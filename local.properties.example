@@ -1,0 +1,11 @@
+# Local Properties Template
+# Copy this file to local.properties and fill in your values
+# DO NOT commit local.properties to version control
+
+# Android SDK location (auto-detected on most systems)
+sdk.dir=/path/to/android-sdk
+
+# Maven Central Publishing (optional - only for maintainers)
+# CENTRAL_USERNAME=your_sonatype_username
+# CENTRAL_PASSWORD=your_sonatype_password
+# SIGNING_PASSWORD=your_gpg_passphrase

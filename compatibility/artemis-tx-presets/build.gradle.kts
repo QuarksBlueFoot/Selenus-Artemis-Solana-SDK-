@@ -1,0 +1,16 @@
+plugins { kotlin("jvm") }
+
+dependencies {
+  testImplementation(kotlin("test"))
+  implementation(kotlin("stdlib"))
+  // Keep this module fully optional and drop-in.
+  implementation(project(":artemis-wallet"))
+  implementation(project(":artemis-rpc"))
+  implementation(project(":artemis-programs"))
+  implementation(project(":artemis-tx"))
+  implementation(project(":artemis-vtx"))
+  implementation(project(":artemis-compute"))
+  implementation(project(":artemis-errors"))
+  implementation(project(":artemis-core"))
+  implementation(project(":artemis-presets"))
+}

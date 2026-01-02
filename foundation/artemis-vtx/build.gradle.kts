@@ -1,0 +1,20 @@
+plugins { kotlin("multiplatform") }
+
+kotlin {
+  jvm()
+
+  sourceSets {
+    commonMain.dependencies {
+      implementation(kotlin("stdlib"))
+      implementation(libs.kotlinx.serialization.json)
+      implementation(libs.kotlinx.coroutines.core)
+      implementation(project(":artemis-core"))
+      implementation(project(":artemis-tx"))
+      implementation(project(":artemis-rpc"))
+    }
+    commonTest.dependencies {
+      implementation(kotlin("test"))
+      implementation(project(":artemis-programs"))
+    }
+  }
+}

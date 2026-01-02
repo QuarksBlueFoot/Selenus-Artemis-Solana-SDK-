@@ -1,0 +1,78 @@
+{
+  "name": "@selenus/artemis-solana-sdk",
+  "version": "2.1.0",
+  "description": "Artemis Solana SDK for React Native - The most comprehensive Kotlin/Android Solana SDK. Features: Anchor, Jupiter, Jito, Actions/Blinks, NLP Transactions, Zero-Copy Streaming, and more.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-.git"
+  },
+  "homepage": "https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-",
+  "bugs": {
+    "url": "https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-/issues"
+  },
+  "scripts": {
+    "test": "echo \"Run integration tests in a React Native app\" && exit 0"
+  },
+  "files": [
+    "android",
+    "ios",
+    "index.js",
+    "index.d.ts",
+    "Base58.ts",
+    "MobileWalletAdapter.ts",
+    "Gaming.ts",
+    "Enhanced.ts",
+    "tests",
+    "TROUBLESHOOTING.md",
+    "package.json",
+    "README.md"
+  ],
+  "keywords": [
+    "react-native",
+    "solana",
+    "android",
+    "ios",
+    "sdk",
+    "mobile-wallet-adapter",
+    "base58",
+    "kotlin",
+    "swift",
+    "anchor",
+    "jupiter",
+    "jito",
+    "actions",
+    "blinks",
+    "defi",
+    "mev-protection",
+    "priority-fees"
+  ],
+  "author": "Bluefoot Labs <contact@bluefootlabs.com>",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "peerDependencies": {
+    "@solana/wallet-adapter-base": ">=0.9.0",
+    "@solana/web3.js": ">=1.0.0",
+    "react": "*",
+    "react-native": "*"
+  },
+  "dependencies": {
+    "buffer": "^6.0.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.6",
+    "@babel/preset-env": "^7.28.6",
+    "@solana/web3.js": "^1.98.4",
+    "@types/jest": "^30.0.0",
+    "@types/react-native": "^0.72.8",
+    "babel-jest": "^30.2.0",
+    "jest": "^30.2.0",
+    "react-test-renderer": "^19.2.3",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3"
+  }
+}
