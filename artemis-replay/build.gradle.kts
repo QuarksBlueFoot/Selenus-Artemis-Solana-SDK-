@@ -1,4 +1,7 @@
-plugins { kotlin("jvm") }
+plugins {
+  kotlin("jvm")
+  kotlin("plugin.serialization")
+}
 
 dependencies {
   implementation(project(":artemis-runtime"))

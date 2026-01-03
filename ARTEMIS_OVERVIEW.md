@@ -42,7 +42,15 @@ Transaction and instruction layer:
 ### artemis-tx-presets
 Predefined transaction presets for common compute/fee scenarios.
 
-### artemis-token2022
+##Investigating the Class Name
+
+I've verified that the class name CandyGuardMintV2Safe is indeed present in the relevant file, specifically in the file CandyGuardMintSafe.kt, as object CandyGuardMintV2Safe. The class name seems correct. I'm now proceeding to investigate the unresolved reference error.
+
+Debugging Imports
+
+I've pinpointed a possible cause of the unresolved reference: the import statement for CandyGuardMintV2Safe might be incorrect given the package structure. The initial investigation indicated the correct class and file. However, my latest check reveals that the importing file, CandyMachineMintPresets.kt, is in a subdirectory. I'm now verifying the import path to make sure it accurately reflects the file's location.
+
+Pinpointing# artemis-token2022
 Full Token-2022 support:
 - instruction builders
 - TLV decoding

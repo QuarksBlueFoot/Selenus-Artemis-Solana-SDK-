@@ -90,12 +90,12 @@ object Token2022Program {
     val buf = ArrayList<Byte>()
     buf.add(20.toByte())
     buf.add(decimals.toByte())
-    buf.addAll(mintAuthority.toByteArray().toList())
+    buf.addAll(mintAuthority.bytes.toList())
     if (freezeAuthority == null) {
       buf.add(0)
     } else {
       buf.add(1)
-      buf.addAll(freezeAuthority.toByteArray().toList())
+      buf.addAll(freezeAuthority.bytes.toList())
     }
     return Instruction(
       programId = PROGRAM_ID,

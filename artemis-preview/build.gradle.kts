@@ -13,4 +13,5 @@ implementation(kotlin("stdlib"))
   implementation(project(":artemis-cnft"))
   implementation(project(":artemis-mplcore"))
   implementation(project(":artemis-ws"))
+  implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

@@ -18,8 +18,8 @@ object ComputeBudgetPresets {
 
   fun setComputeUnitLimit(units: Int): Instruction = ComputeBudgetProgram.setComputeUnitLimit(units)
 
-  fun setComputeUnitPrice(microLamports: Int): Instruction =
-    ComputeBudgetProgram.setComputeUnitPrice(microLamports.toLong())
+  fun setComputeUnitPrice(microLamports: Long): Instruction =
+    ComputeBudgetProgram.setComputeUnitPrice(microLamports)
 
   fun preset(tier: Tier): List<Instruction> {
     return listOf(

@@ -1,6 +1,7 @@
 package com.selenus.artemis.nft
 
 import com.selenus.artemis.runtime.Pubkey
+import com.selenus.artemis.runtime.Pda
 
 /**
  * PDA helpers.
@@ -10,7 +11,7 @@ import com.selenus.artemis.runtime.Pubkey
 object Pdas {
 
   fun metadataPda(mint: Pubkey): Pubkey {
-    return Pubkey.findProgramAddress(
+    return Pda.findProgramAddress(
       seeds = listOf(
         "metadata".toByteArray(),
         MetaplexIds.TOKEN_METADATA_PROGRAM.bytes,
@@ -21,7 +22,7 @@ object Pdas {
   }
 
   fun masterEditionPda(mint: Pubkey): Pubkey {
-    return Pubkey.findProgramAddress(
+    return Pda.findProgramAddress(
       seeds = listOf(
         "metadata".toByteArray(),
         MetaplexIds.TOKEN_METADATA_PROGRAM.bytes,
@@ -34,7 +35,7 @@ object Pdas {
 
   fun editionMarkerPda(mint: Pubkey, edition: Long): Pubkey {
     val marker = (edition / 248L).toString()
-    return Pubkey.findProgramAddress(
+    return Pda.findProgramAddress(
       seeds = listOf(
         "metadata".toByteArray(),
         MetaplexIds.TOKEN_METADATA_PROGRAM.bytes,
@@ -47,7 +48,7 @@ object Pdas {
   }
 
   fun tokenRecordPda(mint: Pubkey, tokenAccount: Pubkey): Pubkey {
-    return Pubkey.findProgramAddress(
+    return Pda.findProgramAddress(
       seeds = listOf(
         "metadata".toByteArray(),
         MetaplexIds.TOKEN_METADATA_PROGRAM.bytes,
@@ -60,7 +61,7 @@ object Pdas {
   }
 
   fun collectionAuthorityRecordPda(collectionMint: Pubkey, authority: Pubkey): Pubkey {
-    return Pubkey.findProgramAddress(
+    return Pda.findProgramAddress(
       seeds = listOf(
         "metadata".toByteArray(),
         MetaplexIds.TOKEN_METADATA_PROGRAM.bytes,

@@ -4,6 +4,7 @@ data class Pubkey(val bytes: ByteArray) {
   init { require(bytes.size == 32) { "Pubkey must be 32 bytes" } }
 
   override fun toString(): String = Base58.encode(bytes)
+  fun toBase58(): String = toString()
 
   companion object {
     fun fromBase58(s: String): Pubkey {

@@ -112,8 +112,8 @@ object V0MessageCompiler {
       val progIdx = idxOf(ix.programId)
       val acctIdxs = ix.accounts.map { m -> idxOf(m.pubkey).toByte() }.toByteArray()
       CompiledInstruction(
-        programIdIndex = progIdx.toByte(),
-        accountIndices = acctIdxs,
+        programIdIndex = progIdx,
+        accountIndexes = acctIdxs,
         data = ix.data
       )
     }

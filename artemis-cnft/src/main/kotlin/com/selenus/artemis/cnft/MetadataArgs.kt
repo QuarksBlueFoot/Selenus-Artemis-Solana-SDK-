@@ -50,7 +50,7 @@ data class MetadataArgs(
       creators.map {
         CnftCodec.concat(
           listOf(
-            it.address.toByteArray(),
+            it.address.bytes,
             CnftCodec.u8(if (it.verified) 1 else 0),
             CnftCodec.u8(it.share)
           )
@@ -63,7 +63,7 @@ data class MetadataArgs(
     } else {
       CnftCodec.u8(1) + CnftCodec.concat(
         listOf(
-          collection.key.toByteArray(),
+          collection.key.bytes,
           CnftCodec.u8(if (collection.verified) 1 else 0)
         )
       )

@@ -1,0 +1,142 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.selenus.artemis",
+    "module": "artemis-candy-machine-presets",
+    "version": "1.0.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.10.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "artemis-candy-machine-presets-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-candy-machine-presets-1.0.0-SNAPSHOT.jar",
+          "size": 15852,
+          "sha512": "1330b707c9c6abdf7060a2dc4e4135b07010084c724a5d2d6dc3c96be1608ec8be5a978e5cd0dbaea03e11106f529528a71259075798262bf4655537db2a6004",
+          "sha256": "2f26740c080c1d9c9dc3b113615127b68722166e906c1c9b7bbd405cb704958c",
+          "sha1": "60afa3dc731414728be613ba2009f79d4c4e33d9",
+          "md5": "8cf3c8730820e0ec8aa1a6ad94bd7a96"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib"
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-rpc",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-wallet",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-tx",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-programs",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-errors",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-candy-machine",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-tx-presets",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-presets",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-runtime",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-candy-machine-presets-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-candy-machine-presets-1.0.0-SNAPSHOT.jar",
+          "size": 15852,
+          "sha512": "1330b707c9c6abdf7060a2dc4e4135b07010084c724a5d2d6dc3c96be1608ec8be5a978e5cd0dbaea03e11106f529528a71259075798262bf4655537db2a6004",
+          "sha256": "2f26740c080c1d9c9dc3b113615127b68722166e906c1c9b7bbd405cb704958c",
+          "sha1": "60afa3dc731414728be613ba2009f79d4c4e33d9",
+          "md5": "8cf3c8730820e0ec8aa1a6ad94bd7a96"
+        }
+      ]
+    }
+  ]
+}

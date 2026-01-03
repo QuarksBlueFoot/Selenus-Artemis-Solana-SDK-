@@ -5,6 +5,10 @@ import com.selenus.artemis.runtime.Pubkey
 import com.selenus.artemis.runtime.Signer
 import com.selenus.artemis.tx.AccountMeta
 import com.selenus.artemis.tx.Instruction
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.JsonNull
 
 /**
  * ALT selection optimizer.
@@ -106,12 +110,15 @@ object AltOptimizer {
       val units = if (mode == Mode.SIZE_AND_COMPUTE && rpc != null) {
         // We can simulate with replaceRecentBlockhash, so even a dummy blockhash works.
         val vt = VersionedTransaction(
-          signatures = listOf(ByteArray(64)), // dummy sig
+          signatures = mutableListOf(ByteArray(64)), // dummy sig
           message = compiled.message
         )
         val b64 = vt.toBase64()
-        val sim = rpc.simulateTransaction(transactionBase64 = b64, sigVerify = false, replaceRecentBlockhash = true)
-        if (sim.err == null) sim.unitsConsumed else Long.MAX_VALUE
+        val sim = rpc.simulateTransaction(base64Tx = b64, sigVerify = false, replaceRecentBlockhash = true)
+        val value = sim["value"]?.jsonObject
+        val err = value?.get("err")
+        val consumed = value?.get("unitsConsumed")?.jsonPrimitive?.longOrNull
+        if (value != null && (err == null || err is kotlinx.serialization.json.JsonNull) && consumed != null) consumed else Long.MAX_VALUE
       } else -1L
 
       return Result(subset, msgSize, loadedCount, units)

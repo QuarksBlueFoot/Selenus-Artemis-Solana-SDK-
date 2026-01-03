@@ -1,6 +1,6 @@
 package com.selenus.artemis.errors
 
-sealed class ArtemisError(message: String, cause: Throwable? = null) : RuntimeException(message, cause) {
+abstract class ArtemisError(message: String, cause: Throwable? = null) : RuntimeException(message, cause) {
   class NetworkTimeout(cause: Throwable? = null) : ArtemisError("network_timeout", cause)
   class NetworkUnavailable(cause: Throwable? = null) : ArtemisError("network_unavailable", cause)
   class RateLimited(cause: Throwable? = null) : ArtemisError("rate_limited", cause)

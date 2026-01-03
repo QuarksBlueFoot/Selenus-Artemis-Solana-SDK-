@@ -1,0 +1,86 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.selenus.artemis",
+    "module": "artemis-presets",
+    "version": "1.0.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.10.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "artemis-presets-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-presets-1.0.0-SNAPSHOT.jar",
+          "size": 5799,
+          "sha512": "8efe116d17f56f5d4b110dbe0cda8927147e4a432f14a46bd5531b323075430aa2eb906ca3bad30dd354598bfeb99a9029edcd8a45d74a0617de3a0682e82814",
+          "sha256": "8390b79f46a3482eb9ea58765b958203b425565b992219bc9edd83a4a9fa97c3",
+          "sha1": "1336999c0838d49aabc4d027430693d3243e27ed",
+          "md5": "d4fe39f46ec99926eb3bc2ee7d1acbe0"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib"
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-errors",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-presets-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-presets-1.0.0-SNAPSHOT.jar",
+          "size": 5799,
+          "sha512": "8efe116d17f56f5d4b110dbe0cda8927147e4a432f14a46bd5531b323075430aa2eb906ca3bad30dd354598bfeb99a9029edcd8a45d74a0617de3a0682e82814",
+          "sha256": "8390b79f46a3482eb9ea58765b958203b425565b992219bc9edd83a4a9fa97c3",
+          "sha1": "1336999c0838d49aabc4d027430693d3243e27ed",
+          "md5": "d4fe39f46ec99926eb3bc2ee7d1acbe0"
+        }
+      ]
+    }
+  ]
+}

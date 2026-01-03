@@ -9,6 +9,6 @@ package com.selenus.artemis.wallet
 interface WalletAdapterSignAndSend {
   suspend fun signAndSendTransactions(
     transactions: List<ByteArray>,
-    request: WalletRequest = WalletRequest()
+    request: WalletRequest = SignTxRequest(purpose = "signAndSend")
   ): List<String>
 }

@@ -1,7 +1,7 @@
 package com.selenus.artemis.cnft
 
 import com.selenus.artemis.runtime.Pubkey
-import com.selenus.artemis.runtime.findProgramAddress
+import com.selenus.artemis.runtime.Pda
 
 /**
  * Bubblegum "signer" PDA used for CPIs into Token Metadata during mintToCollectionV1.
@@ -11,7 +11,7 @@ import com.selenus.artemis.runtime.findProgramAddress
  */
 object BubblegumSigner {
   fun pda(): Pubkey {
-    return findProgramAddress(
+    return Pda.findProgramAddress(
       seeds = listOf("collection_cpi".encodeToByteArray()),
       programId = BubblegumPrograms.BUBBLEGUM_PROGRAM_ID
     ).address

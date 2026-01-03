@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.selenus.artemis.rpc.RpcConfirmTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-01-03T06:59:39" hostname="codespaces-6e0b81" time="0.007">
+  <properties/>
+  <testcase name="confirmTransactionReturnsTrueWhenFinalized" classname="com.selenus.artemis.rpc.RpcConfirmTest" time="0.007"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

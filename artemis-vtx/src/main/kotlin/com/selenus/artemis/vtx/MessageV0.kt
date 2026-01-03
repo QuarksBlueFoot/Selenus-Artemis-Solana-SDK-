@@ -55,8 +55,8 @@ data class MessageV0(
     out.write(ShortVec.encodeLen(instructions.size))
     instructions.forEach { ix ->
       out.write(byteArrayOf(ix.programIdIndex.toByte()))
-      out.write(ShortVec.encodeLen(ix.accounts.size))
-      out.write(ix.accounts.toByteArray())
+      out.write(ShortVec.encodeLen(ix.accountIndexes.size))
+      out.write(ix.accountIndexes)
       out.write(ShortVec.encodeLen(ix.data.size))
       out.write(ix.data)
     }

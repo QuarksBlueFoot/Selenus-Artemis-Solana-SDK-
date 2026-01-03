@@ -32,8 +32,8 @@ object DasProofParser {
       ?: compression?.get("dataHash")?.jsonPrimitive?.content
       ?: error("missing compression.data_hash")
 
-    val creatorHashB58 = compression.get("creator_hash")?.jsonPrimitive?.content
-      ?: compression.get("creatorHash")?.jsonPrimitive?.content
+    val creatorHashB58 = compression?.get("creator_hash")?.jsonPrimitive?.content
+      ?: compression?.get("creatorHash")?.jsonPrimitive?.content
       ?: error("missing compression.creator_hash")
 
     val dataHash = Base58.decode(dataHashB58)
@@ -49,11 +49,11 @@ object DasProofParser {
       ?: error("missing proof.node_index")).toLong().toInt()
 
     val proofArr = proofResult["proof"] as? JsonArray ?: error("missing proof.proof")
-    val proofNodes = proofArr.map { Base58.decode(it.jsonPrimitive.content) }
+    val proofNodes = proofArr.map { Pubkey(Base58.decode(it.jsonPrimitive.content)) }
 
-    val nonce = (compression["leaf_id"]?.jsonPrimitive?.content
-      ?: compression["leafId"]?.jsonPrimitive?.content
-      ?: compression["nonce"]?.jsonPrimitive?.content
+    val nonce = (compression?.get("leaf_id")?.jsonPrimitive?.content
+      ?: compression?.get("leafId")?.jsonPrimitive?.content
+      ?: compression?.get("nonce")?.jsonPrimitive?.content
       ?: "0").toLong()
 
     return ProofArgs(

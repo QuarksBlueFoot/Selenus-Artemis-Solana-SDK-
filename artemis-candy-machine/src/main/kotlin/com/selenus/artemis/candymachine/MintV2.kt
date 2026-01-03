@@ -74,7 +74,7 @@ object CandyGuardMintV2 {
    */
   fun build(args: Args, accounts: Accounts, mintArgsBorsh: ByteArray?): Instruction {
     // Assemble bytes manually: [anchor discriminator] + [borsh args]
-    val header = AnchorDiscriminators.instruction("mint_v2")
+    val header = AnchorDiscriminators.global("mint_v2")
     val body = BorshWriter()
       .optionString(args.group)
       // mint_args: Option<MintArgs>

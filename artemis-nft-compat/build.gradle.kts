@@ -7,6 +7,7 @@ dependencies {
   implementation(project(":artemis-runtime"))
   implementation(project(":artemis-rpc"))
   implementation(project(":artemis-programs"))
+  implementation(project(":artemis-tx"))
 }
 
 kotlin {

@@ -44,7 +44,7 @@ class NftClient(private val rpc: RpcApi) {
     return out
   }
 
-  suspend fun findAllByMintList(mintBase58: List<String>): List<Nft> =
+  suspend fun findAllByMintListBase58(mintBase58: List<String>): List<Nft> =
     findAllByMintList(mintBase58.map { Pubkey.fromBase58(it) })
 
   /**
@@ -84,8 +84,8 @@ class NftClient(private val rpc: RpcApi) {
     val filters = kotlinx.serialization.json.buildJsonArray {
       add(kotlinx.serialization.json.buildJsonObject {
         put("memcmp", kotlinx.serialization.json.buildJsonObject {
-          put("offset", creatorOffset)
-          put("bytes", creator.toBase58())
+          put("offset", kotlinx.serialization.json.JsonPrimitive(creatorOffset))
+          put("bytes", kotlinx.serialization.json.JsonPrimitive(creator.toBase58()))
         })
       })
     }
@@ -153,7 +153,6 @@ class NftClient(private val rpc: RpcApi) {
     val tokenAccounts = rpc.getTokenAccountsByOwner(
       owner = owner.toBase58(),
       programId = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-      encoding = "jsonParsed",
       commitment = "confirmed"
     )
 

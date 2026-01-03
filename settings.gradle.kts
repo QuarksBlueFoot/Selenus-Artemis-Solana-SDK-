@@ -29,7 +29,7 @@ include(":artemis-logging")
 
 include(":artemis-errors")
 
-include(":artemis-wallet-mwa-android")
+// include(":artemis-wallet-mwa-android")
 
 include(":artemis-nft-compat")
 include(":artemis-candy-machine")

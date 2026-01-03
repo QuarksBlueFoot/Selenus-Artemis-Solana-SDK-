@@ -54,8 +54,8 @@ object SendPipeline {
       attempt += 1
       try {
         // Compile messages with compute budget inserted.
-        val legacy = compileLegacyMessage(blockhash, computeIxs = emptyList())
-        val v0 = compileV0Message?.invoke(blockhash, computeIxs = emptyList())
+        val legacy = compileLegacyMessage(blockhash, emptyList())
+        val v0 = compileV0Message?.invoke(blockhash, emptyList())
 
         val advice = TxBudgetAdvisor.advise(
           legacyMessage = legacy,
@@ -68,7 +68,7 @@ object SendPipeline {
           .buildInstructions()
 
         // Re-compile with compute instructions included.
-        val legacy2 = compileLegacyMessage(blockhash, computeIxs = computeIxs)
+        val legacy2 = compileLegacyMessage(blockhash, computeIxs)
         val msgBytes = legacy2.serialize()
 
         val signed = adapter.signMessage(msgBytes, SignTxRequest(purpose = "send"))

@@ -1,0 +1,79 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.selenus.artemis",
+    "module": "artemis-core",
+    "version": "1.0.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.10.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "artemis-core-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-core-1.0.0-SNAPSHOT.jar",
+          "size": 16357,
+          "sha512": "79afc73ec99759f1c8691375e8b566621fa900cf37c92cb50beecb2cb38b12e2ac3f9127e8627fa1b0e73e1a4b6f2d04eecd474aec9543bfa0c5ba6d3eccb600",
+          "sha256": "81ef230511151596dd28fb1d5bfac1fb93b40bcbc71da3f678a559cd1c68ae5a",
+          "sha1": "32d0da20f9aec12c0f8e06bdc76b0f1189cf5adc",
+          "md5": "9f878aa472d070376320e021af014c87"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib"
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-core-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-core-1.0.0-SNAPSHOT.jar",
+          "size": 16357,
+          "sha512": "79afc73ec99759f1c8691375e8b566621fa900cf37c92cb50beecb2cb38b12e2ac3f9127e8627fa1b0e73e1a4b6f2d04eecd474aec9543bfa0c5ba6d3eccb600",
+          "sha256": "81ef230511151596dd28fb1d5bfac1fb93b40bcbc71da3f678a559cd1c68ae5a",
+          "sha1": "32d0da20f9aec12c0f8e06bdc76b0f1189cf5adc",
+          "md5": "9f878aa472d070376320e021af014c87"
+        }
+      ]
+    }
+  ]
+}

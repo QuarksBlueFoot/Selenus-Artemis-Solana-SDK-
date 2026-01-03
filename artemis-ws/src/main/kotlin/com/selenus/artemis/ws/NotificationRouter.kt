@@ -6,6 +6,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.serialization.json.JsonElement
 
 /**
@@ -34,6 +36,8 @@ internal class NotificationRouter(
   private var droppedTotal = 0
   private val droppedByKey = LinkedHashMap<String, Int>()
 
+  @Suppress("DEPRECATION")
+  @OptIn(ExperimentalCoroutinesApi::class)
   fun start() {
     if (job?.isActive == true) return
     job = scope.launch {
@@ -56,7 +60,7 @@ internal class NotificationRouter(
           }
 
           // periodic flush for sampled keys
-          kotlinx.coroutines.onTimeout(sampleDelay) {
+          onTimeout(sampleDelay) {
             if (latest.isNotEmpty()) {
               val snap = ArrayList(latest.values)
               latest.clear()

@@ -1,0 +1,89 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.selenus.artemis",
+    "module": "artemis-discriminators",
+    "version": "1.0.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.10.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-discriminators-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-discriminators-1.0.0-SNAPSHOT.jar",
+          "size": 7518,
+          "sha512": "73193640968cae6ab1ef5f3746fb27d760f2f1d22d66001f54a19a7a52be6dc85b7cf71994a34dc1733b4b2b8af9be22826d090278ebbaa8d0c8804b00764e51",
+          "sha256": "851c7ee4c1c1d04a1b09cb0383fd08da171c0619c475581256672f172351ccb6",
+          "sha1": "5129ec08f2649ce8d637844d8b2cb59c7dd50860",
+          "md5": "52e40bc40edb0da7ecbdaf6633def0d1"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-runtime",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-discriminators-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-discriminators-1.0.0-SNAPSHOT.jar",
+          "size": 7518,
+          "sha512": "73193640968cae6ab1ef5f3746fb27d760f2f1d22d66001f54a19a7a52be6dc85b7cf71994a34dc1733b4b2b8af9be22826d090278ebbaa8d0c8804b00764e51",
+          "sha256": "851c7ee4c1c1d04a1b09cb0383fd08da171c0619c475581256672f172351ccb6",
+          "sha1": "5129ec08f2649ce8d637844d8b2cb59c7dd50860",
+          "md5": "52e40bc40edb0da7ecbdaf6633def0d1"
+        }
+      ]
+    }
+  ]
+}

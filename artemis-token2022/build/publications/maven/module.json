@@ -1,0 +1,96 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.selenus.artemis",
+    "module": "artemis-token2022",
+    "version": "1.0.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.10.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-token2022-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-token2022-1.0.0-SNAPSHOT.jar",
+          "size": 18804,
+          "sha512": "e6f3447cf0d59655ca2a63273f6e107b0a34f39315f525733e4318584dca91693dd19b99caad5d8795744c8ae27a57139a33f5d506686b81f280dfcd4d6a947b",
+          "sha256": "e71ee29b14c5b92dc0b27ccfc24469c76a7bba63bb4267dea0c85e59fd9e76b9",
+          "sha1": "b4247a3bfb995dee72519d41d37f530f0447b33b",
+          "md5": "525d83818be7c06d2b7eb727d4320573"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-runtime",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-tx",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-token2022-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-token2022-1.0.0-SNAPSHOT.jar",
+          "size": 18804,
+          "sha512": "e6f3447cf0d59655ca2a63273f6e107b0a34f39315f525733e4318584dca91693dd19b99caad5d8795744c8ae27a57139a33f5d506686b81f280dfcd4d6a947b",
+          "sha256": "e71ee29b14c5b92dc0b27ccfc24469c76a7bba63bb4267dea0c85e59fd9e76b9",
+          "sha1": "b4247a3bfb995dee72519d41d37f530f0447b33b",
+          "md5": "525d83818be7c06d2b7eb727d4320573"
+        }
+      ]
+    }
+  ]
+}

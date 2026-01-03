@@ -1,7 +1,7 @@
 package com.selenus.artemis.mplcore
 
 import com.selenus.artemis.runtime.Pubkey
-import com.selenus.artemis.runtime.findProgramAddress
+import com.selenus.artemis.runtime.Pda
 
 /**
  * PDA helpers for MPL Core.
@@ -16,16 +16,16 @@ object MplCorePdas {
    * Since Core seeds can vary by client, treat this as an optional helper.
    */
   fun assetPda(owner: Pubkey, name: String): Pubkey {
-    return findProgramAddress(
-      seeds = listOf("asset".encodeToByteArray(), owner.toByteArray(), name.encodeToByteArray()),
-      programId = MplCorePrograms.MPL_CORE_ID
+    return Pda.findProgramAddress(
+      seeds = listOf("asset".encodeToByteArray(), owner.bytes, name.encodeToByteArray()),
+      programId = MplCorePrograms.DEFAULT_PROGRAM_ID
     ).address
   }
 
   fun collectionPda(authority: Pubkey, name: String): Pubkey {
-    return findProgramAddress(
-      seeds = listOf("collection".encodeToByteArray(), authority.toByteArray(), name.encodeToByteArray()),
-      programId = MplCorePrograms.MPL_CORE_ID
+    return Pda.findProgramAddress(
+      seeds = listOf("collection".encodeToByteArray(), authority.bytes, name.encodeToByteArray()),
+      programId = MplCorePrograms.DEFAULT_PROGRAM_ID
     ).address
   }
 }

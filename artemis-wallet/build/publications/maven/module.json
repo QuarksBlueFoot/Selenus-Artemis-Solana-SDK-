@@ -1,0 +1,124 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.selenus.artemis",
+    "module": "artemis-wallet",
+    "version": "1.0.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.10.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-wallet-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-wallet-1.0.0-SNAPSHOT.jar",
+          "size": 32402,
+          "sha512": "2cd4b7f10f8778cdc8ea15bd35b95ac3226661d1650376b7e98b5988f862a7e41717358d35dcc0b733c1b32813c66496e43f6a7d746cf7460df3c5ea1c4208e8",
+          "sha256": "8a412e8f1e1529d7dd0096e3d8dc9cd7fae279514d4599ccf99daf21cf160498",
+          "sha1": "14b740c0c4283ae3d9ae1c049c293d97f9e4557a",
+          "md5": "5f6748eb16fee3683ec329381ca53783"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-errors",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-runtime",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-tx",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-vtx",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-compute",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-core",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-wallet-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-wallet-1.0.0-SNAPSHOT.jar",
+          "size": 32402,
+          "sha512": "2cd4b7f10f8778cdc8ea15bd35b95ac3226661d1650376b7e98b5988f862a7e41717358d35dcc0b733c1b32813c66496e43f6a7d746cf7460df3c5ea1c4208e8",
+          "sha256": "8a412e8f1e1529d7dd0096e3d8dc9cd7fae279514d4599ccf99daf21cf160498",
+          "sha1": "14b740c0c4283ae3d9ae1c049c293d97f9e4557a",
+          "md5": "5f6748eb16fee3683ec329381ca53783"
+        }
+      ]
+    }
+  ]
+}

@@ -3,8 +3,9 @@ package com.selenus.artemis.cnft.das
 import com.selenus.artemis.rpc.JsonRpcClient
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.add
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 
@@ -16,50 +17,36 @@ import kotlinx.serialization.json.putJsonArray
 class DasClient(private val rpc: JsonRpcClient) {
 
   fun getAsset(id: String): JsonObject {
-    val req = buildJsonObject {
-      put("id", "1")
-      put("jsonrpc", "2.0")
-      put("method", "getAsset")
-      putJsonArray("params") { add(buildJsonObject { put("id", id) }) }
+    val params = buildJsonArray {
+      add(buildJsonObject { put("id", id) })
     }
-    return rpc.call(req)
+    return rpc.call("getAsset", params)
   }
 
   fun getAssetProof(id: String): JsonObject {
-    val req = buildJsonObject {
-      put("id", "1")
-      put("jsonrpc", "2.0")
-      put("method", "getAssetProof")
-      putJsonArray("params") { add(buildJsonObject { put("id", id) }) }
+    val params = buildJsonArray {
+      add(buildJsonObject { put("id", id) })
     }
-    return rpc.call(req)
+    return rpc.call("getAssetProof", params)
   }
 
   /**
    * Helper: getAsset + getAssetProof and return both results.
    */
   fun getAssetWithProof(id: String, truncateCanopy: Boolean = true): JsonObject {
-    val req = buildJsonObject {
-      put("id", "1")
-      put("jsonrpc", "2.0")
-      put("method", "getAsset")
-      putJsonArray("params") {
-        add(buildJsonObject {
-          put("id", id)
-          // Some providers accept options; others ignore them. Safe to include.
-          putJsonArray("options") { }
-        })
-      }
+    val assetParams = buildJsonArray {
+      add(buildJsonObject {
+        put("id", id)
+        // Some providers accept options; others ignore them. Safe to include.
+        putJsonArray("options") { }
+      })
     }
-    val asset = rpc.call(req)
+    val asset = rpc.call("getAsset", assetParams)
 
-    val proofReq = buildJsonObject {
-      put("id", "1")
-      put("jsonrpc", "2.0")
-      put("method", "getAssetProof")
-      putJsonArray("params") { add(buildJsonObject { put("id", id) }) }
+    val proofParams = buildJsonArray {
+      add(buildJsonObject { put("id", id) })
     }
-    val proof = rpc.call(proofReq)
+    val proof = rpc.call("getAssetProof", proofParams)
 
     return buildJsonObject {
       put("asset", asset)

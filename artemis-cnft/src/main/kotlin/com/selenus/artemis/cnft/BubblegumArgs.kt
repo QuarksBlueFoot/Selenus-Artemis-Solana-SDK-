@@ -19,8 +19,8 @@ object BubblegumArgs {
       require(creatorHash.size == 32) { "creatorHash must be 32 bytes" }
       return CnftCodec.concat(
         listOf(
-          owner.toByteArray(),
-          delegate.toByteArray(),
+          owner.bytes,
+          delegate.bytes,
           CnftCodec.u64le(nonce),
           dataHash,
           creatorHash
@@ -67,7 +67,7 @@ object BubblegumArgs {
     val newDelegate: Pubkey
   ) {
     fun serialize(): ByteArray {
-      return CnftCodec.concat(listOf(proof.serialize(), newDelegate.toByteArray()))
+      return CnftCodec.concat(listOf(proof.serialize(), newDelegate.bytes))
     }
   }
 
@@ -83,7 +83,7 @@ object BubblegumArgs {
     val proof: ProofArgs,
     val creator: Pubkey
   ) {
-    fun serialize(): ByteArray = CnftCodec.concat(listOf(proof.serialize(), creator.toByteArray()))
+    fun serialize(): ByteArray = CnftCodec.concat(listOf(proof.serialize(), creator.bytes))
   }
 
   fun buildVerifyCreatorIxData(
@@ -100,7 +100,7 @@ object BubblegumArgs {
     val proof: ProofArgs,
     val collectionMint: Pubkey
   ) {
-    fun serialize(): ByteArray = CnftCodec.concat(listOf(proof.serialize(), collectionMint.toByteArray()))
+    fun serialize(): ByteArray = CnftCodec.concat(listOf(proof.serialize(), collectionMint.bytes))
   }
 
   fun buildVerifyCollectionIxData(

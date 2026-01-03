@@ -1,5 +1,6 @@
 package com.selenus.artemis.programs
 
+import com.selenus.artemis.runtime.Pda
 import com.selenus.artemis.runtime.Pubkey
 import com.selenus.artemis.tx.AccountMeta
 import com.selenus.artemis.tx.Instruction
@@ -16,7 +17,8 @@ object AddressLookupTableProgram {
    */
   fun deriveLookupTableAddress(authority: Pubkey, recentSlot: Long): Pair<Pubkey, Int> {
     val slotBytes = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(recentSlot).array()
-    return Pubkey.findProgramAddress(listOf(authority.bytes, slotBytes), PROGRAM_ID)
+    val res = Pda.findProgramAddress(listOf(authority.bytes, slotBytes), PROGRAM_ID)
+    return Pair(res.address, res.bump)
   }
 
   /**

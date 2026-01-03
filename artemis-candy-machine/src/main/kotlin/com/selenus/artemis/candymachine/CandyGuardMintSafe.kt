@@ -73,7 +73,7 @@ object CandyGuardMintV2Safe {
     assertMeta(5, isWritable = false, isSigner = true)
 
     // No duplicate metas with conflicting flags.
-    val byKey = ix.accounts.groupBy { it.publicKey }
+    val byKey = ix.accounts.groupBy { it.pubkey }
     for ((k, metas) in byKey) {
       if (metas.size <= 1) continue
       val anySigner = metas.any { it.isSigner }

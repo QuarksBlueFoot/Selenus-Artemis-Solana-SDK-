@@ -34,7 +34,7 @@ object MplCorePlugins {
         listOf(
           MplCoreCodec.u32le(creators.size.toLong()),
           *creators.map {
-            MplCoreCodec.concat(listOf(it.address.toByteArray(), MplCoreCodec.u8(it.share)))
+            MplCoreCodec.concat(listOf(it.address.bytes, MplCoreCodec.u8(it.share)))
           }.toTypedArray()
         )
       )

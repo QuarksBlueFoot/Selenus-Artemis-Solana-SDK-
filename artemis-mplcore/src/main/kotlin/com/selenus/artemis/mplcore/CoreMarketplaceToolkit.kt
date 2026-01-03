@@ -22,7 +22,7 @@ object CoreMarketplaceToolkit {
     delegate: Pubkey,
     programId: Pubkey = MplCorePrograms.DEFAULT_PROGRAM_ID,
     methodName: String = "delegate",
-    data: ByteArray = delegate.toByteArray()
+    data: ByteArray = delegate.bytes
   ): Instruction {
     val ixData = MplCoreCodec.disc(methodName) + data
     return Instruction(

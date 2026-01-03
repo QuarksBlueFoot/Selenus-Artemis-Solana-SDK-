@@ -104,7 +104,7 @@ object CandyGuardAccountPlanner {
       collectionMint = collectionMint,
       collectionMetadata = collectionMetaPda,
       collectionMasterEdition = collectionMasterEdition,
-      collectionUpdateAuthority = collectionUpdateAuthority,
+      collectionUpdateAuthority = collectionUpdateAuthority!!,
       candyMachineAuthorityPda = candyMachineAuthorityPda,
       remainingAccounts = emptyList(),
       nftMintIsSigner = mintIsSigner,

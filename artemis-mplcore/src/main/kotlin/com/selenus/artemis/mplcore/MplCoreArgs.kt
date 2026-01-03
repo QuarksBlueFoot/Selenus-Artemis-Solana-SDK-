@@ -20,7 +20,7 @@ object MplCoreArgs {
         listOf(
           MplCoreCodec.borshString(name),
           MplCoreCodec.borshString(uri),
-          updateAuthority.toByteArray(),
+          updateAuthority.bytes,
           MplCoreCodec.u8(if (isMutable) 1 else 0)
         )
       )
@@ -40,14 +40,14 @@ object MplCoreArgs {
       val colBytes = if (!hasCollection) {
         MplCoreCodec.u8(0)
       } else {
-        MplCoreCodec.u8(1) + collection!!.toByteArray()
+        MplCoreCodec.u8(1) + collection!!.bytes
       }
       return MplCoreCodec.concat(
         listOf(
           MplCoreCodec.borshString(name),
           MplCoreCodec.borshString(uri),
-          owner.toByteArray(),
-          updateAuthority.toByteArray(),
+          owner.bytes,
+          updateAuthority.bytes,
           colBytes,
           MplCoreCodec.u8(if (isMutable) 1 else 0)
         )
@@ -58,6 +58,6 @@ object MplCoreArgs {
   data class UpdateAuthorityArgs(
     val newAuthority: Pubkey
   ) {
-    fun serialize(): ByteArray = newAuthority.toByteArray()
+    fun serialize(): ByteArray = newAuthority.bytes
   }
 }

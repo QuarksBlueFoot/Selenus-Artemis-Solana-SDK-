@@ -26,7 +26,7 @@ class ArcanaFlowFrameComposer(
     val computeInstructions: List<Instruction>,
     val frameInstructions: List<Instruction>,
     val lookupTableAddresses: List<Pubkey>,
-    val suggestedMicroLamports: Int
+    val suggestedMicroLamports: Long
   )
 
   /**
@@ -43,7 +43,7 @@ class ArcanaFlowFrameComposer(
     proposal: AltSessionBuilder.Proposal? = null,
     deny: Set<Pubkey> = emptySet()
   ): FrameTxPlan {
-    val microLamports = oracle?.suggest(programId = programId, tier = tier, cluster = cluster)
+    val microLamports: Long = oracle?.suggest(programId = programId, tier = tier, cluster = cluster)?.toLong()
       ?: ComputeBudgetPresets.Tier.COMPETITIVE.microLamports
 
     val compute = listOf(

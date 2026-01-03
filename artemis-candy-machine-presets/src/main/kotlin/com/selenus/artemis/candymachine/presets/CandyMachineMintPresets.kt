@@ -99,8 +99,9 @@ object CandyMachineMintPresets {
     if (forcePnft) {
       ataIntents += TxComposerPresets.AtaIntent(owner = wallet, mint = mint)
     }
-    if (manifest.requirements.requiresTokenPayment && manifest.tokenPaymentMint != null) {
-      ataIntents += TxComposerPresets.AtaIntent(owner = wallet, mint = manifest.tokenPaymentMint)
+    val tokenMint = manifest.tokenPaymentMint
+    if (manifest.requirements.requiresTokenPayment && tokenMint != null) {
+      ataIntents += TxComposerPresets.AtaIntent(owner = wallet, mint = tokenMint)
     }
 
     val composed = TxComposerPresets.sendWithAtaAndPriority(
@@ -188,8 +189,9 @@ object CandyMachineMintPresets {
     if (forcePnft) {
       ataIntents += TxComposerPresets.AtaIntent(owner = walletPub, mint = mint)
     }
-    if (manifest.requirements.requiresTokenPayment && manifest.tokenPaymentMint != null) {
-      ataIntents += TxComposerPresets.AtaIntent(owner = walletPub, mint = manifest.tokenPaymentMint)
+    val tokenMint = manifest.tokenPaymentMint
+    if (manifest.requirements.requiresTokenPayment && tokenMint != null) {
+      ataIntents += TxComposerPresets.AtaIntent(owner = walletPub, mint = tokenMint)
     }
 
     val composed = TxComposerPresets.sendWithAtaAndPriority(

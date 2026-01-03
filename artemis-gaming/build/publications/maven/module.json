@@ -1,0 +1,138 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.selenus.artemis",
+    "module": "artemis-gaming",
+    "version": "1.0.0-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.10.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-gaming-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-gaming-1.0.0-SNAPSHOT.jar",
+          "size": 50561,
+          "sha512": "ec3fee1be9ea803b39874951ca088e2a18556ac6888fb91f50713579512db1c9f633333d9f3eb7386586b135fb81626a9e582aac8d96c82d8e764e97f6079871",
+          "sha256": "811c34058e63440c2b7ba0a19845d6cc6e4dd77bb7003a2f891336dd53957062",
+          "sha1": "944ac2eff5d876b7c91a1a610e6bae7c1f1825a6",
+          "md5": "b5b1773dae4fca0c8890a5aa201d0136"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-runtime",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-tx",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-vtx",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-compute",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-ws",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-rpc",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "com.selenus.artemis",
+          "module": "artemis-programs",
+          "version": {
+            "requires": "1.0.0-SNAPSHOT"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-core",
+          "version": {
+            "requires": "1.7.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "artemis-gaming-1.0.0-SNAPSHOT.jar",
+          "url": "artemis-gaming-1.0.0-SNAPSHOT.jar",
+          "size": 50561,
+          "sha512": "ec3fee1be9ea803b39874951ca088e2a18556ac6888fb91f50713579512db1c9f633333d9f3eb7386586b135fb81626a9e582aac8d96c82d8e764e97f6079871",
+          "sha256": "811c34058e63440c2b7ba0a19845d6cc6e4dd77bb7003a2f891336dd53957062",
+          "sha1": "944ac2eff5d876b7c91a1a610e6bae7c1f1825a6",
+          "md5": "b5b1773dae4fca0c8890a5aa201d0136"
+        }
+      ]
+    }
+  ]
+}

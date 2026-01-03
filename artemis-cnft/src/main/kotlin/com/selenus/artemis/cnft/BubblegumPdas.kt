@@ -1,7 +1,7 @@
 package com.selenus.artemis.cnft
 
 import com.selenus.artemis.runtime.Pubkey
-import com.selenus.artemis.runtime.findProgramAddress
+import com.selenus.artemis.runtime.Pda
 
 /**
  * PDA helpers for Bubblegum + Compression.
@@ -14,8 +14,8 @@ object BubblegumPdas {
    * The Bubblegum TreeConfig PDA is derived from the merkle tree address.
    */
   fun treeConfig(merkleTree: Pubkey): Pubkey {
-    return findProgramAddress(
-      seeds = listOf(merkleTree.toByteArray()),
+    return Pda.findProgramAddress(
+      seeds = listOf(merkleTree.bytes),
       programId = BubblegumPrograms.BUBBLEGUM_PROGRAM_ID
     ).address
   }
@@ -30,10 +30,10 @@ object BubblegumPdas {
     val idx = ByteArray(8)
     var x = leafIndex
     for (i in 0 until 8) { idx[i] = (x and 0xff).toByte(); x = x ushr 8 }
-    return findProgramAddress(
+    return Pda.findProgramAddress(
       seeds = listOf(
         "asset".encodeToByteArray(),
-        merkleTree.toByteArray(),
+        merkleTree.bytes,
         idx
       ),
       programId = BubblegumPrograms.BUBBLEGUM_PROGRAM_ID
@@ -49,10 +49,10 @@ object BubblegumPdas {
     val n = ByteArray(8)
     var x = nonce
     for (i in 0 until 8) { n[i] = (x and 0xff).toByte(); x = x ushr 8 }
-    return findProgramAddress(
+    return Pda.findProgramAddress(
       seeds = listOf(
         "voucher".encodeToByteArray(),
-        merkleTree.toByteArray(),
+        merkleTree.bytes,
         n
       ),
       programId = BubblegumPrograms.BUBBLEGUM_PROGRAM_ID
@@ -68,13 +68,13 @@ object BubblegumPdas {
     collectionMint: Pubkey,
     collectionAuthority: Pubkey
   ): Pubkey {
-    return findProgramAddress(
+    return Pda.findProgramAddress(
       seeds = listOf(
         "metadata".encodeToByteArray(),
-        tokenMetadataProgram.toByteArray(),
-        collectionMint.toByteArray(),
+        tokenMetadataProgram.bytes,
+        collectionMint.bytes,
         "collection_authority".encodeToByteArray(),
-        collectionAuthority.toByteArray(),
+        collectionAuthority.bytes,
       ),
       programId = tokenMetadataProgram
     ).address

@@ -18,6 +18,12 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonElement
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -384,7 +390,17 @@ class SolanaWsClient(
       put("jsonrpc", "2.0")
       put("id", id)
       put("method", method)
-      put("params", json.encodeToJsonElement(params))
+      put("params", buildJsonArray {
+        for (p in params) {
+          when (p) {
+            is Number -> add(JsonPrimitive(p))
+            is String -> add(JsonPrimitive(p))
+            is Boolean -> add(JsonPrimitive(p))
+            is JsonElement -> add(p)
+            else -> add(JsonPrimitive(p.toString()))
+          }
+        }
+      })
     }
   }
 

@@ -43,12 +43,12 @@ internal class BorshWriter {
     return this
   }
 
-  fun <T> option(value: T?, writeValue: (T) -> Unit): BorshWriter {
+  fun <T> option(value: T?, writeValue: BorshWriter.(T) -> Unit): BorshWriter {
     if (value == null) {
       u8(0)
     } else {
       u8(1)
-      writeValue(value)
+      this.writeValue(value)
     }
     return this
   }

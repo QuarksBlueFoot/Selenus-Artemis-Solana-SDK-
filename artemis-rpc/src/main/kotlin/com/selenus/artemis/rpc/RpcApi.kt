@@ -120,8 +120,8 @@ class RpcApi(private val client: JsonRpcClient) {
         if (maxRetries != null) put("maxRetries", maxRetries)
       })
     }
-    val res = client.call("sendTransaction", params).resultObj()
-    return res.jsonPrimitive.content
+    val res = client.call("sendTransaction", params)
+    return res["result"]?.jsonPrimitive?.content ?: throw RpcException("Missing result")
   }
 
   fun sendRawTransaction(txBytes: ByteArray, skipPreflight: Boolean = false, maxRetries: Int? = null, preflightCommitment: String = "processed"): String {
