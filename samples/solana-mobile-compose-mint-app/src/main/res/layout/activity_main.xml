@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+      android:id="@+id/title"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="Artemis Candy Machine Mint (MWA)"
+      android:textStyle="bold"
+      android:textSize="18sp"
+      android:paddingBottom="12dp" />
+
+    <EditText
+      android:id="@+id/inputRpc"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="RPC URL (https://...)"
+      android:inputType="textUri"
+      android:text="https://api.mainnet-beta.solana.com" />
+
+    <EditText
+      android:id="@+id/inputCandyMachine"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="Candy Machine pubkey"
+      android:inputType="text"
+      android:layout_marginTop="12dp" />
+
+    <EditText
+      android:id="@+id/inputCandyGuard"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="Candy Guard pubkey"
+      android:inputType="text"
+      android:layout_marginTop="12dp" />
+
+    <EditText
+      android:id="@+id/inputGroup"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="Guard group (optional)"
+      android:inputType="text"
+      android:layout_marginTop="12dp" />
+
+    <EditText
+      android:id="@+id/inputSeed"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="Seed (for mint pubkey)"
+      android:inputType="text"
+      android:layout_marginTop="12dp"
+      android:text="mint-1" />
+
+    <CheckBox
+      android:id="@+id/checkForcePnft"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Force pNFT account planning"
+      android:layout_marginTop="12dp" />
+
+    <Button
+      android:id="@+id/btnConnect"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="Connect Wallet (MWA)"
+      android:layout_marginTop="16dp" />
+
+    <Button
+      android:id="@+id/btnMint"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="Mint"
+      android:layout_marginTop="8dp" />
+
+    <TextView
+      android:id="@+id/textStatus"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="Status: idle"
+      android:layout_marginTop="16dp" />
+
+  </LinearLayout>
+</ScrollView>
