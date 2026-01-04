@@ -152,12 +152,6 @@ val disc = registry.discriminator(programId, "mainnet", "transfer")
 - artemis-candy-machine: Candy Machine v3 and Candy Guard instruction builders
 - artemis-discriminators: versioned discriminator registry for Anchor programs
 
-## Release process
-
-Every few big additions we ship a full repo zip, plus updated documentation.
-If you see a doc mismatch, treat the code as the source of truth and open an issue.
-
-
 ## Marketplace helpers
 
 ### cNFT batch delegate and transfer
@@ -270,8 +264,3 @@ packages: docs/packages.md
 Optional modules:
 - :artemis-nft-compat (Metaplex-compatible NFT helpers)
 
-v54: docs/v54.md
-
-v55: docs/v55.md
-
-v56: docs/v56.md
