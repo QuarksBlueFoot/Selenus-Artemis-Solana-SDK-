@@ -21,13 +21,11 @@ class SeedVaultWalletAdapter(
 
     override suspend fun getCapabilities(): WalletCapabilities {
         return WalletCapabilities(
-            supportsSignAndSend = false, // Seed Vault is a signer, not an RPC provider
-            supportsSignTransactions = true,
-            supportsSignMessages = true,
-            maxTransactionsPerRequest = 20,
-            maxMessagesPerRequest = 20,
-            supportsPreAuthorize = true,
-            supportsMultipleMessages = true
+            supportsReSign = true,
+            supportsPartialSign = false,
+            supportsFeePayerSwap = false,
+            supportsMultipleMessages = true,
+            supportsPreAuthorize = true
         )
     }
 

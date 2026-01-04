@@ -11,10 +11,11 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.intOrNull
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
 
-internal class MwaSession(
+class MwaSession internal constructor(
   private val transport: MwaTransport,
   private val cipher: Aes128Gcm,
   private val json: Json = Json { ignoreUnknownKeys = true }
@@ -64,7 +65,7 @@ internal class MwaSession(
   }
 
   companion object {
-    suspend fun connectLocal(
+    internal suspend fun connectLocal(
       server: MwaWebSocketServer,
       associationKeypair: java.security.KeyPair,
       protocolVersionMajor: Int = 2,

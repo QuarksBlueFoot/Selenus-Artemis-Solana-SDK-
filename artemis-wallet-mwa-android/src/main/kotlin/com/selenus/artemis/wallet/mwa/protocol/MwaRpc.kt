@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class MwaIdentity(
+data class MwaIdentity(
   val uri: String? = null,
   val icon: String? = null,
   val name: String? = null
@@ -21,20 +21,20 @@ internal data class MwaAuthorizeRequest(
 )
 
 @Serializable
-internal data class MwaAccount(
+data class MwaAccount(
   // base64 encoded public key bytes
   val address: String,
   val label: String? = null
 )
 
 @Serializable
-internal data class MwaAuthorizeResult(
+data class MwaAuthorizeResult(
   @SerialName("auth_token") val authToken: String,
   val accounts: List<MwaAccount> = emptyList()
 )
 
 @Serializable
-internal data class MwaCapabilities(
+data class MwaCapabilities(
   // Wallets vary. We keep fields optional and rely on ignoreUnknownKeys.
   @SerialName("supports_sign_and_send_transactions") val supportsSignAndSendTransactions: Boolean? = null,
   @SerialName("supports_sign_transactions") val supportsSignTransactions: Boolean? = null,
@@ -57,7 +57,7 @@ internal data class MwaSignTransactionsResult(
 )
 
 @Serializable
-internal data class MwaSendOptions(
+data class MwaSendOptions(
   @SerialName("skip_preflight") val skipPreflight: Boolean? = null,
   @SerialName("max_retries") val maxRetries: Int? = null,
   @SerialName("preflight_commitment") val preflightCommitment: String? = null,

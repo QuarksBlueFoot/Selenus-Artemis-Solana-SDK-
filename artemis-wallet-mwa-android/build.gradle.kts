@@ -23,6 +23,8 @@ android {
 
 dependencies {
   implementation(project(":artemis-wallet"))
+  implementation(project(":artemis-rpc"))
+  implementation(project(":artemis-runtime"))
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
   implementation("androidx.datastore:datastore-preferences:1.1.1")
   // Artemis native Mobile Wallet Adapter client. No dependency on Solana Mobile clientlib.

@@ -5,9 +5,21 @@
 # export CENTRAL_USERNAME="<your_token_username>"
 # export CENTRAL_PASSWORD="<your_token_password>"
 
-# GPG Keys
-# export SIGNING_KEY="$(cat secret.asc)"
-# export SIGNING_PASSWORD="<your_gpg_passphrase>"
+# Load from local.properties if available
+if [ -f "local.properties" ]; then
+    echo "Loading properties from local.properties..."
+    while IFS='=' read -r key value; do
+        if [[ $key == "CENTRAL_USERNAME" || $key == "CENTRAL_PASSWORD" || $key == "SIGNING_PASSWORD" ]]; then
+            export "$key"="$value"
+        fi
+    done < local.properties
+fi
+
+# Auto-load Signing Key
+if [ -z "$SIGNING_KEY" ] && [ -f "secret.asc" ]; then
+    echo "Loading SIGNING_KEY from secret.asc..."
+    export SIGNING_KEY="$(cat secret.asc)"
+fi
 
 if [ -z "$CENTRAL_USERNAME" ]; then
   echo "Error: CENTRAL_USERNAME is not set."
@@ -31,7 +43,7 @@ fi
 
 echo "1. Cleaning and Building Staging Repository..."
 rm -rf build
-./gradlew clean publishMavenPublicationToStagingRepository -Pversion=1.0.0 --no-daemon || exit 1
+./gradlew clean publishMavenPublicationToStagingRepository -Pversion=1.0.2 --no-daemon -x javaDocReleaseGeneration || exit 1
 
 echo "2. Zipping Bundle..."
 cd build/staging-deploy

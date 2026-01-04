@@ -10,7 +10,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import java.security.KeyPair
 
-internal class MwaClient(
+class MwaClient(
   private val json: Json = Json { ignoreUnknownKeys = true }
 ) {
 

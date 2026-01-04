@@ -165,11 +165,11 @@ private object SpkiP256 {
   //   BIT STRING( 0x00 || <65-byte uncompressed point> )
   // )
   private val prefix = byteArrayOf(
-    0x30, 0x59, // SEQUENCE (89)
-    0x30, 0x13, // SEQUENCE (19)
-    0x06, 0x07, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 0x01, // OID 1.2.840.10045.2.1
-    0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07, // OID 1.2.840.10045.3.1.7
-    0x03, 0x42, 0x00 // BIT STRING (66), unused bits = 0
+    0x30.toByte(), 0x59.toByte(), // SEQUENCE (89)
+    0x30.toByte(), 0x13.toByte(), // SEQUENCE (19)
+    0x06.toByte(), 0x07.toByte(), 0x2A.toByte(), 0x86.toByte(), 0x48.toByte(), 0xCE.toByte(), 0x3D.toByte(), 0x02.toByte(), 0x01.toByte(), // OID 1.2.840.10045.2.1
+    0x06.toByte(), 0x08.toByte(), 0x2A.toByte(), 0x86.toByte(), 0x48.toByte(), 0xCE.toByte(), 0x3D.toByte(), 0x03.toByte(), 0x01.toByte(), 0x07.toByte(), // OID 1.2.840.10045.3.1.7
+    0x03.toByte(), 0x42.toByte(), 0x00.toByte() // BIT STRING (66), unused bits = 0
   )
 
   fun wrapUncompressedPoint(x962Uncompressed: ByteArray): ByteArray {

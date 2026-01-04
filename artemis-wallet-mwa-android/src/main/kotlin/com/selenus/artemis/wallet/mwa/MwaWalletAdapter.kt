@@ -42,8 +42,7 @@ class MwaWalletAdapter(
     val c = ensureMwaCapabilities()
     return WalletCapabilities.defaultMobile().copy(
       supportsPreAuthorize = true,
-      supportsMultipleMessages = true,
-      supportsSignAndSend = c.supportsSignAndSend()
+      supportsMultipleMessages = true
     )
   }
 
