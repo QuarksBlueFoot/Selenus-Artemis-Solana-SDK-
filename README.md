@@ -32,19 +32,27 @@ v64 includes an optional Solana Mobile Candy Machine mint sample app. It is excl
 
 ## Install
 
-This repo is a Gradle multi module project. Add the modules you need.
-
-Example:
+Add `mavenCentral()` to your repositories, then add the modules you need:
 
 ```kotlin
+repositories {
+    mavenCentral()
+}
+
 dependencies {
-  implementation(project(":artemis-runtime"))
-  implementation(project(":artemis-rpc"))
-  implementation(project(":artemis-tx"))
-  implementation(project(":artemis-token2022"))
-  implementation(project(":artemis-cnft"))
-  implementation(project(":artemis-mplcore"))
-  implementation(project(":artemis-candy-machine"))
+    // Core
+    implementation("xyz.selenus:artemis-core:1.0.0")
+    implementation("xyz.selenus:artemis-rpc:1.0.0")
+
+    // Features
+    implementation("xyz.selenus:artemis-tx:1.0.0")
+    implementation("xyz.selenus:artemis-token2022:1.0.0")
+    implementation("xyz.selenus:artemis-cnft:1.0.0")
+    implementation("xyz.selenus:artemis-mplcore:1.0.0")
+    implementation("xyz.selenus:artemis-candy-machine:1.0.0")
+
+    // Android Wallet Adapter
+    implementation("xyz.selenus:artemis-wallet-mwa-android:1.0.0")
 }
 ```
 
