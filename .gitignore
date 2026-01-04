@@ -1,0 +1,6 @@
+secret.asc
+build/
+.gradle/
+*.iml
+.idea/
+local.properties
