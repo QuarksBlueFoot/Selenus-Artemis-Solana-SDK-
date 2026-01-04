@@ -7,9 +7,9 @@ import java.io.ByteArrayOutputStream
 import java.util.Base64
 
 class Transaction(
-  private val feePayer: Pubkey,
-  private val recentBlockhash: String,
-  private val instructions: List<Instruction>
+  val feePayer: Pubkey,
+  val recentBlockhash: String,
+  val instructions: List<Instruction>
 ) {
   fun compileMessage(): Message {
     val metas = LinkedHashMap<String, AccountMeta>()
@@ -62,6 +62,76 @@ class Transaction(
     }
 
     return SignedTransaction(signatures, msgBytes)
+  }
+
+  companion object {
+    fun from(bytes: ByteArray): Transaction {
+      var offset = 0
+
+      // 1. Signatures
+      val (numSigs, sigLenBytes) = ShortVec.decodeLen(bytes)
+      offset += sigLenBytes
+      offset += numSigs * 64
+
+      // 2. Message Header
+      val numRequiredSignatures = bytes[offset].toInt() and 0xFF
+      val numReadonlySigned = bytes[offset + 1].toInt() and 0xFF
+      val numReadonlyUnsigned = bytes[offset + 2].toInt() and 0xFF
+      offset += 3
+
+      // 3. Account Keys
+      val (numKeys, keysLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+      offset += keysLenBytes
+
+      val accountKeys = ArrayList<Pubkey>()
+      for (i in 0 until numKeys) {
+        accountKeys.add(Pubkey(bytes.copyOfRange(offset, offset + 32)))
+        offset += 32
+      }
+
+      // 4. Recent Blockhash
+      val recentBlockhash = Base58.encode(bytes.copyOfRange(offset, offset + 32))
+      offset += 32
+
+      // 5. Instructions
+      val (numIxs, ixsLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+      offset += ixsLenBytes
+
+      val instructions = ArrayList<Instruction>()
+      for (i in 0 until numIxs) {
+        val programIdIndex = bytes[offset].toInt() and 0xFF
+        offset += 1
+
+        val (numAccounts, accLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+        offset += accLenBytes
+
+        val accounts = ArrayList<AccountMeta>()
+        for (j in 0 until numAccounts) {
+          val accountIndex = bytes[offset].toInt() and 0xFF
+          offset += 1
+
+          val pubkey = accountKeys[accountIndex]
+          val isSigner = accountIndex < numRequiredSignatures
+          val isWritable = if (isSigner) {
+            accountIndex < (numRequiredSignatures - numReadonlySigned)
+          } else {
+            accountIndex < (accountKeys.size - numReadonlyUnsigned)
+          }
+          accounts.add(AccountMeta(pubkey, isSigner, isWritable))
+        }
+
+        val (dataLen, dataLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+        offset += dataLenBytes
+
+        val data = bytes.copyOfRange(offset, offset + dataLen)
+        offset += dataLen
+
+        instructions.add(Instruction(accountKeys[programIdIndex], accounts, data))
+      }
+
+      val feePayer = accountKeys.firstOrNull() ?: throw IllegalArgumentException("Transaction has no accounts")
+      return Transaction(feePayer, recentBlockhash, instructions)
+    }
   }
 }
 
