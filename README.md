@@ -268,13 +268,13 @@ from ArcanaFlow frames. This helps you build lookup tables once and reuse them a
 
 ArcanaFlow guide: docs/arcanaflow.md
 
-Game presets: docs/game-presets.md
+Game presets: docs/modules/other/game-presets.md
 
-Replay pagination: docs/replay-pagination.md
+Replay pagination: docs/modules/other/replay-pagination.md
 
 Changelog: [CHANGELOG.md](CHANGELOG.md)
 
-packages: docs/packages.md
+packages: docs/overview/packages.md
 
 Optional modules:
 - :artemis-nft-compat (Metaplex-compatible NFT helpers)
