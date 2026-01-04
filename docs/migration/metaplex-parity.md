@@ -26,7 +26,7 @@ Metaplex-style queries (indexer-free, RPC-based):
 - findAllByCreator (memcmp filter on metadata creator slots; may be heavy)
 - findAllByCandyMachineV2 (best-effort creator-slot filter)
 
-Implementation: `:artemis-nft-compat` (+ thin facade in `:artemis-metaplex`).
+Implementation: `:artemis-nft-compat` (package `com.selenus.artemis.nft`).
 
 ### Candy Machine v3 + Candy Guard
 - Candy Machine + Candy Guard account reads (no indexer).
