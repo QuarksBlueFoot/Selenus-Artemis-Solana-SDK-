@@ -21,6 +21,17 @@ This page documents common method parity.
 | getRecentPrioritizationFees | RpcApi.getRecentPrioritizationFees |
 | getFeeForMessage | RpcApi.getFeeForMessage |
 
+## Class Mapping
+
+| Concept | SolanaKT / Web3.js | Artemis |
+|---|---|---|
+| Public Key | `PublicKey` | `Pubkey` |
+| Private Key / Signer | `Account` / `Keypair` | `Keypair` / `Signer` |
+| Instruction | `TransactionInstruction` | `Instruction` |
+| Legacy Transaction | `Transaction` | `Transaction` |
+| Versioned Transaction | `VersionedTransaction` | `VersionedTransaction` |
+| Account Meta | `AccountMeta` | `AccountMeta` |
+
 ## Networking (OkHttp and Ktor)
 
 - OkHttp default: JsonRpcClient(endpoint)
