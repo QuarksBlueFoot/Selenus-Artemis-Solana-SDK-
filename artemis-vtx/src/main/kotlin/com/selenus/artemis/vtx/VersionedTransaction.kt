@@ -33,4 +33,25 @@ data class VersionedTransaction(
   }
 
   fun toBase64(): String = java.util.Base64.getEncoder().encodeToString(serialize())
+
+  companion object {
+    fun deserialize(bytes: ByteArray): VersionedTransaction {
+      var offset = 0
+
+      // Signatures
+      val (numSigs, sigLenBytes) = ShortVec.decodeLen(bytes)
+      offset += sigLenBytes
+      val signatures = ArrayList<ByteArray>()
+      for (i in 0 until numSigs) {
+        signatures.add(bytes.copyOfRange(offset, offset + 64))
+        offset += 64
+      }
+
+      // Message
+      val messageBytes = bytes.copyOfRange(offset, bytes.size)
+      val message = MessageV0.deserialize(messageBytes)
+
+      return VersionedTransaction(message, signatures)
+    }
+  }
 }

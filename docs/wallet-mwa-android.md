@@ -12,7 +12,7 @@ dependencies {
 }
 ```
 
-No extra wallet adapter client dependency is required. Artemis includes a native MWA 2.x protocol client.
+No extra wallet adapter client dependency is required. Artemis includes a native, zero-dependency MWA 2.x protocol implementation (no OkHttp, no heavy libraries).
 
 ## 2. Create the adapter
 
@@ -44,4 +44,25 @@ val sig = sendPipeline.sendSingle(
   compile = { compiledBytes },
   sendSigned = { signedTxBytes -> rpc.sendRawTransaction(signedTxBytes) }
 )
+```
+
+## 5. Session Management
+
+Artemis supports full session lifecycle management:
+
+```kotlin
+// Re-verify the current session (e.g. on app resume)
+adapter.reauthorize()
+
+// Disconnect and clear session
+adapter.deauthorize()
+```
+
+## 6. Off-chain Signing
+
+Sign arbitrary messages (authentication challenges) using `signOffChainMessages`. This maps to the MWA `sign_messages` method.
+
+```kotlin
+val message = "Sign this to authenticate".toByteArray(Charsets.UTF_8)
+val signatures = adapter.signOffChainMessages(listOf(message))
 ```

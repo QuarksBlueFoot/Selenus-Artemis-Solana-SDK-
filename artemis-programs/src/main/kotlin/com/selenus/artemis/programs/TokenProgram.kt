@@ -94,6 +94,38 @@ object TokenProgram {
     )
   }
 
+  fun approve(
+    source: Pubkey,
+    delegate: Pubkey,
+    owner: Pubkey,
+    amount: Long
+  ): Instruction {
+    val body = TokenInstructions.u64LE(amount)
+    return Instruction(
+      programId = ProgramIds.TOKEN_PROGRAM,
+      accounts = listOf(
+        AccountMeta(source, isSigner = false, isWritable = true),
+        AccountMeta(delegate, isSigner = false, isWritable = false),
+        AccountMeta(owner, isSigner = true, isWritable = false)
+      ),
+      data = iData(4, body)
+    )
+  }
+
+  fun revoke(
+    source: Pubkey,
+    owner: Pubkey
+  ): Instruction {
+    return Instruction(
+      programId = ProgramIds.TOKEN_PROGRAM,
+      accounts = listOf(
+        AccountMeta(source, isSigner = false, isWritable = true),
+        AccountMeta(owner, isSigner = true, isWritable = false)
+      ),
+      data = iData(5)
+    )
+  }
+
   fun closeAccount(
     account: Pubkey,
     destination: Pubkey,

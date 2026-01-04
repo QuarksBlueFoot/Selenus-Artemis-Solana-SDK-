@@ -29,10 +29,17 @@ include(":artemis-logging")
 
 include(":artemis-errors")
 
-// include(":artemis-wallet-mwa-android")
+include(":artemis-wallet-mwa-android")
+include(":artemis-seed-vault")
 
 include(":artemis-nft-compat")
+
+// include(":artemis-compose")
+
+include(":artemis-react-native")
 include(":artemis-candy-machine")
+include(":artemis-depin")
+include(":artemis-solana-pay")
 
 // v59: optional transaction composer presets (ATA + priority fees + resend)
 include(":artemis-tx-presets")
@@ -48,3 +55,4 @@ include(":artemis-presets")
 if (providers.gradleProperty("enableAndroidSamples").orNull == "true") {
   include(":samples:solana-mobile-compose-mint-app")
 }
+project(":artemis-react-native").projectDir = file("artemis-react-native/android")

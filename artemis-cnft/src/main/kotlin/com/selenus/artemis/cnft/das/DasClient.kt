@@ -17,15 +17,15 @@ import kotlinx.serialization.json.putJsonArray
 class DasClient(private val rpc: JsonRpcClient) {
 
   fun getAsset(id: String): JsonObject {
-    val params = buildJsonArray {
-      add(buildJsonObject { put("id", id) })
+    val params = buildJsonObject {
+      put("id", id)
     }
     return rpc.call("getAsset", params)
   }
 
   fun getAssetProof(id: String): JsonObject {
-    val params = buildJsonArray {
-      add(buildJsonObject { put("id", id) })
+    val params = buildJsonObject {
+      put("id", id)
     }
     return rpc.call("getAssetProof", params)
   }
@@ -34,17 +34,15 @@ class DasClient(private val rpc: JsonRpcClient) {
    * Helper: getAsset + getAssetProof and return both results.
    */
   fun getAssetWithProof(id: String, truncateCanopy: Boolean = true): JsonObject {
-    val assetParams = buildJsonArray {
-      add(buildJsonObject {
-        put("id", id)
-        // Some providers accept options; others ignore them. Safe to include.
-        putJsonArray("options") { }
-      })
+    val assetParams = buildJsonObject {
+      put("id", id)
+      // Some providers accept options; others ignore them. Safe to include.
+      putJsonArray("options") { }
     }
     val asset = rpc.call("getAsset", assetParams)
 
-    val proofParams = buildJsonArray {
-      add(buildJsonObject { put("id", id) })
+    val proofParams = buildJsonObject {
+      put("id", id)
     }
     val proof = rpc.call("getAssetProof", proofParams)
 

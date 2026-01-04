@@ -11,7 +11,7 @@ import java.util.Base64
 
 class MetaplexClient(private val rpc: RpcApi) {
 
-  fun getMetadata(mint: Pubkey): MetadataData? {
+  suspend fun getMetadata(mint: Pubkey): MetadataData? {
     val pda = MetadataPdas.metadataPda(mint)
     val info = rpc.getAccountInfo(pda.toString())
     val value = info["value"]?.jsonObject ?: return null

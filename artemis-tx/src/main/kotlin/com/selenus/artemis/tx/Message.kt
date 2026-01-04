@@ -23,7 +23,7 @@ data class Message(
     out.write(com.selenus.artemis.runtime.Base58.decode(recentBlockhash))
     out.write(ShortVec.encodeLen(instructions.size))
     for (ix in instructions) out.write(ix.serialize())
-    out.write(ShortVec.encodeLen(0)) // address table lookups = 0 for legacy
+    // out.write(ShortVec.encodeLen(0)) // address table lookups = 0 for legacy
     return out.toByteArray()
   }
 }

@@ -28,10 +28,4 @@ internal object MwaAndroid {
     intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
     activity.startActivity(intent)
   }
-
-  fun randomEphemeralPort(): Int {
-    // For local ws connections wallets expect a port we choose.
-    // Use the dynamic/private range and avoid common ports.
-    return 20000 + rng.nextInt(20000)
-  }
 }

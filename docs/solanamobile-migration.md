@@ -43,10 +43,16 @@ val pubkey = adapter.connect()
 
 ## Step 4: Signing
 
-Sign-only:
+Sign transactions (sign-only):
 
 ```kotlin
 val signed = adapter.signMessages(listOf(txBytes))
+```
+
+Sign off-chain messages (authentication):
+
+```kotlin
+val signatures = adapter.signOffChainMessages(listOf(messageBytes))
 ```
 
 Sign and send when available:

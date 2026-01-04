@@ -105,6 +105,20 @@ class MwaWalletAdapter(
   return out
 }
 
+  override suspend fun signArbitraryMessage(message: ByteArray, request: WalletRequest): ByteArray {
+    if (pk == null || session == null) connect()
+    val s = session ?: throw IllegalStateException("MWA session not ready")
+    
+    // MWA 2.0 spec: sign_messages
+    val address = pk?.bytes ?: throw IllegalStateException("Wallet not connected")
+    
+    // MWA sign_messages takes a list of payloads and a list of addresses.
+    // We are signing one message with one address.
+    val signatures = client.signMessages(s, listOf(message), listOf(address))
+    return signatures.first()
+  }
+
+
 
   /**
    * signAndSendTransactions
@@ -198,5 +212,51 @@ private fun <T> chunk(list: List<T>, maxSize: Int): List<List<T>> {
     val loaded = client.getCapabilities(s)
     caps = loaded
     return loaded
+  }
+
+  suspend fun reauthorize() {
+    val s = session ?: throw IllegalStateException("MWA session not ready")
+    val token = authStore.get() ?: throw IllegalStateException("No auth token to reauthorize")
+
+    val identity = MwaIdentity(
+      uri = identityUri.toString(),
+      icon = iconPath,
+      name = identityName
+    )
+
+    val res = client.reauthorize(s, identity, token)
+    authStore.set(res.authToken)
+  }
+
+  suspend fun deauthorize() {
+    val s = session
+    val token = authStore.get()
+    if (s != null && token != null) {
+      try {
+        client.deauthorize(s, token)
+      } catch (_: Exception) {
+        // Best effort
+      }
+    }
+    authStore.set(null)
+    session = null
+    pk = null
+    caps = null
+  }
+
+  /**
+   * Sign off-chain messages (e.g. authentication challenges).
+   * This maps to MWA `sign_messages`.
+   */
+  suspend fun signOffChainMessages(messages: List<ByteArray>): List<ByteArray> {
+    if (pk == null || session == null) connect()
+    val s = session ?: throw IllegalStateException("MWA session not ready")
+    val currentPk = pk ?: throw IllegalStateException("Wallet not connected")
+
+    // MWA expects a list of addresses corresponding to each message.
+    // We assume all messages are signed by the connected wallet.
+    val addresses = List(messages.size) { currentPk.bytes }
+
+    return client.signMessages(s, messages, addresses)
   }
 }

@@ -48,6 +48,13 @@ dependencies {
     implementation("xyz.selenus:artemis-tx:1.0.0")
     implementation("xyz.selenus:artemis-token2022:1.0.0")
     implementation("xyz.selenus:artemis-cnft:1.0.0")
+    implementation("xyz.selenus:artemis-depin:1.0.0")
+    implementation("xyz.selenus:artemis-gaming:1.0.0")
+    implementation("xyz.selenus:artemis-solana-pay:1.0.0")
+    implementation("xyz.selenus:artemis-seed-vault:1.0.0")
+    
+    // React Native
+    // npm install artemis-solana-sdk
     implementation("xyz.selenus:artemis-mplcore:1.0.0")
     implementation("xyz.selenus:artemis-candy-machine:1.0.0")
 

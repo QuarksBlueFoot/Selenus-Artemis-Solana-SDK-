@@ -8,11 +8,9 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
-import okhttp3.OkHttpClient
 import java.security.KeyPair
 
 internal class MwaClient(
-  private val okHttp: OkHttpClient = MwaSession.defaultOkHttp(),
   private val json: Json = Json { ignoreUnknownKeys = true }
 ) {
 
@@ -23,7 +21,9 @@ internal class MwaClient(
     timeoutMs: Long = 10_000
   ): Pair<MwaSession, KeyPair> {
     val associationKeypair = MwaAndroid.generateAssociationKeypair()
-    val port = MwaAndroid.randomEphemeralPort()
+    val server = MwaWebSocketServer()
+    val port = server.bind(0) // Bind to random port
+
     val base = (walletUriPrefix ?: Uri.parse("solana-wallet:/"))
     val local = Uri.parse(base.toString().trimEnd('/') + "/v1/associate/local")
       .buildUpon()
@@ -34,8 +34,7 @@ internal class MwaClient(
 
     MwaAndroid.launchWallet(activity, local)
     val session = MwaSession.connectLocal(
-      okHttp = okHttp,
-      port = port,
+      server = server,
       associationKeypair = associationKeypair,
       protocolVersionMajor = protocolVersionMajor,
       timeoutMs = timeoutMs
@@ -88,6 +87,50 @@ internal class MwaClient(
     val rsp = withTimeout(timeoutMs) { session.sendJsonRpc("sign_and_send_transactions", params).await() }
     val result: MwaSignAndSendResult = parseResult(rsp)
     return result.signatures
+  }
+
+  suspend fun reauthorize(
+    session: MwaSession,
+    identity: MwaIdentity,
+    authToken: String,
+    timeoutMs: Long = 10_000
+  ): MwaAuthorizeResult {
+    val params = json.encodeToJsonElement(
+      MwaReauthorizeRequest.serializer(),
+      MwaReauthorizeRequest(identity = identity, authToken = authToken)
+    )
+    val rsp = withTimeout(timeoutMs) { session.sendJsonRpc("reauthorize", params).await() }
+    return parseResult(rsp)
+  }
+
+  suspend fun deauthorize(
+    session: MwaSession,
+    authToken: String,
+    timeoutMs: Long = 10_000
+  ) {
+    val params = json.encodeToJsonElement(
+      MwaDeauthorizeRequest.serializer(),
+      MwaDeauthorizeRequest(authToken = authToken)
+    )
+    withTimeout(timeoutMs) { session.sendJsonRpc("deauthorize", params).await() }
+  }
+
+  suspend fun signMessages(
+    session: MwaSession,
+    payloads: List<ByteArray>,
+    addresses: List<ByteArray>,
+    timeoutMs: Long = 60_000
+  ): List<ByteArray> {
+    val b64Payloads = payloads.map { java.util.Base64.getEncoder().encodeToString(it) }
+    val b64Addresses = addresses.map { java.util.Base64.getEncoder().encodeToString(it) }
+    val params = json.encodeToJsonElement(
+      MwaSignMessagesRequest.serializer(),
+      MwaSignMessagesRequest(b64Payloads, b64Addresses)
+    )
+
+    val rsp = withTimeout(timeoutMs) { session.sendJsonRpc("sign_messages", params).await() }
+    val result: MwaSignMessagesResult = parseResult(rsp)
+    return result.signedPayloads.map { java.util.Base64.getDecoder().decode(it) }
   }
 
   private inline fun <reified T> parseResult(rsp: JsonObject): T {

@@ -32,6 +32,18 @@ This page documents common method parity.
 | Versioned Transaction | `VersionedTransaction` | `VersionedTransaction` |
 | Account Meta | `AccountMeta` | `AccountMeta` |
 
+## Transaction Deserialization
+
+Artemis supports deserializing transactions from raw bytes, similar to `Transaction.from(bytes)`.
+
+```kotlin
+// Legacy Transaction
+val tx = Transaction.from(bytes)
+
+// Versioned Transaction
+val vtx = VersionedTransaction.deserialize(bytes)
+```
+
 ## Networking (OkHttp and Ktor)
 
 - OkHttp default: JsonRpcClient(endpoint)

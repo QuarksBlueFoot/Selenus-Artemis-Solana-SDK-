@@ -13,6 +13,10 @@ Artemis intentionally focuses on **mobile-first** and **indexer-free** flows. Wh
   - Master edition
   - Token record (pNFT)
   - Collection authority records
+- Instruction Builders:
+  - `createMetadataAccountV3`
+  - `updateMetadataAccountV2`
+  - `verifyCollection`
 - Wallet NFT listing (heuristic: token accounts amount==1, then metadata batch fetch).
 
 Metaplex-style queries (indexer-free, RPC-based):

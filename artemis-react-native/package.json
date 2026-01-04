@@ -1,0 +1,45 @@
+{
+  "name": "artemis-solana-sdk",
+  "version": "1.0.1",
+  "description": "Artemis Solana SDK for React Native. Modular. Drop-in. Mobile-first.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-.git"
+  },
+  "homepage": "https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-",
+  "bugs": {
+    "url": "https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-/issues"
+  },
+  "scripts": {
+    "test": "echo \"Run integration tests in a React Native app\" && exit 0"
+  },
+  "files": [
+    "android",
+    "index.js",
+    "MobileWalletAdapter.ts",
+    "tests",
+    "TROUBLESHOOTING.md",
+    "package.json",
+    "README.md"
+  ],
+  "keywords": [
+    "react-native",
+    "solana",
+    "android",
+    "sdk",
+    "mobile-wallet-adapter",
+    "kotlin"
+  ],
+  "author": "Bluefoot Labs <contact@bluefootlabs.com>",
+  "license": "Apache-2.0",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "@solana/web3.js": ">=1.0.0",
+    "@solana/wallet-adapter-base": ">=0.9.0"
+  },
+  "dependencies": {
+    "buffer": "^6.0.3"
+  }
+}

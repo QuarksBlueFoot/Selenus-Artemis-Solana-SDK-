@@ -11,18 +11,11 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.WebSocket
-import okhttp3.WebSocketListener
-import okio.ByteString
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 
 internal class MwaSession(
-  private val socket: WebSocket,
+  private val transport: MwaTransport,
   private val cipher: Aes128Gcm,
   private val json: Json = Json { ignoreUnknownKeys = true }
 ) : Closeable {
@@ -43,7 +36,7 @@ internal class MwaSession(
     val packet = cipher.encrypt(sendSeq++, bytes)
     val def = CompletableDeferred<JsonObject>()
     pending[id] = def
-    socket.send(ByteString.of(*packet))
+    transport.send(packet)
     return def
   }
 
@@ -57,7 +50,7 @@ internal class MwaSession(
   }
 
   override fun close() {
-    try { socket.close(1000, "bye") } catch (_: Throwable) {}
+    try { transport.close(1000, "bye") } catch (_: Throwable) {}
   }
 
   private fun buildJsonRpcRequest(id: Int, method: String, params: JsonElement?): JsonObject {
@@ -72,42 +65,21 @@ internal class MwaSession(
 
   companion object {
     suspend fun connectLocal(
-      okHttp: OkHttpClient,
-      port: Int,
+      server: MwaWebSocketServer,
       associationKeypair: java.security.KeyPair,
       protocolVersionMajor: Int = 2,
       timeoutMs: Long = 10_000
     ): MwaSession {
-      val socketDef = CompletableDeferred<WebSocket>()
-      val incoming = Channel<ByteArray>(capacity = Channel.BUFFERED)
-      val req = Request.Builder()
-        .url("ws://127.0.0.1:$port")
-        .build()
-
-      val ws = okHttp.newWebSocket(req, object : WebSocketListener() {
-        override fun onOpen(webSocket: WebSocket, response: Response) {
-          socketDef.complete(webSocket)
-        }
-
-        override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-          incoming.trySend(bytes.toByteArray())
-        }
-
-        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-          socketDef.completeExceptionally(t)
-        }
-      })
-
-      val socket = withTimeout(timeoutMs) { socketDef.await() }
+      val transport = server.accept(timeoutMs)
 
       // HELLO_REQ
       val eph = EcP256.generateKeypair()
       val qd = EcP256.x962Uncompressed(eph.public)
       val sa = EcP256.signP1363(associationKeypair.private, qd)
-      socket.send(ByteString.of(*(qd + sa)))
+      transport.send(qd + sa)
 
       // HELLO_RSP
-      val helloRsp = withTimeout(timeoutMs) { incoming.receive() }
+      val helloRsp = withTimeout(timeoutMs) { transport.incoming.receive() }
       require(helloRsp.size >= 65) { "HELLO_RSP too short" }
       val qwBytes = helloRsp.copyOfRange(0, 65)
       val walletEphPub = EcP256.publicKeyFromX962(qwBytes)
@@ -117,7 +89,7 @@ internal class MwaSession(
       val key16 = HkdfSha256.derive(ikm = ikm, salt = salt, length = 16)
       val cipher = Aes128Gcm(key16)
 
-      val session = MwaSession(socket = socket, cipher = cipher)
+      val session = MwaSession(transport = transport, cipher = cipher)
 
       // Any additional bytes after Qw are encrypted session props (v param present).
       if (helloRsp.size > 65) {
@@ -131,17 +103,11 @@ internal class MwaSession(
       // Wire receive loop
       CoroutineScope(Dispatchers.IO).apply {
         launch {
-          for (pkt in incoming) session.handleIncoming(pkt)
+          for (pkt in transport.incoming) session.handleIncoming(pkt)
         }
       }
 
       return session
-    }
-
-    fun defaultOkHttp(): OkHttpClient {
-      return OkHttpClient.Builder()
-        .pingInterval(10, TimeUnit.SECONDS)
-        .build()
     }
   }
 }

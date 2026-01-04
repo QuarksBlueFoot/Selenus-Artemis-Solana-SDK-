@@ -7,10 +7,17 @@ import java.io.ByteArrayOutputStream
 import java.util.Base64
 
 class Transaction(
-  val feePayer: Pubkey,
-  val recentBlockhash: String,
-  val instructions: List<Instruction>
+  var feePayer: Pubkey,
+  var recentBlockhash: String,
+  instructions: List<Instruction> = emptyList()
 ) {
+  val instructions = ArrayList(instructions)
+  val signatures = LinkedHashMap<Pubkey, ByteArray>()
+
+  fun addInstruction(instruction: Instruction) {
+    instructions.add(instruction)
+  }
+
   fun compileMessage(): Message {
     val metas = LinkedHashMap<String, AccountMeta>()
     fun upsert(meta: AccountMeta) {
@@ -31,10 +38,32 @@ class Transaction(
       upsert(AccountMeta(ix.programId, isSigner = false, isWritable = false))
     }
 
-    val accountKeys = metas.values.map { it.pubkey }
-    val signerCount = metas.values.count { it.isSigner }
-    val readonlySigned = metas.values.take(signerCount).count { it.isSigner && !it.isWritable }
-    val readonlyUnsigned = metas.values.drop(signerCount).count { !it.isWritable }
+    // Sort accounts according to Solana rules:
+    // 1. Fee Payer (must be first)
+    // 2. Signers, Writable
+    // 3. Signers, Read-only
+    // 4. Non-signers, Writable
+    // 5. Non-signers, Read-only
+    val sortedMetas = metas.values.sortedWith(Comparator { a, b ->
+      // Fee payer always first
+      if (a.pubkey == feePayer) return@Comparator -1
+      if (b.pubkey == feePayer) return@Comparator 1
+
+      // Signers before non-signers
+      if (a.isSigner != b.isSigner) return@Comparator if (a.isSigner) -1 else 1
+
+      // Writable before read-only
+      if (a.isWritable != b.isWritable) return@Comparator if (a.isWritable) -1 else 1
+
+      // Tie-break with pubkey bytes for deterministic ordering (optional but good practice)
+      // For now, just keep stable sort or insertion order if equal
+      0
+    })
+
+    val accountKeys = sortedMetas.map { it.pubkey }
+    val signerCount = sortedMetas.count { it.isSigner }
+    val readonlySigned = sortedMetas.take(signerCount).count { !it.isWritable }
+    val readonlyUnsigned = sortedMetas.drop(signerCount).count { !it.isWritable }
 
     val header = MessageHeader(signerCount, readonlySigned, readonlyUnsigned)
 
@@ -52,34 +81,66 @@ class Transaction(
   fun sign(signers: List<Signer>): SignedTransaction {
     val msg = compileMessage()
     val msgBytes = msg.serialize()
-    // signatures in order of first N signer keys in accountKeys
-    val signerKeys = msg.accountKeys.take(msg.header.numRequiredSignatures)
-    val sigMap = signers.associateBy { it.publicKey.toString() }
-
-    val signatures = signerKeys.map { pk ->
-      val s = sigMap[pk.toString()] ?: throw IllegalArgumentException("Missing signer for $pk")
-      s.sign(msgBytes)
+    
+    for (signer in signers) {
+      signatures[signer.publicKey] = signer.sign(msgBytes)
     }
 
-    return SignedTransaction(signatures, msgBytes)
+    val signerKeys = msg.accountKeys.take(msg.header.numRequiredSignatures)
+    val orderedSignatures = signerKeys.map { pk ->
+      signatures[pk] ?: throw IllegalArgumentException("Missing signer for $pk")
+    }
+
+    return SignedTransaction(orderedSignatures, msgBytes)
+  }
+
+  fun partialSign(signers: List<Signer>) {
+    val msg = compileMessage()
+    val msgBytes = msg.serialize()
+    for (signer in signers) {
+      signatures[signer.publicKey] = signer.sign(msgBytes)
+    }
+  }
+
+  fun addSignature(pubkey: Pubkey, signature: ByteArray) {
+    require(signature.size == 64) { "Signature must be 64 bytes" }
+    signatures[pubkey] = signature
+  }
+
+  fun serialize(): ByteArray {
+    val msg = compileMessage()
+    val msgBytes = msg.serialize()
+    val requiredSigners = msg.accountKeys.take(msg.header.numRequiredSignatures)
+    
+    val orderedSignatures = requiredSigners.map { pk ->
+      signatures[pk] ?: ByteArray(64)
+    }
+    
+    val out = ByteArrayOutputStream()
+    out.write(ShortVec.encodeLen(orderedSignatures.size))
+    for (sig in orderedSignatures) out.write(sig)
+    out.write(msgBytes)
+    return out.toByteArray()
   }
 
   companion object {
     fun from(bytes: ByteArray): Transaction {
       var offset = 0
 
-      // 1. Signatures
       val (numSigs, sigLenBytes) = ShortVec.decodeLen(bytes)
       offset += sigLenBytes
-      offset += numSigs * 64
+      
+      val rawSignatures = ArrayList<ByteArray>()
+      for (i in 0 until numSigs) {
+        rawSignatures.add(bytes.copyOfRange(offset, offset + 64))
+        offset += 64
+      }
 
-      // 2. Message Header
       val numRequiredSignatures = bytes[offset].toInt() and 0xFF
       val numReadonlySigned = bytes[offset + 1].toInt() and 0xFF
       val numReadonlyUnsigned = bytes[offset + 2].toInt() and 0xFF
       offset += 3
 
-      // 3. Account Keys
       val (numKeys, keysLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
       offset += keysLenBytes
 
@@ -89,11 +150,9 @@ class Transaction(
         offset += 32
       }
 
-      // 4. Recent Blockhash
       val recentBlockhash = Base58.encode(bytes.copyOfRange(offset, offset + 32))
       offset += 32
 
-      // 5. Instructions
       val (numIxs, ixsLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
       offset += ixsLenBytes
 
@@ -130,7 +189,15 @@ class Transaction(
       }
 
       val feePayer = accountKeys.firstOrNull() ?: throw IllegalArgumentException("Transaction has no accounts")
-      return Transaction(feePayer, recentBlockhash, instructions)
+      val tx = Transaction(feePayer, recentBlockhash, instructions)
+      
+      for (i in 0 until numSigs) {
+        if (i < accountKeys.size) {
+          tx.signatures[accountKeys[i]] = rawSignatures[i]
+        }
+      }
+      
+      return tx
     }
   }
 }

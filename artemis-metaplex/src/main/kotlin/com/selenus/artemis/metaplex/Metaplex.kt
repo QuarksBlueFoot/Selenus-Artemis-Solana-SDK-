@@ -22,6 +22,12 @@ class Metaplex(private val rpc: RpcApi) {
   /** Token Metadata read helpers (Metadata, MasterEdition, TokenRecord, etc.). */
   val nfts: NftClient = NftClient(rpc)
 
+  /** Token Metadata write helpers (Create, Update, Verify). */
+  val metadata: TokenMetadataInstructions = TokenMetadataInstructions
+
+  /** Token Metadata read helpers (Lightweight). */
+  val client: MetaplexClient = MetaplexClient(rpc)
+
   /** Bubblegum/cNFT helpers (instruction composition flows). */
   val cnft: CnftApi = CnftApi
 

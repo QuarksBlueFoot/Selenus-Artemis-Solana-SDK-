@@ -1,0 +1,48 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.2.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22")
+    }
+}
+
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
+
+android {
+    namespace "com.selenus.artemis.reactnative"
+    compileSdkVersion 34
+
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 34
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    google()
+}
+
+dependencies {
+    implementation "com.facebook.react:react-native:+"
+    implementation "xyz.selenus:artemis-wallet-mwa-android:1.0.1"
+    implementation "xyz.selenus:artemis-runtime:1.0.1"
+    implementation "xyz.selenus:artemis-tx:1.0.1"
+    implementation "xyz.selenus:artemis-rpc:1.0.1"
+    implementation "xyz.selenus:artemis-programs:1.0.1"
+    implementation "xyz.selenus:artemis-depin:1.0.1"
+    implementation "xyz.selenus:artemis-solana-pay:1.0.1"
+    implementation "xyz.selenus:artemis-gaming:1.0.1"
+    implementation "xyz.selenus:artemis-compute:1.0.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+}

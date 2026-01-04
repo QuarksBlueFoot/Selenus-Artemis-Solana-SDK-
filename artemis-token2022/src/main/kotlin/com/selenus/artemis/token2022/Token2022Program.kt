@@ -107,6 +107,30 @@ object Token2022Program {
     )
   }
 
+  /**
+   * Mints new tokens to an account.
+   * data: [7] + amount(u64 LE)
+   */
+  fun mintTo(
+    mint: Pubkey,
+    destination: Pubkey,
+    authority: Pubkey,
+    amount: Long
+  ): Instruction {
+    val data = ByteArray(1 + 8)
+    data[0] = 7
+    putU64LE(data, 1, amount)
+    return Instruction(
+      programId = PROGRAM_ID,
+      accounts = listOf(
+        AccountMeta(mint, isSigner = false, isWritable = true),
+        AccountMeta(destination, isSigner = false, isWritable = true),
+        AccountMeta(authority, isSigner = true, isWritable = false),
+      ),
+      data = data
+    )
+  }
+
   private fun putU64LE(dst: ByteArray, off: Int, v: Long) {
     var x = v
     for (i in 0 until 8) {

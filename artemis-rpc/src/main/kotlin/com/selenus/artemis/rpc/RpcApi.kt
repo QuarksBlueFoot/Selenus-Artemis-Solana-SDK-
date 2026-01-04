@@ -191,9 +191,7 @@ class RpcApi(private val client: JsonRpcClient) {
     return AddressLookupTableResult(value.jsonObject)
   }
 
-  
-
-fun getSignaturesForAddress(
+  fun getSignaturesForAddress(
   address: String,
   limit: Int = 1000,
   before: String? = null,

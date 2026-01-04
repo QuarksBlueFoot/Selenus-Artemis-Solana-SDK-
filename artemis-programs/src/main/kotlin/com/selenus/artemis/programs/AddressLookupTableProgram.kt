@@ -68,6 +68,55 @@ object AddressLookupTableProgram {
     }
     return Instruction(PROGRAM_ID, accounts, data.toByteArray())
   }
+
+  /**
+   * ProgramInstruction::FreezeLookupTable
+   * bincode enum tag u32 LE where Freeze=1
+   */
+  fun freezeLookupTable(lookupTable: Pubkey, authority: Pubkey): Instruction {
+    val data = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
+      .putInt(1) // enum variant: FreezeLookupTable
+      .array()
+
+    val accounts = listOf(
+      AccountMeta(lookupTable, isSigner = false, isWritable = true),
+      AccountMeta(authority, isSigner = true, isWritable = false)
+    )
+    return Instruction(PROGRAM_ID, accounts, data)
+  }
+
+  /**
+   * ProgramInstruction::DeactivateLookupTable
+   * bincode enum tag u32 LE where Deactivate=3
+   */
+  fun deactivateLookupTable(lookupTable: Pubkey, authority: Pubkey): Instruction {
+    val data = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
+      .putInt(3) // enum variant: DeactivateLookupTable
+      .array()
+
+    val accounts = listOf(
+      AccountMeta(lookupTable, isSigner = false, isWritable = true),
+      AccountMeta(authority, isSigner = true, isWritable = false)
+    )
+    return Instruction(PROGRAM_ID, accounts, data)
+  }
+
+  /**
+   * ProgramInstruction::CloseLookupTable
+   * bincode enum tag u32 LE where Close=4
+   */
+  fun closeLookupTable(lookupTable: Pubkey, authority: Pubkey, recipient: Pubkey): Instruction {
+    val data = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
+      .putInt(4) // enum variant: CloseLookupTable
+      .array()
+
+    val accounts = listOf(
+      AccountMeta(lookupTable, isSigner = false, isWritable = true),
+      AccountMeta(authority, isSigner = true, isWritable = false),
+      AccountMeta(recipient, isSigner = false, isWritable = true)
+    )
+    return Instruction(PROGRAM_ID, accounts, data)
+  }
 }
 
 // Tiny helper to avoid pulling extra deps.

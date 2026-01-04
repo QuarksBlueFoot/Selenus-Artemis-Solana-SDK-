@@ -25,4 +25,12 @@ interface WalletAdapter {
     // default fallback
     return messages.map { signMessage(it, request) }
   }
+
+  /**
+   * Signs an arbitrary message (off-chain).
+   * This is distinct from signMessage which signs a transaction.
+   */
+  suspend fun signArbitraryMessage(message: ByteArray, request: WalletRequest): ByteArray {
+      throw UnsupportedOperationException("signArbitraryMessage not supported")
+  }
 }

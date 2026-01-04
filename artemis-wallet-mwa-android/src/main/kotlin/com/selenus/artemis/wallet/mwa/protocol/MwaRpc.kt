@@ -74,3 +74,25 @@ internal data class MwaSignAndSendRequest(
 internal data class MwaSignAndSendResult(
   val signatures: List<String>
 )
+
+@Serializable
+internal data class MwaReauthorizeRequest(
+  val identity: MwaIdentity? = null,
+  @SerialName("auth_token") val authToken: String
+)
+
+@Serializable
+internal data class MwaDeauthorizeRequest(
+  @SerialName("auth_token") val authToken: String
+)
+
+@Serializable
+internal data class MwaSignMessagesRequest(
+  val payloads: List<String>,
+  val addresses: List<String>
+)
+
+@Serializable
+internal data class MwaSignMessagesResult(
+  @SerialName("signed_payloads") val signedPayloads: List<String>
+)

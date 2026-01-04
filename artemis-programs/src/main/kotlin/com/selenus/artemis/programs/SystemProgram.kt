@@ -102,4 +102,46 @@ object SystemProgram {
       data = data
     )
   }
+
+  /**
+   * assign
+   *
+   * Assigns an account to a program.
+   */
+  fun assign(account: Pubkey, programId: Pubkey): Instruction {
+    val data = ByteBuffer.allocate(4 + 32)
+      .order(ByteOrder.LITTLE_ENDIAN)
+      .putInt(1) // SystemInstruction::Assign
+      .put(programId.bytes)
+      .array()
+
+    return Instruction(
+      programId = ProgramIds.SYSTEM_PROGRAM,
+      accounts = listOf(
+        AccountMeta(account, isSigner = true, isWritable = true)
+      ),
+      data = data
+    )
+  }
+
+  /**
+   * allocate
+   *
+   * Allocates space for an account.
+   */
+  fun allocate(account: Pubkey, space: Long): Instruction {
+    val data = ByteBuffer.allocate(4 + 8)
+      .order(ByteOrder.LITTLE_ENDIAN)
+      .putInt(8) // SystemInstruction::Allocate
+      .putLong(space)
+      .array()
+
+    return Instruction(
+      programId = ProgramIds.SYSTEM_PROGRAM,
+      accounts = listOf(
+        AccountMeta(account, isSigner = true, isWritable = true)
+      ),
+      data = data
+    )
+  }
 }

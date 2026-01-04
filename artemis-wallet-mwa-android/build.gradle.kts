@@ -26,6 +26,6 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
   implementation("androidx.datastore:datastore-preferences:1.1.1")
   // Artemis native Mobile Wallet Adapter client. No dependency on Solana Mobile clientlib.
-  implementation("com.squareup.okhttp3:okhttp:4.12.0")
+  // No OkHttp dependency needed (native socket implementation).
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }
