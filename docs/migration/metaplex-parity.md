@@ -55,7 +55,6 @@ These are not required for *minting + viewing* NFTs on mobile, and are intention
 - **Gumdrop** / allowlist distribution tooling
 - **Token Extras**
 
-If your product needs these, they should land as **optional, separate modules** that follow the core Artemis tenets.
 
 ## One-stop Metaplex entry point
 

@@ -8,8 +8,10 @@ import {
     WalletPublicKeyError,
     WalletSignTransactionError,
     WalletWindowClosedError,
+    WalletSendTransactionError,
+    SendTransactionOptions,
 } from '@solana/wallet-adapter-base';
-import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction, Connection, TransactionSignature } from '@solana/web3.js';
 import { NativeModules } from 'react-native';
 import { Buffer } from 'buffer';
 
@@ -85,14 +87,29 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
             
             const signedBase64 = await ArtemisModule.signTransaction(base64Tx);
             const signedBytes = Buffer.from(signedBase64, 'base64');
+            const signedArray = new Uint8Array(signedBytes);
 
             if (transaction instanceof VersionedTransaction) {
-                return VersionedTransaction.deserialize(signedBytes) as T;
+                return VersionedTransaction.deserialize(signedArray) as T;
             } else {
-                return Transaction.from(signedBytes) as T;
+                return Transaction.from(signedArray) as T;
             }
         } catch (error: any) {
             throw new WalletSignTransactionError(error?.message, error);
+        }
+    }
+
+    async sendTransaction(
+        transaction: Transaction | VersionedTransaction,
+        connection: Connection,
+        options: SendTransactionOptions = {}
+    ): Promise<TransactionSignature> {
+        try {
+            const signedTransaction = await this.signTransaction(transaction);
+            const rawTransaction = signedTransaction.serialize();
+            return await connection.sendRawTransaction(rawTransaction, options);
+        } catch (error: any) {
+            throw new WalletSendTransactionError(error?.message, error);
         }
     }
 
