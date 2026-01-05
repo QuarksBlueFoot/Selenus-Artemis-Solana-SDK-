@@ -8,7 +8,10 @@ import java.util.Base64
  *
  * A thin, explicit Solana JSON-RPC wrapper with the methods most used by mobile apps.
  */
-class RpcApi(private val client: JsonRpcClient) {
+open class RpcApi(private val client: JsonRpcClient) {
+
+  // Compatibility shim for solana-kt users who expect an .api property
+  val api: RpcApi get() = this
 
   fun callRaw(method: String, params: JsonElement? = null): JsonObject {
     return client.call(method, params)
@@ -23,6 +26,11 @@ class RpcApi(private val client: JsonRpcClient) {
       blockhash = value["blockhash"]!!.jsonPrimitive.content,
       lastValidBlockHeight = value["lastValidBlockHeight"]!!.jsonPrimitive.long
     )
+  }
+
+  @Deprecated("Use getLatestBlockhash")
+  fun getRecentBlockhash(commitment: String = "finalized"): BlockhashResult {
+    return getLatestBlockhash(commitment)
   }
 
   fun getBalance(pubkeyBase58: String, commitment: String = "confirmed"): BalanceResult {
@@ -110,6 +118,12 @@ class RpcApi(private val client: JsonRpcClient) {
     return client.call("simulateTransaction", params).resultObj().jsonObject
   }
 
+  // Compatibility overload for clients passing ByteArray directly
+  fun simulateTransaction(txBytes: ByteArray, sigVerify: Boolean = false, replaceRecentBlockhash: Boolean = false, commitment: String = "processed"): JsonObject {
+    val b64 = Base64.getEncoder().encodeToString(txBytes)
+    return simulateTransaction(b64, sigVerify, replaceRecentBlockhash, commitment)
+  }
+
   fun sendTransaction(base64Tx: String, skipPreflight: Boolean = false, maxRetries: Int? = null, preflightCommitment: String = "processed"): String {
     val params = buildJsonArray {
       add(JsonPrimitive(base64Tx))
@@ -122,6 +136,11 @@ class RpcApi(private val client: JsonRpcClient) {
     }
     val res = client.call("sendTransaction", params)
     return res["result"]?.jsonPrimitive?.content ?: throw RpcException("Missing result")
+  }
+
+  // Compatibility overload for clients passing ByteArray directly
+  fun sendTransaction(txBytes: ByteArray, skipPreflight: Boolean = false, maxRetries: Int? = null, preflightCommitment: String = "processed"): String {
+    return sendRawTransaction(txBytes, skipPreflight, maxRetries, preflightCommitment)
   }
 
   fun sendRawTransaction(txBytes: ByteArray, skipPreflight: Boolean = false, maxRetries: Int? = null, preflightCommitment: String = "processed"): String {
@@ -137,6 +156,15 @@ class RpcApi(private val client: JsonRpcClient) {
     return client.call("getSignatureStatuses", params).resultObj().jsonObject
   }
 
+  // Convenience overload for single signature
+  fun getSignatureStatus(signature: String, searchTransactionHistory: Boolean = true): JsonObject? {
+    val res = getSignatureStatuses(listOf(signature), searchTransactionHistory)
+    val value = res["value"]?.jsonArray
+    val item = value?.getOrNull(0)
+    if (item == null || item is JsonNull) return null
+    return item.jsonObject
+  }
+
   fun getTransaction(signature: String, commitment: String = "confirmed", encoding: String = "jsonParsed", maxSupportedTransactionVersion: Int = 0): JsonObject {
     val params = buildJsonArray {
       add(JsonPrimitive(signature))
@@ -147,6 +175,11 @@ class RpcApi(private val client: JsonRpcClient) {
       })
     }
     return client.call("getTransaction", params).resultObj().jsonObject
+  }
+
+  @Deprecated("Use getTransaction")
+  fun getConfirmedTransaction(signature: String, commitment: String = "confirmed"): JsonObject {
+    return getTransaction(signature, commitment)
   }
 
   fun getRecentPrioritizationFees(addresses: List<String>? = null): JsonArray {
@@ -209,6 +242,11 @@ class RpcApi(private val client: JsonRpcClient) {
     add(cfg)
   }
   return client.call("getSignaturesForAddress", params).resultObj().jsonArray
+}
+
+@Deprecated("Use getSignaturesForAddress")
+fun getConfirmedSignaturesForAddress2(address: String, limit: Int = 1000, before: String? = null, until: String? = null, commitment: String = "confirmed"): JsonArray {
+  return getSignaturesForAddress(address, limit, before, until, commitment)
 }
 
 fun getBlock(

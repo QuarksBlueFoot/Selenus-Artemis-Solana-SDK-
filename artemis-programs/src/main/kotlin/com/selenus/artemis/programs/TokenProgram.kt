@@ -12,6 +12,7 @@ import java.nio.ByteOrder
  * SPL Token instruction builders for the classic Tokenkeg program.
  */
 object TokenProgram {
+  val PROGRAM_ID = ProgramIds.TOKEN_PROGRAM
 
   private fun iData(op: Int, body: ByteArray = byteArrayOf()): ByteArray {
     val out = ByteArray(1 + body.size)

@@ -7,6 +7,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 object SystemProgram {
+  val PROGRAM_ID = ProgramIds.SYSTEM_PROGRAM
 
   /**
    * createAccount

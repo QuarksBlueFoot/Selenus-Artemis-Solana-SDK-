@@ -41,6 +41,7 @@
 
 ## Migration & Compatibility
 - [Solana Mobile Migration](migration/solanamobile-migration.md)
+- [Solana KT Migration](migration/solana-kt-migration.md)
 - [Metaplex Parity](migration/metaplex-parity.md)
 - [Compat Guide](migration/compat)
 
