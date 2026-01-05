@@ -448,10 +448,6 @@ fun sendAndConfirmRawTransaction(
   return sig
 }
 
-fun getRecentBlockhash(commitment: String = "finalized"): JsonObject {
-  val params = buildJsonArray { add(buildJsonObject { put("commitment", commitment) }) }
-  return client.call("getRecentBlockhash", params).resultObj().jsonObject
-}
 
 fun getFees(commitment: String = "confirmed"): JsonObject {
   val params = buildJsonArray { add(buildJsonObject { put("commitment", commitment) }) }

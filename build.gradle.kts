@@ -51,6 +51,10 @@ subprojects {
     }
 
     plugins.withId("org.jetbrains.kotlin.jvm") {
+        extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
+            jvmToolchain(17)
+        }
+
         apply(plugin = "maven-publish")
         apply(plugin = "signing")
 
