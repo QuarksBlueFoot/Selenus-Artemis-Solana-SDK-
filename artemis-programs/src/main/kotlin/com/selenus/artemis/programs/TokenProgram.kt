@@ -43,6 +43,17 @@ object TokenProgram {
     )
   }
 
+  /**
+   * Alias for initializeMint2 to support legacy calls.
+   */
+  @JvmStatic
+  fun initializeMint(
+    mint: Pubkey,
+    decimals: Int,
+    mintAuthority: Pubkey,
+    freezeAuthority: Pubkey? = null
+  ) = initializeMint2(mint, decimals, mintAuthority, freezeAuthority)
+
   @JvmStatic
   fun transfer(
     source: Pubkey,

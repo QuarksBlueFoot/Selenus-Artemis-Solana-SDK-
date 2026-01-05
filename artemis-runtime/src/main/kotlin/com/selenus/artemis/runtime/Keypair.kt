@@ -36,5 +36,16 @@ class Keypair private constructor(
       val pub = priv.generatePublicKey()
       return Keypair(priv, pub)
     }
+
+    /**
+     * Creates a Keypair from a 64-byte secret key (legacy format).
+     * This matches solana-kt's Account.fromSecretKey().
+     */
+    fun fromSecretKey(secretKey: ByteArray): Keypair {
+        require(secretKey.size == 64) { "Secret key must be 64 bytes" }
+        // The first 32 bytes are the seed/private key
+        val seed = secretKey.copyOfRange(0, 32)
+        return fromSeed(seed)
+    }
   }
 }

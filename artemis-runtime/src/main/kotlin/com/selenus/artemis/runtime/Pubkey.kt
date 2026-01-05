@@ -47,5 +47,17 @@ data class Pubkey(val bytes: ByteArray) {
       val hash = Crypto.sha256(data)
       return Pubkey(hash)
     }
+
+    /**
+     * Compatibility alias: solana-kt users look for findProgramAddress on Pubkey/PublicKey.
+     */
+    fun findProgramAddress(seeds: List<ByteArray>, programId: Pubkey): Pda.Result =
+        Pda.findProgramAddress(seeds, programId)
+
+    /**
+     * Compatibility alias: solana-kt users look for createProgramAddress on Pubkey/PublicKey.
+     */
+    fun createProgramAddress(seeds: List<ByteArray>, programId: Pubkey): Pubkey =
+        Pda.createProgramAddress(seeds, programId)
   }
 }
