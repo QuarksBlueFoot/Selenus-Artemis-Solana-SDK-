@@ -7,8 +7,8 @@ import java.io.ByteArrayOutputStream
 import java.util.Base64
 
 class Transaction(
-  var feePayer: Pubkey,
-  var recentBlockhash: String,
+  var feePayer: Pubkey? = null,
+  var recentBlockhash: String? = null,
   instructions: List<Instruction> = emptyList()
 ) {
   val instructions = ArrayList(instructions)
@@ -19,6 +19,9 @@ class Transaction(
   }
 
   fun compileMessage(): Message {
+    val currentFeePayer = requireNotNull(feePayer) { "feePayer must be set before compiling" }
+    val currentRecentBlockhash = requireNotNull(recentBlockhash) { "recentBlockhash must be set before compiling" }
+
     val metas = LinkedHashMap<String, AccountMeta>()
     fun upsert(meta: AccountMeta) {
       val k = meta.pubkey.toString()
@@ -31,7 +34,7 @@ class Transaction(
     }
 
     // fee payer must be signer + writable
-    upsert(AccountMeta(feePayer, isSigner = true, isWritable = true))
+    upsert(AccountMeta(currentFeePayer, isSigner = true, isWritable = true))
 
     for (ix in instructions) {
       for (m in ix.accounts) upsert(m)
@@ -46,8 +49,8 @@ class Transaction(
     // 5. Non-signers, Read-only
     val sortedMetas = metas.values.sortedWith(Comparator { a, b ->
       // Fee payer always first
-      if (a.pubkey == feePayer) return@Comparator -1
-      if (b.pubkey == feePayer) return@Comparator 1
+      if (a.pubkey == currentFeePayer) return@Comparator -1
+      if (b.pubkey == currentFeePayer) return@Comparator 1
 
       // Signers before non-signers
       if (a.isSigner != b.isSigner) return@Comparator if (a.isSigner) -1 else 1
@@ -75,7 +78,7 @@ class Transaction(
       CompiledInstruction(programIndex, accIdx, ix.data)
     }
 
-    return Message(header, accountKeys, recentBlockhash, compiledIxs)
+    return Message(header, accountKeys, currentRecentBlockhash, compiledIxs)
   }
 
   fun sign(signers: List<Signer>): SignedTransaction {

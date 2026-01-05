@@ -13,6 +13,7 @@ import java.nio.ByteOrder
  */
 object TokenProgram {
   val PROGRAM_ID = ProgramIds.TOKEN_PROGRAM
+  val TOKEN_PROGRAM_ID = PROGRAM_ID
 
   private fun iData(op: Int, body: ByteArray = byteArrayOf()): ByteArray {
     val out = ByteArray(1 + body.size)
@@ -21,6 +22,7 @@ object TokenProgram {
     return out
   }
 
+  @JvmStatic
   fun initializeMint2(
     mint: Pubkey,
     decimals: Int,
@@ -41,6 +43,7 @@ object TokenProgram {
     )
   }
 
+  @JvmStatic
   fun transfer(
     source: Pubkey,
     destination: Pubkey,
@@ -59,6 +62,7 @@ object TokenProgram {
     )
   }
 
+  @JvmStatic
   fun mintTo(
     mint: Pubkey,
     destination: Pubkey,
@@ -77,6 +81,7 @@ object TokenProgram {
     )
   }
 
+  @JvmStatic
   fun burn(
     account: Pubkey,
     mint: Pubkey,
@@ -95,6 +100,7 @@ object TokenProgram {
     )
   }
 
+  @JvmStatic
   fun approve(
     source: Pubkey,
     delegate: Pubkey,
@@ -113,6 +119,7 @@ object TokenProgram {
     )
   }
 
+  @JvmStatic
   fun revoke(
     source: Pubkey,
     owner: Pubkey
@@ -127,6 +134,7 @@ object TokenProgram {
     )
   }
 
+  @JvmStatic
   fun closeAccount(
     account: Pubkey,
     destination: Pubkey,
@@ -143,6 +151,7 @@ object TokenProgram {
     )
   }
 
+  @JvmStatic
   fun transferChecked(
     source: Pubkey,
     mint: Pubkey,
@@ -166,6 +175,7 @@ object TokenProgram {
     )
   }
 
+  @JvmStatic
   fun syncNative(account: Pubkey): Instruction {
     return Instruction(
       programId = ProgramIds.TOKEN_PROGRAM,

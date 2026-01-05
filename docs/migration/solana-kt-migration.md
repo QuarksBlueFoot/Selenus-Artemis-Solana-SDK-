@@ -10,7 +10,7 @@ The build fails with `Unresolved reference: api` in `TransactionService.kt`. Thi
 **Resolution:**
 Update `TransactionService.kt` to serialize the transaction and use the RPC service's send method directly.
 
-*Note: As of version 1.0.3, `RpcApi` includes:*
+*Note: As of version 1.0.4, `RpcApi` includes:*
 1.  *A compatibility `api` property that returns `this`.*
 2.  *Overloads for `sendTransaction` and `simulateTransaction` that accept `ByteArray`.*
 3.  *Aliases for legacy methods like `getRecentBlockhash`, `getConfirmedTransaction`, and `getConfirmedSignaturesForAddress2`.*
@@ -19,8 +19,11 @@ Update `TransactionService.kt` to serialize the transaction and use the RPC serv
 6.  *Type aliases for `PublicKey` (maps to `Pubkey`), `Account` (maps to `Keypair`), and `TransactionInstruction` (maps to `Instruction`).*
 7.  *Factory functions `PublicKey(String)` and `Account()` (generates new keypair).*
 8.  *`Account.secretKey` extension property.*
-9.  *`PROGRAM_ID` constants in `SystemProgram` and `TokenProgram` objects.*
+9.  *`PROGRAM_ID` constants in `SystemProgram` and `TokenProgram` objects, including `TOKEN_PROGRAM_ID`.*
 10. *`createInstruction` aliases in `MemoProgram` and `AssociatedTokenProgram`.*
+11. *Improved Java interoperability with `@JvmStatic` annotations on program objects (e.g., `SystemProgram.transfer`), avoiding `.INSTANCE`.*
+12. *`Transaction` class now supports a no-argument constructor and late properties assignment (`feePayer`, `recentBlockhash`), mimicking the mutable builder pattern.*
+13. *`Pubkey` class now has a string constructor `Pubkey("base58")` alongside `Pubkey.fromBase58()`.*
 
 *These additions allow for a near drop-in replacement without significant code changes.*
 

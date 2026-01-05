@@ -16,6 +16,7 @@ object SystemProgram {
    *
    * NOTE: The new account must sign the transaction.
    */
+  @JvmStatic
   fun createAccount(
     from: Pubkey,
     newAccount: Pubkey,
@@ -47,6 +48,7 @@ object SystemProgram {
    * Mobile-friendly variant that does NOT require the derived account to sign.
    * The [base] must sign.
    */
+  @JvmStatic
   fun createAccountWithSeed(
     from: Pubkey,
     newAccount: Pubkey,
@@ -87,6 +89,7 @@ object SystemProgram {
    *
    * Creates a system transfer instruction.
    */
+  @JvmStatic
   fun transfer(from: Pubkey, to: Pubkey, lamports: Long): Instruction {
     val data = ByteBuffer.allocate(4 + 8)
       .order(ByteOrder.LITTLE_ENDIAN)
@@ -109,6 +112,7 @@ object SystemProgram {
    *
    * Assigns an account to a program.
    */
+  @JvmStatic
   fun assign(account: Pubkey, programId: Pubkey): Instruction {
     val data = ByteBuffer.allocate(4 + 32)
       .order(ByteOrder.LITTLE_ENDIAN)
@@ -130,6 +134,7 @@ object SystemProgram {
    *
    * Allocates space for an account.
    */
+  @JvmStatic
   fun allocate(account: Pubkey, space: Long): Instruction {
     val data = ByteBuffer.allocate(4 + 8)
       .order(ByteOrder.LITTLE_ENDIAN)

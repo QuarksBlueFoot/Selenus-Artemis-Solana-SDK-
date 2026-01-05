@@ -3,6 +3,14 @@ package com.selenus.artemis.runtime
 data class Pubkey(val bytes: ByteArray) {
   init { require(bytes.size == 32) { "Pubkey must be 32 bytes" } }
 
+  constructor(base58: String) : this(
+    try {
+      Base58.decode(base58)
+    } catch (e: Exception) {
+      throw IllegalArgumentException("Invalid Base58 string", e)
+    }
+  )
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
