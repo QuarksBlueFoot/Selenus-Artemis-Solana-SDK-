@@ -19,4 +19,7 @@ object MemoProgram {
       data = data
     )
   }
+
+  // Compatibility alias
+  fun createInstruction(text: String): Instruction = memo(text)
 }

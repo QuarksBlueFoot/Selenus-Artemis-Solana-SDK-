@@ -17,7 +17,10 @@ Update `TransactionService.kt` to serialize the transaction and use the RPC serv
 4.  *Convenience method `getSignatureStatus(String)` for checking a single signature.*
 5.  *A `Connection` class that wraps `RpcApi` for users migrating from `solana-kt`'s `Connection`.*
 6.  *Type aliases for `PublicKey` (maps to `Pubkey`), `Account` (maps to `Keypair`), and `TransactionInstruction` (maps to `Instruction`).*
-7.  *`PROGRAM_ID` constants in `SystemProgram` and `TokenProgram` objects.*
+7.  *Factory functions `PublicKey(String)` and `Account()` (generates new keypair).*
+8.  *`Account.secretKey` extension property.*
+9.  *`PROGRAM_ID` constants in `SystemProgram` and `TokenProgram` objects.*
+10. *`createInstruction` aliases in `MemoProgram` and `AssociatedTokenProgram`.*
 
 *These additions allow for a near drop-in replacement without significant code changes.*
 
