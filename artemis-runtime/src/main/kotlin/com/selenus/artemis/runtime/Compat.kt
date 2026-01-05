@@ -7,11 +7,6 @@ typealias PublicKey = Pubkey
 typealias Account = Keypair
 
 /**
- * Factory function to mimic PublicKey(String) constructor.
- */
-fun PublicKey(base58: String): PublicKey = Pubkey.fromBase58(base58)
-
-/**
  * Factory function to mimic Account() constructor (generates new keypair).
  */
 fun Account(): Account = Keypair.generate()

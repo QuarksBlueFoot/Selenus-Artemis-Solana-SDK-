@@ -56,8 +56,10 @@ data class Pubkey(val bytes: ByteArray) {
 
     /**
      * Compatibility alias: solana-kt users look for createProgramAddress on Pubkey/PublicKey.
+     * Throws exception if derivation fails, matching solana-kt legacy behavior.
      */
     fun createProgramAddress(seeds: List<ByteArray>, programId: Pubkey): Pubkey =
         Pda.createProgramAddress(seeds, programId)
+            ?: throw IllegalArgumentException("Invalid seeds, address must fall off the curve")
   }
 }
