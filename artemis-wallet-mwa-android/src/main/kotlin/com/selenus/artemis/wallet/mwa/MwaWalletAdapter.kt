@@ -12,6 +12,9 @@ import com.selenus.artemis.wallet.mwa.protocol.MwaCapabilities
 import com.selenus.artemis.wallet.mwa.protocol.MwaIdentity
 import com.selenus.artemis.wallet.mwa.protocol.MwaSendOptions
 import com.selenus.artemis.wallet.mwa.protocol.MwaSession
+import com.selenus.artemis.wallet.mwa.protocol.MwaSignInPayload
+import com.selenus.artemis.wallet.mwa.protocol.MwaSignInResult
+
 
 /**
  * MwaWalletAdapter
@@ -72,6 +75,34 @@ class MwaWalletAdapter(
     val out = Pubkey(addr)
     pk = out
     return out
+  }
+
+  suspend fun connectWithSignIn(payload: MwaSignInPayload): MwaSignInResult {
+    val (s, _) = client.openSession(activity)
+    session = s
+
+    caps = client.getCapabilities(s)
+
+    val identity = MwaIdentity(
+      uri = identityUri.toString(),
+      icon = iconPath,
+      name = identityName
+    )
+
+    val res = client.authorize(
+      session = s,
+      identity = identity,
+      chain = chain,
+      authToken = authStore.get(),
+      signInPayload = payload
+    )
+    authStore.set(res.authToken)
+    
+    val first = res.accounts.firstOrNull() ?: throw IllegalStateException("No accounts returned by wallet")
+    val addr = java.util.Base64.getDecoder().decode(first.address)
+    pk = Pubkey(addr)
+
+    return res.signInResult ?: throw IllegalStateException("Wallet connected but returned no Sign In result")
   }
 
   override suspend fun signMessage(message: ByteArray, request: WalletRequest): ByteArray {

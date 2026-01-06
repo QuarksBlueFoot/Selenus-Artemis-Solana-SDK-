@@ -17,7 +17,8 @@ internal data class MwaAuthorizeRequest(
   val features: List<String>? = null,
   val addresses: List<String>? = null,
   @SerialName("auth_token") val authToken: String? = null,
-  val cluster: String? = null
+  val cluster: String? = null,
+  @SerialName("sign_in_payload") val signInPayload: MwaSignInPayload? = null
 )
 
 @Serializable
@@ -30,7 +31,8 @@ data class MwaAccount(
 @Serializable
 data class MwaAuthorizeResult(
   @SerialName("auth_token") val authToken: String,
-  val accounts: List<MwaAccount> = emptyList()
+  val accounts: List<MwaAccount> = emptyList(),
+  @SerialName("sign_in_result") val signInResult: MwaSignInResult? = null
 )
 
 @Serializable

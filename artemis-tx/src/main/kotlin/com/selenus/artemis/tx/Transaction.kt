@@ -105,6 +105,14 @@ class Transaction(
     }
   }
 
+  /**
+   * Compatibility helper for single-signer signing (often used in solana-kt).
+   * Note: This adds a signature to the transaction but does not return a SignedTransaction wrapper immediately.
+   */
+  fun sign(signer: Signer) {
+    partialSign(listOf(signer))
+  }
+
   fun addSignature(pubkey: Pubkey, signature: ByteArray) {
     require(signature.size == 64) { "Signature must be 64 bytes" }
     signatures[pubkey] = signature

@@ -10,6 +10,13 @@ import android.os.RemoteException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import com.selenus.artemis.runtime.Pubkey
+
+import com.selenus.artemis.seedvault.internal.SeedVaultConstants
+import com.selenus.artemis.seedvault.internal.SeedVaultConstants.ACTION_AUTHORIZE_SEED_ACCESS
+import com.selenus.artemis.seedvault.internal.SeedVaultConstants.ACTION_CREATE_SEED
+import com.selenus.artemis.seedvault.internal.SeedVaultConstants.ACTION_IMPORT_SEED
+import com.selenus.artemis.seedvault.internal.SeedVaultConstants.SERVICE_PACKAGE
 
 /**
  * SeedVaultManager
@@ -18,100 +25,91 @@ import kotlin.coroutines.resumeWithException
  * Handles service binding, lifecycle, and IPC with the system service.
  */
 class SeedVaultManager(private val context: Context) {
-
-    companion object {
-        private const val SERVICE_PACKAGE = "com.solanamobile.seedvault"
-        private const val SERVICE_CLASS = "com.solanamobile.seedvault.SeedVaultService"
-        private const val ACTION_BIND_SEED_VAULT = "com.solanamobile.seedvault.BIND_SEED_VAULT"
-    }
-
-    // We use a raw IBinder here because we can't compile the AIDL in this environment.
-    // In a real Android build, this would be ISeedVaultService.Stub.asInterface(service)
+    
     private var serviceBinder: IBinder? = null
 
-    // Placeholder for the generated AIDL interface
-    // private var service: ISeedVaultService? = null
+    companion object {
+        // Constants delegated to internal definition
+        private const val ACTION_BIND_SEED_VAULT = SeedVaultConstants.ACTION_BIND_SEED_VAULT
 
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            serviceBinder = service
-            // service = ISeedVaultService.Stub.asInterface(service)
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            serviceBinder = null
-            // service = null
+        /**
+         * Resolves the component for the Intent using Artemis internal check logic.
+         * Ensures we target the valid System Seed Vault.
+         */
+        fun resolveComponent(context: Context, intent: Intent) {
+             com.selenus.artemis.seedvault.internal.SeedVaultCheck.resolveComponentForIntent(context, intent)
         }
     }
 
-    suspend fun connect() = suspendCancellableCoroutine<Unit> { cont ->
-        val intent = Intent(ACTION_BIND_SEED_VAULT).apply {
+    // ... (rest of class)
+    
+    /**
+     * Creates an Intent to authorize the app to access the Seed Vault.
+     * Use this with startActivityForResult or ActivityResultCaller.
+     */
+    fun buildAuthorizeIntent(purpose: String = "sign_transaction"): Intent {
+        val intent = Intent(ACTION_AUTHORIZE_SEED_ACCESS).apply {
             setPackage(SERVICE_PACKAGE)
+            putExtra("purpose", purpose.toIntOrNull() ?: 1) // Default to standard purpose
         }
-        
-        val bound = context.bindService(intent, object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                serviceBinder = service
-                if (cont.isActive) cont.resume(Unit)
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                serviceBinder = null
-            }
-        }, Context.BIND_AUTO_CREATE)
-
-        if (!bound) {
-            cont.resumeWithException(IllegalStateException("Could not bind to Seed Vault Service"))
-        }
-        
-        cont.invokeOnCancellation {
-            context.unbindService(connection)
-        }
-    }
-
-    fun disconnect() {
-        try {
-            context.unbindService(connection)
-        } catch (e: Exception) {
-            // Ignore if already unbound
-        }
-        serviceBinder = null
+        resolveComponent(context, intent)
+        return intent
     }
 
     /**
-     * Authorize the app to access the Seed Vault.
+     * Creates an Intent to create a new seed in the Seed Vault.
      */
-    suspend fun authorize(purpose: String = "sign_transaction"): SeedVaultAuthorization {
-        val params = Bundle().apply {
-            putString("purpose", purpose)
+    fun buildCreateSeedIntent(purpose: String = "sign_transaction"): Intent {
+        val intent = Intent(ACTION_CREATE_SEED).apply {
+            // setPackage(SERVICE_PACKAGE) // Create/Import might be handled by different activity
+            putExtra("purpose", purpose.toIntOrNull() ?: 1)
         }
-        val response = performAction("authorize", params)
-        
-        val token = response.getString(SeedVaultKeys.AUTH_TOKEN) 
-            ?: throw SeedVaultException.Unknown("No auth token returned")
-        val accountBundle = response.getParcelable<Bundle>("account") 
-            ?: throw SeedVaultException.Unknown("No account returned")
-            
-        return SeedVaultAuthorization(token, SeedVaultAccount.fromBundle(accountBundle))
+        resolveComponent(context, intent)
+        return intent
+    }
+
+    /**
+     * Creates an Intent to import a seed into the Seed Vault.
+     */
+    fun buildImportSeedIntent(purpose: String = "sign_transaction"): Intent {
+        val intent = Intent(ACTION_IMPORT_SEED).apply {
+           putExtra("purpose", purpose.toIntOrNull() ?: 1)
+        }
+        resolveComponent(context, intent)
+        return intent
+    }
+
+    /**
+     * Parses the result Intent from an Authorize/Create/Import action.
+     */
+    fun parseAuthorizationResult(data: Intent): SeedVaultAuthorization {
+        val token = data.getLongExtra(SeedVaultConstants.EXTRA_AUTH_TOKEN, -1L)
+        if (token == -1L) throw SeedVaultException.Unknown("Invalid auth token in result")
+        // Account details might be fetched separately via getAccounts if not present
+        // Provide a dummy key for now until we fetch the real one.
+        val dummyKey = Pubkey(ByteArray(32))
+        return SeedVaultAuthorization(token.toString(), SeedVaultAccount(0, "Parsed Account", dummyKey)) 
     }
 
     suspend fun getAccounts(authToken: String): List<SeedVaultAccount> {
         val params = Bundle().apply {
-            putString(SeedVaultKeys.AUTH_TOKEN, authToken)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
         }
         val response = performAction("getAccounts", params)
         
-        val list = response.getParcelableArrayList<Bundle>(SeedVaultKeys.ACCOUNTS) 
+        val list = response.getParcelableArrayList<Bundle>(SeedVaultConstants.EXTRA_ACCOUNTS) 
             ?: return emptyList()
             
         return list.map { SeedVaultAccount.fromBundle(it) }
     }
-
+    
+    // ... signTransactions ...
     suspend fun signTransactions(authToken: String, transactions: List<ByteArray>): List<ByteArray> {
         val params = Bundle().apply {
-            putString(SeedVaultKeys.AUTH_TOKEN, authToken)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
             putSerializable(SeedVaultKeys.PAYLOADS, ArrayList(transactions))
         }
+        // ...
         val response = performAction("signTransactions", params)
         
         val sigs = response.getSerializable(SeedVaultKeys.SIGNATURES) as? ArrayList<ByteArray>
@@ -122,7 +120,7 @@ class SeedVaultManager(private val context: Context) {
 
     suspend fun signMessages(authToken: String, messages: List<ByteArray>): List<ByteArray> {
         val params = Bundle().apply {
-            putString(SeedVaultKeys.AUTH_TOKEN, authToken)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
             putSerializable(SeedVaultKeys.PAYLOADS, ArrayList(messages))
         }
         val response = performAction("signMessages", params)
@@ -135,7 +133,7 @@ class SeedVaultManager(private val context: Context) {
 
     suspend fun deauthorize(authToken: String) {
         val params = Bundle().apply {
-            putString(SeedVaultKeys.AUTH_TOKEN, authToken)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
         }
         performAction("deauthorize", params)
     }

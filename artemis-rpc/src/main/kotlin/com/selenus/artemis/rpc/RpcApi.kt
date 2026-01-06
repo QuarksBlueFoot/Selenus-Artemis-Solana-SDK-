@@ -2,6 +2,7 @@ package com.selenus.artemis.rpc
 
 import kotlinx.serialization.json.*
 import java.util.Base64
+import com.selenus.artemis.tx.Transaction
 
 /**
  * RpcApi
@@ -124,6 +125,11 @@ open class RpcApi(private val client: JsonRpcClient) {
     return simulateTransaction(b64, sigVerify, replaceRecentBlockhash, commitment)
   }
 
+  // Compatibility overload for solana-kt users passing Transaction object
+  fun simulateTransaction(transaction: Transaction, sigVerify: Boolean = false, replaceRecentBlockhash: Boolean = false, commitment: String = "processed"): JsonObject {
+    return simulateTransaction(transaction.serialize(), sigVerify, replaceRecentBlockhash, commitment)
+  }
+
   fun sendTransaction(base64Tx: String, skipPreflight: Boolean = false, maxRetries: Int? = null, preflightCommitment: String = "processed"): String {
     val params = buildJsonArray {
       add(JsonPrimitive(base64Tx))
@@ -146,6 +152,11 @@ open class RpcApi(private val client: JsonRpcClient) {
   fun sendRawTransaction(txBytes: ByteArray, skipPreflight: Boolean = false, maxRetries: Int? = null, preflightCommitment: String = "processed"): String {
     val b64 = Base64.getEncoder().encodeToString(txBytes)
     return sendTransaction(b64, skipPreflight, maxRetries, preflightCommitment)
+  }
+
+  // Compatibility overload for solana-kt users passing Transaction object
+  fun sendTransaction(transaction: Transaction, skipPreflight: Boolean = false, maxRetries: Int? = null, preflightCommitment: String = "processed"): String {
+    return sendTransaction(transaction.serialize(), skipPreflight, maxRetries, preflightCommitment)
   }
 
   fun getSignatureStatuses(signatures: List<String>, searchTransactionHistory: Boolean = true): JsonObject {

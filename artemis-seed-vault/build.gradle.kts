@@ -27,4 +27,5 @@ dependencies {
     implementation(project(":artemis-wallet"))
     implementation(project(":artemis-tx"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("androidx.annotation:annotation:1.9.0")
 }

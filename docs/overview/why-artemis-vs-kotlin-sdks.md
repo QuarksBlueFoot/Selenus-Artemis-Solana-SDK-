@@ -1,44 +1,48 @@
 # Why Artemis vs other Solana Kotlin SDKs
 
-Artemis is designed for **mobile-first Solana apps**. Most Kotlin/JVM Solana libraries focus on
-basic RPC calls and transaction construction. Artemis targets the problems that show up when
-shipping real mobile apps: guard-heavy programs (Candy Machine), Token-2022 edge cases, and
-transaction reliability under mobile network conditions.
+Artemis is designed to be the comprehensive, **mobile-first** standard for Solana development on the JVM (Android & server). While several Kotlin SDKs exist, the landscape has been fragmented, with most libraries either unmaintained (`solana-kt`) or too lightweight for complex dApps (`sol4k`).
 
-## What Artemis optimizes for
+Artemis unifies these approaches, offering a modular, fully-featured SDK that supports modern Solana standards like **Token 2022**, **Versioned Transactions**, and **MPL Core** out of the box.
 
-- **Modular + optional** modules (drop in only what you use)
-- **No paid assumptions**: RPC-only by default
-- **Deterministic planning** for program calls where remaining accounts/args are easy to get wrong
-- **Mobile reliability**: priority fees + resend/confirm patterns
+## SDK Landscape Comparison
 
-## Comparison (high-level)
+| Feature | **solana-kt** (Legacy/Metaplex) | **metaplex-kmm** (KMP) | **sol4k** (Lightweight) | **Artemis** |
+| :--- | :--- | :--- | :--- | :--- |
+| **Primary Focus** | General Purpose (Legacy) | NFT Metadata / Standard | Lightweight / Scripts | **Modern Mobile Apps** |
+| **Maintenance** | ⚠️ Maintenance Mode | ⚠️ Sporadic / Verticals | ✅ Active Community | 🚀 **Active Development** |
+| **Token 2022** | ❌ Basic Support | ❌ No native TLV support | ⚠️ Manual Parsing | ✅ **First-Class Support** |
+| **Transactions** | Legacy (v1) | Abstracted | ✅ **v0 + ALTs** | ✅ **v0 + ALTs** |
+| **Metaplex** | Candy Machine v2 | Metadata Decoding | Manual Encoding | ✅ **CM v3, Core, cNFTs** |
+| **Mobile Wallet Adapter** | Manual Integration | Manual Integration | Manual Integration | ✅ **Built-in Helpers** |
+| **Async Model** | Coroutines | Flow / Coroutines | Coroutines | **Coroutines + Flow** |
 
-### sol4k
+---
 
-Strong baseline for Kotlin RPC + basic tx construction.
+## Detailed Feature Breakdown
 
-Where Artemis goes further:
+### 1. Token 2022 (Token Extensions)
+Modern Solana development relies heavily on Token Extensions (transfer hooks, confidential transfers, metadata pointer).
+*   **Others**: Most SDKs treat Token 2022 as "just another program call," leaving you to manually parse complex Type-Length-Value (TLV) byte structures.
+*   **Artemis**: Provides a native, type-safe decoder for Token 2022 state. You can read Transfer Fees, Interest Bearing configs, and more without dealing with raw bytes.
 
-- Candy Machine v3 + Candy Guard planning and safe builder
-- Tx composer presets (ATA + priority + resend)
+### 2. Metaplex & NFT Standards
+Artemis offers the most complete implementation of modern Metaplex standards on Android.
+*   **MPL Core**: Full support for the new low-cost asset standard.
+*   **Candy Machine v3**: Includes sophisticated "Guard" validation—Artemis can dry-run a mint transaction locally to tell the user *exactly* why a mint might fail (e.g., "Wrong Date", "Sol Balance Low") before sending it.
+*   **Compressed NFTs (cNFT)**: Read and transfer Bubblegum assets natively.
 
-### Metaplex Kotlin modules
+### 3. Versioned Transactions & Address Lookup Tables (ALT)
+To fit complex protocols into a single transaction, Versioned Transactions (v0) are essential.
+*   **Legacy SDKs**: `solana-kt` often defaults to "Legacy" transactions, which fail when logic becomes complex.
+*   **Artemis**: Deep support for v0 transaction compilation and Address Lookup Table resolution, ensuring your complex DeFi or Gaming transactions land successfully.
 
-Historically NFT-oriented and not focused on mobile transaction reliability.
+### 4. Drop-in Compatibility
+Artemis 1.0.4+ introduces API compatibility layers for `solana-kt` users.
+*   **Classes**: `Pubkey`, `Transaction`, and `SystemProgram` expose methods familiar to legacy users (e.g., `Pubkey("base58String")`, `createProgramAddress`).
+*   **No Wrappers**: We don't just wrap the old library; we implemented the API surface on top of our optimized Core, so you get the performance of Artemis with the familiarity of the existing ecosystem.
 
-Where Artemis goes further:
+## When to use what?
 
-- Candy Guard introspection + fail-early validation
-- pNFT-aware planning for token record + metadata account sets
-
-### Solana Mobile Wallet Adapter libraries
-
-These provide wallet connection and signing on Android. Artemis complements them by providing
-program-level tooling and mobile-first sending patterns.
-
-## Practical guidance
-
-- If you only need simple RPC calls and transfers, a thin Kotlin RPC client is enough.
-- If you are shipping a mobile minting experience (Candy Machine v3), Artemis removes the
-  remaining-account/guard guessing and adds send reliability patterns.
+*   **Use `sol4k`**: If you are writing a tiny server-side bot or script, don't need Token 2022, and want the absolute smallest JAR size possible.
+*   **Use `metaplex-kmm`**: If you are building a pure Kotlin Multiplatform project and share 100% of your business logic with iOS (though feature parity may be lower).
+*   **Use `Artemis`**: If you are building a production **Android Application**. It is the only choice that combines Mobile Wallet Adapter integration, reliable Transaction construction, and full support for the modern Solana program ecosystem.

@@ -4,6 +4,7 @@ dependencies{
 
   implementation(kotlin("stdlib"))
   implementation(project(":artemis-runtime"))
+  implementation(project(":artemis-tx"))
   implementation("com.squareup.okhttp3:okhttp:4.12.0")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }

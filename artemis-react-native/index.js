@@ -44,6 +44,23 @@ const Artemis = {
    */
   signMessage: (base64Msg) => ArtemisModule.signMessage(base64Msg),
   
+  /**
+   * Helper payload for SignInWithSolana
+   * @typedef {Object} SignInPayload
+   * @property {string} domain - Domain name using the wallet
+   * @property {string} [uri] - URI
+   * @property {string} [statement] - Statement to sign
+   * @property {string[]} [resources] - Resources
+   * @property {string} [chainId] - Chain ID (e.g. solana:mainnet)
+   */
+
+  /**
+   * Connect with SignInWithSolana (SIWS).
+   * @param {SignInPayload} payload - The SIWS payload.
+   * @returns {Promise<Object>} An object containing the public key, signature, and message.
+   */
+  connectWithSignIn: (payload) => ArtemisModule.connectWithSignIn(payload),
+
   // --- RPC Methods ---
 
   /**
@@ -125,6 +142,44 @@ const Artemis = {
    * @returns {Promise<boolean>} True if valid.
    */
   verifyMerkleProof: (proof, root, leaf) => ArtemisModule.verifyMerkleProof(proof, root, leaf),
+
+  // --- Seed Vault Methods (Android Only) ---
+
+  /**
+   * Authorize usage of the Seed Vault.
+   * @param {string} purpose - Purpose text (e.g. "sign_transaction").
+   * @returns {Promise<Object>} Object containing authToken.
+   */
+  seedVaultAuthorize: (purpose) => ArtemisModule.seedVaultAuthorize(purpose),
+
+  /**
+   * Create a new seed in the Seed Vault.
+   * @param {string} purpose - Purpose text.
+   * @returns {Promise<Object>} Object containing authToken.
+   */
+  seedVaultCreateSeed: (purpose) => ArtemisModule.seedVaultCreateSeed(purpose),
+
+  /**
+   * Import a seed into the Seed Vault.
+   * @param {string} purpose - Purpose text.
+   * @returns {Promise<Object>} Object containing authToken.
+   */
+  seedVaultImportSeed: (purpose) => ArtemisModule.seedVaultImportSeed(purpose),
+
+  /**
+   * Get accounts for a Seed Vault auth token.
+   * @param {string} authToken - The auth token.
+   * @returns {Promise<Array<{accountId: number, name: string}>>} List of accounts.
+   */
+  seedVaultGetAccounts: (authToken) => ArtemisModule.seedVaultGetAccounts(authToken),
+
+  /**
+   * Sign messages using the Seed Vault.
+   * @param {string} authToken - The auth token.
+   * @param {string[]} messages - Array of base64 encoded messages.
+   * @returns {Promise<string[]>} Array of base64 encoded signatures.
+   */
+  seedVaultSignMessages: (authToken, messages) => ArtemisModule.seedVaultSignMessages(authToken, messages),
 };
 
 export default Artemis;

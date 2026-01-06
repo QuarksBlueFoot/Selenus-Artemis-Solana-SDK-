@@ -21,12 +21,54 @@ import kotlinx.coroutines.sync.withLock
 import java.util.Base64
 import java.math.BigDecimal
 
-class ArtemisModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+import com.selenus.artemis.wallet.mwa.protocol.MwaSignInPayload
+
+import android.app.Activity
+import android.content.Intent
+import com.facebook.react.bridge.*
+import com.selenus.artemis.seedvault.SeedVaultManager
+import com.selenus.artemis.seedvault.SeedVaultAuthorization
+
+class ArtemisModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), ActivityEventListener {
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private val mutex = Mutex()
     private var adapter: MwaWalletAdapter? = null
     private var rpcClient: JsonRpcClient? = null
+    
+    // Seed Vault
+    private var seedVaultManager: SeedVaultManager? = null
+    private var seedVaultPromise: Promise? = null
+    private val SEED_VAULT_REQUEST_CODE = 8675 // Jenny
+
+    init {
+        reactContext.addActivityEventListener(this)
+        seedVaultManager = SeedVaultManager(reactContext)
+    }
+
+    override fun onActivityResult(activity: Activity?, requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == SEED_VAULT_REQUEST_CODE) {
+            val promise = seedVaultPromise ?: return
+            seedVaultPromise = null // Consume
+            
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                try {
+                    val result = seedVaultManager?.parseAuthorizationResult(data)
+                    val map = Arguments.createMap()
+                    map.putString("authToken", result?.authToken)
+                    promise.resolve(map)
+                } catch (e: Exception) {
+                    promise.reject("SEED_VAULT_ERROR", e.message, e)
+                }
+            } else {
+                promise.reject("SEED_VAULT_CANCELLED", "User cancelled or operation failed")
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        // No-op
+    }
     
     // Store DePIN identities in memory
     private val deviceIdentities = mutableMapOf<String, DeviceIdentity>()
@@ -120,6 +162,40 @@ class ArtemisModule(reactContext: ReactApplicationContext) : ReactContextBaseJav
         }
     }
 
+    @ReactMethod
+    fun connectWithSignIn(payload: ReadableMap, promise: Promise) {
+        scope.launch {
+            mutex.withLock {
+                try {
+                    val adapter = adapter ?: throw IllegalStateException("Not initialized")
+                    
+                    // Parse ReadableMap to MwaSignInPayload
+                    val signInPayload = MwaSignInPayload(
+                        domain = payload.getString("domain")!!,
+                        uri = if (payload.hasKey("uri")) payload.getString("uri") else null,
+                        statement = if (payload.hasKey("statement")) payload.getString("statement") else null,
+                        resources = if (payload.hasKey("resources")) {
+                            val list = payload.getArray("resources")!!
+                            (0 until list.size()).map { list.getString(it) }
+                        } else null,
+                        chainId = if (payload.hasKey("chainId")) payload.getString("chainId") else null
+                    )
+
+                    val result = adapter.connectWithSignIn(signInPayload)
+                    val map = Arguments.createMap()
+                    map.putString("address", result.address)
+                    map.putString("signedMessage", result.signedMessage)
+                    map.putString("signature", result.signature)
+                    map.putString("signatureType", result.signatureType)
+                    
+                    promise.resolve(map)
+                } catch (e: Exception) {
+                    promise.reject("SIGN_IN_ERROR", e.message, e)
+                }
+            }
+        }
+    }
+
     // --- RPC Methods ---
 
     @ReactMethod
@@ -198,6 +274,130 @@ class ArtemisModule(reactContext: ReactApplicationContext) : ReactContextBaseJav
     @ReactMethod
     fun buildSolanaPayUri(recipientStr: String, amountStr: String, label: String, message: String, promise: Promise) {
         try {
+            val recipient = Pubkey.fromBase58(recipientStr)
+            val amount = BigDecimal(amountStr)
+            
+            val uri = SolanaPayUri(
+                recipient = recipient,
+                amount = amount,
+                label = label,
+                message = message
+            )
+            promise.resolve(uri.toString())
+        } catch (e: Exception) {
+            promise.reject("SOLANA_PAY_ERROR", e.message, e)
+        }
+    }
+
+    // --- Seed Vault Methods (Wallet App Only) ---
+
+    @ReactMethod
+    fun seedVaultAuthorize(purpose: String, promise: Promise) {
+        val activity = currentActivity
+        if (activity == null) {
+            promise.reject("ACTIVITY_ERROR", "Activity not available")
+            return
+        }
+        if (seedVaultPromise != null) {
+            promise.reject("CONCURRENT_ERROR", "Action already in progress")
+            return
+        }
+        
+        seedVaultPromise = promise
+        try {
+            val intent = seedVaultManager?.buildAuthorizeIntent(purpose)
+            activity.startActivityForResult(intent, SEED_VAULT_REQUEST_CODE)
+        } catch (e: Exception) {
+            seedVaultPromise = null
+            promise.reject("LAUNCH_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun seedVaultCreateSeed(purpose: String, promise: Promise) {
+        val activity = currentActivity
+        if (activity == null) {
+            promise.reject("ACTIVITY_ERROR", "Activity not available")
+            return
+        }
+        if (seedVaultPromise != null) {
+            promise.reject("CONCURRENT_ERROR", "Action already in progress")
+            return
+        }
+        
+        seedVaultPromise = promise
+        try {
+            val intent = seedVaultManager?.buildCreateSeedIntent(purpose)
+            activity.startActivityForResult(intent, SEED_VAULT_REQUEST_CODE)
+        } catch (e: Exception) {
+            seedVaultPromise = null
+            promise.reject("LAUNCH_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun seedVaultImportSeed(purpose: String, promise: Promise) {
+        val activity = currentActivity
+        if (activity == null) {
+            promise.reject("ACTIVITY_ERROR", "Activity not available")
+            return
+        }
+        if (seedVaultPromise != null) {
+            promise.reject("CONCURRENT_ERROR", "Action already in progress")
+            return
+        }
+        
+        seedVaultPromise = promise
+        try {
+            val intent = seedVaultManager?.buildImportSeedIntent(purpose)
+            activity.startActivityForResult(intent, SEED_VAULT_REQUEST_CODE)
+        } catch (e: Exception) {
+            seedVaultPromise = null
+            promise.reject("LAUNCH_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun seedVaultGetAccounts(authToken: String, promise: Promise) {
+        scope.launch {
+            try {
+                val accounts = seedVaultManager?.getAccounts(authToken) ?: emptyList()
+                val array = Arguments.createArray()
+                accounts.forEach { 
+                    val map = Arguments.createMap()
+                    map.putInt("accountId", it.accountId.toInt())
+                    map.putString("name", it.name)
+                    array.pushMap(map)
+                }
+                promise.resolve(array)
+            } catch (e: Exception) {
+                promise.reject("SEED_VAULT_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun seedVaultSignMessages(authToken: String, messages: ReadableArray, promise: Promise) {
+         scope.launch {
+            try {
+                val msgs = ArrayList<ByteArray>()
+                for (i in 0 until messages.size()) {
+                    val b64 = messages.getString(i)
+                    msgs.add(Base64.getDecoder().decode(b64))
+                }
+                
+                val sigs = seedVaultManager?.signMessages(authToken, msgs) ?: emptyList()
+                
+                val array = Arguments.createArray()
+                sigs.forEach { 
+                    array.pushString(Base64.getEncoder().encodeToString(it))
+                }
+                promise.resolve(array)
+            } catch (e: Exception) {
+                promise.reject("SEED_VAULT_ERROR", e.message, e)
+            }
+        }
+    }
             val req = SolanaPayUri.Request(
                 recipient = Pubkey.fromBase58(recipientStr),
                 amount = BigDecimal(amountStr),

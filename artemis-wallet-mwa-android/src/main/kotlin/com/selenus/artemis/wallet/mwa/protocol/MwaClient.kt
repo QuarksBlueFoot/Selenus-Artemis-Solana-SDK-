@@ -53,11 +53,18 @@ class MwaClient(
     chain: String? = null,
     authToken: String? = null,
     features: List<String>? = null,
+    signInPayload: MwaSignInPayload? = null,
     timeoutMs: Long = 30_000
   ): MwaAuthorizeResult {
     val params = json.encodeToJsonElement(
       MwaAuthorizeRequest.serializer(),
-      MwaAuthorizeRequest(identity = identity, chain = chain, authToken = authToken, features = features)
+      MwaAuthorizeRequest(
+        identity = identity, 
+        chain = chain, 
+        authToken = authToken, 
+        features = features,
+        signInPayload = signInPayload
+      )
     )
     val rsp = withTimeout(timeoutMs) { session.sendJsonRpc("authorize", params).await() }
     return parseResult(rsp)

@@ -1,6 +1,6 @@
 {
   "name": "artemis-solana-sdk",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Artemis Solana SDK for React Native. Modular. Drop-in. Mobile-first.",
   "main": "index.js",
   "repository": {

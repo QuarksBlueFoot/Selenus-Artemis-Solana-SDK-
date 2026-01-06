@@ -41,13 +41,16 @@ repositories {
 
 dependencies {
     // Core
-    implementation("xyz.selenus:artemis-core:1.0.2")
-    implementation("xyz.selenus:artemis-rpc:1.0.2")
+    implementation("xyz.selenus:artemis-core:1.0.5")
+    implementation("xyz.selenus:artemis-rpc:1.0.5")
 
     // Features
-    implementation("xyz.selenus:artemis-tx:1.0.2")
-    implementation("xyz.selenus:artemis-token2022:1.0.2")
-    implementation("xyz.selenus:artemis-cnft:1.0.2")
+    implementation("xyz.selenus:artemis-tx:1.0.5")
+    implementation("xyz.selenus:artemis-token2022:1.0.5")
+    implementation("xyz.selenus:artemis-cnft:1.0.5")
+    
+    // Mobile Features (New!)
+    implementation("xyz.selenus:artemis-seed-vault:1.0.5")
     implementation("xyz.selenus:artemis-depin:1.0.2")
     implementation("xyz.selenus:artemis-gaming:1.0.2")
     implementation("xyz.selenus:artemis-solana-pay:1.0.2")
@@ -166,6 +169,53 @@ val disc = registry.discriminator(programId, "mainnet", "transfer")
 - artemis-mplcore: MPL Core create flows, plugins, marketplace utilities
 - artemis-candy-machine: Candy Machine v3 and Candy Guard instruction builders
 - artemis-discriminators: versioned discriminator registry for Anchor programs
+- **artemis-seed-vault**: 100% Kotlin implementation of the Solana Seed Vault SDK (with `com.solanamobile.seedvault` compatibility). Contains `SeedVaultManager` and secure Intent resolution logic.
+- **artemis-wallet-mwa-android**: Native implementation of the Mobile Wallet Adapter (MWA 2.0) protocol for Android. Supports `SignInWithSolana` (SIWS) and `signAndSend` with falback.
+- **artemis-react-native**: High-performance React Native bridge exposing full Seed Vault and MWA capabilities.
+- artemis-depin: Location proof and device identity generation utilities.
+- artemis-gaming: Merkle tree verification tools for on-chain gaming distributions.
+
+## Mobile & React Native
+
+Artemis offers a complete replacement for the standard mobile SDKs.
+
+### Seed Vault (Kotlin)
+
+A cleaner, Coroutine-first API for the Seed Vault.
+
+```kotlin
+val manager = SeedVaultManager(context)
+
+// Create a seed (returns Intent)
+val intent = manager.buildCreateSeedIntent(purpose = "sign_transaction")
+startActivityForResult(intent, REQUEST_CODE)
+
+// Sign Transaction (background)
+val signatures = manager.signTransactions(authToken, txBytes)
+```
+
+Also includes drop-in compatibility for existing libraries:
+```kotlin
+// Works exactly like the official SDK
+wallet.authorizeSeed(context, WalletContractV1.PURPOSE_SIGN_SOLANA_TRANSACTION)
+```
+
+### React Native Usage
+
+```javascript
+import Artemis from 'artemis-solana-sdk';
+
+// Mobile Wallet Adapter (SIWS)
+const result = await Artemis.connectWithSignIn({
+  domain: 'your.dapp',
+  statement: 'Sign in to Artemis'
+});
+console.log(result.address, result.signature);
+
+// Seed Vault (Android Wallet Apps)
+const authToken = await Artemis.seedVaultAuthorize("sign_transaction");
+const accounts = await Artemis.seedVaultGetAccounts(authToken);
+```
 
 ## Marketplace helpers
 
