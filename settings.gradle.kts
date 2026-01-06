@@ -36,7 +36,7 @@ include(":artemis-nft-compat")
 
 // include(":artemis-compose")
 
-include(":artemis-react-native")
+// include(":artemis-react-native")
 include(":artemis-candy-machine")
 include(":artemis-depin")
 include(":artemis-solana-pay")
@@ -55,4 +55,4 @@ include(":artemis-presets")
 if (providers.gradleProperty("enableAndroidSamples").orNull == "true") {
   include(":samples:solana-mobile-compose-mint-app")
 }
-project(":artemis-react-native").projectDir = file("artemis-react-native/android")
+// project(":artemis-react-native").projectDir = file("artemis-react-native/android")

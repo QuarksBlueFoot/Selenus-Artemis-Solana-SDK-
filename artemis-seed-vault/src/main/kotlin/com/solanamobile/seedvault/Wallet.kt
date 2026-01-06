@@ -21,7 +21,6 @@ class Wallet private constructor() {
         }
 
         @JvmStatic
-        @WalletContractV1.AuthToken
         @Throws(ActionFailedException::class)
         fun onAuthorizeSeedResult(resultCode: Int, result: Intent?): Long {
             // ... (Result parsing logic remains standard, but we could wrap it)
@@ -42,8 +41,9 @@ class Wallet private constructor() {
         @JvmStatic
         fun createSeed(context: Context, @WalletContractV1.Purpose purpose: Int): Intent {
             return SeedVaultManager(context).buildCreateSeedIntent(purpose.toString())
+        }
+        
         @JvmStatic
-        @WalletContractV1.AuthToken
         @Throws(ActionFailedException::class)
         fun onCreateSeedResult(resultCode: Int, result: Intent?): Long {
              if (resultCode != Activity.RESULT_OK) {
@@ -66,7 +66,6 @@ class Wallet private constructor() {
         }
 
         @JvmStatic
-        @WalletContractV1.AuthToken
         @Throws(ActionFailedException::class)
         fun onImportSeedResult(resultCode: Int, result: Intent?): Long {
             if (resultCode != Activity.RESULT_OK) {
