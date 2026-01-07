@@ -43,7 +43,7 @@ fi
 
 echo "1. Cleaning and Building Staging Repository..."
 rm -rf build
-./gradlew clean publishMavenPublicationToStagingRepository -Pversion=1.0.6 --no-daemon -x javaDocReleaseGeneration || exit 1
+./gradlew clean publishMavenPublicationToStagingRepository -Pversion=1.0.7 --no-daemon -x javaDocReleaseGeneration || exit 1
 
 echo "2. Zipping Bundle..."
 cd build/staging-deploy

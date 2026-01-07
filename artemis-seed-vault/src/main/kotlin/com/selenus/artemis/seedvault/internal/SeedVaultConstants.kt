@@ -42,4 +42,8 @@ object SeedVaultConstants {
     const val BIP44_URI_SCHEME = "bip44"
 
     const val PURPOSE_SIGN_SOLANA_TRANSACTION = 1
+
+    // Payload keys
+    const val KEY_PAYLOADS = "payloads"
+    const val KEY_SIGNATURES = "signatures"
 }

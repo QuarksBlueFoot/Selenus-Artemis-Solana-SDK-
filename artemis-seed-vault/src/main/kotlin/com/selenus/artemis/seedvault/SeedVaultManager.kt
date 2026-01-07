@@ -17,6 +17,8 @@ import com.selenus.artemis.seedvault.internal.SeedVaultConstants.ACTION_AUTHORIZ
 import com.selenus.artemis.seedvault.internal.SeedVaultConstants.ACTION_CREATE_SEED
 import com.selenus.artemis.seedvault.internal.SeedVaultConstants.ACTION_IMPORT_SEED
 import com.selenus.artemis.seedvault.internal.SeedVaultConstants.SERVICE_PACKAGE
+import com.selenus.artemis.seedvault.internal.ipc.ISeedVaultService
+import com.selenus.artemis.seedvault.internal.ipc.ISeedVaultCallback
 
 /**
  * SeedVaultManager
@@ -27,9 +29,25 @@ import com.selenus.artemis.seedvault.internal.SeedVaultConstants.SERVICE_PACKAGE
 class SeedVaultManager(private val context: Context) {
     
     private var serviceBinder: IBinder? = null
+    private var service: ISeedVaultService? = null
+    private var isBound = false
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+            serviceBinder = binder
+            if (binder != null) {
+                service = ISeedVaultService.Stub.asInterface(binder)
+            }
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            serviceBinder = null
+            service = null
+            isBound = false
+        }
+    }
 
     companion object {
-        // Constants delegated to internal definition
         private const val ACTION_BIND_SEED_VAULT = SeedVaultConstants.ACTION_BIND_SEED_VAULT
 
         /**
@@ -41,7 +59,31 @@ class SeedVaultManager(private val context: Context) {
         }
     }
 
-    // ... (rest of class)
+    /**
+     * Connects to the Seed Vault system service.
+     * This must be called before performing any privileged actions.
+     */
+    fun connect() {
+        if (isBound) return
+        val intent = Intent(ACTION_BIND_SEED_VAULT).apply {
+            setPackage(SeedVaultConstants.PACKAGE_SEED_VAULT)
+        }
+        resolveComponent(context, intent)
+        isBound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+    }
+
+    /**
+     * Disconnects from the Seed Vault service.
+     * Should be called when the manager is no longer needed (e.g. onDestroy).
+     */
+    fun disconnect() {
+        if (isBound) {
+            context.unbindService(connection)
+            isBound = false
+            service = null
+            serviceBinder = null
+        }
+    }
     
     /**
      * Creates an Intent to authorize the app to access the Seed Vault.
@@ -50,7 +92,7 @@ class SeedVaultManager(private val context: Context) {
     fun buildAuthorizeIntent(purpose: String = "sign_transaction"): Intent {
         val intent = Intent(ACTION_AUTHORIZE_SEED_ACCESS).apply {
             setPackage(SERVICE_PACKAGE)
-            putExtra("purpose", purpose.toIntOrNull() ?: 1) // Default to standard purpose
+            putExtra("purpose", purpose.toIntOrNull() ?: SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION)
         }
         resolveComponent(context, intent)
         return intent
@@ -62,7 +104,7 @@ class SeedVaultManager(private val context: Context) {
     fun buildCreateSeedIntent(purpose: String = "sign_transaction"): Intent {
         val intent = Intent(ACTION_CREATE_SEED).apply {
             // setPackage(SERVICE_PACKAGE) // Create/Import might be handled by different activity
-            putExtra("purpose", purpose.toIntOrNull() ?: 1)
+            putExtra("purpose", purpose.toIntOrNull() ?: SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION)
         }
         resolveComponent(context, intent)
         return intent
@@ -73,7 +115,7 @@ class SeedVaultManager(private val context: Context) {
      */
     fun buildImportSeedIntent(purpose: String = "sign_transaction"): Intent {
         val intent = Intent(ACTION_IMPORT_SEED).apply {
-           putExtra("purpose", purpose.toIntOrNull() ?: 1)
+           putExtra("purpose", purpose.toIntOrNull() ?: SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION)
         }
         resolveComponent(context, intent)
         return intent
@@ -85,10 +127,14 @@ class SeedVaultManager(private val context: Context) {
     fun parseAuthorizationResult(data: Intent): SeedVaultAuthorization {
         val token = data.getLongExtra(SeedVaultConstants.EXTRA_AUTH_TOKEN, -1L)
         if (token == -1L) throw SeedVaultException.Unknown("Invalid auth token in result")
+        
+        // Try to parse basic account info if available in extras, otherwise use placeholder
+        val accountId = data.getLongExtra(SeedVaultConstants.EXTRA_ACCOUNT_ID, 0L)
+        
         // Account details might be fetched separately via getAccounts if not present
-        // Provide a dummy key for now until we fetch the real one.
+        // Provide a dummy key for now until we fetch the real one. 
         val dummyKey = Pubkey(ByteArray(32))
-        return SeedVaultAuthorization(token.toString(), SeedVaultAccount(0, "Parsed Account", dummyKey)) 
+        return SeedVaultAuthorization(token.toString(), SeedVaultAccount(accountId, "Parsed Account", dummyKey)) 
     }
 
     suspend fun getAccounts(authToken: String): List<SeedVaultAccount> {
@@ -103,16 +149,15 @@ class SeedVaultManager(private val context: Context) {
         return list.map { SeedVaultAccount.fromBundle(it) }
     }
     
-    // ... signTransactions ...
     suspend fun signTransactions(authToken: String, transactions: List<ByteArray>): List<ByteArray> {
         val params = Bundle().apply {
             putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
-            putSerializable(SeedVaultKeys.PAYLOADS, ArrayList(transactions))
+            putSerializable(SeedVaultConstants.KEY_PAYLOADS, ArrayList(transactions))
         }
-        // ...
+        
         val response = performAction("signTransactions", params)
         
-        val sigs = response.getSerializable(SeedVaultKeys.SIGNATURES) as? ArrayList<ByteArray>
+        val sigs = response.getSerializable(SeedVaultConstants.KEY_SIGNATURES) as? ArrayList<ByteArray>
             ?: throw SeedVaultException.Unknown("No signatures returned")
             
         return sigs
@@ -121,11 +166,11 @@ class SeedVaultManager(private val context: Context) {
     suspend fun signMessages(authToken: String, messages: List<ByteArray>): List<ByteArray> {
         val params = Bundle().apply {
             putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
-            putSerializable(SeedVaultKeys.PAYLOADS, ArrayList(messages))
+            putSerializable(SeedVaultConstants.KEY_PAYLOADS, ArrayList(messages))
         }
         val response = performAction("signMessages", params)
         
-        val sigs = response.getSerializable(SeedVaultKeys.SIGNATURES) as? ArrayList<ByteArray>
+        val sigs = response.getSerializable(SeedVaultConstants.KEY_SIGNATURES) as? ArrayList<ByteArray>
             ?: throw SeedVaultException.Unknown("No signatures returned")
             
         return sigs
@@ -139,40 +184,42 @@ class SeedVaultManager(private val context: Context) {
     }
 
     private suspend fun performAction(method: String, params: Bundle): Bundle = suspendCancellableCoroutine { cont ->
-        checkConnected()
-        
-        // In a real implementation, we would create the Stub callback here.
-        // Since we don't have the generated code, we simulate the structure.
-        /*
-        val callback = object : ISeedVaultCallback.Stub() {
-            override fun onResponse(response: Bundle) {
-                if (cont.isActive) cont.resume(response)
-            }
-            override fun onError(error: Bundle) {
-                if (cont.isActive) cont.resumeWithException(SeedVaultException.fromBundle(error))
-            }
-        }
-        
         try {
+            checkConnected()
+            
+            // Define the callback
+            val callback = object : ISeedVaultCallback.Stub() {
+                override fun onResponse(response: Bundle) {
+                    if (cont.isActive) cont.resume(response)
+                }
+                override fun onError(error: Bundle) {
+                    if (cont.isActive) cont.resumeWithException(SeedVaultException.fromBundle(error))
+                }
+            }
+            
             when (method) {
                 "authorize" -> service!!.authorize(params, callback)
                 "getAccounts" -> service!!.getAccounts(params, callback)
                 "signTransactions" -> service!!.signTransactions(params, callback)
                 "signMessages" -> service!!.signMessages(params, callback)
                 "deauthorize" -> service!!.deauthorize(params, callback)
+                else -> {
+                    if (cont.isActive) cont.resumeWithException(IllegalArgumentException("Unknown method: $method"))
+                }
             }
         } catch (e: RemoteException) {
-            cont.resumeWithException(SeedVaultException.InternalError("Remote exception: ${e.message}"))
+            if (cont.isActive) {
+                cont.resumeWithException(SeedVaultException.InternalError("Remote exception: ${e.message}"))
+            }
+        } catch (e: Exception) {
+             if (cont.isActive) {
+                cont.resumeWithException(SeedVaultException.InternalError("Unexpected exception: ${e.message}"))
+            }
         }
-        */
-        
-        // For compilation in this environment, we throw to indicate this is a skeleton
-        // that requires the AIDL build step.
-        cont.resumeWithException(UnsupportedOperationException("AIDL compilation required for $method"))
     }
 
     private fun checkConnected() {
-        if (serviceBinder == null) throw IllegalStateException("Seed Vault not connected")
+        if (service == null) throw IllegalStateException("Seed Vault not connected. Call connect() first.")
     }
 }
 

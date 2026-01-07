@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Process
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
-import com.solanamobile.seedvault.WalletContractV1
 
 object SeedVaultCheck {
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.TIRAMISU)
@@ -30,7 +29,7 @@ object SeedVaultCheck {
     fun isAvailable(context: Context, allowSimulated: Boolean = false): Boolean {
         val pm = context.packageManager
         val pi = try {
-            pm.getPackageInfo(WalletContractV1.PACKAGE_SEED_VAULT, PackageManager.GET_PERMISSIONS or PackageManager.GET_SIGNATURES)
+            pm.getPackageInfo(SeedVaultConstants.PACKAGE_SEED_VAULT, PackageManager.GET_PERMISSIONS or PackageManager.GET_SIGNATURES)
         } catch (e: PackageManager.NameNotFoundException) {
             return false
         }
@@ -38,7 +37,7 @@ object SeedVaultCheck {
         if (allowSimulated) return true
 
         pi.permissions?.forEach { permission ->
-            if (WalletContractV1.PERMISSION_SEED_VAULT_IMPL == permission.name) {
+            if (SeedVaultConstants.PERMISSION_SEED_VAULT_IMPL == permission.name) {
                 if (!usesSignatureProtection(permission)) return false
                 if (hasPrivilegedProtectionFlag(permission)) return true
                 
@@ -58,9 +57,9 @@ object SeedVaultCheck {
 
     @JvmStatic
     fun getAccessType(context: Context): AccessType {
-        return if (context.checkSelfPermission(WalletContractV1.PERMISSION_ACCESS_SEED_VAULT_PRIVILEGED) == PackageManager.PERMISSION_GRANTED) {
+        return if (context.checkSelfPermission(SeedVaultConstants.PERMISSION_ACCESS_SEED_VAULT_PRIVILEGED) == PackageManager.PERMISSION_GRANTED) {
             AccessType.PRIVILEGED
-        } else if (context.checkSelfPermission(WalletContractV1.PERMISSION_ACCESS_SEED_VAULT) == PackageManager.PERMISSION_GRANTED) {
+        } else if (context.checkSelfPermission(SeedVaultConstants.PERMISSION_ACCESS_SEED_VAULT) == PackageManager.PERMISSION_GRANTED) {
             AccessType.STANDARD
         } else {
             AccessType.NONE
@@ -85,15 +84,24 @@ object SeedVaultCheck {
 
         val accessType = getAccessType(context)
         val heldPermission = when (accessType) {
-            AccessType.STANDARD -> WalletContractV1.PERMISSION_ACCESS_SEED_VAULT
-            AccessType.PRIVILEGED -> WalletContractV1.PERMISSION_ACCESS_SEED_VAULT_PRIVILEGED
+            AccessType.STANDARD -> SeedVaultConstants.PERMISSION_ACCESS_SEED_VAULT
+            AccessType.PRIVILEGED -> SeedVaultConstants.PERMISSION_ACCESS_SEED_VAULT_PRIVILEGED
             else -> throw IllegalStateException("No access to Seed Vault; callers must hold either permission")
         }
 
         val resolved = context.packageManager.queryIntentActivities(intent, 0)
         
         for (ri in resolved) {
+            // Check if the activity requires the permission we hold
             if (heldPermission == ri.activityInfo.permission) {
+                intent.setClassName(ri.activityInfo.packageName, ri.activityInfo.name)
+                return
+            }
+        }
+        
+        // Also check if no permission is required by the activity (some intents might be open)
+         for (ri in resolved) {
+            if (ri.activityInfo.permission == null) {
                 intent.setClassName(ri.activityInfo.packageName, ri.activityInfo.name)
                 return
             }
