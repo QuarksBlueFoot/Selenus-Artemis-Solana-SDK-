@@ -12,6 +12,7 @@ It hits all the modern Solana patterns out of the box:
 - Token-2022 with TLV decoding
 - Compressed NFTs (Bubblegum-compatible utilities)
 - MPL Core (v2 lane) create flows and marketplace utilities
+- **Native Android Seed Vault & MWA implementation** (No wrappers)
 - If you need Helius stuff, check out LunaSDK. Artemis stays pure.
 
 ## Build
@@ -41,28 +42,27 @@ repositories {
 
 dependencies {
     // Core
-    implementation("xyz.selenus:artemis-core:1.0.5")
-    implementation("xyz.selenus:artemis-rpc:1.0.5")
+    implementation("xyz.selenus:artemis-core:1.0.6")
+    implementation("xyz.selenus:artemis-rpc:1.0.6")
 
     // Features
-    implementation("xyz.selenus:artemis-tx:1.0.5")
-    implementation("xyz.selenus:artemis-token2022:1.0.5")
-    implementation("xyz.selenus:artemis-cnft:1.0.5")
-    
-    // Mobile Features (New!)
-    implementation("xyz.selenus:artemis-seed-vault:1.0.5")
-    implementation("xyz.selenus:artemis-depin:1.0.2")
-    implementation("xyz.selenus:artemis-gaming:1.0.2")
-    implementation("xyz.selenus:artemis-solana-pay:1.0.2")
-    implementation("xyz.selenus:artemis-seed-vault:1.0.2")
-    
+    implementation("xyz.selenus:artemis-tx:1.0.6")
+    implementation("xyz.selenus:artemis-token2022:1.0.6")
+    implementation("xyz.selenus:artemis-cnft:1.0.6")
+
+    // Mobile Features (Refactored in 1.0.6!)
+    implementation("xyz.selenus:artemis-seed-vault:1.0.6") // Pure Kotlin Seed Vault
+    implementation("xyz.selenus:artemis-wallet-mwa-android:1.0.6") // Native MWA 2.0
+    implementation("xyz.selenus:artemis-solana-pay:1.0.6")
+
     // React Native
     // npm install artemis-solana-sdk
-    implementation("xyz.selenus:artemis-mplcore:1.0.2")
-    implementation("xyz.selenus:artemis-candy-machine:1.0.2")
-
-    // Android Wallet Adapter
-    implementation("xyz.selenus:artemis-wallet-mwa-android:1.0.2")
+    
+    // Niche Features
+    implementation("xyz.selenus:artemis-depin:1.0.6")
+    implementation("xyz.selenus:artemis-gaming:1.0.6")
+    implementation("xyz.selenus:artemis-mplcore:1.0.6")
+    implementation("xyz.selenus:artemis-candy-machine:1.0.6")
 }
 ```
 
@@ -105,79 +105,9 @@ val ix = BubblegumInstructions.transfer(
 )
 ```
 
-### 4) MPL Core create flows
-
-```kotlin
-val createCollectionIx = MplCoreInstructions.createCollection(
-  collection = collectionPubkey,
-  payer = payer,
-  authority = authority,
-  args = MplCoreArgs.CreateCollectionArgs(
-    name = "My Collection",
-    uri = "https://example.com/collection.json",
-    updateAuthority = authority
-  )
-)
-```
-
-### 5) Candy Machine mint (Candy Guard mint_v2)
-
-This covers the common SOL payment mint flow. If your Candy Guard requires extra mint args
-(for example, allow-list proofs), you can provide the additional accounts via `remainingAccounts`.
-
-```kotlin
-val ix = CandyGuardMintV2.build(
-  args = CandyGuardMintV2.Args(group = null),
-  accounts = CandyGuardMintV2.Accounts(
-    candyGuard = candyGuard,
-    candyMachine = candyMachine,
-    payer = payer,
-    minter = minter,
-    nftMint = newNftMint,
-    nftMetadata = nftMetadata,
-    nftMasterEdition = nftMasterEdition,
-    collectionDelegateRecord = collectionDelegateRecord,
-    collectionMint = collectionMint,
-    collectionMetadata = collectionMetadata,
-    collectionMasterEdition = collectionMasterEdition,
-    collectionUpdateAuthority = collectionUpdateAuthority,
-  )
-)
-```
-
-## Discriminator registry
-
-Some Anchor programs ship with different method names across builds.
-Use the registry to keep those differences out of your app logic.
-
-```kotlin
-val registry = DiscriminatorRegistry.builder()
-  .put(programId, "mainnet", "mintToCollection", "mint_to_collection_v1")
-  .put(programId, "mainnet", "transfer", "transfer")
-  .build()
-
-val disc = registry.discriminator(programId, "mainnet", "transfer")
-```
-
-## Modules
-
-- artemis-runtime: Pubkeys, base58, hashing, address derivation
-- artemis-rpc: JsonRpcClient
-- artemis-tx: instructions, transaction building, v0 and ALT support
-- artemis-token2022: Token-2022 builders and TLV decoding
-- artemis-cnft: Bubblegum cNFT builders, DAS helpers, marketplace toolkit
-- artemis-mplcore: MPL Core create flows, plugins, marketplace utilities
-- artemis-candy-machine: Candy Machine v3 and Candy Guard instruction builders
-- artemis-discriminators: versioned discriminator registry for Anchor programs
-- **artemis-seed-vault**: 100% Kotlin implementation of the Solana Seed Vault SDK (with `com.solanamobile.seedvault` compatibility). Contains `SeedVaultManager` and secure Intent resolution logic.
-- **artemis-wallet-mwa-android**: Native implementation of the Mobile Wallet Adapter (MWA 2.0) protocol for Android. Supports `SignInWithSolana` (SIWS) and `signAndSend` with falback.
-- **artemis-react-native**: High-performance React Native bridge exposing full Seed Vault and MWA capabilities.
-- artemis-depin: Location proof and device identity generation utilities.
-- artemis-gaming: Merkle tree verification tools for on-chain gaming distributions.
-
 ## Mobile & React Native
 
-Artemis offers a complete replacement for the standard mobile SDKs.
+Artemis offers a complete, original replacement for the standard mobile SDKs.
 
 ### Seed Vault (Kotlin)
 
@@ -186,17 +116,17 @@ A cleaner, Coroutine-first API for the Seed Vault.
 ```kotlin
 val manager = SeedVaultManager(context)
 
-// Create a seed (returns Intent)
+// Create a seed (returns Intent for result contract)
 val intent = manager.buildCreateSeedIntent(purpose = "sign_transaction")
 startActivityForResult(intent, REQUEST_CODE)
 
-// Sign Transaction (background)
+// Sign Transaction (background, no callbacks)
 val signatures = manager.signTransactions(authToken, txBytes)
 ```
 
-Also includes drop-in compatibility for existing libraries:
+Also includes drop-in compatibility for existing libraries using `com.solanamobile` namespaces, powered by Artemis internals:
 ```kotlin
-// Works exactly like the official SDK
+// Works exactly like the official SDK but uses Artemis engine
 wallet.authorizeSeed(context, WalletContractV1.PURPOSE_SIGN_SOLANA_TRANSACTION)
 ```
 
@@ -217,63 +147,31 @@ const authToken = await Artemis.seedVaultAuthorize("sign_transaction");
 const accounts = await Artemis.seedVaultGetAccounts(authToken);
 ```
 
-## Marketplace helpers
+## Modules
 
-### cNFT batch delegate and transfer
-
-```kotlin
-val batch = BatchMarketplaceToolkit.fetchBatch(das, assetIds)
-val ixs = BatchMarketplaceToolkit.buildDelegateMany(
-  merkleTree = merkleTree,
-  treeConfig = BubblegumPdas.treeConfig(merkleTree),
-  leafOwner = owner,
-  currentDelegate = null,
-  newDelegate = marketplaceDelegate,
-  batch = batch
-)
-```
-
-### Core listing bundle
-
-```kotlin
-val ixs = CoreMarketplaceToolkit.buildListingBundle(
-  asset = asset,
-  ownerAuthority = owner,
-  marketplaceDelegate = delegate
-)
-```
-
-- artemis-ws: Solana WebSocket subscriptions with reconnect, resubscribe, dedupe, and Flow events
-
-WebSocket notes: artemis-ws supports subscription bundling and optional HTTP fallback polling while disconnected.
-
-- artemis-gaming: game focused utilities (compute presets, session keys, ArcanaFlow batching lane)
-
+- **artemis-runtime**: Pubkeys, base58, hashing, address derivation
+- **artemis-rpc**: JsonRpcClient
+- **artemis-tx**: instructions, transaction building, v0 and ALT support
+- **artemis-token2022**: Token-2022 builders and TLV decoding
+- **artemis-cnft**: Bubblegum cNFT builders, DAS helpers, marketplace toolkit
+- **artemis-mplcore**: MPL Core create flows, plugins, marketplace utilities
+- **artemis-candy-machine**: Candy Machine v3 and Candy Guard instruction builders
+- **artemis-discriminators**: versioned discriminator registry for Anchor programs
+- **artemis-ws**: Solana WebSocket subscriptions with reconnect, resubscribe, dedupe, and Flow events
+- **artemis-seed-vault**: 100% Kotlin implementation of the Solana Seed Vault SDK (with `com.solanamobile.seedvault` compatibility). Contains `SeedVaultManager` and secure Intent resolution logic.
+- **artemis-wallet-mwa-android**: Native implementation of the Mobile Wallet Adapter (MWA 2.0) protocol for Android. Supports `SignInWithSolana` (SIWS) and `signAndSend` with fallback.
+- **artemis-react-native**: High-performance React Native bridge exposing full Seed Vault and MWA capabilities.
+- **artemis-depin**: Location proof and device identity generation utilities.
+- **artemis-gaming**: Merkle tree verification tools for on-chain gaming distributions, compute presets, session keys, ArcanaFlow batching lane.
 
 ## Gaming features (2025)
 
 Artemis includes a gaming oriented module focused on performance and player experience:
 
-- Compute budget presets that match common game tiers
-- Session keys for fast signing after a one time authorization
-- ArcanaFlow, a batching lane that emits deterministic action frames
-
-These are designed to work with v0 + ALT so games can keep transactions small and fast.
-
-- artemis-replay: deterministic frame replay recorder and loader for games and interactive apps
-
-
-### Gaming upgrades
-
-- PriorityFeeOracle: adaptive compute unit price suggestions based on recent confirmation feedback
-- AltSessionCache: collect session addresses to prebuild and reuse ALTs across matches
-- ArcanaFlow: deterministic frame batching lane for mobile game actions
-- Replay: record and replay frame metadata for debugging and telemetry
-
-## License
-
-Artemis is licensed under Apache-2.0. See LICENSE and NOTICE.
-
+- **PriorityFeeOracle**: adaptive compute unit price suggestions based on recent confirmation feedback
+- **AltSessionCache**: collect session addresses to prebuild and reuse ALTs across matches
+- **ArcanaFlow**: deterministic frame batching lane for mobile game actions
+- **Replay**: record and replay frame metadata for debugging and telemetry
 
 ### Priority fee advisor
 
@@ -286,46 +184,9 @@ val feeIxs = listOf(
 )
 ```
 
-### Replay recording
+## License
 
-```kotlin
-val rec = ReplayRecorder()
-rec.recordFrame(frame.createdAtMs, frame.instructions, meta = mapOf("match" to matchId))
-
-// after send
-rec.attachSignature(index = 0, signature = sig, recentBlockhash = recentBlockhash)
-rec.writeTo(File("replay.json"))
-```
-
-
-### ALT session planning for games
-
-The gaming module includes an ALT session builder that produces deterministic address proposals
-from ArcanaFlow frames. This helps you build lookup tables once and reuse them across a match.
-
-
-### Gaming v22 upgrades
-
-- AltSessionExecutor: build create and extend instruction bundles for Address Lookup Tables
-- PriorityFeeOracle v22: rolling window samples, fast bump on failures, slow decay when healthy
-- ArcanaFlowFrameComposer: create per-frame transaction plans (compute, fees, LUT hints)
-
-
-### Gaming v23 upgrades
-
-- AltTxScheduler: split ALT create and extend into deterministic multi-transaction batches
-- ArcanaFlowV0Compiler: one-call compile for ArcanaFlow frame plans into signed v0 VersionedTransaction
-
-ArcanaFlow guide: docs/arcanaflow.md
-
-Game presets: docs/modules/other/game-presets.md
-
-Replay pagination: docs/modules/other/replay-pagination.md
-
-Changelog: [CHANGELOG.md](CHANGELOG.md)
-
-packages: docs/overview/packages.md
+Artemis is licensed under Apache-2.0. See LICENSE and NOTICE.
 
 Optional modules:
 - :artemis-nft-compat (Metaplex-compatible NFT helpers)
-
