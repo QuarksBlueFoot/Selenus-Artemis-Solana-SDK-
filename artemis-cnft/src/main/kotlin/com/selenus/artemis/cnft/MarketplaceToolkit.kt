@@ -18,7 +18,7 @@ object MarketplaceToolkit {
     val proof: JsonObject
   )
 
-  fun fetchAssetWithProof(das: DasClient, assetId: String): AssetWithProof {
+  suspend fun fetchAssetWithProof(das: DasClient, assetId: String): AssetWithProof {
     val asset = das.getAsset(assetId)
     val proof = das.getAssetProof(assetId)
     return AssetWithProof(asset, proof)

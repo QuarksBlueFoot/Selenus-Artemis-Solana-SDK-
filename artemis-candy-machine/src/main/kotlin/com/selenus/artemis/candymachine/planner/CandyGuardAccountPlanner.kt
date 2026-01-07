@@ -19,7 +19,7 @@ import kotlinx.serialization.json.jsonPrimitive
  */
 object CandyGuardAccountPlanner {
 
-  fun planMint(
+  suspend fun planMint(
     rpc: RpcApi,
     candyGuard: Pubkey,
     candyMachine: Pubkey,
@@ -117,7 +117,7 @@ object CandyGuardAccountPlanner {
     return MintPlan(accounts = finalAccounts, mintArgsBorsh = mintArgsBorsh, warnings = warnings)
   }
 
-  private fun fetchAccountBase64(rpc: RpcApi, pubkey: Pubkey): ByteArray? {
+  private suspend fun fetchAccountBase64(rpc: RpcApi, pubkey: Pubkey): ByteArray? {
     val rsp = rpc.getAccountInfo(pubkey.toBase58(), commitment = "confirmed", encoding = "base64")
     val value = rsp["value"] ?: return null
     if (value.toString() == "null") return null

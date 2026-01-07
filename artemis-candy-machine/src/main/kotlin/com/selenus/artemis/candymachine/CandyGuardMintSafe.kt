@@ -16,7 +16,7 @@ object CandyGuardMintV2Safe {
     val warnings: List<String> = emptyList(),
   )
 
-  fun buildSafe(
+  suspend fun buildSafe(
     rpc: RpcApi,
     wallet: Pubkey,
     candyGuard: Pubkey,

@@ -28,7 +28,7 @@ class AltResolver(
     return (currentSlot - entry.fetchedAtSlot) <= ttlSlots
   }
 
-  fun fetchOne(
+  suspend fun fetchOne(
     key: Pubkey,
     commitment: String = "finalized"
   ): AddressLookupTableAccount? {
@@ -45,7 +45,7 @@ class AltResolver(
     return decoded
   }
 
-  fun fetchMany(
+  suspend fun fetchMany(
     keys: List<Pubkey>,
     commitment: String = "finalized"
   ): List<AddressLookupTableAccount> {

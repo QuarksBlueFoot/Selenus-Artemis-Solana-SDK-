@@ -50,7 +50,7 @@ object TxComposerPresets {
    *
    * Returns a list of create-ATA instructions (empty if all already exist).
    */
-  fun buildAtaCreateIxs(
+  suspend fun buildAtaCreateIxs(
     rpc: RpcApi,
     payer: Pubkey,
     intents: List<AtaIntent>,
@@ -140,7 +140,7 @@ object TxComposerPresets {
     )
   }
 
-  private fun confirmWithResend(
+  private suspend fun confirmWithResend(
     rpc: RpcApi,
     signature: String,
     signedTxBytes: ByteArray,

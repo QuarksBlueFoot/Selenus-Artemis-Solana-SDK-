@@ -23,7 +23,7 @@ import com.selenus.artemis.tx.Instruction
  */
 object ArcanaFlowV0Compiler {
 
-  fun compileFrame(
+  suspend fun compileFrame(
     rpc: RpcApi,
     feePayer: Signer,
     additionalSigners: List<Signer>,

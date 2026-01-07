@@ -6,7 +6,7 @@ import kotlin.test.assertTrue
 class RpcConfirmTest {
 
   @Test
-  fun confirmTransactionReturnsTrueWhenFinalized() {
+  fun confirmTransactionReturnsTrueWhenFinalized() = kotlinx.coroutines.runBlocking {
     var calls = 0
     val client = JsonRpcClient("http://localhost:8899", transport = object : HttpTransport {
       override fun postJson(url: String, body: String, headers: Map<String, String>): HttpTransport.Response {

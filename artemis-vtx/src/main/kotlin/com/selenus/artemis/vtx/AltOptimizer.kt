@@ -35,7 +35,7 @@ object AltOptimizer {
     override fun sign(message: ByteArray): ByteArray = ByteArray(64)
   }
 
-  fun optimize(
+  suspend fun optimize(
     feePayerKey: Pubkey,
     recentBlockhash: String,
     instructions: List<Instruction>,
@@ -55,7 +55,7 @@ object AltOptimizer {
     )
   }
 
-  fun optimizeWithSimulation(
+  suspend fun optimizeWithSimulation(
     rpc: RpcApi,
     feePayerKey: Pubkey,
     recentBlockhash: String,
@@ -76,7 +76,7 @@ object AltOptimizer {
     )
   }
 
-  private fun optimizeInternal(
+  private suspend fun optimizeInternal(
     rpc: RpcApi?,
     mode: Mode,
     feePayerKey: Pubkey,
@@ -101,7 +101,7 @@ object AltOptimizer {
       .take(topCandidates)
       .map { it.first }
 
-    fun eval(subset: List<AddressLookupTableAccount>): Result {
+    suspend fun eval(subset: List<AddressLookupTableAccount>): Result {
       val compiled = V0MessageCompiler.compile(DummySigner(feePayerKey), recentBlockhash, instructions, subset)
       val msgSize = compiled.message.serialize().size
       val plan = AltPlanner.plan(allMetas, subset, exclude)
@@ -137,7 +137,7 @@ object AltOptimizer {
       }
     }
 
-    fun consider(sub: List<AddressLookupTableAccount>) {
+    suspend fun consider(sub: List<AddressLookupTableAccount>) {
       val r = eval(sub)
       if (better(r, best)) best = r
     }

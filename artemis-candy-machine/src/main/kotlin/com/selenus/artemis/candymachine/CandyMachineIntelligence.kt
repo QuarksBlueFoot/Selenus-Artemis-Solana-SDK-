@@ -15,7 +15,7 @@ import kotlinx.serialization.json.jsonPrimitive
  */
 object CandyMachineIntelligence {
 
-  fun readCandyGuardState(rpc: RpcApi, candyGuard: Pubkey): CandyGuardState {
+  suspend fun readCandyGuardState(rpc: RpcApi, candyGuard: Pubkey): CandyGuardState {
     val guardData = fetchAccountBase64(rpc, candyGuard) ?: throw IllegalArgumentException("Candy Guard account not found")
     val manifest = CandyGuardManifestReader.read(guardData)
     if (manifest.unknownGuards.isNotEmpty()) {
@@ -26,7 +26,7 @@ object CandyMachineIntelligence {
     return CandyGuardState(manifest = manifest, guardSummary = summary)
   }
 
-  fun readCandyMachineState(
+  suspend fun readCandyMachineState(
     rpc: RpcApi,
     candyMachine: Pubkey,
     candyGuard: Pubkey? = null,
@@ -63,7 +63,7 @@ object CandyMachineIntelligence {
     if (m.requirements.requiresTokenGate) add(GuardSummaryItem(type = GuardType.tokenGate, required = true, details = "Token gate"))
   }
 
-  private fun fetchAccountBase64(rpc: RpcApi, pubkey: Pubkey): ByteArray? {
+  private suspend fun fetchAccountBase64(rpc: RpcApi, pubkey: Pubkey): ByteArray? {
     val rsp = rpc.getAccountInfo(pubkey.toBase58(), commitment = "confirmed", encoding = "base64")
     val value = rsp["value"] ?: return null
     if (value.toString() == "null") return null

@@ -27,7 +27,7 @@ object BatchMarketplaceToolkit {
   /**
    * Fetch asset and proof for each asset id from DAS.
    */
-  fun fetchBatch(das: DasClient, assetIds: List<String>): List<AssetWithProof> {
+  suspend fun fetchBatch(das: DasClient, assetIds: List<String>): List<AssetWithProof> {
     return assetIds.map { id -> AssetWithProof(das.getAsset(id), das.getAssetProof(id)) }
   }
 
@@ -91,7 +91,7 @@ object BatchMarketplaceToolkit {
    *
    * Returns the signature string.
    */
-  fun signAndSendV0(
+  suspend fun signAndSendV0(
     rpc: RpcApi,
     feePayer: Signer,
     instructions: List<Instruction>,

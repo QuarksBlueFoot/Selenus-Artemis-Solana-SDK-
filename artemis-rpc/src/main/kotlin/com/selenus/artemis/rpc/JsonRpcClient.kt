@@ -6,6 +6,9 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,7 +32,7 @@ class JsonRpcClient(
   private val id = AtomicLong(1)
   private val mediaType = "application/json".toMediaType()
 
-  fun call(method: String, params: JsonElement? = null): JsonObject {
+  suspend fun call(method: String, params: JsonElement? = null): JsonObject {
     val payload = buildJsonObject {
       put("jsonrpc", "2.0")
       put("id", id.getAndIncrement())
@@ -42,7 +45,7 @@ class JsonRpcClient(
 
     while (attempt <= config.maxAttempts) {
       try {
-        val bodyText = doPost(payload.toString())
+        val bodyText = withContext(Dispatchers.IO) { doPost(payload.toString()) }
         val json = Json.parseToJsonElement(bodyText).jsonObject
         json["error"]?.let { throw RpcException(it.toString()) }
         return json
@@ -50,7 +53,7 @@ class JsonRpcClient(
         lastErr = t
         if (!shouldRetry(t, attempt)) break
         val sleep = backoff.backoffMs(attempt, config)
-        try { Thread.sleep(sleep) } catch (_: Throwable) { }
+        delay(sleep)
         attempt += 1
       }
     }

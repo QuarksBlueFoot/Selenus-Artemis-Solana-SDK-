@@ -7,7 +7,7 @@ import kotlinx.serialization.json.*
 class RpcRequestFixturesTest {
 
   @Test
-  fun buildsGetLatestBlockhashPayload() {
+  fun buildsGetLatestBlockhashPayload() = kotlinx.coroutines.runBlocking {
     val client = JsonRpcClient("http://localhost:8899", transport = object : HttpTransport {
       override fun postJson(url: String, body: String, headers: Map<String, String>): HttpTransport.Response {
         // Validate request shape, then respond with minimal valid payload.
@@ -25,7 +25,7 @@ class RpcRequestFixturesTest {
   }
 
   @Test
-  fun buildsSendTransactionPayload() {
+  fun buildsSendTransactionPayload() = kotlinx.coroutines.runBlocking { // modified
     val client = JsonRpcClient("http://localhost:8899", transport = object : HttpTransport {
       override fun postJson(url: String, body: String, headers: Map<String, String>): HttpTransport.Response {
         assertTrue(body.contains("\"method\":\"sendTransaction\""))

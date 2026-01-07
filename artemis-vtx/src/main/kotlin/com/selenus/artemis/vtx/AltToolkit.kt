@@ -13,7 +13,7 @@ import com.selenus.artemis.tx.Instruction
  */
 object AltToolkit {
 
-  fun fetchLookupTables(
+  suspend fun fetchLookupTables(
     rpc: RpcApi,
     lookupTableAddresses: List<Pubkey>,
     commitment: String = "finalized",
@@ -22,7 +22,7 @@ object AltToolkit {
     return AltResolver(rpc, ttlSlots).fetchMany(lookupTableAddresses, commitment)
   }
 
-  fun compileAndSignV0WithAutoAlts(
+  suspend fun compileAndSignV0WithAutoAlts(
     rpc: RpcApi,
     feePayer: Signer,
     additionalSigners: List<Signer>,
