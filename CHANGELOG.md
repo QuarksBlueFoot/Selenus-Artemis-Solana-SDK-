@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.8
+
+Patch release focusing on code hygiene and legacy cleanup.
+
+### Changes
+- **Refactor**: Defined Artemis-native `SeedVaultConstants` with full documentation, ensuring clean protocol implementation without blind code copying.
+- **Cleanup**: Removed legacy `com.solana` packages and duplicate `SignInWithSolana` logic from MWA module.
+- **Verification**: Validated MWA and Seed Vault implementations are self-contained.
+
 ## 65
 
 Hardening + Metaplex parity pass.
