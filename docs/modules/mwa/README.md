@@ -12,7 +12,7 @@ The `artemis-wallet-mwa-android` module implements the [Mobile Wallet Adapter](h
 
 ```kotlin
 dependencies {
-    implementation("com.selenus.artemis:artemis-wallet-mwa-android:1.0.4")
+    implementation("com.selenus.artemis:artemis-wallet-mwa-android:1.0.6")
 }
 ```
 

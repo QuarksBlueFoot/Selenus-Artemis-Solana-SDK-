@@ -12,7 +12,7 @@ The `artemis-seed-vault` module provides a comprehensive, Coroutine-first implem
 
 ```kotlin
 dependencies {
-    implementation("com.selenus.artemis:artemis-seed-vault:1.0.4")
+    implementation("com.selenus.artemis:artemis-seed-vault:1.0.6")
 }
 ```
 
