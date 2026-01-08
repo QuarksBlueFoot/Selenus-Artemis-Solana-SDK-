@@ -42,27 +42,27 @@ repositories {
 
 dependencies {
     // Core
-    implementation("xyz.selenus:artemis-core:1.0.6")
-    implementation("xyz.selenus:artemis-rpc:1.0.6")
+    implementation("xyz.selenus:artemis-core:1.0.8")
+    implementation("xyz.selenus:artemis-rpc:1.0.8")
 
     // Features
-    implementation("xyz.selenus:artemis-tx:1.0.6")
-    implementation("xyz.selenus:artemis-token2022:1.0.6")
-    implementation("xyz.selenus:artemis-cnft:1.0.6")
+    implementation("xyz.selenus:artemis-tx:1.0.8")
+    implementation("xyz.selenus:artemis-token2022:1.0.8")
+    implementation("xyz.selenus:artemis-cnft:1.0.8")
 
     // Mobile Features (Refactored in 1.0.6!)
-    implementation("xyz.selenus:artemis-seed-vault:1.0.6") // Pure Kotlin Seed Vault
-    implementation("xyz.selenus:artemis-wallet-mwa-android:1.0.6") // Native MWA 2.0
-    implementation("xyz.selenus:artemis-solana-pay:1.0.6")
+    implementation("xyz.selenus:artemis-seed-vault:1.0.8") // Pure Kotlin Seed Vault
+    implementation("xyz.selenus:artemis-wallet-mwa-android:1.0.8") // Native MWA 2.0
+    implementation("xyz.selenus:artemis-solana-pay:1.0.8")
 
     // React Native
     // npm install artemis-solana-sdk
     
     // Niche Features
-    implementation("xyz.selenus:artemis-depin:1.0.6")
-    implementation("xyz.selenus:artemis-gaming:1.0.6")
-    implementation("xyz.selenus:artemis-mplcore:1.0.6")
-    implementation("xyz.selenus:artemis-candy-machine:1.0.6")
+    implementation("xyz.selenus:artemis-depin:1.0.8")
+    implementation("xyz.selenus:artemis-gaming:1.0.8")
+    implementation("xyz.selenus:artemis-mplcore:1.0.8")
+    implementation("xyz.selenus:artemis-candy-machine:1.0.8")
 }
 ```
 
@@ -70,11 +70,18 @@ dependencies {
 
 ### 1) Basic RPC
 
+Artemis uses Kotlin Coroutines for all network operations.
+
 ```kotlin
-val rpc = JsonRpcClient("https://your-rpc")
-val latest = rpc.call(buildJsonObject {
-  put("id","1"); put("jsonrpc","2.0"); put("method","getLatestBlockhash")
-})
+// Create the transport layer
+val client = JsonRpcClient("https://api.mainnet-beta.solana.com")
+
+// Wrap it in the API surface
+val api = RpcApi(client)
+
+// Usage (must be in a suspend function or coroutine scope)
+val blockhash = api.getLatestBlockhash()
+val balance = api.getBalance("...pubkey...")
 ```
 
 ### 2) Token-2022 TLV decode
@@ -87,7 +94,7 @@ val transferFee = parsed.extensions.transferFeeConfig
 ### 3) cNFT transfer using DAS proof
 
 ```kotlin
-val das = DasClient(rpc)
+val das = DasClient(client) // Requires JsonRpcClient
 val asset = das.getAsset(assetId)
 val proof = das.getAssetProof(assetId)
 
@@ -150,7 +157,7 @@ const accounts = await Artemis.seedVaultGetAccounts(authToken);
 ## Modules
 
 - **artemis-runtime**: Pubkeys, base58, hashing, address derivation
-- **artemis-rpc**: JsonRpcClient
+- **artemis-rpc**: RpcApi (Suspend functions) and JsonRpcClient
 - **artemis-tx**: instructions, transaction building, v0 and ALT support
 - **artemis-token2022**: Token-2022 builders and TLV decoding
 - **artemis-cnft**: Bubblegum cNFT builders, DAS helpers, marketplace toolkit
