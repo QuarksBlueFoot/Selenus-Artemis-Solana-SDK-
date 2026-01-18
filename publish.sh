@@ -43,7 +43,10 @@ fi
 
 echo "1. Cleaning and Building Staging Repository..."
 rm -rf build
-./gradlew clean publishMavenPublicationToStagingRepository -Pversion=1.0.8 --no-daemon -x javaDocReleaseGeneration || exit 1
+# Read version from gradle.properties
+VERSION=$(grep '^version=' gradle.properties | cut -d'=' -f2)
+echo "Publishing version: $VERSION"
+./gradlew clean publishMavenPublicationToStagingRepository -Pversion=$VERSION --no-daemon -x javaDocReleaseGeneration || exit 1
 
 echo "2. Zipping Bundle..."
 cd build/staging-deploy

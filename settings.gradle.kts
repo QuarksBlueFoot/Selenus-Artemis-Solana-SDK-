@@ -50,6 +50,9 @@ include(":artemis-candy-machine-presets")
 // v61: optional preset registry + lightweight interfaces to compose multiple optional modules
 include(":artemis-presets")
 
+// v65: comprehensive privacy module for mobile-first privacy features
+include(":artemis-privacy")
+
 // v64: optional Android sample app (kept out of default CI/build unless explicitly enabled)
 // Usage: ./gradlew -PenableAndroidSamples=true :samples:solana-mobile-compose-mint-app:assembleDebug
 if (providers.gradleProperty("enableAndroidSamples").orNull == "true") {

@@ -35,14 +35,14 @@ repositories {
 
 dependencies {
     implementation "com.facebook.react:react-native:+"
-    implementation "xyz.selenus:artemis-wallet-mwa-android:1.0.2"
-    implementation "xyz.selenus:artemis-runtime:1.0.2"
-    implementation "xyz.selenus:artemis-tx:1.0.2"
-    implementation "xyz.selenus:artemis-rpc:1.0.2"
-    implementation "xyz.selenus:artemis-programs:1.0.2"
-    implementation "xyz.selenus:artemis-depin:1.0.2"
-    implementation "xyz.selenus:artemis-solana-pay:1.0.2"
-    implementation "xyz.selenus:artemis-gaming:1.0.2"
-    implementation "xyz.selenus:artemis-compute:1.0.2"
+    implementation "xyz.selenus:artemis-wallet-mwa-android:1.0.9"
+    implementation "xyz.selenus:artemis-runtime:1.0.9"
+    implementation "xyz.selenus:artemis-tx:1.0.9"
+    implementation "xyz.selenus:artemis-rpc:1.0.9"
+    implementation "xyz.selenus:artemis-programs:1.0.9"
+    implementation "xyz.selenus:artemis-depin:1.0.9"
+    implementation "xyz.selenus:artemis-solana-pay:1.0.9"
+    implementation "xyz.selenus:artemis-gaming:1.0.9"
+    implementation "xyz.selenus:artemis-compute:1.0.9"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
 }
