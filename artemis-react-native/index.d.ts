@@ -86,12 +86,17 @@ declare const Artemis: {
   
   // Seed Vault Methods (Android Only)
   seedVaultAuthorize(purpose: string): Promise<{ authToken: number }>;
-  seedVaultImportSeed(purpose: string): Promise<void>;
+  seedVaultCreateSeed(purpose: string): Promise<{ authToken: number }>;
+  seedVaultImportSeed(purpose: string): Promise<{ authToken: number }>;
   seedVaultGetAccounts(authToken: number): Promise<Array<{
     publicKey: string;
     derivationPath: string;
   }>>;
   seedVaultSignMessages(authToken: number, messages: string[]): Promise<string[]>;
+  seedVaultSignTransactions(authToken: number, transactions: string[]): Promise<string[]>;
+  seedVaultRequestPublicKeys(authToken: number, derivationPaths: string[]): Promise<string[]>;
+  seedVaultSignWithDerivationPath(authToken: number, derivationPath: string, payloads: string[]): Promise<string[]>;
+  seedVaultDeauthorize(authToken: number): Promise<void>;
 };
 
 export default Artemis;

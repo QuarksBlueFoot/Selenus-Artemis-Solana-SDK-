@@ -187,6 +187,120 @@ object TokenMetadataInstructions {
     )
   }
 
+  /**
+   * Burn NFT (Token Metadata Program instruction)
+   * 
+   * Burns an NFT, closing the token account and removing the metadata.
+   * This is the Metaplex-native burn that handles metadata cleanup.
+   */
+  fun burnNft(
+    metadata: Pubkey,
+    owner: Pubkey,
+    mint: Pubkey,
+    tokenAccount: Pubkey,
+    masterEdition: Pubkey,
+    splTokenProgram: Pubkey = Pubkey.fromBase58("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+    collectionMetadata: Pubkey? = null
+  ): Instruction {
+    val body = byteArrayOf(41) // Instruction: BurnNft
+
+    val accounts = mutableListOf(
+      AccountMeta(metadata, isSigner = false, isWritable = true),
+      AccountMeta(owner, isSigner = true, isWritable = true),
+      AccountMeta(mint, isSigner = false, isWritable = true),
+      AccountMeta(tokenAccount, isSigner = false, isWritable = true),
+      AccountMeta(masterEdition, isSigner = false, isWritable = true),
+      AccountMeta(splTokenProgram, isSigner = false, isWritable = false)
+    )
+
+    if (collectionMetadata != null) {
+      accounts.add(AccountMeta(collectionMetadata, isSigner = false, isWritable = true))
+    }
+
+    return Instruction(
+      programId = PROGRAM_ID,
+      accounts = accounts,
+      data = body
+    )
+  }
+
+  /**
+   * Transfer V1 (Programmable NFT / pNFT transfer)
+   * 
+   * Transfers an NFT using the Token Metadata program's transfer instruction.
+   * Required for pNFTs; also works for regular NFTs.
+   */
+  fun transferV1(
+    token: Pubkey,
+    tokenOwner: Pubkey,
+    destination: Pubkey,
+    destinationOwner: Pubkey,
+    mint: Pubkey,
+    metadata: Pubkey,
+    edition: Pubkey? = null,
+    ownerTokenRecord: Pubkey? = null,
+    destinationTokenRecord: Pubkey? = null,
+    authority: Pubkey,
+    payer: Pubkey,
+    systemProgram: Pubkey = Pubkey.fromBase58("11111111111111111111111111111111"),
+    sysvarInstructions: Pubkey = Pubkey.fromBase58("Sysvar1nstructions1111111111111111111111111"),
+    splTokenProgram: Pubkey = Pubkey.fromBase58("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+    splAtaProgram: Pubkey = Pubkey.fromBase58("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"),
+    authorizationRulesProgram: Pubkey? = null,
+    authorizationRules: Pubkey? = null,
+    amount: Long = 1
+  ): Instruction {
+    val body = java.io.ByteArrayOutputStream()
+    body.write(49) // Instruction: Transfer (discriminator for TransferV1)
+    
+    // TransferArgs::V1 { amount }
+    body.write(0) // V1 variant
+    body.write(longToBytesLE(amount))
+
+    val accounts = mutableListOf(
+      AccountMeta(token, isSigner = false, isWritable = true),
+      AccountMeta(tokenOwner, isSigner = false, isWritable = false),
+      AccountMeta(destination, isSigner = false, isWritable = true),
+      AccountMeta(destinationOwner, isSigner = false, isWritable = false),
+      AccountMeta(mint, isSigner = false, isWritable = false),
+      AccountMeta(metadata, isSigner = false, isWritable = true)
+    )
+
+    // Optional edition
+    if (edition != null) {
+      accounts.add(AccountMeta(edition, isSigner = false, isWritable = false))
+    }
+
+    // Optional token records (for pNFTs)
+    if (ownerTokenRecord != null) {
+      accounts.add(AccountMeta(ownerTokenRecord, isSigner = false, isWritable = true))
+    }
+    if (destinationTokenRecord != null) {
+      accounts.add(AccountMeta(destinationTokenRecord, isSigner = false, isWritable = true))
+    }
+
+    accounts.add(AccountMeta(authority, isSigner = true, isWritable = false))
+    accounts.add(AccountMeta(payer, isSigner = true, isWritable = true))
+    accounts.add(AccountMeta(systemProgram, isSigner = false, isWritable = false))
+    accounts.add(AccountMeta(sysvarInstructions, isSigner = false, isWritable = false))
+    accounts.add(AccountMeta(splTokenProgram, isSigner = false, isWritable = false))
+    accounts.add(AccountMeta(splAtaProgram, isSigner = false, isWritable = false))
+
+    // Optional authorization rules
+    if (authorizationRulesProgram != null) {
+      accounts.add(AccountMeta(authorizationRulesProgram, isSigner = false, isWritable = false))
+    }
+    if (authorizationRules != null) {
+      accounts.add(AccountMeta(authorizationRules, isSigner = false, isWritable = false))
+    }
+
+    return Instruction(
+      programId = PROGRAM_ID,
+      accounts = accounts,
+      data = body.toByteArray()
+    )
+  }
+
   private fun intToBytesLE(i: Int): ByteArray = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(i).array()
   private fun shortToBytesLE(i: Int): ByteArray = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(i.toShort()).array()
   private fun longToBytesLE(i: Long): ByteArray = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(i).array()

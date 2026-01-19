@@ -43,15 +43,19 @@ import com.selenus.artemis.gaming.MerkleDistributor
 import java.io.File
 
 suspend fun main() {
-  // Helius Devnet RPC
-  val rpcUrl = "https://devnet.helius-rpc.com/?api-key=a84585e4-dea7-4301-af26-aa122f20600e"
-  val wsUrl = "wss://devnet.helius-rpc.com/?api-key=a84585e4-dea7-4301-af26-aa122f20600e"
+  // RPC URLs - use environment variables or fallback to public devnet
+  val rpcUrl = System.getenv("DEVNET_RPC_URL") ?: "https://api.devnet.solana.com"
+  val wsUrl = System.getenv("DEVNET_WS_URL") ?: "wss://api.devnet.solana.com"
   
   println("Connecting to RPC: $rpcUrl")
   val rpc = RpcApi(JsonRpcClient(rpcUrl))
 
-  // 1. Load Hardcoded Wallet
-  val secretBase58 = "2jNmruSprMRuBSuyT9LzWQ9Ar853WDyhYppmMZPtZ665"
+  // 1. Load Wallet from environment variable
+  val secretBase58 = System.getenv("DEVNET_WALLET_SEED")
+      ?: throw IllegalStateException(
+          "DEVNET_WALLET_SEED environment variable not set. " +
+          "See DEVNET_WALLET.md for setup instructions."
+      )
   val seed = Base58.decode(secretBase58)
   val keypair = Keypair.fromSeed(seed)
   val pubkey = keypair.publicKey

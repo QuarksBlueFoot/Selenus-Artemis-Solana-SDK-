@@ -33,9 +33,13 @@ class DevnetPreviewTest {
         println("   Current Slot: $slot")
         assertTrue(slot > 0, "Slot should be greater than 0")
 
-        // 3. Load Funded Test Account
+        // 3. Load Funded Test Account from environment variable
         println("3. Loading Funded Test Account...")
-        val secretBase58 = "2jNmruSprMRuBSuyT9LzWQ9Ar853WDyhYppmMZPtZ665"
+        val secretBase58 = System.getenv("DEVNET_WALLET_SEED")
+            ?: throw IllegalStateException(
+                "DEVNET_WALLET_SEED environment variable not set. " +
+                "See DEVNET_WALLET.md for setup instructions."
+            )
         val seed = com.selenus.artemis.runtime.Base58.decode(secretBase58)
         val keypair = Keypair.fromSeed(seed)
         val pubkey = keypair.publicKey.toBase58()

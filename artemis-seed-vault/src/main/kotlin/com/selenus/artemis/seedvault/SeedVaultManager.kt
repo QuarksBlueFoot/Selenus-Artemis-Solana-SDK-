@@ -183,6 +183,56 @@ class SeedVaultManager(private val context: Context) {
         performAction("deauthorize", params)
     }
 
+    /**
+     * Request public keys for specific derivation paths.
+     * 
+     * This is the Seed Vault equivalent of HD wallet key derivation.
+     * @param authToken The authorization token from authorize/createSeed/importSeed
+     * @param derivationPaths List of BIP32/BIP44 derivation paths (e.g. "m/44'/501'/0'/0'")
+     * @return List of public keys corresponding to each derivation path
+     */
+    suspend fun requestPublicKeys(authToken: String, derivationPaths: List<String>): List<Pubkey> {
+        val params = Bundle().apply {
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
+            putStringArrayList("derivation_paths", ArrayList(derivationPaths))
+        }
+        val response = performAction("requestPublicKeys", params)
+        
+        val keys = response.getSerializable("public_keys") as? ArrayList<ByteArray>
+            ?: throw SeedVaultException.Unknown("No public keys returned")
+            
+        return keys.map { Pubkey(it) }
+    }
+
+    /**
+     * Sign payloads using a specific derivation path.
+     *
+     * This allows signing with keys derived from arbitrary BIP32 paths,
+     * not just the default account.
+     * @param authToken The authorization token
+     * @param derivationPath The BIP32 derivation path for the signing key
+     * @param payloads List of messages/transactions to sign
+     * @return List of signatures
+     */
+    suspend fun signWithDerivationPath(
+        authToken: String, 
+        derivationPath: String, 
+        payloads: List<ByteArray>
+    ): List<ByteArray> {
+        val params = Bundle().apply {
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
+            putString("derivation_path", derivationPath)
+            putSerializable(SeedVaultConstants.KEY_PAYLOADS, ArrayList(payloads))
+        }
+        
+        val response = performAction("signWithDerivationPath", params)
+        
+        val sigs = response.getSerializable(SeedVaultConstants.KEY_SIGNATURES) as? ArrayList<ByteArray>
+            ?: throw SeedVaultException.Unknown("No signatures returned")
+            
+        return sigs
+    }
+
     private suspend fun performAction(method: String, params: Bundle): Bundle = suspendCancellableCoroutine { cont ->
         try {
             checkConnected()

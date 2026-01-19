@@ -8,3 +8,15 @@ node_modules/
 **/node_modules/
 npm-debug.log
 .DS_Store
+
+# Environment files with secrets
+.env
+.env.local
+*.env
+
+# Compiled binaries
+bin/
+**/bin/
+
+# Test outputs
+test-results/

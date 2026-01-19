@@ -42,27 +42,30 @@ repositories {
 
 dependencies {
     // Core
-    implementation("xyz.selenus:artemis-core:1.0.8")
-    implementation("xyz.selenus:artemis-rpc:1.0.8")
+    implementation("xyz.selenus:artemis-core:1.1.0")
+    implementation("xyz.selenus:artemis-rpc:1.1.0")
 
     // Features
-    implementation("xyz.selenus:artemis-tx:1.0.8")
-    implementation("xyz.selenus:artemis-token2022:1.0.8")
-    implementation("xyz.selenus:artemis-cnft:1.0.8")
+    implementation("xyz.selenus:artemis-tx:1.1.0")
+    implementation("xyz.selenus:artemis-token2022:1.1.0")
+    implementation("xyz.selenus:artemis-cnft:1.1.0")
 
-    // Mobile Features (Refactored in 1.0.6!)
-    implementation("xyz.selenus:artemis-seed-vault:1.0.8") // Pure Kotlin Seed Vault
-    implementation("xyz.selenus:artemis-wallet-mwa-android:1.0.8") // Native MWA 2.0
-    implementation("xyz.selenus:artemis-solana-pay:1.0.8")
+    // Mobile Features
+    implementation("xyz.selenus:artemis-seed-vault:1.1.0") // Pure Kotlin Seed Vault
+    implementation("xyz.selenus:artemis-wallet-mwa-android:1.1.0") // Native MWA 2.0
+    implementation("xyz.selenus:artemis-solana-pay:1.1.0")
 
     // React Native
     // npm install artemis-solana-sdk
     
+    // Metaplex & NFT
+    implementation("xyz.selenus:artemis-metaplex:1.1.0") // Token Metadata Program
+    implementation("xyz.selenus:artemis-mplcore:1.1.0")  // MPL Core v2
+    
     // Niche Features
-    implementation("xyz.selenus:artemis-depin:1.0.8")
-    implementation("xyz.selenus:artemis-gaming:1.0.8")
-    implementation("xyz.selenus:artemis-mplcore:1.0.8")
-    implementation("xyz.selenus:artemis-candy-machine:1.0.8")
+    implementation("xyz.selenus:artemis-depin:1.1.0")
+    implementation("xyz.selenus:artemis-gaming:1.1.0")
+    implementation("xyz.selenus:artemis-candy-machine:1.1.0")
 }
 ```
 

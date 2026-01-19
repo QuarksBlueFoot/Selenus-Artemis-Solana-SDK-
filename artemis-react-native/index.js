@@ -181,6 +181,38 @@ const Artemis = {
    * @returns {Promise<string[]>} Array of base64 encoded signatures.
    */
   seedVaultSignMessages: (authToken, messages) => ArtemisModule.seedVaultSignMessages(authToken, messages),
+
+  /**
+   * Sign transactions using the Seed Vault.
+   * @param {string} authToken - The auth token.
+   * @param {string[]} transactions - Array of base64 encoded transactions.
+   * @returns {Promise<string[]>} Array of base64 encoded signed transactions.
+   */
+  seedVaultSignTransactions: (authToken, transactions) => ArtemisModule.seedVaultSignTransactions(authToken, transactions),
+
+  /**
+   * Request public keys for specific derivation paths.
+   * @param {string} authToken - The auth token.
+   * @param {string[]} derivationPaths - Array of BIP32/BIP44 paths (e.g. "m/44'/501'/0'/0'").
+   * @returns {Promise<string[]>} Array of base58 encoded public keys.
+   */
+  seedVaultRequestPublicKeys: (authToken, derivationPaths) => ArtemisModule.seedVaultRequestPublicKeys(authToken, derivationPaths),
+
+  /**
+   * Sign payloads using a specific derivation path.
+   * @param {string} authToken - The auth token.
+   * @param {string} derivationPath - The BIP32 derivation path.
+   * @param {string[]} payloads - Array of base64 encoded payloads.
+   * @returns {Promise<string[]>} Array of base64 encoded signatures.
+   */
+  seedVaultSignWithDerivationPath: (authToken, derivationPath, payloads) => ArtemisModule.seedVaultSignWithDerivationPath(authToken, derivationPath, payloads),
+
+  /**
+   * Deauthorize access to the Seed Vault.
+   * @param {string} authToken - The auth token to revoke.
+   * @returns {Promise<void>}
+   */
+  seedVaultDeauthorize: (authToken) => ArtemisModule.seedVaultDeauthorize(authToken),
 };
 
 export default Artemis;
