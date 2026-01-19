@@ -3,6 +3,7 @@ package com.selenus.artemis.rpc
 import com.selenus.artemis.runtime.Keypair
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
+import org.junit.Assume
 import kotlin.test.assertTrue
 import kotlin.test.assertEquals
 import kotlinx.serialization.json.*
@@ -15,6 +16,14 @@ class DevnetPreviewTest {
 
     @Test
     fun testAllOnChainFunctions() = runBlocking {
+        // Skip test if DEVNET_WALLET_SEED is not set (e.g., in CI without secrets)
+        val secretBase58 = System.getenv("DEVNET_WALLET_SEED")
+        Assume.assumeTrue(
+            "Skipping test: DEVNET_WALLET_SEED environment variable not set. " +
+            "See DEVNET_WALLET.md for setup instructions.",
+            secretBase58 != null
+        )
+        
         println("=== Starting Devnet Preview Test ===")
 
         // 1. Setup RPC
@@ -35,12 +44,7 @@ class DevnetPreviewTest {
 
         // 3. Load Funded Test Account from environment variable
         println("3. Loading Funded Test Account...")
-        val secretBase58 = System.getenv("DEVNET_WALLET_SEED")
-            ?: throw IllegalStateException(
-                "DEVNET_WALLET_SEED environment variable not set. " +
-                "See DEVNET_WALLET.md for setup instructions."
-            )
-        val seed = com.selenus.artemis.runtime.Base58.decode(secretBase58)
+        val seed = com.selenus.artemis.runtime.Base58.decode(secretBase58!!)
         val keypair = Keypair.fromSeed(seed)
         val pubkey = keypair.publicKey.toBase58()
         println("   Pubkey: $pubkey")
