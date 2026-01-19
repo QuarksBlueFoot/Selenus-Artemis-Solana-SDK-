@@ -2,6 +2,20 @@
 
 A modular, mobile-first Solana SDK for React Native, powered by the Artemis Kotlin SDK on Android and native Swift on iOS.
 
+> **Complete parity with Solana Mobile SDK** — MWA 2.0, Seed Vault, and more, with cross-platform native performance.
+
+## Why Artemis for React Native?
+
+| Feature | @solana/web3.js | Solana Mobile RN | **Artemis** |
+|---------|-----------------|------------------|-------------|
+| Base58 (Native) | ❌ (JS polyfill) | ⚠️ Partial | ✅ **Native Kotlin/Swift** |
+| Ed25519 (Native) | ❌ (JS polyfill) | ⚠️ Partial | ✅ **Native** |
+| MWA 2.0 | ❌ | ✅ | ✅ **Parity** |
+| Seed Vault | ❌ | ✅ | ✅ **Parity** |
+| iOS Support | ✅ | ❌ | ✅ |
+| DePIN Proofs | ❌ | ❌ | ✅ **Exclusive** |
+| Solana Pay | ⚠️ | ❌ | ✅ **Native** |
+
 ## Features
 
 - **Cross-Platform Base58**: Native Base58 encoding/decoding on both iOS and Android.

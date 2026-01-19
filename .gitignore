@@ -20,3 +20,4 @@ bin/
 
 # Test outputs
 test-results/
+.kotlin/

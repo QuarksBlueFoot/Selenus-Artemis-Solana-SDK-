@@ -4,7 +4,63 @@
 
 **Maintained by [Bluefoot Labs](https://bluefootlabs.com) and [Selenus](https://selenus.xyz).**
 
+[![Maven Central](https://img.shields.io/maven-central/v/xyz.selenus/artemis-core?style=flat-square)](https://central.sonatype.com/search?q=xyz.selenus)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+
 Artemis is the modular Kotlin Solana SDK I wish I had when I started building for Android. It's built for 2025, so you're not stuck patching legacy code.
+
+## Why Artemis?
+
+**Artemis provides complete API parity with `solana-kmp` and Solana Mobile SDK**, plus innovative features:
+
+| Feature | solana-kmp | Solana Mobile | Sol4k | **Artemis** |
+|---------|------------|---------------|-------|-------------|
+| Active Maintenance | ✅ | ✅ | ✅ | ✅ **v1.4.0** |
+| MWA 2.0 (P-256 ECDH) | ❌ | ✅ | ❌ | ✅ **Parity** |
+| Seed Vault Integration | ❌ | ✅ | ❌ | ✅ **Parity** |
+| RPC Client | ✅ | ❌ | ✅ | ✅ **Parity + Retry** |
+| Token-2022 | ⚠️ | ❌ | ❌ | ✅ **Full** |
+| Versioned Transactions | ✅ | ❌ | ✅ | ✅ |
+| WebSocket Subscriptions | ❌ | ❌ | ❌ | ✅ **Exclusive** |
+| React Native | ⚠️ | ❌ | ❌ | ✅ |
+| Coroutine-first | ⚠️ | ❌ | ⚠️ | ✅ **Native** |
+| Gaming/DePIN Utilities | ❌ | ❌ | ❌ | ✅ **Exclusive** |
+
+📖 **[Solana Mobile Migration Guide](docs/MIGRATION_FROM_SOLANA_MOBILE.md)** | 📊 **[Full SDK Parity Analysis](docs/SDK_PARITY_ANALYSIS.md)**
+
+## 🚀 Solana Mobile Developers: Drop-In Replacement
+
+**Artemis replaces the entire Solana Mobile Kotlin stack with fewer dependencies:**
+
+```kotlin
+// BEFORE: Current Solana Mobile approach (3+ dependencies)
+implementation("com.solanamobile:mobile-wallet-adapter-clientlib-ktx:2.0.7")
+implementation("com.solanamobile:seedvault-wallet-sdk:0.4.0")
+implementation("foundation.metaplex:solana-kmp:0.3.0")  // For SolanaPublicKey, SolanaRpcClient
+
+// AFTER: Artemis unified SDK (2 dependencies, more features)
+implementation("xyz.selenus:artemis-core:1.4.0")
+implementation("xyz.selenus:artemis-wallet-mwa-android:1.4.0")  // Includes MWA + Seed Vault
+```
+
+**Import mapping (update your imports, keep your code):**
+
+| Current Import | Artemis Import |
+|----------------|----------------|
+| `com.solana.publickey.SolanaPublicKey` | `xyz.selenus.artemis.core.Pubkey` |
+| `com.solana.rpc.SolanaRpcClient` | `xyz.selenus.artemis.rpc.RpcClient` |
+| `com.solana.networking.KtorNetworkDriver` | Not needed (built-in) |
+| `com.solana.mobilewalletadapter.clientlib.*` | `xyz.selenus.artemis.wallet.mwa.*` |
+| `com.solanamobile.seedvault.*` | `xyz.selenus.artemis.seedvault.*` |
+
+**What you gain:**
+- ✅ WebSocket subscriptions (solana-kmp doesn't have this!)
+- ✅ Token-2022 extensions
+- ✅ Gaming & DePIN utilities
+- ✅ Compute budget management
+- ✅ Simpler APIs with Flows
+
+## Features
 
 It hits all the modern Solana patterns out of the box:
 
@@ -12,7 +68,8 @@ It hits all the modern Solana patterns out of the box:
 - Token-2022 with TLV decoding
 - Compressed NFTs (Bubblegum-compatible utilities)
 - MPL Core (v2 lane) create flows and marketplace utilities
-- **Native Android Seed Vault & MWA implementation** (No wrappers)
+- **Native Android Seed Vault & MWA 2.0 implementation** (No wrappers)
+- WebSocket subscriptions via `artemis-ws`
 - If you need Helius stuff, check out LunaSDK. Artemis stays pure.
 
 ## Build
@@ -42,50 +99,49 @@ repositories {
 
 dependencies {
     // Core
-    implementation("xyz.selenus:artemis-core:1.3.0")
-    implementation("xyz.selenus:artemis-rpc:1.3.0")
-    implementation("xyz.selenus:artemis-core:1.3.0")
+    implementation("xyz.selenus:artemis-core:1.4.0")
+    implementation("xyz.selenus:artemis-rpc:1.4.0")
 
     // Transaction Building
-    implementation("xyz.selenus:artemis-tx:1.3.0")
-    implementation("xyz.selenus:artemis-vtx:1.3.0") // Versioned transactions & ALTs
-    implementation("xyz.selenus:artemis-tx-presets:1.3.0")
-    implementation("xyz.selenus:artemis-programs:1.3.0") // System, Token, Token2022 program builders
-    implementation("xyz.selenus:artemis-compute:1.3.0") // Compute budget utilities
-    implementation("xyz.selenus:artemis-presets:1.3.0")
+    implementation("xyz.selenus:artemis-tx:1.4.0")
+    implementation("xyz.selenus:artemis-vtx:1.4.0") // Versioned transactions & ALTs
+    implementation("xyz.selenus:artemis-tx-presets:1.4.0")
+    implementation("xyz.selenus:artemis-programs:1.4.0") // System, Token, Token2022 program builders
+    implementation("xyz.selenus:artemis-compute:1.4.0") // Compute budget utilities
+    implementation("xyz.selenus:artemis-presets:1.4.0")
 
     // Tokens
-    implementation("xyz.selenus:artemis-token2022:1.3.0")
+    implementation("xyz.selenus:artemis-token2022:1.4.0")
 
     // NFT & Metaplex
-    implementation("xyz.selenus:artemis-metaplex:1.3.0") // Token Metadata Program
-    implementation("xyz.selenus:artemis-mplcore:1.3.0")  // MPL Core v2
-    implementation("xyz.selenus:artemis-cnft:1.3.0") // Compressed NFTs (Bubblegum)
-    implementation("xyz.selenus:artemis-nft-compat:1.3.0") // Cross-standard NFT helpers
-    implementation("xyz.selenus:artemis-candy-machine:1.3.0")
-    implementation("xyz.selenus:artemis-candy-machine-presets:1.3.0")
+    implementation("xyz.selenus:artemis-metaplex:1.4.0") // Token Metadata Program
+    implementation("xyz.selenus:artemis-mplcore:1.4.0")  // MPL Core v2
+    implementation("xyz.selenus:artemis-cnft:1.4.0") // Compressed NFTs (Bubblegum)
+    implementation("xyz.selenus:artemis-nft-compat:1.4.0") // Cross-standard NFT helpers
+    implementation("xyz.selenus:artemis-candy-machine:1.4.0")
+    implementation("xyz.selenus:artemis-candy-machine-presets:1.4.0")
 
     // Mobile Features
-    implementation("xyz.selenus:artemis-seed-vault:1.3.0") // Pure Kotlin Seed Vault
-    implementation("xyz.selenus:artemis-wallet-mwa-android:1.3.0") // Native MWA 2.0
-    implementation("xyz.selenus:artemis-wallet:1.3.0") // Wallet abstractions
-    implementation("xyz.selenus:artemis-solana-pay:1.3.0")
+    implementation("xyz.selenus:artemis-seed-vault:1.4.0") // Pure Kotlin Seed Vault
+    implementation("xyz.selenus:artemis-wallet-mwa-android:1.4.0") // Native MWA 2.0
+    implementation("xyz.selenus:artemis-wallet:1.4.0") // Wallet abstractions
+    implementation("xyz.selenus:artemis-solana-pay:1.4.0")
 
-    // React Native: npm install artemis-solana-sdk
+    // React Native: npm install artemis-solana-sdk@1.4.0
 
     // Real-time & WebSocket
-    implementation("xyz.selenus:artemis-ws:1.3.0") // WebSocket subscriptions
+    implementation("xyz.selenus:artemis-ws:1.4.0") // WebSocket subscriptions
 
     // Utilities
-    implementation("xyz.selenus:artemis-discriminators:1.3.0")
-    implementation("xyz.selenus:artemis-errors:1.3.0")
-    implementation("xyz.selenus:artemis-logging:1.3.0")
-    implementation("xyz.selenus:artemis-privacy:1.3.0")
+    implementation("xyz.selenus:artemis-discriminators:1.4.0")
+    implementation("xyz.selenus:artemis-errors:1.4.0")
+    implementation("xyz.selenus:artemis-logging:1.4.0")
+    implementation("xyz.selenus:artemis-privacy:1.4.0")
 
     // Gaming & DePIN
-    implementation("xyz.selenus:artemis-gaming:1.3.0")
-    implementation("xyz.selenus:artemis-depin:1.3.0")
-    implementation("xyz.selenus:artemis-replay:1.3.0") // Session recording & playback
+    implementation("xyz.selenus:artemis-gaming:1.4.0")
+    implementation("xyz.selenus:artemis-depin:1.4.0")
+    implementation("xyz.selenus:artemis-replay:1.4.0") // Session recording & playback
 }
 ```
 
