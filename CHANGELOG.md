@@ -1,11 +1,44 @@
 # Changelog
 
+## 1.3.0
+
+Major release with comprehensive test coverage across all modules and documentation updates.
+
+### Added
+
+- **Test Coverage**: Added unit tests for all 26+ modules
+  - artemis-candy-machine, artemis-candy-machine-presets
+  - artemis-cnft, artemis-compute, artemis-core
+  - artemis-depin, artemis-discriminators, artemis-errors
+  - artemis-gaming, artemis-logging, artemis-metaplex
+  - artemis-mplcore, artemis-nft-compat, artemis-presets
+  - artemis-preview, artemis-privacy, artemis-programs
+  - artemis-replay, artemis-rpc, artemis-runtime
+  - artemis-seed-vault, artemis-solana-pay, artemis-token2022
+  - artemis-tx, artemis-tx-presets, artemis-vtx
+  - artemis-wallet, artemis-ws
+
+### Fixed
+
+- Fixed invalid Candy Guard program ID in `CandyMachineIds.kt`
+- Fixed PDA seed length validation in MPL Core tests
+
+### Documentation
+
+- Updated README with complete module listing (26+ modules)
+- Reorganized module documentation by category (Core, Transactions, NFT, Mobile, Gaming)
+- Updated all version references to 1.3.0
+
+## 1.2.0
+
+Initial Maven Central release with full SDK feature set.
+
 ## 1.0.8
 
 Patch release focusing on code hygiene and legacy cleanup.
 
 ### Changes
-- **Refactor**: Defined Artemis-native `SeedVaultConstants` with full documentation, ensuring clean protocol implementation without blind code copying.
+- **Refactor**: Defined Artemis-native `SeedVaultConstants` with full documentation.
 - **Cleanup**: Removed legacy `com.solana` packages and duplicate `SignInWithSolana` logic from MWA module.
 - **Verification**: Validated MWA and Seed Vault implementations are self-contained.
 

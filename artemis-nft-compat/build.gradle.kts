@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+  testImplementation(kotlin("test"))
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
   implementation(project(":artemis-runtime"))
   implementation(project(":artemis-rpc"))

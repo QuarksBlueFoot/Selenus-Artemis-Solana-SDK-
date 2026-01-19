@@ -1,6 +1,7 @@
 plugins { kotlin("jvm") }
 
 dependencies {
+  testImplementation(kotlin("test"))
   implementation(project(":artemis-errors"))
   implementation(project(":artemis-runtime"))
   implementation(project(":artemis-tx"))

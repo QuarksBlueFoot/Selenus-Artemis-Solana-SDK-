@@ -8,10 +8,12 @@ application {
 }
 
 dependencies{
+  testImplementation(kotlin("test"))
+  
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
   implementation(project(":artemis-logging"))
-implementation(kotlin("stdlib"))
+  implementation(kotlin("stdlib"))
   implementation(project(":artemis-runtime"))
   implementation(project(":artemis-rpc"))
   implementation(project(":artemis-tx"))

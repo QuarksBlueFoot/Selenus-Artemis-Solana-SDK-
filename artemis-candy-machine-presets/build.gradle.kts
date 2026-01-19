@@ -1,6 +1,7 @@
 plugins { kotlin("jvm") }
 
 dependencies {
+  testImplementation(kotlin("test"))
   implementation(kotlin("stdlib"))
 
   // Optional, drop-in: depends only on other Artemis modules.

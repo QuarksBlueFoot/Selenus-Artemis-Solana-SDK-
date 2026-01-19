@@ -1,6 +1,7 @@
 plugins { kotlin("jvm") }
 
 dependencies {
+  testImplementation(kotlin("test"))
   implementation(kotlin("stdlib"))
   // Keep this module fully optional and drop-in.
   implementation(project(":artemis-wallet"))

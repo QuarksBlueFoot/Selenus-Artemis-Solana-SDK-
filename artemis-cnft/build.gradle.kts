@@ -3,6 +3,9 @@ plugins {
 }
 
 dependencies {
+  testImplementation(kotlin("test"))
+  testImplementation(project(":artemis-programs"))
+  
   implementation(project(":artemis-discriminators"))
   implementation(project(":artemis-runtime"))
   implementation(project(":artemis-tx"))

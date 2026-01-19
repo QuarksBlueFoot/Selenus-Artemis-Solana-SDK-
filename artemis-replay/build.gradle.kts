@@ -4,6 +4,7 @@ plugins {
 }
 
 dependencies {
+  testImplementation(kotlin("test"))
   implementation(project(":artemis-runtime"))
   implementation(project(":artemis-tx"))
   implementation(project(":artemis-vtx"))
