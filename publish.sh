@@ -46,7 +46,8 @@ rm -rf build
 # Read version from gradle.properties
 VERSION=$(grep '^version=' gradle.properties | cut -d'=' -f2)
 echo "Publishing version: $VERSION"
-./gradlew clean publishMavenPublicationToStagingRepository -Pversion=$VERSION --no-daemon -x javaDocReleaseGeneration || exit 1
+# Use publishAllPublicationsToStagingRepository to include all publication types (JVM, Android, Multiplatform)
+./gradlew clean publishAllPublicationsToStagingRepository -Pversion=$VERSION --no-daemon -x javaDocReleaseGeneration || exit 1
 
 echo "2. Zipping Bundle..."
 cd build/staging-deploy

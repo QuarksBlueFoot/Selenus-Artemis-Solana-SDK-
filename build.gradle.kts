@@ -117,4 +117,26 @@ subprojects {
             }
         }
     }
+
+    // Kotlin Multiplatform publishing (for artemis-core)
+    plugins.withId("org.jetbrains.kotlin.multiplatform") {
+        apply(plugin = "maven-publish")
+        apply(plugin = "signing")
+
+        configure<PublishingExtension> {
+            publications.withType<MavenPublication>().configureEach {
+                pomConfig()
+            }
+            publishingConfig()
+        }
+
+        configure<SigningExtension> {
+            val signingKey = System.getenv("SIGNING_KEY")
+            val signingPassword = System.getenv("SIGNING_PASSWORD")
+            if (!signingKey.isNullOrEmpty()) {
+                useInMemoryPgpKeys(signingKey, signingPassword)
+                sign(extensions.getByType<PublishingExtension>().publications)
+            }
+        }
+    }
 }
