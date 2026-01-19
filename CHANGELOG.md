@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.1
+
+Patch release fixing Maven Central publishing for multiplatform modules.
+
+### Fixed
+
+- Added Dokka javadoc generation for `artemis-core-jvm` multiplatform artifact
+- Fixed Maven Central validation requirement for javadoc JAR in JVM publications
+
 ## 1.3.0
 
 Major release with comprehensive test coverage across all modules and documentation updates.
