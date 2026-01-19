@@ -6,5 +6,5 @@ dependencies {
   testImplementation(project(":artemis-tx"))
   testImplementation(project(":artemis-rpc"))
   
-  implementation(project(":artemis-runtime"))
+  implementation(project(":artemis-core"))
 }

@@ -2,5 +2,5 @@ plugins{ kotlin("jvm") }
 dependencies{
   testImplementation(kotlin("test"))
   implementation(kotlin("stdlib"))
-  implementation(project(":artemis-runtime"))
+  implementation(project(":artemis-core"))
 }

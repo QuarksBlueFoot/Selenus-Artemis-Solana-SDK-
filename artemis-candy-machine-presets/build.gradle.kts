@@ -14,5 +14,5 @@ dependencies {
   implementation(project(":artemis-candy-machine"))
   implementation(project(":artemis-tx-presets"))
   implementation(project(":artemis-presets"))
-  implementation(project(":artemis-runtime"))
+  implementation(project(":artemis-core"))
 }

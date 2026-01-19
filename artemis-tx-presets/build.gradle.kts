@@ -11,6 +11,6 @@ dependencies {
   implementation(project(":artemis-vtx"))
   implementation(project(":artemis-compute"))
   implementation(project(":artemis-errors"))
-  implementation(project(":artemis-runtime"))
+  implementation(project(":artemis-core"))
   implementation(project(":artemis-presets"))
 }

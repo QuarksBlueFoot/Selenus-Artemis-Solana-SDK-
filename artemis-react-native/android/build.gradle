@@ -36,7 +36,7 @@ repositories {
 dependencies {
     implementation "com.facebook.react:react-native:+"
     implementation "xyz.selenus:artemis-wallet-mwa-android:1.0.9"
-    implementation "xyz.selenus:artemis-runtime:1.0.9"
+    implementation "xyz.selenus:artemis-core:1.0.9"
     implementation "xyz.selenus:artemis-tx:1.0.9"
     implementation "xyz.selenus:artemis-rpc:1.0.9"
     implementation "xyz.selenus:artemis-programs:1.0.9"

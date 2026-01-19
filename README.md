@@ -44,7 +44,7 @@ dependencies {
     // Core
     implementation("xyz.selenus:artemis-core:1.3.0")
     implementation("xyz.selenus:artemis-rpc:1.3.0")
-    implementation("xyz.selenus:artemis-runtime:1.3.0")
+    implementation("xyz.selenus:artemis-core:1.3.0")
 
     // Transaction Building
     implementation("xyz.selenus:artemis-tx:1.3.0")
@@ -181,7 +181,7 @@ const accounts = await Artemis.seedVaultGetAccounts(authToken);
 
 ### Core
 - **artemis-core**: Core utilities and shared primitives
-- **artemis-runtime**: Pubkeys, base58, hashing, address derivation
+- **artemis-core**: Pubkeys, base58, hashing, address derivation
 - **artemis-rpc**: RpcApi (Suspend functions) and JsonRpcClient
 
 ### Transaction Building

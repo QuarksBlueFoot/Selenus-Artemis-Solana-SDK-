@@ -31,7 +31,7 @@ android {
 
 dependencies {
   implementation(project(":artemis-rpc"))
-  implementation(project(":artemis-runtime"))
+  implementation(project(":artemis-core"))
   implementation(project(":artemis-wallet"))
   implementation(project(":artemis-wallet-mwa-android"))
   implementation(project(":artemis-candy-machine-presets"))

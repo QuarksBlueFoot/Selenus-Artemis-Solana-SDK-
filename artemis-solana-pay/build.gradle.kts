@@ -8,6 +8,6 @@ dependencies {
     testImplementation(project(":artemis-rpc"))
     
     implementation(kotlin("stdlib"))
-    implementation(project(":artemis-runtime"))
+    implementation(project(":artemis-core"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 }

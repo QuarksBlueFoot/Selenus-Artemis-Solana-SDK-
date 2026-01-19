@@ -10,7 +10,7 @@ dependencies {
   implementation(project(":artemis-logging"))
 implementation(project(":artemis-gaming"))
   implementation(project(":artemis-vtx"))
-  implementation(project(":artemis-runtime"))
+  implementation(project(":artemis-core"))
   implementation(project(":artemis-rpc"))
 }
 

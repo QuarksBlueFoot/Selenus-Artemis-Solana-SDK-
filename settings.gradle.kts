@@ -7,8 +7,7 @@ pluginManagement {
 }
 
 rootProject.name="selenus-artemis-kotlin-solana-sdk"
-include(":artemis-core")
-include(":artemis-rpc",":artemis-tx",":artemis-runtime",":artemis-preview")
+include(":artemis-rpc",":artemis-tx",":artemis-core",":artemis-preview")
 include(":artemis-programs")
 include(":artemis-metaplex")
 

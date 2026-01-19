@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.4.0
+
+**Breaking Change**: Renamed `artemis-runtime` to `artemis-core` to match Solana Mobile SDK naming convention.
+
+### Changed
+
+- **Module Rename**: `artemis-runtime` → `artemis-core`
+  - Matches Solana Mobile's `web3-core` naming convention for drop-in compatibility
+  - Also absorbed former `artemis-core` (multiplatform) utilities
+  - `artemis-core` is now the single foundational module containing:
+    - Primitives: Pubkey, Keypair, Base58, Pda, Crypto, Signer
+    - Utilities: BatchProcessor, Flows, StateManagement, TransactionPipeline
+
+### Migration
+
+Replace `artemis-runtime` dependency with `artemis-core`:
+```kotlin
+// Before
+implementation("xyz.selenus:artemis-runtime:1.3.x")
+
+// After  
+implementation("xyz.selenus:artemis-core:1.4.0")
+```
+
+Import paths remain the same (`com.selenus.artemis.core.*`).
+
+### Removed
+
+- `artemis-runtime` module (renamed to `artemis-core`)
+- `artemis-core-jvm` multiplatform artifact (no longer needed)
+
 ## 1.3.1
 
 Patch release fixing Maven Central publishing for multiplatform modules.

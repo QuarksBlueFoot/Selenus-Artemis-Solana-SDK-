@@ -14,7 +14,7 @@ dependencies{
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
   implementation(project(":artemis-logging"))
   implementation(kotlin("stdlib"))
-  implementation(project(":artemis-runtime"))
+  implementation(project(":artemis-core"))
   implementation(project(":artemis-rpc"))
   implementation(project(":artemis-tx"))
   implementation(project(":artemis-vtx"))
