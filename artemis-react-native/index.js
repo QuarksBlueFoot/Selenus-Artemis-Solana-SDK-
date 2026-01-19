@@ -1,6 +1,15 @@
 import { NativeModules, Platform } from 'react-native';
 export { MobileWalletAdapter } from './MobileWalletAdapter';
 export { Base58, Base58Check, Crypto, ArtemisPlatform } from './Base58';
+export { ArcanaFlow, GameSessionManager, AdaptiveFee } from './Gaming';
+export { 
+  VersionedTx, 
+  ComputeOptimizer, 
+  Cnft, 
+  SolanaPay, 
+  TransactionPreview, 
+  AccountDetector 
+} from './Enhanced';
 
 const { ArtemisModule } = NativeModules;
 

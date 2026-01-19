@@ -5,6 +5,43 @@
 // Re-export MobileWalletAdapter
 export { MobileWalletAdapter, MobileWalletAdapterConfig, MobileWalletName } from './MobileWalletAdapter';
 
+// Gaming exports
+export { 
+  GameAction, 
+  GameFrame, 
+  FrameResult, 
+  ArcanaFlowConfig,
+  ArcanaFlow,
+  Player,
+  SessionEvent,
+  GameSession,
+  SessionConfig,
+  GameSessionManager,
+  FeeRecommendation,
+  CongestionLevel,
+  AdaptiveFee
+} from './Gaming';
+
+// Enhanced exports
+export {
+  VersionedTxConfig,
+  TxSizeEstimate,
+  ComputeBudget,
+  ComputePreset,
+  CnftAsset,
+  CnftMetadata,
+  PaymentSession,
+  SimulationResult,
+  TransactionPreview as TransactionPreviewType,
+  AccountType,
+  VersionedTx,
+  ComputeOptimizer,
+  Cnft,
+  SolanaPay,
+  TransactionPreview,
+  AccountDetector
+} from './Enhanced';
+
 // Base58 utilities
 export declare const Base58: {
   encode(bytes: Uint8Array | string): Promise<string>;
