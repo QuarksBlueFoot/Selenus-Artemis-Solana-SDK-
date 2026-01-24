@@ -49,11 +49,11 @@ implementation("xyz.selenus:artemis-wallet-mwa-android:1.5.0")  // Includes MWA 
 
 | Current Import | Artemis Import |
 |----------------|----------------|
-| `com.solana.publickey.SolanaPublicKey` | `xyz.selenus.artemis.core.Pubkey` |
-| `com.solana.rpc.SolanaRpcClient` | `xyz.selenus.artemis.rpc.RpcClient` |
+| `com.solana.publickey.SolanaPublicKey` | `com.selenus.artemis.core.Pubkey` |
+| `com.solana.rpc.SolanaRpcClient` | `com.selenus.artemis.rpc.RpcClient` |
 | `com.solana.networking.KtorNetworkDriver` | Not needed (built-in) |
-| `com.solana.mobilewalletadapter.clientlib.*` | `xyz.selenus.artemis.wallet.mwa.*` |
-| `com.solanamobile.seedvault.*` | `xyz.selenus.artemis.seedvault.*` |
+| `com.solana.mobilewalletadapter.clientlib.*` | `com.selenus.artemis.wallet.mwa.*` |
+| `com.solanamobile.seedvault.*` | `com.selenus.artemis.seedvault.*` |
 
 **What you gain:**
 - ✅ WebSocket subscriptions (solana-kmp doesn't have this!)
@@ -319,6 +319,178 @@ val feeIxs = listOf(
   ComputeBudgetPresets.setComputeUnitLimit(ComputeBudgetPresets.Tier.COMPETITIVE.units),
   ComputeBudgetPresets.setComputeUnitPrice(microLamports)
 )
+```
+
+## API Reference
+
+### Correct Import Paths
+
+Below are the correct import paths for commonly used Artemis classes:
+
+#### Core & RPC
+```kotlin
+import com.selenus.artemis.runtime.Pubkey
+import com.selenus.artemis.runtime.Keypair
+import com.selenus.artemis.runtime.Base58
+import com.selenus.artemis.runtime.Pda
+import com.selenus.artemis.rpc.RpcApi
+import com.selenus.artemis.rpc.JsonRpcClient
+import com.selenus.artemis.rpc.AccountInfo       // Typed account info wrapper
+import com.selenus.artemis.rpc.TokenAccountInfo  // Typed token account wrapper
+import com.selenus.artemis.rpc.MintInfo          // Typed mint info wrapper
+```
+
+#### Token-2022
+```kotlin
+import com.selenus.artemis.token2022.Token2022Tlv        // TLV decoding utilities
+import com.selenus.artemis.token2022.Token2022Instructions
+import com.selenus.artemis.token2022.Token2022Extensions
+```
+
+#### Compute Budget
+```kotlin
+import com.selenus.artemis.compute.ComputeBudgetPresets  // Standard/Enhanced/Priority tiers
+import com.selenus.artemis.compute.ComputeBudgetProgram  // Low-level instruction builders
+import com.selenus.artemis.compute.ComputeOptimizer
+import com.selenus.artemis.compute.PriorityFees
+```
+
+#### Gaming (Verifiable Randomness, State Proofs, Rewards)
+```kotlin
+// NOTE: Class is VerifiableRandomness, not VrfUtils
+import com.selenus.artemis.gaming.VerifiableRandomness  // VRF and commit-reveal
+import com.selenus.artemis.gaming.GameStateProofs       // Merkle proofs, fraud proofs
+import com.selenus.artemis.gaming.RewardDistribution    // Payout strategies
+import com.selenus.artemis.gaming.PriorityFeeOracle     // Adaptive fee suggestions
+import com.selenus.artemis.gaming.ComputeBudgetPresets as GamingPresets  // Gaming-specific presets
+import com.selenus.artemis.gaming.ArcanaFlow            // Frame batching
+import com.selenus.artemis.gaming.AltSessionCache       // ALT caching
+```
+
+#### Privacy
+```kotlin
+import com.selenus.artemis.privacy.ConfidentialTransfer  // Encrypted amounts, range proofs
+import com.selenus.artemis.privacy.RingSignature         // Anonymous group signing
+import com.selenus.artemis.privacy.MixingPool            // CoinJoin-style mixing
+import com.selenus.artemis.privacy.ZeroKnowledgeProofs   // ZK proof utilities
+```
+
+#### DePIN (Device Identity & Location)
+```kotlin
+import com.selenus.artemis.depin.DeviceIdentity      // Device key derivation
+import com.selenus.artemis.depin.DeviceAttestation   // Attestation proofs & challenges
+import com.selenus.artemis.depin.LocationProof       // Signed location proofs (in DeviceIdentity.kt)
+import com.selenus.artemis.depin.TelemetryBatcher    // Telemetry batching
+```
+
+#### WebSocket
+```kotlin
+import com.selenus.artemis.ws.SolanaWebSocket
+import com.selenus.artemis.ws.SubscriptionManager
+```
+
+### Typed RPC Responses
+
+Artemis v1.5.0 provides typed account info responses:
+
+```kotlin
+val api = RpcApi(JsonRpcClient("https://api.mainnet-beta.solana.com"))
+
+// Get typed account info with .owner, .lamports, .data properties
+val accountInfo = api.getAccountInfoParsed("...pubkey...")
+println("Owner: ${accountInfo?.owner}")
+println("Lamports: ${accountInfo?.lamports}")
+println("Data size: ${accountInfo?.data?.size} bytes")
+
+// Get typed token account info
+val tokenInfo = api.getTokenAccountInfoParsed("...token-account...")
+println("Mint: ${tokenInfo?.mint}")
+println("Owner: ${tokenInfo?.owner}")
+println("Amount: ${tokenInfo?.amount}")
+
+// Get typed mint info
+val mintInfo = api.getMintInfoParsed("...mint...")
+println("Decimals: ${mintInfo?.decimals}")
+println("Supply: ${mintInfo?.supply}")
+```
+
+### Token-2022 TLV Decoding
+
+```kotlin
+// Decode TLV extensions from raw account data
+val accountData = api.getAccountInfoBase64("...token2022-mint...")
+val entries = Token2022Tlv.decode(accountData!!)
+
+// Check for specific extensions
+if (Token2022Tlv.hasExtension(entries, Token2022Tlv.ExtensionType.TRANSFER_FEE_CONFIG)) {
+    val feeEntries = Token2022Tlv.findByType(entries, Token2022Tlv.ExtensionType.TRANSFER_FEE_CONFIG)
+    // Process transfer fee config...
+}
+
+// List all extensions
+entries.forEach { entry ->
+    println("Extension: ${Token2022Tlv.getTypeName(entry.type.toInt())}")
+}
+```
+
+### Compute Budget Presets
+
+```kotlin
+// Use preset tiers
+val instructions = ComputeBudgetPresets.preset(ComputeBudgetPresets.Tier.PRIORITY)
+
+// Custom compute settings
+val customIxs = listOf(
+    ComputeBudgetPresets.setComputeUnitLimit(500_000),
+    ComputeBudgetPresets.setComputeUnitPrice(2_000)
+)
+
+// Transaction-type based estimation
+val estimatedUnits = ComputeBudgetPresets.estimateForTransaction(
+    ComputeBudgetPresets.TransactionType.TOKEN_TRANSFER
+)
+```
+
+### Gaming: Verifiable Randomness
+
+```kotlin
+// Commit-reveal pattern for provably fair randomness
+val commitment = VerifiableRandomness.commit(secretSeed = mySecret.toByteArray())
+// ... submit commitment on-chain ...
+
+// Later, reveal and verify
+val randomValue = VerifiableRandomness.reveal(secretSeed = mySecret.toByteArray())
+val isValid = VerifiableRandomness.verifyReveal(commitment, mySecret.toByteArray())
+```
+
+### Privacy: Confidential Transfers
+
+```kotlin
+// Create encrypted transfer amount
+val encrypted = ConfidentialTransfer.encryptAmount(
+    amount = 1_000_000L,
+    recipientPubkey = recipientKey
+)
+
+// Generate range proof (amount is within valid range)
+val rangeProof = ConfidentialTransfer.generateRangeProof(
+    amount = 1_000_000L,
+    blindingFactor = encrypted.blindingFactor
+)
+```
+
+### DePIN: Device Attestation
+
+```kotlin
+// Create device identity
+val identity = DeviceIdentity.fromDeviceId("unique-device-id", networkId = "myNetwork")
+
+// Create and respond to attestation challenge
+val challenge = DeviceAttestation.createChallenge(networkId = "myNetwork")
+val proof = DeviceAttestation.respondToChallenge(identity, challenge)
+
+// Verify attestation
+val isValid = DeviceAttestation.verifyAttestation(proof, expectedDeviceId = "unique-device-id")
 ```
 
 ## License

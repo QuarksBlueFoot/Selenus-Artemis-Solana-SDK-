@@ -69,6 +69,42 @@ open class RpcApi(private val client: JsonRpcClient) {
     return Base64.getDecoder().decode(b64)
   }
 
+  /**
+   * Get account info with typed response.
+   * 
+   * @param pubkeyBase58 The account public key in base58
+   * @param commitment The commitment level
+   * @return AccountInfo with owner, lamports, data, etc.
+   */
+  suspend fun getAccountInfoParsed(pubkeyBase58: String, commitment: String = "confirmed"): AccountInfo? {
+    val json = getAccountInfo(pubkeyBase58, commitment, encoding = "base64")
+    return AccountInfo.fromJson(json)
+  }
+
+  /**
+   * Get token account info with typed response.
+   * 
+   * @param pubkeyBase58 The token account public key in base58
+   * @param commitment The commitment level
+   * @return TokenAccountInfo with mint, owner, amount, etc.
+   */
+  suspend fun getTokenAccountInfoParsed(pubkeyBase58: String, commitment: String = "confirmed"): TokenAccountInfo? {
+    val json = getAccountInfo(pubkeyBase58, commitment, encoding = "jsonParsed")
+    return TokenAccountInfo.fromParsedJson(json)
+  }
+
+  /**
+   * Get mint info with typed response.
+   * 
+   * @param mintBase58 The mint public key in base58
+   * @param commitment The commitment level
+   * @return MintInfo with authority, supply, decimals, etc.
+   */
+  suspend fun getMintInfoParsed(mintBase58: String, commitment: String = "confirmed"): MintInfo? {
+    val json = getAccountInfo(mintBase58, commitment, encoding = "jsonParsed")
+    return MintInfo.fromParsedJson(json)
+  }
+
   suspend fun getMultipleAccounts(pubkeys: List<String>, commitment: String = "confirmed", encoding: String = "base64"): JsonObject {
     val params = buildJsonArray {
       add(JsonArray(pubkeys.map { JsonPrimitive(it) }))

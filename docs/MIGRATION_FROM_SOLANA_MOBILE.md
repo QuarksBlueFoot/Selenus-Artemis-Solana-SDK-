@@ -120,11 +120,11 @@ import com.solana.publickey.SolanaPublicKey
 val pk = SolanaPublicKey.from("base58string")
 
 // AFTER (Artemis)
-import xyz.selenus.artemis.core.Pubkey
+import com.selenus.artemis.runtime.Pubkey
 val pk = Pubkey.fromBase58("base58string")
 
 // OR use type alias for zero code changes:
-import xyz.selenus.artemis.compat.SolanaPublicKey
+import com.selenus.artemis.compat.SolanaPublicKey
 val pk = SolanaPublicKey.from("base58string")  // Works!
 
 // ═══════════════════════════════════════════════════════════════
@@ -138,8 +138,10 @@ val rpc = SolanaRpcClient("https://api.devnet.solana.com", KtorNetworkDriver())
 val balance = rpc.getBalance(pubkey)
 
 // AFTER (Artemis - simpler!)
-import xyz.selenus.artemis.rpc.RpcClient
-val rpc = RpcClient("https://api.devnet.solana.com")  // No driver needed
+import com.selenus.artemis.rpc.RpcApi
+import com.selenus.artemis.rpc.JsonRpcClient
+val client = JsonRpcClient("https://api.devnet.solana.com")  // No driver needed
+val rpc = RpcApi(client)
 val balance = rpc.getBalance(pubkey)
 
 // ═══════════════════════════════════════════════════════════════
@@ -151,7 +153,7 @@ import com.solana.keypair.SolanaKeypair
 val keypair = SolanaKeypair.generate()
 
 // AFTER (Artemis)
-import xyz.selenus.artemis.core.Keypair
+import com.selenus.artemis.runtime.Keypair
 val keypair = Keypair()  // Generates new
 
 // ═══════════════════════════════════════════════════════════════
@@ -164,8 +166,8 @@ import com.solana.mobilewalletadapter.clientlib.ConnectionIdentity
 val mwa = MobileWalletAdapter(connectionIdentity)
 
 // AFTER (Artemis)
-import xyz.selenus.artemis.wallet.mwa.MobileWalletAdapter
-import xyz.selenus.artemis.wallet.mwa.ConnectionIdentity
+import com.selenus.artemis.wallet.mwa.MobileWalletAdapter
+import com.selenus.artemis.wallet.mwa.ConnectionIdentity
 val mwa = MobileWalletAdapter(connectionIdentity)  // Same API!
 ```
 
@@ -196,7 +198,7 @@ val secretKey = keypair.secretKey
 
 #### Artemis (drop-in compatible)
 ```kotlin
-import xyz.selenus.artemis.core.Keypair
+import com.selenus.artemis.runtime.Keypair
 
 val keypair = Keypair()
 val secretKey = keypair.secret
@@ -214,7 +216,7 @@ val base58 = pk.toString()
 
 #### Artemis (drop-in compatible)
 ```kotlin
-import xyz.selenus.artemis.core.Pubkey
+import com.selenus.artemis.runtime.Pubkey
 
 val pk = Pubkey.fromBase58("base58string")
 val bytes = pk.bytes
@@ -232,7 +234,7 @@ val decoded = Base58.decode(encoded)
 
 #### Artemis (drop-in compatible)
 ```kotlin
-import xyz.selenus.artemis.core.Base58
+import com.selenus.artemis.runtime.Base58
 
 val encoded = Base58.encode(bytes)  // Identical API!
 val decoded = Base58.decode(encoded)
@@ -255,7 +257,7 @@ val pda = ProgramDerivedAddress.find(
 
 #### Artemis (drop-in compatible)
 ```kotlin
-import xyz.selenus.artemis.core.Pda
+import com.selenus.artemis.runtime.Pda
 
 val (pda, bump) = Pda.findProgramAddress(
     seeds = listOf(seed1, seed2),
@@ -279,18 +281,19 @@ val balance = rpc.getBalance(publicKey)
 
 #### Artemis (simpler, more features)
 ```kotlin
-import xyz.selenus.artemis.rpc.RpcClient
+import com.selenus.artemis.rpc.RpcApi
+import com.selenus.artemis.rpc.JsonRpcClient
 
-val rpc = RpcClient("https://api.mainnet-beta.solana.com")
+val client = JsonRpcClient("https://api.mainnet-beta.solana.com")
+val rpc = RpcApi(client)
 
 // Suspend function - clean and simple!
 val balance = rpc.getBalance(publicKey)
 
-// Or use Flow for reactive updates
-val balanceFlow: Flow<Long> = rpc.observeBalance(publicKey)
-balanceFlow.collect { balance ->
-    updateUI(balance)
-}
+// Artemis also provides typed account responses:
+val accountInfo = rpc.getAccountInfoParsed(publicKey)
+println("Owner: ${accountInfo?.owner}")
+println("Lamports: ${accountInfo?.lamports}")
 ```
 
 ---
@@ -370,22 +373,182 @@ val signature = withContext(Dispatchers.IO) {
 
 After migrating, you get access to features not available in solana-kmp or Solana Mobile SDK:
 
-### 1. Token-2022 Support
+### 1. Privacy Module (`artemis-privacy`)
+```kotlin
+import com.selenus.artemis.privacy.*
+
+// Confidential Transfers - Hide transaction amounts
+val senderKeys = ConfidentialTransfer.generateKeys()
+val recipientKeys = ConfidentialTransfer.generateKeys()
+
+val amount = 1_000_000L  // 1 SOL
+val commitment = ConfidentialTransfer.encryptAmount(
+    amount = amount,
+    recipientPubkey = recipientKeys.publicKey,
+    senderKeys = senderKeys
+)
+
+// Verify without revealing amount
+val isValid = ConfidentialTransfer.verifyCommitment(
+    commitment = commitment,
+    recipientPubkey = recipientKeys.publicKey
+)
+
+// Ring Signatures - Anonymous transactions
+val yourKeypair = Keypair.generate()
+val decoy1 = Keypair.generate().publicKey
+val decoy2 = Keypair.generate().publicKey
+
+val ring = listOf(
+    yourKeypair.publicKey.bytes,
+    decoy1.bytes,
+    decoy2.bytes
+)
+
+val message = "transfer:100000:recipient".toByteArray()
+val signature = RingSignature.sign(
+    message = message,
+    signerPrivateKey = yourKeypair.secretKey,
+    ring = ring,
+    signerIndex = 0
+)
+
+// Anyone can verify, but can't tell which member signed
+val isValid = RingSignature.verify(message, signature, ring)
+
+// Mixing Pools - CoinJoin-style privacy
+val pool = MixingPool.createPool(
+    poolId = "mix-round-42",
+    denomination = 1_000_000L,
+    minParticipants = 3,
+    maxParticipants = 10,
+    timeout = 300_000L
+)
+
+val commitment = MixingPool.commit(
+    participantKeypair = yourKeypair,
+    denomination = 1_000_000L,
+    outputAddress = "your_output_address"
+)
+pool.addCommitment(commitment)
+```
+
+### 2. Gaming Module (`artemis-gaming`)
+```kotlin
+import com.selenus.artemis.gaming.*
+
+// Verifiable Randomness - Provably fair RNG
+val (commitment, secret) = VerifiableRandomness.commit()
+// Submit commitment on-chain...
+// Later reveal to prove fairness
+val reveal = VerifiableRandomness.Reveal(
+    value = secret.copyOfRange(0, 32),
+    salt = secret.copyOfRange(32, 48),
+    commitment = commitment
+)
+val isValid = reveal.verify()
+
+// VRF (Verifiable Random Function)
+val vrfOutput = VerifiableRandomness.vrfGenerate(
+    privateKey = gameServerKey,
+    message = "game-round-42".toByteArray()
+)
+
+// Reward Distribution - Flexible payout strategies
+val totalPool = 10_000_000L  // 0.01 SOL
+
+// Linear decay (50%, 33%, 17%)
+val linear = RewardDistribution.PayoutStrategy.LinearDecay(topN = 3)
+val payouts = linear.calculate(totalPool, 3)
+
+// Exponential (heavier top-weighting)
+val exp = RewardDistribution.PayoutStrategy.ExponentialPayout(
+    topN = 3,
+    decayFactor = 0.5
+)
+
+// Merkle claims for gas-efficient distribution
+val claims = winners.zip(payouts).map { (pubkey, amount) ->
+    RewardDistribution.RewardClaim(
+        recipient = pubkey,
+        amount = amount,
+        metadata = mapOf("rank" to "top3")
+    )
+}
+
+val rewardTree = RewardDistribution.RewardTree.build(claims)
+val proof = rewardTree.generateProof(player1Pubkey)
+
+// Game State Proofs - Cryptographic verification
+val gameState = GameStateProofs.GameState(
+    stateHash = ByteArray(32),
+    nonce = 0,
+    timestamp = System.currentTimeMillis(),
+    players = listOf(player1, player2),
+    data = mapOf(
+        "player1_hp" to byteArrayOf(100),
+        "player2_hp" to byteArrayOf(100)
+    )
+)
+
+val newState = gameState.update("player1_hp", byteArrayOf(90))
+val stateTree = GameStateProofs.buildStateTree(newState)
+```
+
+### 3. Token-2022 Complete Support (`artemis-token2022`)
 ```kotlin
 import com.selenus.artemis.token2022.*
 
-// Transfer with fee
-val ix = Token2022.transferCheckedWithFee(
-    source, destination, mint, owner, amount, decimals, fee
+// All 8 extensions supported
+val extensions = listOf(
+    Token2022Extension.TransferFeeConfig(100, 10000),
+    Token2022Extension.InterestBearingConfig(authority, 500),
+    Token2022Extension.NonTransferable,
+    Token2022Extension.PermanentDelegate(delegateAuthority),
+    Token2022Extension.TransferHook(programId),
+    Token2022Extension.MetadataPointer(metadataAddress)
 )
 
-// Confidential transfers
-val ix = Token2022.initializeConfidentialTransferMint(mint, authority)
+val instructions = AdvancedToken2022Extensions.prepareMintWithExtensions(
+    mint = mintKeypair.publicKey,
+    mintAuthority = authority,
+    decimals = 9,
+    extensions = extensions,
+    payer = payer
+)
 ```
 
-### 2. WebSocket Subscriptions
+### 4. NFT Batch Operations (`artemis-metaplex`)
 ```kotlin
-import com.selenus.artemis.ws.SolanaWebSocket
+import com.selenus.artemis.metaplex.*
+
+// Batch mint 4 NFTs per transaction
+val metadata = listOf(
+    NftMetadata("NFT #1", "https://arweave.net/1", 500),
+    NftMetadata("NFT #2", "https://arweave.net/2", 500),
+    NftMetadata("NFT #3", "https://arweave.net/3", 500),
+    NftMetadata("NFT #4", "https://arweave.net/4", 500)
+)
+
+val result = AdvancedNftOperations.batchMintNfts(
+    payer = payer,
+    creator = creator,
+    metadataList = metadata,
+    rpcClient = rpc
+)
+
+// Dynamic metadata with state hashing
+val dynamicMetadata = AdvancedNftOperations.DynamicMetadata(
+    baseUri = "https://api.mygame.com/nft",
+    stateHash = gameState.stateHash,
+    updateAuthority = updateAuthority,
+    mutable = true
+)
+```
+
+### 5. WebSocket Subscriptions (`artemis-ws`)
+```kotlin
+import com.selenus.artemis.ws.*
 
 val ws = SolanaWebSocket("wss://api.mainnet-beta.solana.com")
 
@@ -402,37 +565,42 @@ ws.signatureSubscribe(signature).collect { status ->
 }
 ```
 
-### 3. Compute Budget Management
+### 6. Enhanced Wallet Integration (`artemis-wallet`)
 ```kotlin
-import com.selenus.artemis.compute.*
+import com.selenus.artemis.wallet.*
 
-// Add priority fee
-val ix = ComputeBudget.setComputeUnitPrice(microLamports = 1000)
+// SendTransactionOptions with commitment control
+val options = SendTransactionOptions(
+    commitment = CommitmentLevel.FINALIZED,
+    preflightCommitment = CommitmentLevel.PROCESSED,
+    skipPreflight = false,
+    maxRetries = 3
+)
 
-// Set compute limit
-val ix = ComputeBudget.setComputeUnitLimit(units = 200_000)
-```
+val signature = wallet.signAndSendTransaction(
+    transaction = tx,
+    options = options
+)
 
-### 4. Privacy Features
-```kotlin
-import com.selenus.artemis.privacy.*
-
-// Generate stealth address
-val (stealthPubkey, ephemeralPubkey) = StealthAddress.generate(
-    recipientSpendKey,
-    recipientViewKey
+// Batch transactions with ordered execution
+val results = wallet.signAndSendTransactions(
+    transactions = listOf(tx1, tx2, tx3),
+    waitForCommitmentToSendNextTransaction = true
 )
 ```
 
-### 5. Gaming Utilities
+### 7. Compute Budget Management (`artemis-compute`)
 ```kotlin
-import com.selenus.artemis.gaming.*
+import com.selenus.artemis.compute.*
 
-// Session keys for gasless transactions
-val sessionKey = SessionKey.create(expiry = 3600)
+// Game-optimized presets
+val instructions = ComputeBudgetPresets.preset(
+    ComputeBudgetPresets.Tier.COMPETITIVE
+)
 
-// Merkle proofs for on-chain verification
-val proof = MerkleTree.generateProof(leaves, index)
+// Custom priority fees
+val ix = ComputeBudget.setComputeUnitPrice(microLamports = 1000)
+val ix2 = ComputeBudget.setComputeUnitLimit(units = 200_000)
 ```
 
 ---
@@ -482,7 +650,7 @@ const signatures = await MWA.signTransactions(transactions);
 
 Make sure you're importing from Artemis:
 ```kotlin
-import xyz.selenus.artemis.core.Pubkey       // ✅ Artemis
+import com.selenus.artemis.runtime.Pubkey    // ✅ Artemis
 import com.solana.publickey.SolanaPublicKey  // ❌ Old solana-kmp
 ```
 
@@ -493,11 +661,34 @@ The `secretKey` property is an extension. Make sure you have the correct import:
 import com.selenus.artemis.runtime.*  // Includes extensions
 ```
 
+### "Unresolved reference: Token2022Tlv"
+
+Make sure you're using the correct package:
+```kotlin
+import com.selenus.artemis.token2022.Token2022Tlv  // ✅ Correct
+```
+
+### "Unresolved reference: ComputeBudgetPresets"
+
+Available in both compute and gaming modules:
+```kotlin
+import com.selenus.artemis.compute.ComputeBudgetPresets  // ✅ From compute module
+import com.selenus.artemis.gaming.ComputeBudgetPresets   // ✅ From gaming module (with gaming presets)
+```
+
+### "Unresolved reference: VrfUtils"
+
+The class is named `VerifiableRandomness`:
+```kotlin
+import com.selenus.artemis.gaming.VerifiableRandomness  // ✅ Correct name
+// NOT: import com.selenus.artemis.gaming.VrfUtils      // ❌ Wrong name
+```
+
 ### MWA not connecting
 
 Ensure you have the Android MWA module:
 ```kotlin
-implementation("xyz.selenus:artemis-wallet-mwa-android:1.4.0")
+implementation("xyz.selenus:artemis-wallet-mwa-android:1.5.0")
 ```
 
 ### Build errors with BouncyCastle

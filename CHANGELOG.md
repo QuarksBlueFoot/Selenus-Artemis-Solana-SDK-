@@ -1,5 +1,77 @@
 # Changelog
 
+## 1.5.1 - January 24, 2026
+
+**Patch Release**: API Fixes & Documentation Improvements
+
+This patch addresses API issues reported by integrators and improves documentation accuracy.
+
+### 🔧 Fixes
+
+#### Token-2022 Module (`artemis-token2022`)
+- **Added** `Token2022Tlv` in correct package `com.selenus.artemis.token2022`
+  - TLV decoding utilities for all 19 Token-2022 extension types
+  - `decode()`, `findByType()`, `hasExtension()`, `getTypeName()` methods
+
+#### Compute Budget Module (`artemis-compute`)
+- **Added** `ComputeBudgetPresets` to `artemis-compute` module (was only in `artemis-gaming`)
+  - Tier enum: `STANDARD`, `ENHANCED`, `PRIORITY`, `URGENT`, `MAXIMUM`
+  - `preset(tier)`, `setComputeUnitLimit(units)`, `setComputeUnitPrice(microLamports)`
+  - `custom(units, microLamports)` for advanced use cases
+
+#### DePIN Module (`artemis-depin`)
+- **Added** `DeviceAttestation` for device attestation proofs
+  - `createAttestation()`, `createChallenge()`, `respondToChallenge()`, `verifyAttestation()`
+  - `AttestationProof` and `AttestationChallenge` data classes
+- **Clarified** `LocationProof` is a data class inside `DeviceIdentity.kt`
+
+#### RPC Module (`artemis-rpc`)
+- **Added** `AccountInfo` typed wrapper with `.owner`, `.lamports`, `.data` properties
+- **Added** `TokenAccountInfo` for parsed SPL token accounts
+- **Added** `MintInfo` for parsed mint accounts
+- **Added** `getAccountInfoParsed()`, `getTokenAccountInfoParsed()`, `getMintInfoParsed()` methods to `RpcApi`
+
+### 📚 Documentation
+
+- **Updated** README.md with comprehensive API Reference section
+  - Correct import paths for all modules
+  - Code samples for Token-2022, Compute, Gaming, Privacy, DePIN
+- **Updated** Migration Guide with accurate package names
+- **Added** Troubleshooting section for common import issues
+- **Clarified** class naming: `VerifiableRandomness` (not `VrfUtils`)
+
+### Correct Import Paths (Quick Reference)
+
+```kotlin
+// Core
+import com.selenus.artemis.runtime.Pubkey
+import com.selenus.artemis.runtime.Keypair
+
+// RPC with typed responses
+import com.selenus.artemis.rpc.RpcApi
+import com.selenus.artemis.rpc.AccountInfo
+
+// Token-2022
+import com.selenus.artemis.token2022.Token2022Tlv
+
+// Compute
+import com.selenus.artemis.compute.ComputeBudgetPresets
+
+// Gaming (note: VerifiableRandomness, not VrfUtils)
+import com.selenus.artemis.gaming.VerifiableRandomness
+import com.selenus.artemis.gaming.PriorityFeeOracle
+import com.selenus.artemis.gaming.RewardDistribution
+
+// Privacy
+import com.selenus.artemis.privacy.ConfidentialTransfer
+
+// DePIN
+import com.selenus.artemis.depin.DeviceAttestation
+import com.selenus.artemis.depin.DeviceIdentity  // Contains LocationProof
+```
+
+---
+
 ## 1.5.0 - January 24, 2026
 
  **Major Release**: Production-Ready Privacy & Gaming Innovations
