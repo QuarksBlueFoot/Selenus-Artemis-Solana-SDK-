@@ -3,6 +3,9 @@ package com.selenus.artemis.wallet.mwa
 import android.app.Activity
 import android.net.Uri
 import com.selenus.artemis.runtime.Pubkey
+import com.selenus.artemis.wallet.BatchSendResult
+import com.selenus.artemis.wallet.SendTransactionOptions
+import com.selenus.artemis.wallet.SendTransactionResult
 import com.selenus.artemis.wallet.WalletAdapter
 import com.selenus.artemis.wallet.WalletAdapterSignAndSend
 import com.selenus.artemis.wallet.WalletCapabilities
@@ -148,17 +151,153 @@ class MwaWalletAdapter(
     return signatures.first()
   }
 
+  /**
+   * signAndSendTransaction (Single Transaction)
+   *
+   * Signs and sends a single transaction via MWA, returning a structured result.
+   * This is the primary method for the new WalletAdapterSignAndSend interface.
+   */
+  override suspend fun signAndSendTransaction(
+    transaction: ByteArray,
+    options: SendTransactionOptions
+  ): SendTransactionResult {
+    if (pk == null || session == null) connect()
+    val s = session ?: throw IllegalStateException("MWA session not ready")
+    val c = ensureMwaCapabilities()
 
+    return try {
+      if (c.supportsSignAndSend()) {
+        // Use MWA sign-and-send with options mapped to MwaSendOptions
+        val mwaOptions = mapToMwaOptions(options)
+        val sigs = client.signAndSend(s, listOf(transaction), options = mwaOptions)
+        val signature = sigs.firstOrNull() ?: ""
+        SendTransactionResult(
+          signature = signature,
+          confirmed = options.waitForConfirmation,
+          slot = null,
+          error = null
+        )
+      } else {
+        // Fallback: sign only, no broadcast - caller needs to handle sending
+        client.signTransactions(s, listOf(transaction))
+        SendTransactionResult(
+          signature = "",
+          confirmed = false,
+          slot = null,
+          error = "Wallet does not support sign-and-send. Transaction signed but not broadcast."
+        )
+      }
+    } catch (e: Exception) {
+      SendTransactionResult(
+        signature = "",
+        confirmed = false,
+        slot = null,
+        error = e.message ?: "Unknown error during signAndSendTransaction"
+      )
+    }
+  }
 
   /**
-   * signAndSendTransactions
+   * signAndSendTransactions (Batch with Options)
+   *
+   * Signs and sends multiple transactions via MWA, returning structured batch results.
+   * Supports ordered/dependent transactions via waitForCommitmentToSendNextTransaction.
+   */
+  override suspend fun signAndSendTransactions(
+    transactions: List<ByteArray>,
+    options: SendTransactionOptions
+  ): BatchSendResult {
+    if (transactions.isEmpty()) {
+      return BatchSendResult(results = emptyList())
+    }
+
+    if (pk == null || session == null) connect()
+    val s = session ?: throw IllegalStateException("MWA session not ready")
+    val c = ensureMwaCapabilities()
+
+    val max = c.maxTransactionsPerRequest ?: transactions.size
+    val parts = chunk(transactions, max)
+    val results = ArrayList<SendTransactionResult>(transactions.size)
+
+    if (c.supportsSignAndSend()) {
+      val mwaOptions = mapToMwaOptions(options)
+      
+      for (part in parts) {
+        try {
+          val sigs = client.signAndSend(s, part, options = mwaOptions)
+          // Map each signature to a result
+          for ((index, sig) in sigs.withIndex()) {
+            results.add(SendTransactionResult(
+              signature = sig,
+              confirmed = options.waitForConfirmation,
+              slot = null,
+              error = null
+            ))
+          }
+        } catch (e: Exception) {
+          // Mark all transactions in this batch as failed
+          for (i in part.indices) {
+            results.add(SendTransactionResult(
+              signature = "",
+              confirmed = false,
+              slot = null,
+              error = e.message ?: "Batch send failed"
+            ))
+          }
+        }
+      }
+    } else {
+      // Fallback: sign only
+      for (part in parts) {
+        try {
+          client.signTransactions(s, part)
+          for (i in part.indices) {
+            results.add(SendTransactionResult(
+              signature = "",
+              confirmed = false,
+              slot = null,
+              error = "Wallet does not support sign-and-send. Signed but not broadcast."
+            ))
+          }
+        } catch (e: Exception) {
+          for (i in part.indices) {
+            results.add(SendTransactionResult(
+              signature = "",
+              confirmed = false,
+              slot = null,
+              error = e.message ?: "Sign failed"
+            ))
+          }
+        }
+      }
+    }
+
+    return BatchSendResult(results = results)
+  }
+
+  /**
+   * Maps Artemis SendTransactionOptions to MWA-specific options.
+   */
+  private fun mapToMwaOptions(options: SendTransactionOptions): MwaSendOptions? {
+    // Create MWA options from Artemis options
+    return MwaSendOptions(
+      minContextSlot = options.minContextSlot,
+      skipPreflight = options.skipPreflight,
+      maxRetries = options.maxRetries,
+      preflightCommitment = options.preflightCommitment.name.lowercase()
+    )
+  }
+
+  /**
+   * signAndSendTransactions (Legacy)
    *
    * If the wallet supports sign-and-send, use it and return signatures.
    * Otherwise fall back to sign-only and return an empty signature list.
    *
    * For the fallback path, use MwaFallbackRouter.sendViaRpc(rpc, signedTxBytes) to broadcast with Artemis RPC.
    */
-  override suspend fun signAndSendTransactions(
+  @Deprecated("Use signAndSendTransactions with SendTransactionOptions instead")
+  suspend fun signAndSendTransactionsLegacy(
   transactions: List<ByteArray>,
   request: WalletRequest
 ): List<String> {

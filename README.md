@@ -5,17 +5,17 @@
 **Maintained by [Bluefoot Labs](https://bluefootlabs.com) and [Selenus](https://selenus.xyz).**
 
 [![Maven Central](https://img.shields.io/maven-central/v/xyz.selenus/artemis-core?style=flat-square)](https://central.sonatype.com/search?q=xyz.selenus)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
 
-Artemis is the modular Kotlin Solana SDK I wish I had when I started building for Android. It's built for 2025, so you're not stuck patching legacy code.
+Artemis is the modular Kotlin Solana SDK built for 2026 Android architecture. Modern coroutines, Jetpack Compose ready, and mobile-first design patterns.
 
 ## Why Artemis?
 
-**Artemis provides complete API parity with `solana-kmp` and Solana Mobile SDK**, plus innovative features:
+**Artemis provides complete API parity with `solana-kmp` and Solana Mobile SDK**, plus exclusive 2026 innovations:
 
 | Feature | solana-kmp | Solana Mobile | Sol4k | **Artemis** |
 |---------|------------|---------------|-------|-------------|
-| Active Maintenance | ✅ | ✅ | ✅ | ✅ **v1.4.0** |
+| Active Maintenance | ✅ | ✅ | ✅ | ✅ **v1.5.0** |
 | MWA 2.0 (P-256 ECDH) | ❌ | ✅ | ❌ | ✅ **Parity** |
 | Seed Vault Integration | ❌ | ✅ | ❌ | ✅ **Parity** |
 | RPC Client | ✅ | ❌ | ✅ | ✅ **Parity + Retry** |
@@ -24,6 +24,8 @@ Artemis is the modular Kotlin Solana SDK I wish I had when I started building fo
 | WebSocket Subscriptions | ❌ | ❌ | ❌ | ✅ **Exclusive** |
 | React Native | ⚠️ | ❌ | ❌ | ✅ |
 | Coroutine-first | ⚠️ | ❌ | ⚠️ | ✅ **Native** |
+| Privacy (Confidential TX) | ❌ | ❌ | ❌ | ✅ **2026** |
+| Gaming (VRF, State Proofs) | ❌ | ❌ | ❌ | ✅ **2026** |
 | Gaming/DePIN Utilities | ❌ | ❌ | ❌ | ✅ **Exclusive** |
 
 📖 **[Solana Mobile Migration Guide](docs/MIGRATION_FROM_SOLANA_MOBILE.md)** | 📊 **[Full SDK Parity Analysis](docs/SDK_PARITY_ANALYSIS.md)**
@@ -39,8 +41,8 @@ implementation("com.solanamobile:seedvault-wallet-sdk:0.4.0")
 implementation("foundation.metaplex:solana-kmp:0.3.0")  // For SolanaPublicKey, SolanaRpcClient
 
 // AFTER: Artemis unified SDK (2 dependencies, more features)
-implementation("xyz.selenus:artemis-core:1.4.0")
-implementation("xyz.selenus:artemis-wallet-mwa-android:1.4.0")  // Includes MWA + Seed Vault
+implementation("xyz.selenus:artemis-core:1.5.0")
+implementation("xyz.selenus:artemis-wallet-mwa-android:1.5.0")  // Includes MWA + Seed Vault
 ```
 
 **Import mapping (update your imports, keep your code):**
@@ -99,49 +101,49 @@ repositories {
 
 dependencies {
     // Core
-    implementation("xyz.selenus:artemis-core:1.4.0")
-    implementation("xyz.selenus:artemis-rpc:1.4.0")
+    implementation("xyz.selenus:artemis-core:1.5.0")
+    implementation("xyz.selenus:artemis-rpc:1.5.0")
 
     // Transaction Building
-    implementation("xyz.selenus:artemis-tx:1.4.0")
-    implementation("xyz.selenus:artemis-vtx:1.4.0") // Versioned transactions & ALTs
-    implementation("xyz.selenus:artemis-tx-presets:1.4.0")
-    implementation("xyz.selenus:artemis-programs:1.4.0") // System, Token, Token2022 program builders
-    implementation("xyz.selenus:artemis-compute:1.4.0") // Compute budget utilities
-    implementation("xyz.selenus:artemis-presets:1.4.0")
+    implementation("xyz.selenus:artemis-tx:1.5.0")
+    implementation("xyz.selenus:artemis-vtx:1.5.0") // Versioned transactions & ALTs
+    implementation("xyz.selenus:artemis-tx-presets:1.5.0")
+    implementation("xyz.selenus:artemis-programs:1.5.0") // System, Token, Token2022 program builders
+    implementation("xyz.selenus:artemis-compute:1.5.0") // Compute budget utilities
+    implementation("xyz.selenus:artemis-presets:1.5.0")
 
     // Tokens
-    implementation("xyz.selenus:artemis-token2022:1.4.0")
+    implementation("xyz.selenus:artemis-token2022:1.5.0") // Full Token-2022 extensions
 
     // NFT & Metaplex
-    implementation("xyz.selenus:artemis-metaplex:1.4.0") // Token Metadata Program
-    implementation("xyz.selenus:artemis-mplcore:1.4.0")  // MPL Core v2
-    implementation("xyz.selenus:artemis-cnft:1.4.0") // Compressed NFTs (Bubblegum)
-    implementation("xyz.selenus:artemis-nft-compat:1.4.0") // Cross-standard NFT helpers
-    implementation("xyz.selenus:artemis-candy-machine:1.4.0")
-    implementation("xyz.selenus:artemis-candy-machine-presets:1.4.0")
+    implementation("xyz.selenus:artemis-metaplex:1.5.0") // Token Metadata Program + Batch minting
+    implementation("xyz.selenus:artemis-mplcore:1.5.0")  // MPL Core v2
+    implementation("xyz.selenus:artemis-cnft:1.5.0") // Compressed NFTs (Bubblegum)
+    implementation("xyz.selenus:artemis-nft-compat:1.5.0") // Cross-standard NFT helpers
+    implementation("xyz.selenus:artemis-candy-machine:1.5.0")
+    implementation("xyz.selenus:artemis-candy-machine-presets:1.5.0")
 
     // Mobile Features
-    implementation("xyz.selenus:artemis-seed-vault:1.4.0") // Pure Kotlin Seed Vault
-    implementation("xyz.selenus:artemis-wallet-mwa-android:1.4.0") // Native MWA 2.0
-    implementation("xyz.selenus:artemis-wallet:1.4.0") // Wallet abstractions
-    implementation("xyz.selenus:artemis-solana-pay:1.4.0")
+    implementation("xyz.selenus:artemis-seed-vault:1.5.0") // Pure Kotlin Seed Vault
+    implementation("xyz.selenus:artemis-wallet-mwa-android:1.5.0") // Native MWA 2.0
+    implementation("xyz.selenus:artemis-wallet:1.5.0") // Wallet abstractions + SendTransactionOptions
+    implementation("xyz.selenus:artemis-solana-pay:1.5.0")
 
-    // React Native: npm install artemis-solana-sdk@1.4.0
+    // React Native: npm install artemis-solana-sdk@1.5.0
 
     // Real-time & WebSocket
-    implementation("xyz.selenus:artemis-ws:1.4.0") // WebSocket subscriptions
+    implementation("xyz.selenus:artemis-ws:1.5.0") // WebSocket subscriptions
 
     // Utilities
-    implementation("xyz.selenus:artemis-discriminators:1.4.0")
-    implementation("xyz.selenus:artemis-errors:1.4.0")
-    implementation("xyz.selenus:artemis-logging:1.4.0")
-    implementation("xyz.selenus:artemis-privacy:1.4.0")
+    implementation("xyz.selenus:artemis-discriminators:1.5.0")
+    implementation("xyz.selenus:artemis-errors:1.5.0")
+    implementation("xyz.selenus:artemis-logging:1.5.0")
+    implementation("xyz.selenus:artemis-privacy:1.5.0") // ⭐ NEW: Confidential transfers, Ring signatures
 
     // Gaming & DePIN
-    implementation("xyz.selenus:artemis-gaming:1.4.0")
-    implementation("xyz.selenus:artemis-depin:1.4.0")
-    implementation("xyz.selenus:artemis-replay:1.4.0") // Session recording & playback
+    implementation("xyz.selenus:artemis-gaming:1.5.0") // ⭐ ENHANCED: VRF, State proofs, Reward distribution
+    implementation("xyz.selenus:artemis-depin:1.5.0")
+    implementation("xyz.selenus:artemis-replay:1.5.0") // Session recording & playback
 }
 ```
 
@@ -249,10 +251,17 @@ const accounts = await Artemis.seedVaultGetAccounts(authToken);
 - **artemis-presets**: High-level SDK presets and configuration
 
 ### Tokens
-- **artemis-token2022**: Token-2022 builders and TLV decoding
+- **artemis-token2022**: ⭐ **ENHANCED v1.5.0** Token-2022 builders and TLV decoding
+  - **All 8 Extensions**: Interest-bearing, Non-transferable (soulbound), Permanent delegate, Transfer hooks, Metadata pointer, Confidential transfers, CPI guard, Default account state
+  - **Comprehensive API**: Initialize, update, and manage all extension types
+  - Mobile-optimized serialization and instruction building
 
 ### NFT & Metaplex
-- **artemis-metaplex**: Token Metadata Program utilities
+- **artemis-metaplex**: ⭐ **ENHANCED v1.5.0** Token Metadata Program utilities
+  - **Batch NFT Operations**: Mint up to 4 NFTs per transaction
+  - **Dynamic Metadata**: Time-based metadata updates with state hashing
+  - **Collection Management**: Advanced collection creation and verification
+  - Standard metadata operations (create, update, verify)
 - **artemis-mplcore**: MPL Core v2 create flows, plugins, marketplace utilities
 - **artemis-cnft**: Bubblegum cNFT builders, DAS helpers, marketplace toolkit
 - **artemis-nft-compat**: Cross-standard NFT compatibility helpers
@@ -261,8 +270,11 @@ const accounts = await Artemis.seedVaultGetAccounts(authToken);
 
 ### Mobile & Wallet
 - **artemis-seed-vault**: 100% Kotlin Solana Seed Vault SDK (with `com.solanamobile.seedvault` compatibility)
-- **artemis-wallet-mwa-android**: Native Mobile Wallet Adapter (MWA 2.0) for Android with SIWS support
-- **artemis-wallet**: Abstract wallet interface and signing utilities
+- **artemis-wallet-mwa-android**: ⭐ **ENHANCED v1.5.0** Native Mobile Wallet Adapter (MWA 2.0) for Android with SIWS support
+  - Full `SendTransactionOptions` support (commitment levels, preflight, retries)
+  - Batch transaction support with ordered execution
+  - P-256 ECDH encryption
+- **artemis-wallet**: Abstract wallet interface and signing utilities with `SendTransactionOptions` API
 - **artemis-solana-pay**: Solana Pay URL parsing and transaction request handling
 - **artemis-react-native**: React Native bridge for Seed Vault and MWA
 
@@ -273,11 +285,19 @@ const accounts = await Artemis.seedVaultGetAccounts(authToken);
 - **artemis-discriminators**: Versioned discriminator registry for Anchor programs
 - **artemis-errors**: Standardized error types and handling
 - **artemis-logging**: SDK logging utilities
-- **artemis-privacy**: Privacy-preserving utilities
+- **artemis-privacy**: ⭐ **NEW v1.5.0** Privacy-preserving cryptography
+  - **Confidential Transfers**: Pedersen commitments, range proofs, encrypted amounts
+  - **Ring Signatures**: SAG signatures for anonymous group signing
+  - **Mixing Pools**: CoinJoin-style transaction mixing
 - **artemis-preview**: SDK preview and experimental features
 
 ### Gaming & DePIN
-- **artemis-gaming**: Merkle verification, compute presets, session keys, ArcanaFlow batching
+- **artemis-gaming**: ⭐ **ENHANCED v1.5.0** Production-ready gaming utilities
+  - **Verifiable Randomness**: VRF and commit-reveal for provably fair gaming
+  - **Game State Proofs**: Merkle state trees, fraud proofs, state channels
+  - **Reward Distribution**: 4 payout strategies (Winner Takes All, Linear, Exponential, Poker-style) with Merkle claims
+  - **ArcanaFlow**: Deterministic frame batching for mobile games
+  - **Priority Fee Oracle**: Adaptive compute unit pricing
 - **artemis-depin**: Location proof and device identity generation
 - **artemis-replay**: Session recording and playback for debugging and telemetry
 

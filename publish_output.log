@@ -1,0 +1,2110 @@
+Loading properties from local.properties...
+Loading SIGNING_KEY from secret.asc...
+1. Cleaning and Building Staging Repository...
+Publishing version: 1.5.0
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.10.2/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :artemis-candy-machine:clean
+> Task :artemis-candy-machine-presets:clean
+> Task :artemis-cnft:clean
+> Task :artemis-compute:clean
+> Task :artemis-core:clean
+> Task :artemis-depin:clean
+> Task :artemis-discriminators:clean
+> Task :artemis-errors:clean
+> Task :artemis-gaming:clean
+> Task :artemis-logging:clean
+> Task :artemis-metaplex:clean
+> Task :artemis-mplcore:clean
+> Task :artemis-nft-compat:clean
+> Task :artemis-presets:clean
+> Task :artemis-preview:clean
+> Task :artemis-privacy:clean
+> Task :artemis-programs:clean
+> Task :artemis-replay:clean
+> Task :artemis-rpc:clean
+> Task :artemis-seed-vault:clean
+> Task :artemis-solana-pay:clean
+> Task :artemis-token2022:clean
+> Task :artemis-tx:clean
+> Task :artemis-tx-presets:clean
+> Task :artemis-vtx:clean
+> Task :artemis-wallet:clean
+> Task :artemis-wallet-mwa-android:clean
+> Task :artemis-ws:clean
+> Task :artemis-candy-machine:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-core:processResources NO-SOURCE
+> Task :artemis-discriminators:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-discriminators:processResources NO-SOURCE
+> Task :artemis-nft-compat:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-programs:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-rpc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-tx:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-tx:processResources NO-SOURCE
+> Task :artemis-rpc:processResources NO-SOURCE
+> Task :artemis-programs:processResources NO-SOURCE
+> Task :artemis-nft-compat:processResources NO-SOURCE
+> Task :artemis-candy-machine:processResources NO-SOURCE
+> Task :artemis-candy-machine:sourcesJar
+> Task :artemis-candy-machine:generatePomFileForMavenPublication
+> Task :artemis-candy-machine-presets:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-errors:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-logging:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-logging:processResources NO-SOURCE
+> Task :artemis-errors:processResources NO-SOURCE
+> Task :artemis-presets:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-presets:processResources NO-SOURCE
+> Task :artemis-compute:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-vtx:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-vtx:processResources NO-SOURCE
+> Task :artemis-compute:processResources NO-SOURCE
+> Task :artemis-tx-presets:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-wallet:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-wallet:processResources NO-SOURCE
+> Task :artemis-tx-presets:processResources NO-SOURCE
+> Task :artemis-candy-machine-presets:processResources NO-SOURCE
+> Task :artemis-candy-machine-presets:sourcesJar
+> Task :artemis-candy-machine-presets:generatePomFileForMavenPublication
+> Task :artemis-cnft:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-cnft:processResources NO-SOURCE
+> Task :artemis-cnft:sourcesJar
+> Task :artemis-cnft:generatePomFileForMavenPublication
+> Task :artemis-compute:sourcesJar
+> Task :artemis-compute:generatePomFileForMavenPublication
+> Task :artemis-core:sourcesJar
+> Task :artemis-core:generatePomFileForMavenPublication
+> Task :artemis-depin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-depin:processResources NO-SOURCE
+> Task :artemis-depin:sourcesJar
+> Task :artemis-depin:generatePomFileForMavenPublication
+> Task :artemis-discriminators:sourcesJar
+> Task :artemis-discriminators:generatePomFileForMavenPublication
+> Task :artemis-errors:sourcesJar
+> Task :artemis-errors:generatePomFileForMavenPublication
+> Task :artemis-gaming:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-ws:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-ws:processResources NO-SOURCE
+> Task :artemis-gaming:processResources NO-SOURCE
+> Task :artemis-gaming:sourcesJar
+> Task :artemis-gaming:generatePomFileForMavenPublication
+> Task :artemis-logging:sourcesJar
+> Task :artemis-logging:generatePomFileForMavenPublication
+> Task :artemis-metaplex:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-mplcore:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-mplcore:processResources NO-SOURCE
+> Task :artemis-metaplex:processResources NO-SOURCE
+> Task :artemis-metaplex:sourcesJar
+> Task :artemis-metaplex:generatePomFileForMavenPublication
+> Task :artemis-mplcore:sourcesJar
+> Task :artemis-mplcore:generatePomFileForMavenPublication
+> Task :artemis-nft-compat:sourcesJar
+> Task :artemis-nft-compat:generatePomFileForMavenPublication
+> Task :artemis-presets:sourcesJar
+> Task :artemis-presets:generatePomFileForMavenPublication
+> Task :artemis-preview:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-replay:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-replay:processResources NO-SOURCE
+> Task :artemis-solana-pay:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-solana-pay:processResources NO-SOURCE
+> Task :artemis-token2022:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-token2022:processResources NO-SOURCE
+> Task :artemis-preview:processResources NO-SOURCE
+> Task :artemis-preview:sourcesJar
+> Task :artemis-preview:generatePomFileForMavenPublication
+> Task :artemis-privacy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-privacy:processResources NO-SOURCE
+> Task :artemis-privacy:sourcesJar
+> Task :artemis-privacy:generatePomFileForMavenPublication
+> Task :artemis-programs:sourcesJar
+> Task :artemis-programs:generatePomFileForMavenPublication
+> Task :artemis-replay:sourcesJar
+> Task :artemis-replay:generatePomFileForMavenPublication
+> Task :artemis-rpc:sourcesJar
+> Task :artemis-rpc:generatePomFileForMavenPublication
+> Task :artemis-seed-vault:preBuild UP-TO-DATE
+> Task :artemis-seed-vault:preReleaseBuild UP-TO-DATE
+> Task :artemis-seed-vault:mergeReleaseJniLibFolders
+> Task :artemis-seed-vault:mergeReleaseNativeLibs NO-SOURCE
+> Task :artemis-seed-vault:stripReleaseDebugSymbols NO-SOURCE
+> Task :artemis-seed-vault:copyReleaseJniLibsProjectAndLocalJars
+> Task :artemis-seed-vault:generateReleaseResValues
+> Task :artemis-seed-vault:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :artemis-seed-vault:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-seed-vault:generateReleaseResources
+> Task :artemis-seed-vault:packageReleaseResources
+> Task :artemis-seed-vault:parseReleaseLocalResources
+> Task :artemis-seed-vault:generateReleaseRFile
+> Task :artemis-seed-vault:javaPreCompileRelease
+> Task :artemis-seed-vault:mergeReleaseShaders
+> Task :artemis-seed-vault:compileReleaseShaders NO-SOURCE
+> Task :artemis-seed-vault:generateReleaseAssets UP-TO-DATE
+> Task :artemis-seed-vault:packageReleaseAssets
+> Task :artemis-seed-vault:prepareLintJarForPublish UP-TO-DATE
+> Task :artemis-seed-vault:prepareReleaseArtProfile UP-TO-DATE
+> Task :artemis-seed-vault:processReleaseManifest
+> Task :artemis-seed-vault:writeReleaseAarMetadata
+> Task :artemis-seed-vault:javaDocReleaseJar
+> Task :artemis-seed-vault:sourceReleaseJar
+> Task :artemis-seed-vault:generatePomFileForMavenPublication
+> Task :artemis-solana-pay:sourcesJar
+> Task :artemis-solana-pay:generatePomFileForMavenPublication
+> Task :artemis-token2022:sourcesJar
+> Task :artemis-token2022:generatePomFileForMavenPublication
+> Task :artemis-tx:sourcesJar
+> Task :artemis-tx:generatePomFileForMavenPublication
+> Task :artemis-tx-presets:sourcesJar
+> Task :artemis-tx-presets:generatePomFileForMavenPublication
+> Task :artemis-vtx:sourcesJar
+> Task :artemis-vtx:generatePomFileForMavenPublication
+> Task :artemis-wallet:sourcesJar
+> Task :artemis-wallet:generatePomFileForMavenPublication
+> Task :artemis-wallet-mwa-android:preBuild UP-TO-DATE
+> Task :artemis-wallet-mwa-android:preReleaseBuild UP-TO-DATE
+> Task :artemis-wallet-mwa-android:mergeReleaseJniLibFolders
+> Task :artemis-wallet-mwa-android:mergeReleaseNativeLibs NO-SOURCE
+> Task :artemis-wallet-mwa-android:stripReleaseDebugSymbols NO-SOURCE
+> Task :artemis-wallet-mwa-android:copyReleaseJniLibsProjectAndLocalJars
+> Task :artemis-wallet-mwa-android:generateReleaseResValues
+> Task :artemis-wallet-mwa-android:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :artemis-wallet-mwa-android:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :artemis-wallet-mwa-android:generateReleaseResources
+> Task :artemis-wallet-mwa-android:packageReleaseResources
+> Task :artemis-wallet-mwa-android:parseReleaseLocalResources
+> Task :artemis-wallet-mwa-android:generateReleaseRFile
+> Task :artemis-wallet-mwa-android:javaPreCompileRelease
+> Task :artemis-wallet-mwa-android:mergeReleaseShaders
+> Task :artemis-wallet-mwa-android:compileReleaseShaders NO-SOURCE
+> Task :artemis-wallet-mwa-android:generateReleaseAssets UP-TO-DATE
+> Task :artemis-wallet-mwa-android:packageReleaseAssets
+> Task :artemis-wallet-mwa-android:prepareLintJarForPublish UP-TO-DATE
+> Task :artemis-wallet-mwa-android:prepareReleaseArtProfile UP-TO-DATE
+> Task :artemis-wallet-mwa-android:processReleaseManifest
+> Task :artemis-wallet-mwa-android:writeReleaseAarMetadata
+> Task :artemis-wallet-mwa-android:javaDocReleaseJar
+> Task :artemis-wallet-mwa-android:sourceReleaseJar
+> Task :artemis-wallet-mwa-android:generatePomFileForMavenPublication
+> Task :artemis-ws:sourcesJar
+> Task :artemis-ws:generatePomFileForMavenPublication
+> Task :artemis-core:compileKotlin
+> Task :artemis-core:compileJava NO-SOURCE
+> Task :artemis-core:classes UP-TO-DATE
+> Task :artemis-core:jar
+> Task :artemis-discriminators:compileKotlin
+> Task :artemis-discriminators:compileJava NO-SOURCE
+> Task :artemis-discriminators:classes UP-TO-DATE
+> Task :artemis-discriminators:jar
+> Task :artemis-logging:compileKotlin
+> Task :artemis-logging:compileJava NO-SOURCE
+> Task :artemis-logging:classes UP-TO-DATE
+> Task :artemis-logging:jar
+> Task :artemis-errors:compileKotlin
+> Task :artemis-errors:compileJava NO-SOURCE
+> Task :artemis-errors:classes UP-TO-DATE
+> Task :artemis-errors:jar
+> Task :artemis-tx:compileKotlin
+> Task :artemis-tx:compileJava NO-SOURCE
+> Task :artemis-tx:classes UP-TO-DATE
+> Task :artemis-tx:jar
+> Task :artemis-presets:compileKotlin
+> Task :artemis-presets:compileJava NO-SOURCE
+> Task :artemis-presets:classes UP-TO-DATE
+> Task :artemis-presets:jar
+> Task :artemis-core:javadoc NO-SOURCE
+> Task :artemis-core:javadocJar
+> Task :artemis-core:generateMetadataFileForMavenPublication
+> Task :artemis-core:signMavenPublication
+> Task :artemis-core:publishMavenPublicationToStagingRepository
+> Task :artemis-core:publishAllPublicationsToStagingRepository
+> Task :artemis-depin:compileKotlin
+> Task :artemis-depin:compileJava NO-SOURCE
+> Task :artemis-depin:classes UP-TO-DATE
+> Task :artemis-depin:jar
+> Task :artemis-depin:javadoc NO-SOURCE
+> Task :artemis-depin:javadocJar
+> Task :artemis-depin:generateMetadataFileForMavenPublication
+> Task :artemis-depin:signMavenPublication
+> Task :artemis-depin:publishMavenPublicationToStagingRepository
+> Task :artemis-depin:publishAllPublicationsToStagingRepository
+> Task :artemis-discriminators:javadoc NO-SOURCE
+> Task :artemis-discriminators:javadocJar
+> Task :artemis-discriminators:generateMetadataFileForMavenPublication
+> Task :artemis-discriminators:signMavenPublication
+> Task :artemis-discriminators:publishMavenPublicationToStagingRepository
+> Task :artemis-discriminators:publishAllPublicationsToStagingRepository
+> Task :artemis-errors:javadoc NO-SOURCE
+> Task :artemis-errors:javadocJar
+> Task :artemis-errors:generateMetadataFileForMavenPublication
+> Task :artemis-errors:signMavenPublication
+> Task :artemis-errors:publishMavenPublicationToStagingRepository
+> Task :artemis-errors:publishAllPublicationsToStagingRepository
+> Task :artemis-rpc:compileKotlin
+> Task :artemis-rpc:compileJava NO-SOURCE
+> Task :artemis-rpc:classes UP-TO-DATE
+> Task :artemis-rpc:jar
+> Task :artemis-programs:compileKotlin
+> Task :artemis-programs:compileJava NO-SOURCE
+> Task :artemis-programs:classes UP-TO-DATE
+> Task :artemis-programs:jar
+> Task :artemis-ws:compileKotlin
+> Task :artemis-nft-compat:compileKotlin
+> Task :artemis-nft-compat:compileJava NO-SOURCE
+> Task :artemis-nft-compat:classes UP-TO-DATE
+> Task :artemis-nft-compat:jar
+> Task :artemis-candy-machine:compileKotlin
+> Task :artemis-candy-machine:compileJava NO-SOURCE
+> Task :artemis-candy-machine:classes UP-TO-DATE
+> Task :artemis-candy-machine:jar
+> Task :artemis-candy-machine:javadoc NO-SOURCE
+> Task :artemis-candy-machine:javadocJar
+> Task :artemis-candy-machine:generateMetadataFileForMavenPublication
+> Task :artemis-candy-machine:signMavenPublication
+> Task :artemis-vtx:compileKotlin
+> Task :artemis-candy-machine:publishMavenPublicationToStagingRepository
+> Task :artemis-candy-machine:publishAllPublicationsToStagingRepository
+> Task :artemis-vtx:compileJava NO-SOURCE
+> Task :artemis-vtx:classes UP-TO-DATE
+> Task :artemis-vtx:jar
+> Task :artemis-compute:compileKotlin
+> Task :artemis-compute:compileJava NO-SOURCE
+> Task :artemis-compute:classes UP-TO-DATE
+> Task :artemis-compute:jar
+> Task :artemis-cnft:compileKotlin
+> Task :artemis-cnft:compileJava NO-SOURCE
+> Task :artemis-cnft:classes UP-TO-DATE
+> Task :artemis-cnft:jar
+> Task :artemis-cnft:javadoc NO-SOURCE
+> Task :artemis-cnft:javadocJar
+> Task :artemis-cnft:generateMetadataFileForMavenPublication
+> Task :artemis-cnft:signMavenPublication
+> Task :artemis-cnft:publishMavenPublicationToStagingRepository
+> Task :artemis-cnft:publishAllPublicationsToStagingRepository
+> Task :artemis-compute:javadoc NO-SOURCE
+> Task :artemis-compute:javadocJar
+> Task :artemis-compute:generateMetadataFileForMavenPublication
+> Task :artemis-compute:signMavenPublication
+> Task :artemis-compute:publishMavenPublicationToStagingRepository
+> Task :artemis-compute:publishAllPublicationsToStagingRepository
+> Task :artemis-ws:compileJava NO-SOURCE
+> Task :artemis-ws:classes UP-TO-DATE
+> Task :artemis-ws:jar
+> Task :artemis-wallet:compileKotlin
+> Task :artemis-wallet:compileJava NO-SOURCE
+> Task :artemis-wallet:classes UP-TO-DATE
+> Task :artemis-wallet:jar
+> Task :artemis-tx-presets:compileKotlin
+> Task :artemis-tx-presets:compileJava NO-SOURCE
+> Task :artemis-tx-presets:classes UP-TO-DATE
+> Task :artemis-tx-presets:jar
+> Task :artemis-candy-machine-presets:compileKotlin
+> Task :artemis-candy-machine-presets:compileJava NO-SOURCE
+> Task :artemis-candy-machine-presets:classes UP-TO-DATE
+> Task :artemis-candy-machine-presets:jar
+> Task :artemis-candy-machine-presets:javadoc NO-SOURCE
+> Task :artemis-candy-machine-presets:javadocJar
+> Task :artemis-candy-machine-presets:generateMetadataFileForMavenPublication
+> Task :artemis-candy-machine-presets:signMavenPublication
+> Task :artemis-candy-machine-presets:publishMavenPublicationToStagingRepository
+> Task :artemis-candy-machine-presets:publishAllPublicationsToStagingRepository
+> Task :artemis-logging:javadoc NO-SOURCE
+> Task :artemis-logging:javadocJar
+> Task :artemis-logging:generateMetadataFileForMavenPublication
+> Task :artemis-logging:signMavenPublication
+> Task :artemis-logging:publishMavenPublicationToStagingRepository
+> Task :artemis-logging:publishAllPublicationsToStagingRepository
+> Task :artemis-mplcore:compileKotlin
+> Task :artemis-mplcore:compileJava NO-SOURCE
+> Task :artemis-mplcore:classes UP-TO-DATE
+> Task :artemis-mplcore:jar
+> Task :artemis-metaplex:compileKotlin
+> Task :artemis-metaplex:compileJava NO-SOURCE
+> Task :artemis-metaplex:classes UP-TO-DATE
+> Task :artemis-metaplex:jar
+> Task :artemis-metaplex:javadoc NO-SOURCE
+> Task :artemis-metaplex:javadocJar
+> Task :artemis-metaplex:generateMetadataFileForMavenPublication
+> Task :artemis-metaplex:signMavenPublication
+> Task :artemis-metaplex:publishMavenPublicationToStagingRepository
+> Task :artemis-metaplex:publishAllPublicationsToStagingRepository
+> Task :artemis-mplcore:javadoc NO-SOURCE
+> Task :artemis-mplcore:javadocJar
+> Task :artemis-mplcore:generateMetadataFileForMavenPublication
+> Task :artemis-mplcore:signMavenPublication
+> Task :artemis-mplcore:publishMavenPublicationToStagingRepository
+> Task :artemis-mplcore:publishAllPublicationsToStagingRepository
+> Task :artemis-nft-compat:javadoc NO-SOURCE
+> Task :artemis-nft-compat:javadocJar
+> Task :artemis-nft-compat:generateMetadataFileForMavenPublication
+> Task :artemis-nft-compat:signMavenPublication
+> Task :artemis-nft-compat:publishMavenPublicationToStagingRepository
+> Task :artemis-nft-compat:publishAllPublicationsToStagingRepository
+> Task :artemis-presets:javadoc NO-SOURCE
+> Task :artemis-presets:javadocJar
+> Task :artemis-presets:generateMetadataFileForMavenPublication
+> Task :artemis-presets:signMavenPublication
+> Task :artemis-presets:publishMavenPublicationToStagingRepository
+> Task :artemis-presets:publishAllPublicationsToStagingRepository
+> Task :artemis-gaming:compileKotlin
+> Task :artemis-gaming:compileJava NO-SOURCE
+> Task :artemis-gaming:classes UP-TO-DATE
+> Task :artemis-replay:compileKotlin
+> Task :artemis-gaming:jar
+> Task :artemis-gaming:javadoc NO-SOURCE
+> Task :artemis-gaming:javadocJar
+> Task :artemis-gaming:generateMetadataFileForMavenPublication
+> Task :artemis-gaming:signMavenPublication
+> Task :artemis-gaming:publishMavenPublicationToStagingRepository
+> Task :artemis-gaming:publishAllPublicationsToStagingRepository
+> Task :artemis-replay:compileJava NO-SOURCE
+> Task :artemis-replay:classes UP-TO-DATE
+> Task :artemis-replay:jar
+> Task :artemis-token2022:compileKotlin
+> Task :artemis-token2022:compileJava NO-SOURCE
+> Task :artemis-token2022:classes UP-TO-DATE
+> Task :artemis-token2022:jar
+> Task :artemis-solana-pay:compileKotlin
+> Task :artemis-solana-pay:compileJava NO-SOURCE
+> Task :artemis-solana-pay:classes UP-TO-DATE
+> Task :artemis-solana-pay:jar
+
+> Task :artemis-preview:compileKotlin
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-preview/src/main/kotlin/com/selenus/artemis/preview/Preview.kt:261:32 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-preview/src/main/kotlin/com/selenus/artemis/preview/Preview.kt:532:57 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+
+> Task :artemis-preview:compileJava NO-SOURCE
+> Task :artemis-preview:classes UP-TO-DATE
+> Task :artemis-preview:jar
+> Task :artemis-preview:javadoc NO-SOURCE
+> Task :artemis-preview:javadocJar
+> Task :artemis-preview:generateMetadataFileForMavenPublication
+> Task :artemis-privacy:compileKotlin
+> Task :artemis-preview:signMavenPublication
+> Task :artemis-preview:publishMavenPublicationToStagingRepository
+> Task :artemis-preview:publishAllPublicationsToStagingRepository
+> Task :artemis-privacy:compileJava NO-SOURCE
+> Task :artemis-privacy:classes UP-TO-DATE
+> Task :artemis-privacy:jar
+> Task :artemis-privacy:javadoc NO-SOURCE
+> Task :artemis-privacy:javadocJar
+> Task :artemis-privacy:generateMetadataFileForMavenPublication
+> Task :artemis-privacy:signMavenPublication
+> Task :artemis-privacy:publishMavenPublicationToStagingRepository
+> Task :artemis-privacy:publishAllPublicationsToStagingRepository
+> Task :artemis-programs:javadoc NO-SOURCE
+> Task :artemis-programs:javadocJar
+> Task :artemis-programs:generateMetadataFileForMavenPublication
+> Task :artemis-programs:signMavenPublication
+> Task :artemis-programs:publishMavenPublicationToStagingRepository
+> Task :artemis-programs:publishAllPublicationsToStagingRepository
+> Task :artemis-replay:javadoc NO-SOURCE
+> Task :artemis-replay:javadocJar
+> Task :artemis-replay:generateMetadataFileForMavenPublication
+> Task :artemis-replay:signMavenPublication
+> Task :artemis-replay:publishMavenPublicationToStagingRepository
+> Task :artemis-replay:publishAllPublicationsToStagingRepository
+> Task :artemis-rpc:javadoc NO-SOURCE
+> Task :artemis-rpc:javadocJar
+> Task :artemis-rpc:generateMetadataFileForMavenPublication
+> Task :artemis-rpc:signMavenPublication
+> Task :artemis-rpc:publishMavenPublicationToStagingRepository
+> Task :artemis-rpc:publishAllPublicationsToStagingRepository
+> Task :artemis-solana-pay:javadoc NO-SOURCE
+> Task :artemis-solana-pay:javadocJar
+> Task :artemis-solana-pay:generateMetadataFileForMavenPublication
+> Task :artemis-solana-pay:signMavenPublication
+> Task :artemis-solana-pay:publishMavenPublicationToStagingRepository
+> Task :artemis-solana-pay:publishAllPublicationsToStagingRepository
+> Task :artemis-token2022:javadoc NO-SOURCE
+> Task :artemis-token2022:javadocJar
+> Task :artemis-token2022:generateMetadataFileForMavenPublication
+> Task :artemis-token2022:signMavenPublication
+> Task :artemis-token2022:publishMavenPublicationToStagingRepository
+> Task :artemis-token2022:publishAllPublicationsToStagingRepository
+> Task :artemis-tx:javadoc NO-SOURCE
+> Task :artemis-tx:javadocJar
+> Task :artemis-tx:generateMetadataFileForMavenPublication
+> Task :artemis-tx:signMavenPublication
+> Task :artemis-tx:publishMavenPublicationToStagingRepository
+> Task :artemis-tx:publishAllPublicationsToStagingRepository
+> Task :artemis-tx-presets:javadoc NO-SOURCE
+> Task :artemis-tx-presets:javadocJar
+> Task :artemis-tx-presets:generateMetadataFileForMavenPublication
+> Task :artemis-tx-presets:signMavenPublication
+> Task :artemis-tx-presets:publishMavenPublicationToStagingRepository
+> Task :artemis-tx-presets:publishAllPublicationsToStagingRepository
+> Task :artemis-vtx:javadoc NO-SOURCE
+> Task :artemis-vtx:javadocJar
+> Task :artemis-vtx:generateMetadataFileForMavenPublication
+> Task :artemis-vtx:signMavenPublication
+> Task :artemis-vtx:publishMavenPublicationToStagingRepository
+> Task :artemis-vtx:publishAllPublicationsToStagingRepository
+> Task :artemis-wallet:javadoc NO-SOURCE
+> Task :artemis-wallet:javadocJar
+> Task :artemis-wallet:generateMetadataFileForMavenPublication
+> Task :artemis-wallet:signMavenPublication
+> Task :artemis-wallet:publishMavenPublicationToStagingRepository
+> Task :artemis-wallet:publishAllPublicationsToStagingRepository
+
+> Task :artemis-seed-vault:compileReleaseKotlin
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/SeedVaultManager.kt:146:29 'fun <T : Parcelable!> getParcelableArrayList(p0: String?): ArrayList<T!>?' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/SeedVaultManager.kt:160:29 'fun getSerializable(p0: String?): Serializable?' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/SeedVaultManager.kt:160:80 Unchecked cast of 'java.io.Serializable?' to 'java.util.ArrayList<kotlin.ByteArray>'.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/SeedVaultManager.kt:173:29 'fun getSerializable(p0: String?): Serializable?' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/SeedVaultManager.kt:173:80 Unchecked cast of 'java.io.Serializable?' to 'java.util.ArrayList<kotlin.ByteArray>'.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/SeedVaultManager.kt:201:29 'fun getSerializable(p0: String?): Serializable?' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/SeedVaultManager.kt:201:60 Unchecked cast of 'java.io.Serializable?' to 'java.util.ArrayList<kotlin.ByteArray>'.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/SeedVaultManager.kt:230:29 'fun getSerializable(p0: String?): Serializable?' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/SeedVaultManager.kt:230:80 Unchecked cast of 'java.io.Serializable?' to 'java.util.ArrayList<kotlin.ByteArray>'.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/SeedVaultCheck.kt:32:119 'static field GET_SIGNATURES: Int' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/SeedVaultCheck.kt:46:65 'static field GET_SIGNATURES: Int' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/SeedVaultCheck.kt:52:28 'field signatures: (Array<Signature!>?..Array<out Signature!>?)' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/SeedVaultCheck.kt:52:67 'field signatures: (Array<Signature!>?..Array<out Signature!>?)' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/SeedVaultCheck.kt:70:28 'field protectionLevel: Int' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/SeedVaultCheck.kt:70:63 'static field PROTECTION_MASK_BASE: Int' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/SeedVaultCheck.kt:74:41 'field protectionLevel: Int' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/SeedVaultCheck.kt:75:32 'static field PROTECTION_MASK_BASE: Int' is deprecated. Deprecated in Java.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/ipc/ISeedVaultCallback.kt:63:25 Condition is always 'true'.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/ipc/ISeedVaultCallback.kt:79:25 Condition is always 'true'.
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/internal/ipc/ISeedVaultService.kt:58:25 Condition is always 'true'.
+
+> Task :artemis-seed-vault:extractReleaseAnnotations
+> Task :artemis-seed-vault:compileReleaseJavaWithJavac NO-SOURCE
+> Task :artemis-seed-vault:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :artemis-seed-vault:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :artemis-seed-vault:processReleaseJavaRes
+> Task :artemis-seed-vault:mergeReleaseJavaResource
+> Task :artemis-seed-vault:syncReleaseLibJars
+> Task :artemis-seed-vault:bundleReleaseAar
+> Task :artemis-seed-vault:generateMetadataFileForMavenPublication
+> Task :artemis-seed-vault:signMavenPublication
+> Task :artemis-seed-vault:publishMavenPublicationToStagingRepository
+> Task :artemis-seed-vault:publishAllPublicationsToStagingRepository
+> Task :artemis-ws:javadoc NO-SOURCE
+> Task :artemis-ws:javadocJar
+> Task :artemis-ws:generateMetadataFileForMavenPublication
+> Task :artemis-ws:signMavenPublication
+> Task :artemis-ws:publishMavenPublicationToStagingRepository
+> Task :artemis-ws:publishAllPublicationsToStagingRepository
+
+> Task :artemis-wallet-mwa-android:compileReleaseKotlin
+w: file:///workspaces/Selenus-Artemis-Solana-SDK-/artemis-wallet-mwa-android/src/main/kotlin/com/selenus/artemis/wallet/mwa/protocol/MwaWebSocketServer.kt:57:15 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'kotlin.String?'.
+
+> Task :artemis-wallet-mwa-android:extractReleaseAnnotations
+> Task :artemis-wallet-mwa-android:compileReleaseJavaWithJavac NO-SOURCE
+> Task :artemis-wallet-mwa-android:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :artemis-wallet-mwa-android:mergeReleaseConsumerProguardFiles
+> Task :artemis-wallet-mwa-android:processReleaseJavaRes
+> Task :artemis-wallet-mwa-android:mergeReleaseJavaResource
+> Task :artemis-wallet-mwa-android:syncReleaseLibJars
+> Task :artemis-wallet-mwa-android:bundleReleaseAar
+> Task :artemis-wallet-mwa-android:generateMetadataFileForMavenPublication
+> Task :artemis-wallet-mwa-android:signMavenPublication
+> Task :artemis-wallet-mwa-android:publishMavenPublicationToStagingRepository
+> Task :artemis-wallet-mwa-android:publishAllPublicationsToStagingRepository
+
+BUILD SUCCESSFUL in 2m 5s
+294 actionable tasks: 285 executed, 9 up-to-date
+2. Zipping Bundle...
+  adding: xyz/ (stored 0%)
+  adding: xyz/selenus/ (stored 0%)
+  adding: xyz/selenus/artemis-ws/ (stored 0%)
+  adding: xyz/selenus/artemis-ws/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-ws/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-ws/maven-metadata.xml.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-ws/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/maven-metadata.xml (deflated 45%)
+  adding: xyz/selenus/artemis-ws/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.pom.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.pom.sha512 (deflated 36%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-javadoc.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-javadoc.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.module (deflated 77%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.module.asc.sha512 (deflated 31%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.module.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-javadoc.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-sources.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.pom (deflated 69%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.pom.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-sources.jar (deflated 13%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-sources.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.jar (deflated 8%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.pom.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.module.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.pom.asc (deflated 20%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-ws/1.5.0/artemis-ws-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-tx-presets/ (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx-presets/maven-metadata.xml.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-tx-presets/maven-metadata.xml.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-sources.jar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.module.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.module (deflated 79%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-javadoc.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.jar.asc.sha256 (deflated 16%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.jar (deflated 12%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.module.asc.sha512 (deflated 31%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-sources.jar.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.module.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.pom.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.pom.sha256 (deflated 22%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.module.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-javadoc.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0-sources.jar (deflated 29%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-tx-presets/1.5.0/artemis-tx-presets-1.5.0.pom (deflated 77%)
+  adding: xyz/selenus/artemis-gaming/ (stored 0%)
+  adding: xyz/selenus/artemis-gaming/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-gaming/maven-metadata.xml.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-gaming/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-gaming/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/maven-metadata.xml (deflated 45%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.module.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.pom.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.module.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-javadoc.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.pom.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-sources.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.pom (deflated 74%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-sources.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.pom.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-javadoc.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.module.sha256 (deflated 16%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-sources.jar (deflated 6%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-javadoc.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.jar (deflated 7%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.pom.asc.sha512 (deflated 31%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.module (deflated 79%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-gaming/1.5.0/artemis-gaming-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/ (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.aar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.pom (deflated 71%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-sources.jar (deflated 14%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-javadoc.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.aar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-sources.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.module.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.pom.sha256 (deflated 16%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.aar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.aar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-javadoc.jar (deflated 50%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.aar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-javadoc.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.aar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.pom.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-javadoc.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.pom.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.aar (deflated 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.aar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.pom.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.pom.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.aar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.module (deflated 77%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-sources.jar.sha256 (deflated 16%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0-sources.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-wallet-mwa-android/1.5.0/artemis-wallet-mwa-android-1.5.0.aar.asc.sha256 (deflated 22%)
+  adding: xyz/selenus/artemis-preview/ (stored 0%)
+  adding: xyz/selenus/artemis-preview/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-preview/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-preview/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-preview/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-preview/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-preview/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-sources.jar.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.jar (deflated 7%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.jar.asc (deflated 20%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-javadoc.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.pom.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.pom.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.pom.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.module.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-sources.jar (deflated 9%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.jar.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.jar.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.pom.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-sources.jar.asc.sha256 (deflated 22%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-sources.jar.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.jar.asc.sha256 (deflated 22%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.module (deflated 82%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-javadoc.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.module.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.pom.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.pom (deflated 83%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.module.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-preview/1.5.0/artemis-preview-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/ (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/maven-metadata.xml.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-seed-vault/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-seed-vault/maven-metadata.xml.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.pom (deflated 69%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.aar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.module.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.module.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.aar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-sources.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.module.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.aar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.aar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.aar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-javadoc.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-sources.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.module.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.pom.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.pom.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.module (deflated 76%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-javadoc.jar (deflated 50%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.aar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-javadoc.jar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.aar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-sources.jar (deflated 16%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.aar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-javadoc.jar.asc (deflated 20%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.aar (deflated 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.pom.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0.aar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-seed-vault/1.5.0/artemis-seed-vault-1.5.0-javadoc.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-errors/ (stored 0%)
+  adding: xyz/selenus/artemis-errors/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-errors/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-errors/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-errors/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/maven-metadata.xml (deflated 45%)
+  adding: xyz/selenus/artemis-errors/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-javadoc.jar.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.module (deflated 75%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.pom.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.pom (deflated 61%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.module.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.module.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.jar (deflated 18%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.pom.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.module.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-sources.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-javadoc.jar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-sources.jar.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.module.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-javadoc.jar.sha256 (deflated 22%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.pom.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-sources.jar (deflated 36%)
+  adding: xyz/selenus/artemis-errors/1.5.0/artemis-errors-1.5.0-javadoc.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-tx/ (stored 0%)
+  adding: xyz/selenus/artemis-tx/maven-metadata.xml.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-tx/maven-metadata.xml.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-tx/maven-metadata.xml.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-tx/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/maven-metadata.xml (deflated 45%)
+  adding: xyz/selenus/artemis-tx/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.pom.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.pom.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.module.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.pom (deflated 64%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-javadoc.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.module (deflated 74%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.jar (deflated 8%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-sources.jar (deflated 12%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.module.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.jar.sha512 (deflated 31%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-sources.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.module.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-tx/1.5.0/artemis-tx-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-wallet/ (stored 0%)
+  adding: xyz/selenus/artemis-wallet/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-wallet/maven-metadata.xml.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-wallet/maven-metadata.xml.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-wallet/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.pom.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-javadoc.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.pom (deflated 71%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.module (deflated 77%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.pom.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.pom.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.pom.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.pom.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.module.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.module.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.pom.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.module.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.jar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.jar (deflated 8%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-sources.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-javadoc.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-sources.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0-sources.jar (deflated 14%)
+  adding: xyz/selenus/artemis-wallet/1.5.0/artemis-wallet-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-logging/ (stored 0%)
+  adding: xyz/selenus/artemis-logging/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-logging/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-logging/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-logging/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-logging/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.jar (deflated 16%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-sources.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.module.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-javadoc.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.module (deflated 75%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-javadoc.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.jar.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.pom.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-sources.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-javadoc.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-sources.jar (deflated 32%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-javadoc.jar.asc (deflated 20%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.pom (deflated 61%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.module.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.pom.asc.sha512 (deflated 30%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.module.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-sources.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.pom.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-logging/1.5.0/artemis-logging-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-token2022/ (stored 0%)
+  adding: xyz/selenus/artemis-token2022/maven-metadata.xml.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-token2022/maven-metadata.xml.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-token2022/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-token2022/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.pom.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.jar (deflated 11%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.pom.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-sources.jar (deflated 14%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.pom.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.pom.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.module.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.pom (deflated 64%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.module (deflated 75%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-sources.jar.sha256 (deflated 22%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.jar.asc.sha512 (deflated 31%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-javadoc.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.module.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0-sources.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-token2022/1.5.0/artemis-token2022-1.5.0.module.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-nft-compat/ (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-nft-compat/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-nft-compat/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-nft-compat/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-sources.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.pom (deflated 70%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.module.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.module.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.module (deflated 77%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.module.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-javadoc.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.module.asc.sha256 (deflated 16%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.pom.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-sources.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-sources.jar.asc.sha512 (deflated 31%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-javadoc.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.module.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-sources.jar (deflated 17%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-sources.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.pom.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.pom.asc.sha256 (deflated 16%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.jar (deflated 7%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-nft-compat/1.5.0/artemis-nft-compat-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-rpc/ (stored 0%)
+  adding: xyz/selenus/artemis-rpc/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-rpc/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-rpc/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-rpc/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/maven-metadata.xml (deflated 45%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-sources.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.module.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.pom.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-sources.jar (deflated 17%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.module (deflated 76%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-javadoc.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.module.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.jar (deflated 10%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.pom.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-sources.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-javadoc.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.pom.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.module.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.pom (deflated 71%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-javadoc.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.module.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-sources.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-sources.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.module.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-rpc/1.5.0/artemis-rpc-1.5.0.pom.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-depin/ (stored 0%)
+  adding: xyz/selenus/artemis-depin/maven-metadata.xml.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-depin/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-depin/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-depin/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-depin/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.pom.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.pom (deflated 66%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.pom.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-sources.jar.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-sources.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.module (deflated 74%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.pom.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-sources.jar (deflated 23%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-sources.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.module.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.module.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.module.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-javadoc.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.jar (deflated 11%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-sources.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.module.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.pom.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.module.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0-javadoc.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-depin/1.5.0/artemis-depin-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-vtx/ (stored 0%)
+  adding: xyz/selenus/artemis-vtx/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-vtx/maven-metadata.xml.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-vtx/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-vtx/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-javadoc.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-sources.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.module.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.pom.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.pom.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.pom.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.pom (deflated 71%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-javadoc.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.pom.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-sources.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.module (deflated 76%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-sources.jar (deflated 10%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.jar (deflated 7%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0-sources.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-vtx/1.5.0/artemis-vtx-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-discriminators/ (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-discriminators/maven-metadata.xml.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-discriminators/maven-metadata.xml.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.pom.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-sources.jar (deflated 15%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.pom (deflated 62%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.module.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.module.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.module (deflated 75%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-sources.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.pom.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.jar (deflated 8%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-javadoc.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.module.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-sources.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-discriminators/1.5.0/artemis-discriminators-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-metaplex/ (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-metaplex/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-metaplex/maven-metadata.xml.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/maven-metadata.xml (deflated 45%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.module.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.pom (deflated 77%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-sources.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.module.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.pom.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-sources.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.pom.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-javadoc.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.module.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-sources.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.jar (deflated 7%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.pom.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-sources.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-sources.jar (deflated 12%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.module.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.module (deflated 80%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-javadoc.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.pom.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-metaplex/1.5.0/artemis-metaplex-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-presets/ (stored 0%)
+  adding: xyz/selenus/artemis-presets/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-presets/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-presets/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-presets/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-presets/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-javadoc.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-sources.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.module.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.pom (deflated 64%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.module.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-sources.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.pom.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-sources.jar.asc.sha512 (deflated 31%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.module.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.pom.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.jar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.jar.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.jar.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-sources.jar (deflated 38%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.pom.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.pom.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.module (deflated 74%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.jar (deflated 20%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-sources.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-javadoc.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.module.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.pom.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-presets/1.5.0/artemis-presets-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-core/ (stored 0%)
+  adding: xyz/selenus/artemis-core/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-core/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-core/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-core/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/maven-metadata.xml (deflated 45%)
+  adding: xyz/selenus/artemis-core/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.module.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.pom (deflated 66%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.module (deflated 74%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-sources.jar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.pom.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.pom.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-sources.jar (deflated 7%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.pom.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-javadoc.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.jar (deflated 7%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-sources.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-javadoc.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.module.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-sources.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-core/1.5.0/artemis-core-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/ (stored 0%)
+  adding: xyz/selenus/artemis-cnft/maven-metadata.xml.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-cnft/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-cnft/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-javadoc.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.pom.asc.sha256 (deflated 23%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.module.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-javadoc.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-sources.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.pom.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.pom.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-sources.jar (deflated 14%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-javadoc.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.module.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.module (deflated 78%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.pom.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.jar (deflated 7%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-sources.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.pom (deflated 73%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.module.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-cnft/1.5.0/artemis-cnft-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-privacy/ (stored 0%)
+  adding: xyz/selenus/artemis-privacy/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-privacy/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-privacy/maven-metadata.xml.sha1 (deflated 8%)
+  adding: xyz/selenus/artemis-privacy/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.pom.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.jar (deflated 7%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.module.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.pom.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-sources.jar.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.pom.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.pom.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-javadoc.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.module.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-sources.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.module.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.jar.asc.sha256 (deflated 22%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-javadoc.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.jar.sha256 (deflated 16%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.pom (deflated 67%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-sources.jar.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.module (deflated 76%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-javadoc.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0-sources.jar (deflated 5%)
+  adding: xyz/selenus/artemis-privacy/1.5.0/artemis-privacy-1.5.0.pom.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/ (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine/maven-metadata.xml.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-candy-machine/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.jar.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.pom (deflated 73%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.jar.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.pom.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-javadoc.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.pom.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-javadoc.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-javadoc.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.module.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.module.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.jar (deflated 8%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.module.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.pom.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.pom.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.module.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-sources.jar (deflated 19%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.jar.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.pom.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-sources.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-javadoc.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.module (deflated 78%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.module.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine/1.5.0/artemis-candy-machine-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-compute/ (stored 0%)
+  adding: xyz/selenus/artemis-compute/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-compute/maven-metadata.xml.sha256 (deflated 22%)
+  adding: xyz/selenus/artemis-compute/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-compute/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-compute/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-compute/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.module.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-sources.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-sources.jar.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-javadoc.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.jar.md5 (deflated 3%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-sources.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.pom.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.module (deflated 77%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.pom.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-sources.jar (deflated 9%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.module.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.pom.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-javadoc.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.pom.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.module.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.pom (deflated 70%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.jar (deflated 8%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-javadoc.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-sources.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-compute/1.5.0/artemis-compute-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/ (stored 0%)
+  adding: xyz/selenus/artemis-programs/maven-metadata.xml.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-programs/maven-metadata.xml.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-programs/maven-metadata.xml.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-programs/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-programs/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-sources.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.pom.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-sources.jar (deflated 19%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.pom.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-javadoc.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.pom.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.module.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.jar.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.module.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.jar (deflated 8%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.module.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-sources.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.pom.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.module (deflated 76%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-javadoc.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.pom.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.pom (deflated 67%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-javadoc.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.jar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-programs/1.5.0/artemis-programs-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/ (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-solana-pay/maven-metadata.xml.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-solana-pay/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-solana-pay/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-sources.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.module.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-javadoc.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.module.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.pom.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.module.sha256 (deflated 22%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-sources.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.module.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.pom.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.pom.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.module (deflated 75%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.pom (deflated 66%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.pom.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-sources.jar.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-sources.jar.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.jar (deflated 9%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-sources.jar (deflated 12%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0-sources.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-solana-pay/1.5.0/artemis-solana-pay-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine-presets/ (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine-presets/maven-metadata.xml.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-candy-machine-presets/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine-presets/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.pom.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-javadoc.jar.asc (deflated 20%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.module.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.module.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.pom.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.pom.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.pom (deflated 77%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-javadoc.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-javadoc.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.pom.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.module.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-javadoc.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-sources.jar (deflated 25%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-sources.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.jar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-sources.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.module.sha256 (deflated 22%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.module (deflated 79%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.module.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.jar (deflated 12%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0-sources.jar.asc.sha512 (deflated 35%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-candy-machine-presets/1.5.0/artemis-candy-machine-presets-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-replay/ (stored 0%)
+  adding: xyz/selenus/artemis-replay/maven-metadata.xml.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-replay/maven-metadata.xml.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-replay/maven-metadata.xml.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-replay/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-replay/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-replay/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.pom.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-javadoc.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.module.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.jar (deflated 9%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-sources.jar.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.pom.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-javadoc.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-sources.jar.asc.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-sources.jar (deflated 34%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-javadoc.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.module.asc.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.module.asc (deflated 21%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.module.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.jar.asc.md5 (deflated 6%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-sources.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.module.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.module.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-javadoc.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-sources.jar.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.module (deflated 76%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-javadoc.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.pom (deflated 68%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.pom.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.pom.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-javadoc.jar.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.module.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.pom.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-replay/1.5.0/artemis-replay-1.5.0-sources.jar.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-mplcore/ (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/maven-metadata.xml.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-mplcore/maven-metadata.xml.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-mplcore/maven-metadata.xml.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/maven-metadata.xml.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/maven-metadata.xml (deflated 44%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/ (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.module (deflated 76%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.pom.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.pom.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.jar.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.module.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-javadoc.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-sources.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-javadoc.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-sources.jar (deflated 20%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-sources.jar.asc.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-sources.jar.asc.sha256 (deflated 17%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.jar.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.module.sha1 (deflated 5%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.jar.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-sources.jar.asc.sha512 (deflated 32%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.module.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-sources.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-sources.jar.sha256 (deflated 19%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-javadoc.jar.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.pom.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-sources.jar.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.module.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-javadoc.jar.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.pom.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.pom.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-javadoc.jar.asc.sha256 (deflated 20%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-sources.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.pom.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-javadoc.jar.sha512 (deflated 33%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-sources.jar.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.module.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-javadoc.jar.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-javadoc.jar (deflated 49%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-javadoc.jar.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.module.asc.md5 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0-javadoc.jar.asc (deflated 21%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.pom.asc (deflated 21%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.pom.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.jar (deflated 9%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.pom.asc.sha1 (deflated 3%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.module.asc.sha1 (stored 0%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.pom (deflated 67%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.module.asc.sha512 (deflated 34%)
+  adding: xyz/selenus/artemis-mplcore/1.5.0/artemis-mplcore-1.5.0.module.asc (deflated 21%)
+3. Uploading to Central Portal...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100 3229k    0     0  100 3229k      0  3769k --:--:-- --:--:-- --:--:-- 3768k100 3229k  100    36  100 3229k     31  2861k  0:00:01  0:00:01 --:--:-- 2863k
+bb14a38f-218e-487c-a517-9058b22e8d9cDone.
