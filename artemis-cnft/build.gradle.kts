@@ -11,6 +11,6 @@ dependencies {
   implementation(project(":artemis-tx"))
   implementation(project(":artemis-rpc"))
   implementation(project(":artemis-vtx"))
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+  implementation(libs.kotlinx.serialization.json)
+  implementation(libs.kotlinx.coroutines.core)
 }

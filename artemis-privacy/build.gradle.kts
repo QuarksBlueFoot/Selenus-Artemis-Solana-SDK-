@@ -7,20 +7,19 @@ plugins {
 
 dependencies {
     implementation(project(":artemis-core"))
-    implementation(project(":artemis-core"))
     
     // Cryptography
-    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+    implementation(libs.bouncycastle)
     
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation(libs.kotlinx.coroutines.core)
     
     // Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation(libs.kotlinx.serialization.json)
     
     // Testing
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 tasks.test {

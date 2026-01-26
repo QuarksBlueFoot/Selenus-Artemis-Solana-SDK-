@@ -6,6 +6,8 @@ pluginManagement {
     }
 }
 
+// Version catalog is automatically loaded from gradle/libs.versions.toml
+
 rootProject.name="selenus-artemis-kotlin-solana-sdk"
 include(":artemis-rpc",":artemis-tx",":artemis-core",":artemis-preview")
 include(":artemis-programs")
@@ -51,6 +53,21 @@ include(":artemis-presets")
 
 // v65: comprehensive privacy module for mobile-first privacy features
 include(":artemis-privacy")
+
+// v67: Transaction Intent Protocol - first SDK to decode instructions into human-readable intents
+include(":artemis-intent")
+
+// v68: Real-Time Portfolio Sync - first SDK to provide live portfolio tracking via WebSocket
+include(":artemis-portfolio")
+
+// v69: Offline Transaction Queue - first SDK to support offline transaction preparation
+include(":artemis-offline")
+
+// v70: Predictive Transaction Scheduler - first SDK with network-aware scheduling
+include(":artemis-scheduler")
+
+// v71: Intelligent Batching Engine - first SDK with automatic transaction batching
+include(":artemis-batch")
 
 // v66: devnet integration test for all innovative features (privacy, gaming, nft, token2022)
 // Temporarily disabled until API signatures are updated to match new implementations

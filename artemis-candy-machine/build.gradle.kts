@@ -9,6 +9,6 @@ dependencies {
   implementation(project(":artemis-discriminators"))
   implementation(project(":artemis-nft-compat"))
   implementation(project(":artemis-rpc"))
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+  implementation(libs.kotlinx.serialization.json)
   testImplementation(kotlin("test"))
 }

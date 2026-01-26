@@ -1,6 +1,6 @@
-plugins{ kotlin("jvm") }
+plugins { kotlin("jvm") }
 
-dependencies{
+dependencies {
   testImplementation(kotlin("test"))
   implementation(project(":artemis-core"))
   implementation(project(":artemis-rpc"))
@@ -15,5 +15,5 @@ dependencies{
   implementation(project(":artemis-mplcore"))
   implementation(project(":artemis-wallet"))
   implementation(project(":artemis-tx-presets"))
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+  implementation(libs.kotlinx.serialization.json)
 }

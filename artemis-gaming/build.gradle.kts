@@ -10,5 +10,5 @@ dependencies {
   implementation(project(":artemis-ws"))
   implementation(project(":artemis-rpc"))
   implementation(project(":artemis-programs"))
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+  implementation(libs.kotlinx.coroutines.core)
 }

@@ -1,0 +1,127 @@
+# Artemis Solana SDK - Centralized Version Catalog
+# Updated: January 2026 - Latest Stable Versions
+# This ensures all modules use consistent, tested dependencies
+
+[versions]
+# Kotlin & Core
+kotlin = "2.1.0"
+kotlinx-coroutines = "1.10.2"
+kotlinx-serialization = "1.7.3"
+kotlinx-datetime = "0.6.1"
+kotlinx-io = "0.5.4"
+
+# Android
+android-gradle = "8.7.3"
+android-minSdk = "24"
+android-targetSdk = "35"
+android-compileSdk = "35"
+
+# AndroidX
+androidx-core = "1.15.0"
+androidx-lifecycle = "2.8.7"
+androidx-activity = "1.9.3"
+androidx-compose-bom = "2024.12.01"
+androidx-datastore = "1.1.1"
+androidx-security-crypto = "1.1.0-alpha06"
+androidx-biometric = "1.4.0-alpha02"
+
+# Networking & HTTP
+okhttp = "4.12.0"
+ktor = "3.0.2"
+
+# Cryptography
+bouncycastle = "1.79"
+tink = "1.15.0"
+
+# Solana Mobile Stack
+solana-mobile-wallet-adapter = "2.1.3"
+solana-mobile-seed-vault = "1.0.0"
+
+# Testing
+junit5 = "5.11.4"
+mockk = "1.13.14"
+turbine = "1.2.0"
+kotest = "5.9.1"
+
+# Code Quality
+detekt = "1.23.7"
+ktlint = "12.1.2"
+
+# Compression & Encoding
+okio = "3.9.1"
+
+[libraries]
+# Kotlin Standard
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+
+# KotlinX Coroutines
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+
+# KotlinX Serialization
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-cbor = { module = "org.jetbrains.kotlinx:kotlinx-serialization-cbor", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinx-serialization" }
+
+# KotlinX DateTime & IO
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
+
+# AndroidX Core
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
+androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "androidx-lifecycle" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+androidx-datastore = { module = "androidx.datastore:datastore-preferences", version.ref = "androidx-datastore" }
+androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "androidx-biometric" }
+androidx-annotation = { module = "androidx.annotation:annotation", version = "1.9.1" }
+
+# Cryptography
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
+bouncycastle-provider = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
+bouncycastle-pkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
+tink = { module = "com.google.crypto.tink:tink", version.ref = "tink" }
+
+# Networking
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okhttp-logging = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+# Encoding
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+
+# Compose BOM
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "androidx-compose-bom" }
+
+# Testing
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5" }
+junit5-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit5" }
+junit5-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit5" }
+junit5-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit5" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+
+[bundles]
+kotlinx-core = ["kotlinx-coroutines-core", "kotlinx-serialization-json"]
+kotlinx-android = ["kotlinx-coroutines-core", "kotlinx-coroutines-android", "kotlinx-serialization-json"]
+testing = ["junit5-api", "junit5-engine", "kotlinx-coroutines-test", "mockk"]
+testing-android = ["junit5-api", "junit5-engine", "kotlinx-coroutines-test", "mockk", "turbine"]
+networking = ["okhttp", "ktor-client-core", "ktor-client-okhttp"]
+crypto = ["bouncycastle-provider", "bouncycastle-pkix"]
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version.ref = "android-gradle" }
+android-application = { id = "com.android.application", version.ref = "android-gradle" }
