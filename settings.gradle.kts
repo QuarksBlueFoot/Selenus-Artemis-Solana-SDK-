@@ -69,6 +69,27 @@ include(":artemis-scheduler")
 // v71: Intelligent Batching Engine - first SDK with automatic transaction batching
 include(":artemis-batch")
 
+// v72: Anchor IDL Support - first Kotlin SDK with full Anchor program client support
+include(":artemis-anchor")
+
+// v73: Jupiter DEX Integration - complete Jupiter swap API integration
+include(":artemis-jupiter")
+
+// v74: Solana Actions/Blinks - first Android SDK for Solana Actions specification
+include(":artemis-actions")
+
+// v75: Universal Program Client - world's first IDL-less program discovery
+include(":artemis-universal")
+
+// v76: Predictive Transaction Simulation - AI-powered transaction analysis
+include(":artemis-simulation")
+
+// v77: Natural Language Transactions - world's first NLP transaction builder
+include(":artemis-nlp")
+
+// v78: Zero-Copy Account Streaming - memory-efficient real-time updates
+include(":artemis-streaming")
+
 // v66: devnet integration test for all innovative features (privacy, gaming, nft, token2022)
 // Temporarily disabled until API signatures are updated to match new implementations
 // include(":samples:artemis-features-devnet-test")
