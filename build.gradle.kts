@@ -47,8 +47,12 @@ subprojects {
     val publishingConfig: PublishingExtension.() -> Unit = {
         repositories {
             maven {
-                name = "Staging"
-                url = uri(rootProject.layout.buildDirectory.dir("staging-deploy"))
+                name = "MavenCentral"
+                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                credentials {
+                    username = findProperty("CENTRAL_USERNAME") as String? ?: System.getenv("CENTRAL_USERNAME") ?: ""
+                    password = findProperty("CENTRAL_PASSWORD") as String? ?: System.getenv("CENTRAL_PASSWORD") ?: ""
+                }
             }
         }
     }
@@ -77,12 +81,14 @@ subprojects {
         }
 
         configure<SigningExtension> {
+            val signingKeyId = findProperty("signing.keyId") as String? ?: System.getenv("SIGNING_KEY_ID")
             val signingKey = System.getenv("SIGNING_KEY")
-            val signingPassword = System.getenv("SIGNING_PASSWORD")
+            val signingPassword = findProperty("signing.password") as String? ?: System.getenv("SIGNING_PASSWORD")
+            
             if (!signingKey.isNullOrEmpty()) {
-                useInMemoryPgpKeys(signingKey, signingPassword)
-                sign(extensions.getByType<PublishingExtension>().publications["maven"])
+                useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
             }
+            sign(extensions.getByType<PublishingExtension>().publications["maven"])
         }
     }
 
@@ -112,12 +118,14 @@ subprojects {
         }
 
         configure<SigningExtension> {
+            val signingKeyId = findProperty("signing.keyId") as String? ?: System.getenv("SIGNING_KEY_ID")
             val signingKey = System.getenv("SIGNING_KEY")
-            val signingPassword = System.getenv("SIGNING_PASSWORD")
+            val signingPassword = findProperty("signing.password") as String? ?: System.getenv("SIGNING_PASSWORD")
+            
             if (!signingKey.isNullOrEmpty()) {
-                useInMemoryPgpKeys(signingKey, signingPassword)
-                sign(extensions.getByType<PublishingExtension>().publications["maven"])
+                useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
             }
+            sign(extensions.getByType<PublishingExtension>().publications["maven"])
         }
     }
 
@@ -134,12 +142,14 @@ subprojects {
         }
 
         configure<SigningExtension> {
+            val signingKeyId = findProperty("signing.keyId") as String? ?: System.getenv("SIGNING_KEY_ID")
             val signingKey = System.getenv("SIGNING_KEY")
-            val signingPassword = System.getenv("SIGNING_PASSWORD")
+            val signingPassword = findProperty("signing.password") as String? ?: System.getenv("SIGNING_PASSWORD")
+            
             if (!signingKey.isNullOrEmpty()) {
-                useInMemoryPgpKeys(signingKey, signingPassword)
-                sign(extensions.getByType<PublishingExtension>().publications)
+                useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
             }
+            sign(extensions.getByType<PublishingExtension>().publications)
         }
     }
 }

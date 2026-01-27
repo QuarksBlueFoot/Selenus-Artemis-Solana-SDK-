@@ -41,32 +41,33 @@ jobs:
         with:
           validate-wrappers: false
 
-      - name: Decode GPG Key
-        run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d > $HOME/secring.gpg
-          echo "signing.secretKeyRingFile=$HOME/secring.gpg" >> local.properties
-          echo "signing.keyId=${{ secrets.GPG_KEY_ID }}" >> local.properties
-          echo "signing.password=${{ secrets.GPG_PASSPHRASE }}" >> local.properties
-
       - name: Configure Maven Central credentials
         run: |
           echo "CENTRAL_USERNAME=${{ secrets.CENTRAL_USERNAME }}" >> local.properties
           echo "CENTRAL_PASSWORD=${{ secrets.CENTRAL_PASSWORD }}" >> local.properties
-          echo "SIGNING_PASSWORD=${{ secrets.GPG_PASSPHRASE }}" >> local.properties
+          echo "signing.keyId=${{ secrets.GPG_KEY_ID }}" >> local.properties
+          echo "signing.password=${{ secrets.GPG_PASSPHRASE }}" >> local.properties
 
       - name: Build and Publish to Maven Central
         run: |
           ./gradlew publish -x javaDocReleaseGeneration \
             --no-daemon \
+            -PCENTRAL_USERNAME="${{ secrets.CENTRAL_USERNAME }}" \
+            -PCENTRAL_PASSWORD="${{ secrets.CENTRAL_PASSWORD }}" \
             -Psigning.keyId=${{ secrets.GPG_KEY_ID }} \
-            -Psigning.password=${{ secrets.GPG_PASSPHRASE }} \
-            -Psigning.secretKeyRingFile=$HOME/secring.gpg
+            -Psigning.password=${{ secrets.GPG_PASSPHRASE }}
+        env:
+          SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          SIGNING_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
 
       - name: Summary
         run: |
           echo "## 📦 Maven Central Publication" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Published **xyz.selenus:artemis-*:${{ github.event.release.tag_name || inputs.version }}** to Maven Central staging." >> $GITHUB_STEP_SUMMARY
+          echo "Published **xyz.selenus:artemis-*:${{ github.event.release.tag_name || inputs.version }}** to Maven Central." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "⚠️ **Action Required:** Log into [Sonatype OSSRH](https://s01.oss.sonatype.org/) to promote from staging to release." >> $GITHUB_STEP_SUMMARY
 
