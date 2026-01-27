@@ -43,8 +43,8 @@ jobs:
 
       - name: Configure Maven Central credentials
         run: |
-          echo "CENTRAL_USERNAME=${{ secrets.CENTRAL_USERNAME }}" >> local.properties
-          echo "CENTRAL_PASSWORD=${{ secrets.CENTRAL_PASSWORD }}" >> local.properties
+          echo "CENTRAL_USERNAME=${{ secrets.OSSRH_USERNAME }}" >> local.properties
+          echo "CENTRAL_PASSWORD=${{ secrets.OSSRH_PASSWORD }}" >> local.properties
           echo "signing.keyId=${{ secrets.GPG_KEY_ID }}" >> local.properties
           echo "signing.password=${{ secrets.GPG_PASSPHRASE }}" >> local.properties
 
@@ -52,16 +52,16 @@ jobs:
         run: |
           ./gradlew publish -x javaDocReleaseGeneration \
             --no-daemon \
-            -PCENTRAL_USERNAME="${{ secrets.CENTRAL_USERNAME }}" \
-            -PCENTRAL_PASSWORD="${{ secrets.CENTRAL_PASSWORD }}" \
+            -PCENTRAL_USERNAME="${{ secrets.OSSRH_USERNAME }}" \
+            -PCENTRAL_PASSWORD="${{ secrets.OSSRH_PASSWORD }}" \
             -Psigning.keyId=${{ secrets.GPG_KEY_ID }} \
             -Psigning.password=${{ secrets.GPG_PASSPHRASE }}
         env:
           SIGNING_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           SIGNING_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           SIGNING_PASSWORD: ${{ secrets.GPG_PASSPHRASE }}
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          CENTRAL_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
 
       - name: Summary
         run: |
