@@ -93,6 +93,9 @@ include(":artemis-streaming")
 // v79: Comprehensive Integration Tests - test all features on devnet
 include(":artemis-integration-tests")
 
+// v80: Devnet Live Tests - test all revolutionary features against real devnet
+include(":artemis-devnet-tests")
+
 // v66: devnet integration test for all innovative features (privacy, gaming, nft, token2022)
 // Temporarily disabled until API signatures are updated to match new implementations
 // include(":samples:artemis-features-devnet-test")
