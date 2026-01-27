@@ -56,7 +56,7 @@ jobs:
 
       - name: Build and Publish to Maven Central
         run: |
-          ./gradlew publish -x javaDocReleaseGeneration -x javadoc -x javadocJar \
+          ./gradlew publish -x javaDocReleaseGeneration \
             --no-daemon \
             -Psigning.keyId=${{ secrets.GPG_KEY_ID }} \
             -Psigning.password=${{ secrets.GPG_PASSPHRASE }} \
