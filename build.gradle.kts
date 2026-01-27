@@ -15,6 +15,8 @@ allprojects{
 
 subprojects {
     if (project.name == "artemis-react-native") return@subprojects
+    if (project.name == "artemis-integration-tests") return@subprojects
+    if (project.name == "artemis-devnet-tests") return@subprojects
 
     val pomConfig: MavenPublication.() -> Unit = {
         pom {
