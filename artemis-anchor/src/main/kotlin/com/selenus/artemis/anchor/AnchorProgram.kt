@@ -694,7 +694,8 @@ class PdaBuilder(private val program: AnchorProgram) {
         // Derive PDA
         val programIdForDerivation = pda.programId?.let { seedToPubkey(it, args, accounts) } ?: program.programId
         
-        return Pubkey.findProgramAddress(seeds, programIdForDerivation)
+        val result = Pubkey.findProgramAddress(seeds, programIdForDerivation)
+        return Pair(result.address, result.bump)
     }
     
     private fun findAccountItem(items: List<IdlAccountItem>, name: String): IdlAccountItem? {

@@ -1,4 +1,3 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "swift.path": "/workspaces/Selenus-Artemis-Solana-SDK-/artemis-ws/src/main/kotlin/xyz/selenus/artemis/ws/reactive"
+    "java.configuration.updateBuildConfiguration": "automatic"
 }

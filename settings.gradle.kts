@@ -90,6 +90,9 @@ include(":artemis-nlp")
 // v78: Zero-Copy Account Streaming - memory-efficient real-time updates
 include(":artemis-streaming")
 
+// v79: Comprehensive Integration Tests - test all features on devnet
+include(":artemis-integration-tests")
+
 // v66: devnet integration test for all innovative features (privacy, gaming, nft, token2022)
 // Temporarily disabled until API signatures are updated to match new implementations
 // include(":samples:artemis-features-devnet-test")

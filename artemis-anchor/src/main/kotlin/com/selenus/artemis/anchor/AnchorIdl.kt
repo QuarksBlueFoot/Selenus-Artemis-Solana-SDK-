@@ -17,6 +17,8 @@ package com.selenus.artemis.anchor
 
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
+import kotlinx.serialization.descriptors.*
+import kotlinx.serialization.encoding.*
 
 /**
  * Anchor IDL representation.
