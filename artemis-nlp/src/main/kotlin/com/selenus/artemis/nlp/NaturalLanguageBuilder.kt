@@ -292,6 +292,19 @@ class NaturalLanguageBuilder private constructor(
             
             // Account patterns
             CloseAccountPattern(),
+            CreateAtaPattern(),
+            
+            // Authority patterns
+            ApprovePattern(),
+            RevokePattern(),
+            
+            // SOL wrapping
+            WrapSolPattern(),
+            UnwrapSolPattern(),
+            
+            // Devnet patterns
+            AirdropPattern(),
+            BalancePattern(),
             
             // Memo pattern
             MemoPattern()
@@ -359,22 +372,53 @@ data class TransactionIntent(
 )
 
 /**
- * Intent type.
+ * Intent type - comprehensive list of all supported operations.
  */
 enum class IntentType {
+    // Transfers
     TRANSFER_SOL,
     TRANSFER_TOKEN,
+    
+    // Swaps (Jupiter)
     SWAP,
+    
+    // Token Operations
     CREATE_TOKEN,
     MINT_TOKEN,
     BURN_TOKEN,
+    
+    // Staking
     STAKE,
     UNSTAKE,
     DELEGATE,
+    
+    // NFT Operations
     TRANSFER_NFT,
     BURN_NFT,
+    
+    // Account Management
     CLOSE_ACCOUNT,
+    CREATE_ACCOUNT,
+    CREATE_ATA,
+    
+    // Authority Management
+    APPROVE_DELEGATE,
+    REVOKE_DELEGATE,
+    FREEZE_ACCOUNT,
+    THAW_ACCOUNT,
+    SET_AUTHORITY,
+    
+    // SOL Wrapping
+    WRAP_SOL,
+    UNWRAP_SOL,
+    
+    // Devnet/Testing
+    AIRDROP,
+    CHECK_BALANCE,
+    
+    // Utility
     MEMO,
+    
     UNKNOWN
 }
 
@@ -979,6 +1023,161 @@ class MemoPattern : TransactionPattern() {
     override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Add memo", "", entities.associateBy { it.original.type.displayName })
     override fun getSuggestion(missing: EntityType) = "What message to include?"
     override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "memo" }) 0.5 else 0.0
+}
+
+// ===========================================
+// Additional Comprehensive Patterns
+// ===========================================
+
+class CreateAtaPattern : TransactionPattern() {
+    override val intentType = IntentType.CREATE_ATA
+    override val template = "create account for [token]"
+    override val description = "Create an associated token account"
+    override val examples = listOf("create account for USDC", "create token account for BONK")
+    override val requiredEntities = listOf(EntityType.TOKEN)
+    override val entityTypes = listOf(EntityType.TOKEN, EntityType.ADDRESS)
+    override fun match(tokens: List<Token>) = if (tokens.any { it.value == "create" } && tokens.any { it.value in listOf("account", "ata") }) PatternMatch(0.85, emptyMap()) else null
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "create" && tokens.any { it.value == "account" } }
+    override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Create token account", "Create associated token account", entities.associateBy { it.original.type.displayName })
+    override fun getSuggestion(missing: EntityType) = "Which token do you want to create an account for?"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "create" }) 0.4 else 0.0
+}
+
+class ApprovePattern : TransactionPattern() {
+    override val intentType = IntentType.APPROVE_DELEGATE
+    override val template = "approve [amount] [token] to [address]"
+    override val description = "Approve a delegate to spend tokens"
+    override val examples = listOf("approve 100 USDC to delegate.sol", "approve 50 SOL spending")
+    override val requiredEntities = listOf(EntityType.AMOUNT, EntityType.TOKEN, EntityType.ADDRESS)
+    override val entityTypes = listOf(EntityType.AMOUNT, EntityType.TOKEN, EntityType.ADDRESS, EntityType.DOMAIN)
+    override fun match(tokens: List<Token>) = if (tokens.any { it.value == "approve" }) PatternMatch(0.9, emptyMap()) else null
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "approve" }
+    override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Approve delegate", "Approve delegate to spend tokens", entities.associateBy { it.original.type.displayName })
+    override fun getSuggestion(missing: EntityType) = when (missing) {
+        EntityType.AMOUNT -> "How many tokens to approve?"
+        EntityType.ADDRESS -> "Who to approve as delegate?"
+        else -> "Please provide more details"
+    }
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "approve" }) 0.5 else 0.0
+}
+
+class RevokePattern : TransactionPattern() {
+    override val intentType = IntentType.REVOKE_DELEGATE
+    override val template = "revoke [token] approval"
+    override val description = "Revoke token spending approval"
+    override val examples = listOf("revoke USDC approval", "revoke delegate access")
+    override val requiredEntities = listOf(EntityType.TOKEN)
+    override val entityTypes = listOf(EntityType.TOKEN)
+    override fun match(tokens: List<Token>) = if (tokens.any { it.value == "revoke" }) PatternMatch(0.9, emptyMap()) else null
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "revoke" }
+    override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Revoke approval", "Revoke delegate spending approval", entities.associateBy { it.original.type.displayName })
+    override fun getSuggestion(missing: EntityType) = "Which token account to revoke approval for?"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "revoke" }) 0.5 else 0.0
+}
+
+class WrapSolPattern : TransactionPattern() {
+    override val intentType = IntentType.WRAP_SOL
+    override val template = "wrap [amount] SOL"
+    override val description = "Wrap SOL to wSOL"
+    override val examples = listOf("wrap 1 SOL", "wrap 5 SOL to wSOL")
+    override val requiredEntities = listOf(EntityType.AMOUNT)
+    override val entityTypes = listOf(EntityType.AMOUNT)
+    override fun match(tokens: List<Token>) = if (tokens.any { it.value == "wrap" } && tokens.any { it.value.uppercase() == "SOL" }) PatternMatch(0.95, emptyMap()) else null
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "wrap" }
+    override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Wrap SOL", "Wrap native SOL to wSOL token", entities.associateBy { it.original.type.displayName })
+    override fun getSuggestion(missing: EntityType) = "How much SOL to wrap?"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "wrap" }) 0.5 else 0.0
+}
+
+class UnwrapSolPattern : TransactionPattern() {
+    override val intentType = IntentType.UNWRAP_SOL
+    override val template = "unwrap [amount] wSOL"
+    override val description = "Unwrap wSOL to native SOL"
+    override val examples = listOf("unwrap wSOL", "unwrap all wSOL", "unwrap 1 wSOL")
+    override val requiredEntities = emptyList<EntityType>()
+    override val entityTypes = listOf(EntityType.AMOUNT)
+    override fun match(tokens: List<Token>) = if (tokens.any { it.value == "unwrap" }) PatternMatch(0.95, emptyMap()) else null
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "unwrap" }
+    override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Unwrap wSOL", "Unwrap wSOL token to native SOL", entities.associateBy { it.original.type.displayName })
+    override fun getSuggestion(missing: EntityType) = "This will unwrap all wSOL to native SOL"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "unwrap" }) 0.5 else 0.0
+}
+
+class AirdropPattern : TransactionPattern() {
+    override val intentType = IntentType.AIRDROP
+    override val template = "airdrop [amount] SOL"
+    override val description = "Request devnet SOL airdrop"
+    override val examples = listOf("airdrop 1 SOL", "airdrop 2 SOL", "get devnet SOL")
+    override val requiredEntities = listOf(EntityType.AMOUNT)
+    override val entityTypes = listOf(EntityType.AMOUNT)
+    
+    override fun match(tokens: List<Token>): PatternMatch? {
+        val hasAirdrop = tokens.any { it.value in listOf("airdrop", "faucet") }
+        val hasDevnet = tokens.any { it.value == "devnet" }
+        val hasAmount = tokens.any { it.type == TokenType.NUMBER }
+        
+        return when {
+            hasAirdrop && hasAmount -> PatternMatch(0.95, emptyMap())
+            hasAirdrop -> PatternMatch(0.8, emptyMap())
+            hasDevnet && tokens.any { it.value in listOf("sol", "get", "request") } -> PatternMatch(0.7, emptyMap())
+            else -> null
+        }
+    }
+    
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value in listOf("airdrop", "faucet", "devnet") }
+    
+    override fun buildIntent(entities: List<ResolvedEntity>): TransactionIntent {
+        val amount = entities.find { it.original.type == EntityType.AMOUNT }?.resolvedValue ?: "1"
+        return TransactionIntent(
+            type = intentType,
+            summary = "Airdrop $amount SOL",
+            description = "Request $amount SOL from devnet faucet",
+            entities = entities.associateBy { it.original.type.displayName },
+            warnings = listOf("Only works on devnet/testnet")
+        )
+    }
+    
+    override fun getSuggestion(missing: EntityType) = "How much devnet SOL to airdrop? (max 2 per request)"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "airdrop" }) 0.6 else 0.0
+}
+
+class BalancePattern : TransactionPattern() {
+    override val intentType = IntentType.CHECK_BALANCE
+    override val template = "check balance"
+    override val description = "Check wallet balance"
+    override val examples = listOf("check balance", "show my balance", "how much SOL do I have", "what's my balance")
+    override val requiredEntities = emptyList<EntityType>()
+    override val entityTypes = listOf(EntityType.TOKEN, EntityType.ADDRESS)
+    
+    override fun match(tokens: List<Token>): PatternMatch? {
+        val hasBalance = tokens.any { it.value == "balance" }
+        val hasCheck = tokens.any { it.value in listOf("check", "show", "get", "view", "my") }
+        val hasHow = tokens.any { it.value in listOf("how", "what", "whats") }
+        val hasMuch = tokens.any { it.value == "much" }
+        
+        return when {
+            hasBalance && hasCheck -> PatternMatch(0.95, emptyMap())
+            hasBalance -> PatternMatch(0.85, emptyMap())
+            hasHow && hasMuch && tokens.any { it.value.uppercase() in listOf("SOL", "USDC") } -> PatternMatch(0.8, emptyMap())
+            else -> null
+        }
+    }
+    
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "balance" }
+    
+    override fun buildIntent(entities: List<ResolvedEntity>): TransactionIntent {
+        val token = entities.find { it.original.type == EntityType.TOKEN }?.resolvedValue
+        val tokenDesc = token ?: "SOL"
+        return TransactionIntent(
+            type = intentType,
+            summary = "Check $tokenDesc balance",
+            description = "Query current $tokenDesc balance",
+            entities = entities.associateBy { it.original.type.displayName }
+        )
+    }
+    
+    override fun getSuggestion(missing: EntityType) = "Which token balance to check? (default: SOL)"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "balance" }) 0.5 else 0.0
 }
 
 /**
