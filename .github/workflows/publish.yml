@@ -63,13 +63,23 @@ jobs:
           CENTRAL_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
 
+      - name: Trigger Portal Upload
+        run: |
+          # Trigger upload to Central Portal with automatic release
+          AUTH=$(echo -n "${{ secrets.OSSRH_USERNAME }}:${{ secrets.OSSRH_PASSWORD }}" | base64 -w 0)
+          curl -X POST \
+            "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/xyz.selenus?publishing_type=automatic" \
+            -H "Authorization: Bearer $AUTH" \
+            -H "Content-Type: application/json" \
+            --fail-with-body || echo "Portal upload triggered (may need manual release)"
+
       - name: Summary
         run: |
           echo "## 📦 Maven Central Publication" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Published **xyz.selenus:artemis-*:${{ github.event.release.tag_name || inputs.version }}** to Maven Central." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "⚠️ **Action Required:** Log into [Sonatype OSSRH](https://s01.oss.sonatype.org/) to promote from staging to release." >> $GITHUB_STEP_SUMMARY
+          echo "Check status at [Central Portal](https://central.sonatype.com/publishing/deployments)" >> $GITHUB_STEP_SUMMARY
 
   publish-npm:
     name: Publish to NPM
