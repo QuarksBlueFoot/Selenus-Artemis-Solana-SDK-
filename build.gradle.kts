@@ -87,8 +87,8 @@ subprojects {
             
             if (!signingKey.isNullOrEmpty()) {
                 useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+                sign(extensions.getByType<PublishingExtension>().publications["maven"])
             }
-            sign(extensions.getByType<PublishingExtension>().publications["maven"])
         }
     }
 
@@ -124,8 +124,8 @@ subprojects {
             
             if (!signingKey.isNullOrEmpty()) {
                 useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+                sign(extensions.getByType<PublishingExtension>().publications["maven"])
             }
-            sign(extensions.getByType<PublishingExtension>().publications["maven"])
         }
     }
 
@@ -148,8 +148,8 @@ subprojects {
             
             if (!signingKey.isNullOrEmpty()) {
                 useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+                sign(extensions.getByType<PublishingExtension>().publications)
             }
-            sign(extensions.getByType<PublishingExtension>().publications)
         }
     }
 }
