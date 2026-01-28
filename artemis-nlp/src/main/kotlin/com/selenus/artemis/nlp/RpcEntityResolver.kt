@@ -9,6 +9,8 @@
  * - Token symbol lookup via Jupiter token list
  * - Program ID resolution for known programs
  * - Validator name resolution
+ * - Wallet alias resolution (off-chain custom names)
+ * - SeedVault .skr key reference resolution
  */
 package com.selenus.artemis.nlp
 
@@ -18,11 +20,186 @@ import kotlinx.serialization.json.*
 import java.net.URL
 
 /**
+ * Wallet alias store for off-chain custom wallet names.
+ * 
+ * Allows users to set friendly names for wallet addresses without needing
+ * on-chain domains like .sol. Apps can persist this using SharedPreferences,
+ * Room database, or any key-value store.
+ * 
+ * Example:
+ * ```kotlin
+ * val aliases = WalletAliasStore()
+ * aliases.setAlias("mom", "7xKX...")
+ * aliases.setAlias("savings", "9yRZ...")
+ * 
+ * // Later in NLP:
+ * "send 1 SOL to mom" -> resolves to 7xKX...
+ * ```
+ */
+class WalletAliasStore {
+    private val aliases = mutableMapOf<String, String>()
+    
+    /**
+     * Set an alias for a wallet address.
+     * @param alias The friendly name (e.g., "mom", "savings", "exchange")
+     * @param address The wallet address in base58
+     */
+    fun setAlias(alias: String, address: String) {
+        aliases[alias.lowercase()] = address
+    }
+    
+    /**
+     * Remove an alias.
+     */
+    fun removeAlias(alias: String) {
+        aliases.remove(alias.lowercase())
+    }
+    
+    /**
+     * Get the address for an alias.
+     */
+    fun getAddress(alias: String): String? {
+        return aliases[alias.lowercase()]
+    }
+    
+    /**
+     * Check if an alias exists.
+     */
+    fun hasAlias(alias: String): Boolean {
+        return aliases.containsKey(alias.lowercase())
+    }
+    
+    /**
+     * Get all aliases.
+     */
+    fun getAllAliases(): Map<String, String> = aliases.toMap()
+    
+    /**
+     * Import aliases from a map (e.g., from SharedPreferences).
+     */
+    fun importAliases(map: Map<String, String>) {
+        map.forEach { (alias, address) ->
+            aliases[alias.lowercase()] = address
+        }
+    }
+    
+    /**
+     * Export aliases for persistence.
+     */
+    fun exportAliases(): Map<String, String> = aliases.toMap()
+    
+    /**
+     * Clear all aliases.
+     */
+    fun clear() {
+        aliases.clear()
+    }
+}
+
+/**
+ * SeedVault key reference (.skr) resolver.
+ * 
+ * Allows resolving .skr references to their public keys.
+ * The .skr format is: name.skr or accountId.skr
+ * 
+ * Example:
+ * ```kotlin
+ * val skrResolver = SkrResolver()
+ * skrResolver.registerKey("main", "7xKX...")
+ * skrResolver.registerKey("trading", "9yRZ...")
+ * 
+ * // Later in NLP:
+ * "send 1 SOL from main.skr to bob.sol" -> uses 7xKX... as sender
+ * ```
+ */
+class SkrResolver {
+    private val keyReferences = mutableMapOf<String, SkrKeyInfo>()
+    
+    /**
+     * Register a .skr key reference.
+     * @param name The key name (without .skr extension)
+     * @param publicKey The public key in base58
+     * @param derivationPath Optional BIP44 derivation path
+     * @param accountId Optional SeedVault account ID
+     */
+    fun registerKey(
+        name: String,
+        publicKey: String,
+        derivationPath: String? = null,
+        accountId: Long? = null
+    ) {
+        keyReferences[name.lowercase()] = SkrKeyInfo(
+            name = name,
+            publicKey = publicKey,
+            derivationPath = derivationPath,
+            accountId = accountId
+        )
+    }
+    
+    /**
+     * Remove a .skr key reference.
+     */
+    fun removeKey(name: String) {
+        keyReferences.remove(name.lowercase())
+    }
+    
+    /**
+     * Resolve a .skr reference to its public key.
+     * @param skrRef The .skr reference (e.g., "main.skr" or "main")
+     * @return The public key or null if not found
+     */
+    fun resolve(skrRef: String): String? {
+        val name = skrRef.lowercase().removeSuffix(".skr")
+        return keyReferences[name]?.publicKey
+    }
+    
+    /**
+     * Get full key info for a .skr reference.
+     */
+    fun getKeyInfo(skrRef: String): SkrKeyInfo? {
+        val name = skrRef.lowercase().removeSuffix(".skr")
+        return keyReferences[name]
+    }
+    
+    /**
+     * Get all registered .skr keys.
+     */
+    fun getAllKeys(): Map<String, SkrKeyInfo> = keyReferences.toMap()
+    
+    /**
+     * Check if a .skr reference exists.
+     */
+    fun hasKey(skrRef: String): Boolean {
+        val name = skrRef.lowercase().removeSuffix(".skr")
+        return keyReferences.containsKey(name)
+    }
+    
+    /**
+     * Clear all key references.
+     */
+    fun clear() {
+        keyReferences.clear()
+    }
+}
+
+/**
+ * Information about a SeedVault key reference.
+ */
+data class SkrKeyInfo(
+    val name: String,
+    val publicKey: String,
+    val derivationPath: String? = null,
+    val accountId: Long? = null
+)
+
+/**
  * RPC-backed entity resolver with caching.
  */
 class RpcEntityResolver(
     private val rpc: RpcApi,
-    private val jupiterApiUrl: String = "https://token.jup.ag/all"
+    private val jupiterApiUrl: String = "https://token.jup.ag/all",
+    private val walletAliases: WalletAliasStore = WalletAliasStore(),
+    private val skrResolver: SkrResolver = SkrResolver()
 ) : EntityResolver {
     
     // Token cache: symbol -> mint address
@@ -89,6 +266,111 @@ class RpcEntityResolver(
         return null
     }
     
+    /**
+     * Resolve a .skr (SeedVault key reference) to its public key.
+     * 
+     * The .skr format allows referencing SeedVault keys by name.
+     * Example: "main.skr", "trading.skr"
+     */
+    suspend fun resolveSkr(skrRef: String): String? {
+        if (!skrRef.endsWith(".skr")) return null
+        return skrResolver.resolve(skrRef)
+    }
+    
+    /**
+     * Resolve a .skr key reference (EntityResolver interface implementation).
+     */
+    override suspend fun resolveSkrKey(skrRef: String): String? {
+        return resolveSkr(skrRef)
+    }
+    
+    /**
+     * Resolve a wallet alias to its address (EntityResolver interface implementation).
+     */
+    override suspend fun resolveWalletAlias(alias: String): String? {
+        return walletAliases.getAddress(alias)
+    }
+    
+    /**
+     * Resolve any address-like entity.
+     * 
+     * Resolution order:
+     * 1. Check if it's already a valid base58 address
+     * 2. Check if it's a .sol domain
+     * 3. Check if it's a .skr key reference
+     * 4. Check if it's a wallet alias
+     * 
+     * @param input The input to resolve (address, domain, .skr, or alias)
+     * @return The resolved base58 address or null
+     */
+    suspend fun resolveAnyAddress(input: String): AddressResolution? {
+        val normalized = input.lowercase().trim()
+        
+        // 1. Check if it's already a valid base58 address
+        if (isValidBase58Address(input)) {
+            return AddressResolution(
+                address = input,
+                source = AddressSource.DIRECT,
+                originalInput = input
+            )
+        }
+        
+        // 2. Check if it's a .sol domain
+        if (normalized.endsWith(".sol")) {
+            val resolved = resolveDomain(input)
+            if (resolved != null) {
+                return AddressResolution(
+                    address = resolved,
+                    source = AddressSource.SNS_DOMAIN,
+                    originalInput = input
+                )
+            }
+        }
+        
+        // 3. Check if it's a .skr key reference
+        if (normalized.endsWith(".skr")) {
+            val resolved = resolveSkr(normalized)
+            if (resolved != null) {
+                return AddressResolution(
+                    address = resolved,
+                    source = AddressSource.SEED_VAULT_KEY,
+                    originalInput = input
+                )
+            }
+        }
+        
+        // 4. Check if it's a wallet alias
+        val aliasResolved = resolveWalletAlias(normalized)
+        if (aliasResolved != null) {
+            return AddressResolution(
+                address = aliasResolved,
+                source = AddressSource.WALLET_ALIAS,
+                originalInput = input
+            )
+        }
+        
+        return null
+    }
+    
+    /**
+     * Check if a string is a valid base58 Solana address.
+     */
+    private fun isValidBase58Address(input: String): Boolean {
+        if (input.length !in 32..44) return false
+        val base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+        return input.all { it in base58Chars }
+    }
+    
+    /**
+     * Get the wallet alias store for configuration.
+     */
+    fun getAliasStore(): WalletAliasStore = walletAliases
+    
+    /**
+     * Get the .skr resolver for configuration.
+     */
+    fun getSkrResolver(): SkrResolver = skrResolver
+
     /**
      * Resolve a token symbol to its mint address.
      */
@@ -237,4 +519,27 @@ class RpcEntityResolver(
             "PRISM" to "PRSMNsEPqhGVCH1TtWiJqPjJyh2cKrLostPZTNy1fxw"
         )
     }
+}
+
+/**
+ * Result of resolving an address-like entity.
+ */
+data class AddressResolution(
+    val address: String,
+    val source: AddressSource,
+    val originalInput: String
+)
+
+/**
+ * Source of an address resolution.
+ */
+enum class AddressSource {
+    /** Direct base58 address */
+    DIRECT,
+    /** Resolved from SNS .sol domain */
+    SNS_DOMAIN,
+    /** Resolved from SeedVault .skr key reference */
+    SEED_VAULT_KEY,
+    /** Resolved from user-defined wallet alias */
+    WALLET_ALIAS
 }
