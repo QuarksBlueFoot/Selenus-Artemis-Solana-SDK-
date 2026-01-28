@@ -764,8 +764,8 @@ class WalletManager {
 
 ## Getting Help
 
-- 📖 [Artemis Documentation](https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-)
-- 💬 [GitHub Issues](https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-/issues)
+- 📖 [Artemis Documentation](https://selenus.xyz/docs)
+- 💬 [Community Support](https://selenus.xyz/community)
 - 📦 [Maven Central](https://central.sonatype.com/search?q=xyz.selenus)
 
 ---
@@ -836,7 +836,7 @@ val rpc = RpcClient(url)  // No driver needed, simpler!
 2. **Update example apps** to show Artemis as the recommended SDK
 3. **Link to Artemis** in Solana Mobile docs as the "batteries-included" option
 
-**Contact:** [GitHub Issues](https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-/issues)
+**Contact:** [support@selenus.xyz](mailto:support@selenus.xyz)
 
 ---
 

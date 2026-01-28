@@ -39,6 +39,17 @@ Artemis SDK v2.0.0 introduces **six revolutionary features** that don't exist in
 | [TECHNICAL_ARCHITECTURE.md](TECHNICAL_ARCHITECTURE.md) | Deep dive into how each feature works | Senior developers |
 | [MOBILE_APP_GUIDE.md](MOBILE_APP_GUIDE.md) | Complete mobile integration guide | App developers |
 
+### Feature Guides
+
+| Guide | Description | Module |
+|-------|-------------|--------|
+| [NLP_GUIDE.md](guides/NLP_GUIDE.md) | Natural Language Transaction Builder | artemis-nlp |
+| [UNIVERSAL_GUIDE.md](guides/UNIVERSAL_GUIDE.md) | Universal Program Client | artemis-universal |
+| [JUPITER_GUIDE.md](guides/JUPITER_GUIDE.md) | Jupiter DEX Integration | artemis-jupiter |
+| [ACTIONS_GUIDE.md](guides/ACTIONS_GUIDE.md) | Solana Actions & Blinks | artemis-actions |
+| [ANCHOR_GUIDE.md](guides/ANCHOR_GUIDE.md) | Anchor Client Generator | artemis-anchor |
+| [STREAMING_GUIDE.md](guides/STREAMING_GUIDE.md) | Zero-Copy Account Streaming | artemis-streaming |
+
 ---
 
 ## 🌟 The Six Revolutionary Features
