@@ -1,6 +1,6 @@
 {
   "name": "@selenus/artemis-solana-sdk",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Artemis Solana SDK for React Native - The most comprehensive Kotlin/Android Solana SDK. Features: Anchor, Jupiter, Jito, Actions/Blinks, NLP Transactions, Zero-Copy Streaming, and more.",
   "main": "index.js",
   "types": "index.d.ts",
