@@ -92,8 +92,14 @@ class NaturalLanguageBuilder private constructor(
         val entities = entityExtractor.extract(tokens, pattern.entityTypes)
         
         // Check for missing required entities
+        // ADDRESS requirement can be satisfied by ADDRESS, DOMAIN, SKR_KEY, or WALLET_ALIAS
         val missing = pattern.requiredEntities.filter { required ->
-            entities.none { it.type == required }
+            if (required == EntityType.ADDRESS) {
+                // Any address-like entity satisfies the ADDRESS requirement
+                entities.none { it.type in ADDRESS_LIKE_TYPES }
+            } else {
+                entities.none { it.type == required }
+            }
         }
         
         if (missing.isNotEmpty()) {
@@ -179,6 +185,8 @@ class NaturalLanguageBuilder private constructor(
                         EntityType.TOKEN -> resolveToken(entity)
                         EntityType.AMOUNT -> resolveAmount(entity)
                         EntityType.DOMAIN -> resolveDomain(entity)
+                        EntityType.SKR_KEY -> resolveSkrKey(entity)
+                        EntityType.WALLET_ALIAS -> resolveWalletAlias(entity)
                         EntityType.PROGRAM -> resolveProgram(entity)
                         EntityType.VALIDATOR -> resolveValidator(entity)
                         else -> ResolvedEntity(entity, entity.value, 1.0)
@@ -197,12 +205,42 @@ class NaturalLanguageBuilder private constructor(
             return ResolvedEntity(entity, resolved ?: value, if (resolved != null) 1.0 else 0.0)
         }
         
+        // Check if it's a .skr key reference
+        if (value.endsWith(".skr")) {
+            val resolved = resolver.resolveSkrKey(value)
+            return ResolvedEntity(entity, resolved ?: value, if (resolved != null) 1.0 else 0.0)
+        }
+        
         // Validate as base58 address
         if (isValidBase58(value)) {
             return ResolvedEntity(entity, value, 1.0)
         }
         
+        // Try wallet alias as fallback
+        val aliasResolved = resolver.resolveWalletAlias(value)
+        if (aliasResolved != null) {
+            return ResolvedEntity(entity, aliasResolved, 0.9)
+        }
+        
         return ResolvedEntity(entity, value, 0.0)
+    }
+    
+    private suspend fun resolveSkrKey(entity: ExtractedEntity): ResolvedEntity {
+        val resolved = resolver.resolveSkrKey(entity.value)
+        return if (resolved != null) {
+            ResolvedEntity(entity, resolved, 1.0)
+        } else {
+            ResolvedEntity(entity, entity.value, 0.0)
+        }
+    }
+    
+    private suspend fun resolveWalletAlias(entity: ExtractedEntity): ResolvedEntity {
+        val resolved = resolver.resolveWalletAlias(entity.value)
+        return if (resolved != null) {
+            ResolvedEntity(entity, resolved, 1.0)
+        } else {
+            ResolvedEntity(entity, entity.value, 0.0)
+        }
     }
     
     private suspend fun resolveToken(entity: ExtractedEntity): ResolvedEntity {
@@ -292,6 +330,19 @@ class NaturalLanguageBuilder private constructor(
             
             // Account patterns
             CloseAccountPattern(),
+            CreateAtaPattern(),
+            
+            // Authority patterns
+            ApprovePattern(),
+            RevokePattern(),
+            
+            // SOL wrapping
+            WrapSolPattern(),
+            UnwrapSolPattern(),
+            
+            // Devnet patterns
+            AirdropPattern(),
+            BalancePattern(),
             
             // Memo pattern
             MemoPattern()
@@ -299,6 +350,14 @@ class NaturalLanguageBuilder private constructor(
     }
     
     companion object {
+        // Entity types that can satisfy an ADDRESS requirement
+        val ADDRESS_LIKE_TYPES = setOf(
+            EntityType.ADDRESS,
+            EntityType.DOMAIN,
+            EntityType.SKR_KEY,
+            EntityType.WALLET_ALIAS
+        )
+        
         fun create(
             resolver: EntityResolver,
             config: NlbConfig = NlbConfig()
@@ -359,22 +418,53 @@ data class TransactionIntent(
 )
 
 /**
- * Intent type.
+ * Intent type - comprehensive list of all supported operations.
  */
 enum class IntentType {
+    // Transfers
     TRANSFER_SOL,
     TRANSFER_TOKEN,
+    
+    // Swaps (Jupiter)
     SWAP,
+    
+    // Token Operations
     CREATE_TOKEN,
     MINT_TOKEN,
     BURN_TOKEN,
+    
+    // Staking
     STAKE,
     UNSTAKE,
     DELEGATE,
+    
+    // NFT Operations
     TRANSFER_NFT,
     BURN_NFT,
+    
+    // Account Management
     CLOSE_ACCOUNT,
+    CREATE_ACCOUNT,
+    CREATE_ATA,
+    
+    // Authority Management
+    APPROVE_DELEGATE,
+    REVOKE_DELEGATE,
+    FREEZE_ACCOUNT,
+    THAW_ACCOUNT,
+    SET_AUTHORITY,
+    
+    // SOL Wrapping
+    WRAP_SOL,
+    UNWRAP_SOL,
+    
+    // Devnet/Testing
+    AIRDROP,
+    CHECK_BALANCE,
+    
+    // Utility
     MEMO,
+    
     UNKNOWN
 }
 
@@ -408,7 +498,7 @@ data class Token(
 )
 
 enum class TokenType {
-    WORD, NUMBER, ADDRESS, DOMAIN, SYMBOL, PUNCTUATION, UNKNOWN
+    WORD, NUMBER, ADDRESS, DOMAIN, SKR_KEY, SYMBOL, PUNCTUATION, UNKNOWN
 }
 
 /**
@@ -434,6 +524,7 @@ class Tokenizer {
         return when {
             word.matches(Regex("\\d+\\.?\\d*")) -> TokenType.NUMBER
             word.endsWith(".sol") -> TokenType.DOMAIN
+            word.endsWith(".skr") -> TokenType.SKR_KEY
             word.matches(Regex("[A-HJ-NP-Za-km-z1-9]{32,44}")) -> TokenType.ADDRESS
             word.matches(Regex("[A-Z]{2,10}")) -> TokenType.SYMBOL
             word.matches(Regex("[a-z]+")) -> TokenType.WORD
@@ -450,6 +541,8 @@ enum class EntityType(val displayName: String) {
     TOKEN("token"),
     ADDRESS("address"),
     DOMAIN("domain name"),
+    SKR_KEY("seed vault key"),
+    WALLET_ALIAS("wallet alias"),
     PROGRAM("program"),
     VALIDATOR("validator"),
     MEMO("memo"),
@@ -497,6 +590,12 @@ class EntityExtractor(private val resolver: EntityResolver) {
                     token.value, 
                     index
                 )
+                TokenType.SKR_KEY -> ExtractedEntity(
+                    EntityType.SKR_KEY, 
+                    token.value, 
+                    token.value, 
+                    index
+                )
                 TokenType.ADDRESS -> ExtractedEntity(
                     EntityType.ADDRESS, 
                     token.value, 
@@ -530,6 +629,28 @@ class EntityExtractor(private val resolver: EntityResolver) {
             }
         }
         
+        // Extract words after "to" as potential wallet aliases
+        // Only if no ADDRESS, DOMAIN, or SKR_KEY was found after "to"
+        val hasExplicitRecipient = entities.any { 
+            it.type in listOf(EntityType.ADDRESS, EntityType.DOMAIN, EntityType.SKR_KEY) 
+        }
+        if (!hasExplicitRecipient && EntityType.WALLET_ALIAS in expectedTypes) {
+            val toIndex = tokens.indexOfFirst { it.value == "to" }
+            if (toIndex >= 0 && toIndex < tokens.size - 1) {
+                val nextToken = tokens[toIndex + 1]
+                // Only treat as alias if it's a simple word (not a known token, etc.)
+                if (nextToken.type == TokenType.WORD && 
+                    KNOWN_TOKENS[nextToken.value.uppercase()] == null) {
+                    entities.add(ExtractedEntity(
+                        EntityType.WALLET_ALIAS,
+                        nextToken.value,
+                        nextToken.value,
+                        toIndex + 1
+                    ))
+                }
+            }
+        }
+        
         return entities
     }
     
@@ -557,6 +678,18 @@ interface EntityResolver {
     suspend fun resolveTokenSymbol(symbol: String): String?
     suspend fun resolveProgramName(name: String): String?
     suspend fun resolveValidatorName(name: String): String?
+    
+    /**
+     * Resolve a .skr (SeedVault key reference) to its public key.
+     * Default implementation returns null.
+     */
+    suspend fun resolveSkrKey(skrRef: String): String? = null
+    
+    /**
+     * Resolve a wallet alias to its address.
+     * Default implementation returns null.
+     */
+    suspend fun resolveWalletAlias(alias: String): String? = null
 }
 
 /**
@@ -598,7 +731,7 @@ class TransferPattern : TransactionPattern() {
         "send 0.5 SOL to bob.sol"
     )
     override val requiredEntities = listOf(EntityType.AMOUNT, EntityType.TOKEN, EntityType.ADDRESS)
-    override val entityTypes = listOf(EntityType.AMOUNT, EntityType.TOKEN, EntityType.ADDRESS, EntityType.DOMAIN)
+    override val entityTypes = listOf(EntityType.AMOUNT, EntityType.TOKEN, EntityType.ADDRESS, EntityType.DOMAIN, EntityType.SKR_KEY, EntityType.WALLET_ALIAS)
     
     private val keywords = listOf("transfer")
     
@@ -606,9 +739,8 @@ class TransferPattern : TransactionPattern() {
         val hasTransferKeyword = tokens.any { it.value in keywords }
         val hasTo = tokens.any { it.value == "to" }
         val hasAmount = tokens.any { it.type == TokenType.NUMBER }
-        val hasRecipient = tokens.any { 
-            it.type == TokenType.ADDRESS || it.type == TokenType.DOMAIN 
-        }
+        // Accept any address-like token or word after "to" (potential alias)
+        val hasRecipient = hasRecipientToken(tokens)
         
         return if (hasTransferKeyword && hasTo && hasAmount && hasRecipient) {
             PatternMatch(0.9, emptyMap())
@@ -625,7 +757,7 @@ class TransferPattern : TransactionPattern() {
         val amount = entities.find { it.original.type == EntityType.AMOUNT }?.resolvedValue ?: "0"
         val token = entities.find { it.original.type == EntityType.TOKEN }?.resolvedValue ?: "SOL"
         val recipient = entities.find { 
-            it.original.type == EntityType.ADDRESS || it.original.type == EntityType.DOMAIN 
+            it.original.type in listOf(EntityType.ADDRESS, EntityType.DOMAIN, EntityType.SKR_KEY, EntityType.WALLET_ALIAS)
         }?.resolvedValue ?: ""
         
         return TransactionIntent(
@@ -636,7 +768,7 @@ class TransferPattern : TransactionPattern() {
                 "amount" to entities.first { it.original.type == EntityType.AMOUNT },
                 "token" to entities.first { it.original.type == EntityType.TOKEN },
                 "recipient" to entities.first { 
-                    it.original.type == EntityType.ADDRESS || it.original.type == EntityType.DOMAIN 
+                    it.original.type in listOf(EntityType.ADDRESS, EntityType.DOMAIN, EntityType.SKR_KEY, EntityType.WALLET_ALIAS)
                 }
             )
         )
@@ -646,7 +778,7 @@ class TransferPattern : TransactionPattern() {
         return when (missing) {
             EntityType.AMOUNT -> "How much would you like to transfer? (e.g., '1 SOL')"
             EntityType.TOKEN -> "What token would you like to transfer? (e.g., 'SOL', 'USDC')"
-            EntityType.ADDRESS -> "Who would you like to send to? (address or .sol domain)"
+            EntityType.ADDRESS -> "Who would you like to send to? (address, .sol domain, .skr key, or alias)"
             else -> "Please provide more information"
         }
     }
@@ -656,8 +788,24 @@ class TransferPattern : TransactionPattern() {
         if (tokens.any { it.value in keywords }) score += 0.4
         if (tokens.any { it.value == "to" }) score += 0.2
         if (tokens.any { it.type == TokenType.NUMBER }) score += 0.2
-        if (tokens.any { it.type == TokenType.ADDRESS || it.type == TokenType.DOMAIN }) score += 0.2
+        if (hasRecipientToken(tokens)) score += 0.2
         return score
+    }
+    
+    private fun hasRecipientToken(tokens: List<Token>): Boolean {
+        // Check for direct address types
+        if (tokens.any { it.type in listOf(TokenType.ADDRESS, TokenType.DOMAIN, TokenType.SKR_KEY) }) {
+            return true
+        }
+        // Check for word after "to" (potential wallet alias)
+        val toIndex = tokens.indexOfFirst { it.value == "to" }
+        if (toIndex >= 0 && toIndex < tokens.size - 1) {
+            val nextToken = tokens[toIndex + 1]
+            if (nextToken.type == TokenType.WORD) {
+                return true // Could be a wallet alias
+            }
+        }
+        return false
     }
 }
 
@@ -670,19 +818,19 @@ class SendPattern : TransactionPattern() {
     override val description = "Send tokens to another wallet"
     override val examples = listOf(
         "send 1 SOL to alice.sol",
-        "send 50 USDC to 7xKX..."
+        "send 50 USDC to 7xKX...",
+        "send 1 SOL to mom"
     )
     override val requiredEntities = listOf(EntityType.AMOUNT, EntityType.ADDRESS)
-    override val entityTypes = listOf(EntityType.AMOUNT, EntityType.TOKEN, EntityType.ADDRESS, EntityType.DOMAIN)
+    override val entityTypes = listOf(EntityType.AMOUNT, EntityType.TOKEN, EntityType.ADDRESS, EntityType.DOMAIN, EntityType.SKR_KEY, EntityType.WALLET_ALIAS)
     
     private val keywords = listOf("send", "pay", "give")
     
     override fun match(tokens: List<Token>): PatternMatch? {
         val hasSendKeyword = tokens.any { it.value in keywords }
         val hasAmount = tokens.any { it.type == TokenType.NUMBER }
-        val hasRecipient = tokens.any { 
-            it.type == TokenType.ADDRESS || it.type == TokenType.DOMAIN 
-        }
+        // Accept any address-like token or word after "to" (potential alias)
+        val hasRecipient = hasRecipientToken(tokens)
         
         return if (hasSendKeyword && hasAmount && hasRecipient) {
             PatternMatch(0.85, emptyMap())
@@ -699,7 +847,7 @@ class SendPattern : TransactionPattern() {
         val amount = entities.find { it.original.type == EntityType.AMOUNT }?.resolvedValue ?: "0"
         val token = entities.find { it.original.type == EntityType.TOKEN }?.resolvedValue ?: "SOL"
         val recipient = entities.find { 
-            it.original.type == EntityType.ADDRESS || it.original.type == EntityType.DOMAIN 
+            it.original.type in listOf(EntityType.ADDRESS, EntityType.DOMAIN, EntityType.SKR_KEY, EntityType.WALLET_ALIAS)
         }?.resolvedValue ?: ""
         
         return TransactionIntent(
@@ -713,7 +861,7 @@ class SendPattern : TransactionPattern() {
     override fun getSuggestion(missing: EntityType): String {
         return when (missing) {
             EntityType.AMOUNT -> "How much would you like to send?"
-            EntityType.ADDRESS -> "Who would you like to send to?"
+            EntityType.ADDRESS -> "Who would you like to send to? (address, .sol domain, .skr key, or alias)"
             else -> "Please provide more information"
         }
     }
@@ -722,8 +870,24 @@ class SendPattern : TransactionPattern() {
         var score = 0.0
         if (tokens.any { it.value in keywords }) score += 0.5
         if (tokens.any { it.type == TokenType.NUMBER }) score += 0.25
-        if (tokens.any { it.type == TokenType.ADDRESS || it.type == TokenType.DOMAIN }) score += 0.25
+        if (hasRecipientToken(tokens)) score += 0.25
         return score
+    }
+    
+    private fun hasRecipientToken(tokens: List<Token>): Boolean {
+        // Check for direct address types
+        if (tokens.any { it.type in listOf(TokenType.ADDRESS, TokenType.DOMAIN, TokenType.SKR_KEY) }) {
+            return true
+        }
+        // Check for word after "to" (potential wallet alias)
+        val toIndex = tokens.indexOfFirst { it.value == "to" }
+        if (toIndex >= 0 && toIndex < tokens.size - 1) {
+            val nextToken = tokens[toIndex + 1]
+            if (nextToken.type == TokenType.WORD) {
+                return true // Could be a wallet alias
+            }
+        }
+        return false
     }
 }
 
@@ -979,6 +1143,161 @@ class MemoPattern : TransactionPattern() {
     override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Add memo", "", entities.associateBy { it.original.type.displayName })
     override fun getSuggestion(missing: EntityType) = "What message to include?"
     override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "memo" }) 0.5 else 0.0
+}
+
+// ===========================================
+// Additional Comprehensive Patterns
+// ===========================================
+
+class CreateAtaPattern : TransactionPattern() {
+    override val intentType = IntentType.CREATE_ATA
+    override val template = "create account for [token]"
+    override val description = "Create an associated token account"
+    override val examples = listOf("create account for USDC", "create token account for BONK")
+    override val requiredEntities = listOf(EntityType.TOKEN)
+    override val entityTypes = listOf(EntityType.TOKEN, EntityType.ADDRESS)
+    override fun match(tokens: List<Token>) = if (tokens.any { it.value == "create" } && tokens.any { it.value in listOf("account", "ata") }) PatternMatch(0.85, emptyMap()) else null
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "create" && tokens.any { it.value == "account" } }
+    override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Create token account", "Create associated token account", entities.associateBy { it.original.type.displayName })
+    override fun getSuggestion(missing: EntityType) = "Which token do you want to create an account for?"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "create" }) 0.4 else 0.0
+}
+
+class ApprovePattern : TransactionPattern() {
+    override val intentType = IntentType.APPROVE_DELEGATE
+    override val template = "approve [amount] [token] to [address]"
+    override val description = "Approve a delegate to spend tokens"
+    override val examples = listOf("approve 100 USDC to delegate.sol", "approve 50 SOL spending")
+    override val requiredEntities = listOf(EntityType.AMOUNT, EntityType.TOKEN, EntityType.ADDRESS)
+    override val entityTypes = listOf(EntityType.AMOUNT, EntityType.TOKEN, EntityType.ADDRESS, EntityType.DOMAIN)
+    override fun match(tokens: List<Token>) = if (tokens.any { it.value == "approve" }) PatternMatch(0.9, emptyMap()) else null
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "approve" }
+    override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Approve delegate", "Approve delegate to spend tokens", entities.associateBy { it.original.type.displayName })
+    override fun getSuggestion(missing: EntityType) = when (missing) {
+        EntityType.AMOUNT -> "How many tokens to approve?"
+        EntityType.ADDRESS -> "Who to approve as delegate?"
+        else -> "Please provide more details"
+    }
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "approve" }) 0.5 else 0.0
+}
+
+class RevokePattern : TransactionPattern() {
+    override val intentType = IntentType.REVOKE_DELEGATE
+    override val template = "revoke [token] approval"
+    override val description = "Revoke token spending approval"
+    override val examples = listOf("revoke USDC approval", "revoke delegate access")
+    override val requiredEntities = listOf(EntityType.TOKEN)
+    override val entityTypes = listOf(EntityType.TOKEN)
+    override fun match(tokens: List<Token>) = if (tokens.any { it.value == "revoke" }) PatternMatch(0.9, emptyMap()) else null
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "revoke" }
+    override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Revoke approval", "Revoke delegate spending approval", entities.associateBy { it.original.type.displayName })
+    override fun getSuggestion(missing: EntityType) = "Which token account to revoke approval for?"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "revoke" }) 0.5 else 0.0
+}
+
+class WrapSolPattern : TransactionPattern() {
+    override val intentType = IntentType.WRAP_SOL
+    override val template = "wrap [amount] SOL"
+    override val description = "Wrap SOL to wSOL"
+    override val examples = listOf("wrap 1 SOL", "wrap 5 SOL to wSOL")
+    override val requiredEntities = listOf(EntityType.AMOUNT)
+    override val entityTypes = listOf(EntityType.AMOUNT)
+    override fun match(tokens: List<Token>) = if (tokens.any { it.value == "wrap" } && tokens.any { it.value.uppercase() == "SOL" }) PatternMatch(0.95, emptyMap()) else null
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "wrap" }
+    override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Wrap SOL", "Wrap native SOL to wSOL token", entities.associateBy { it.original.type.displayName })
+    override fun getSuggestion(missing: EntityType) = "How much SOL to wrap?"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "wrap" }) 0.5 else 0.0
+}
+
+class UnwrapSolPattern : TransactionPattern() {
+    override val intentType = IntentType.UNWRAP_SOL
+    override val template = "unwrap [amount] wSOL"
+    override val description = "Unwrap wSOL to native SOL"
+    override val examples = listOf("unwrap wSOL", "unwrap all wSOL", "unwrap 1 wSOL")
+    override val requiredEntities = emptyList<EntityType>()
+    override val entityTypes = listOf(EntityType.AMOUNT)
+    override fun match(tokens: List<Token>) = if (tokens.any { it.value == "unwrap" }) PatternMatch(0.95, emptyMap()) else null
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "unwrap" }
+    override fun buildIntent(entities: List<ResolvedEntity>) = TransactionIntent(intentType, "Unwrap wSOL", "Unwrap wSOL token to native SOL", entities.associateBy { it.original.type.displayName })
+    override fun getSuggestion(missing: EntityType) = "This will unwrap all wSOL to native SOL"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "unwrap" }) 0.5 else 0.0
+}
+
+class AirdropPattern : TransactionPattern() {
+    override val intentType = IntentType.AIRDROP
+    override val template = "airdrop [amount] SOL"
+    override val description = "Request devnet SOL airdrop"
+    override val examples = listOf("airdrop 1 SOL", "airdrop 2 SOL", "get devnet SOL")
+    override val requiredEntities = listOf(EntityType.AMOUNT)
+    override val entityTypes = listOf(EntityType.AMOUNT)
+    
+    override fun match(tokens: List<Token>): PatternMatch? {
+        val hasAirdrop = tokens.any { it.value in listOf("airdrop", "faucet") }
+        val hasDevnet = tokens.any { it.value == "devnet" }
+        val hasAmount = tokens.any { it.type == TokenType.NUMBER }
+        
+        return when {
+            hasAirdrop && hasAmount -> PatternMatch(0.95, emptyMap())
+            hasAirdrop -> PatternMatch(0.8, emptyMap())
+            hasDevnet && tokens.any { it.value in listOf("sol", "get", "request") } -> PatternMatch(0.7, emptyMap())
+            else -> null
+        }
+    }
+    
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value in listOf("airdrop", "faucet", "devnet") }
+    
+    override fun buildIntent(entities: List<ResolvedEntity>): TransactionIntent {
+        val amount = entities.find { it.original.type == EntityType.AMOUNT }?.resolvedValue ?: "1"
+        return TransactionIntent(
+            type = intentType,
+            summary = "Airdrop $amount SOL",
+            description = "Request $amount SOL from devnet faucet",
+            entities = entities.associateBy { it.original.type.displayName },
+            warnings = listOf("Only works on devnet/testnet")
+        )
+    }
+    
+    override fun getSuggestion(missing: EntityType) = "How much devnet SOL to airdrop? (max 2 per request)"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "airdrop" }) 0.6 else 0.0
+}
+
+class BalancePattern : TransactionPattern() {
+    override val intentType = IntentType.CHECK_BALANCE
+    override val template = "check balance"
+    override val description = "Check wallet balance"
+    override val examples = listOf("check balance", "show my balance", "how much SOL do I have", "what's my balance")
+    override val requiredEntities = emptyList<EntityType>()
+    override val entityTypes = listOf(EntityType.TOKEN, EntityType.ADDRESS)
+    
+    override fun match(tokens: List<Token>): PatternMatch? {
+        val hasBalance = tokens.any { it.value == "balance" }
+        val hasCheck = tokens.any { it.value in listOf("check", "show", "get", "view", "my") }
+        val hasHow = tokens.any { it.value in listOf("how", "what", "whats") }
+        val hasMuch = tokens.any { it.value == "much" }
+        
+        return when {
+            hasBalance && hasCheck -> PatternMatch(0.95, emptyMap())
+            hasBalance -> PatternMatch(0.85, emptyMap())
+            hasHow && hasMuch && tokens.any { it.value.uppercase() in listOf("SOL", "USDC") } -> PatternMatch(0.8, emptyMap())
+            else -> null
+        }
+    }
+    
+    override fun partialMatch(tokens: List<Token>) = tokens.any { it.value == "balance" }
+    
+    override fun buildIntent(entities: List<ResolvedEntity>): TransactionIntent {
+        val token = entities.find { it.original.type == EntityType.TOKEN }?.resolvedValue
+        val tokenDesc = token ?: "SOL"
+        return TransactionIntent(
+            type = intentType,
+            summary = "Check $tokenDesc balance",
+            description = "Query current $tokenDesc balance",
+            entities = entities.associateBy { it.original.type.displayName }
+        )
+    }
+    
+    override fun getSuggestion(missing: EntityType) = "Which token balance to check? (default: SOL)"
+    override fun similarityScore(tokens: List<Token>) = if (tokens.any { it.value == "balance" }) 0.5 else 0.0
 }
 
 /**

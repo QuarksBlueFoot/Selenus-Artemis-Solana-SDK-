@@ -2,13 +2,17 @@ package xyz.selenus.artemis.devnet
 
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
+import kotlinx.serialization.builtins.serializer
 import okhttp3.OkHttpClient
-import org.junit.jupiter.api.*
-import xyz.selenus.artemis.core.*
-import xyz.selenus.artemis.rpc.*
-import xyz.selenus.artemis.wallet.*
-import xyz.selenus.artemis.tx.*
-import kotlin.test.*
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
+import com.selenus.artemis.runtime.Keypair
+import com.selenus.artemis.runtime.Pubkey
+import com.selenus.artemis.rpc.JsonRpcClient
+import com.selenus.artemis.tx.builder.artemisTransaction
 
 /**
  * Artemis SDK v2.0.0 - Pre-Publication Validation Tests
@@ -40,7 +44,7 @@ class ArtemisDevnetTests {
         
         // Test that core classes are available
         val keypair = Keypair.generate()
-        val pubkey = keypair.publicKey()
+        val pubkey = keypair.publicKey
         
         println("✅ Keypair generation works")
         println("✅ Pubkey: ${pubkey.toBase58()}")
@@ -53,7 +57,7 @@ class ArtemisDevnetTests {
         println("\n🌐 Test 2: RPC Client")
         println("-".repeat(60))
         
-        val rpcClient = RpcClient(devnetEndpoint)
+        val rpcClient = JsonRpcClient(devnetEndpoint)
         println("✅ RPC Client initialized: $devnetEndpoint")
         
         assertNotNull(rpcClient, "RPC client should be created")
@@ -65,19 +69,16 @@ class ArtemisDevnetTests {
         println("-".repeat(60))
         
         val wallet = Keypair.generate()
-        val recipient = Keypair.generate().publicKey()
+        val recipient = Keypair.generate().publicKey
         
         val tx = artemisTransaction {
-            feePayer(wallet.publicKey())
+            feePayer(wallet.publicKey)
             instruction(Pubkey("11111111111111111111111111111111")) {
                 accounts {
-                    account(wallet.publicKey(), isSigner = true, isWritable = true)
-                    account(recipient, isSigner = false, isWritable = true)
+                    signerWritable(wallet.publicKey)
+                    writable(recipient)
                 }
-                data {
-                    u32(2) // Transfer
-                    u64(1_000_000)
-                }
+                data(ByteArray(12)) // Placeholder data for transfer
             }
         }
         
@@ -94,11 +95,11 @@ class ArtemisDevnetTests {
         
         println("✅ Generated ${keypairs.size} keypairs")
         keypairs.forEachIndexed { index, kp ->
-            println("   Keypair ${index + 1}: ${kp.publicKey().toBase58()}")
+            println("   Keypair ${index + 1}: ${kp.publicKey.toBase58()}")
         }
         
         assertEquals(5, keypairs.size)
-        assertTrue(keypairs.map { it.publicKey().toBase58() }.distinct().size == 5, 
+        assertTrue(keypairs.map { it.publicKey.toBase58() }.distinct().size == 5, 
             "All keypairs should be unique")
     }
     
@@ -210,7 +211,7 @@ class ArtemisDevnetTests {
         
         // Check 3: RPC client
         try {
-            RpcClient(devnetEndpoint)
+            JsonRpcClient(devnetEndpoint)
             checks["RPC Client"] = true
         } catch (e: Exception) {
             checks["RPC Client"] = false
@@ -221,7 +222,7 @@ class ArtemisDevnetTests {
         try {
             val wallet = Keypair.generate()
             artemisTransaction {
-                feePayer(wallet.publicKey())
+                feePayer(wallet.publicKey)
             }
             checks["Transaction Builder"] = true
         } catch (e: Exception) {

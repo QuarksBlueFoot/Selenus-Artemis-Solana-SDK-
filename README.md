@@ -1,37 +1,105 @@
-# Selenus Artemis Solana SDK v2.1.0
+# Artemis Solana SDK
 
-> **The Most Advanced Solana SDK for Mobile Development**
-> 
-> **Modular. Revolutionary. Mobile-first. No paid assumptions.**
-
-**Maintained by [Selenus Technologies](https://selenus.xyz)**
+A comprehensive Kotlin/Android SDK for building Solana mobile applications with privacy features, transaction building, and ecosystem integrations.
 
 [![Maven Central](https://img.shields.io/maven-central/v/xyz.selenus/artemis-core?style=flat-square)](https://central.sonatype.com/search?q=xyz.selenus)
 [![NPM](https://img.shields.io/npm/v/@selenus/artemis-solana-sdk?style=flat-square)](https://www.npmjs.com/package/@selenus/artemis-solana-sdk)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
 
+## Introduction
+
+Artemis provides enabling libraries for Android wallet apps and dApps, allowing developers to build mobile experiences on Solana. Whether you're building a native Kotlin app, a React Native application, or integrating wallet functionality, these libraries handle the complexity of on-chain interaction, transaction construction, and privacy features.
+
+**Maintained by [Bluefoot Labs](https://bluefootlabs.xyz)**
+
+## Documentation
+
+- [Quickstart Guide](QUICKSTART_v2.0.0.md)
+- [Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+
+## What's Included
+
+### Core Libraries
+
+| Module | Description |
+|--------|-------------|
+| **artemis-core** | Cryptographic primitives, Base58 encoding, public key handling |
+| **artemis-rpc** | JSON-RPC client for Solana nodes with retry and failover |
+| **artemis-tx** | Transaction construction and serialization |
+| **artemis-vtx** | Versioned transaction support with address lookup tables |
+| **artemis-ws** | WebSocket client for real-time subscriptions |
+
+### Mobile Wallet Integration
+
+| Module | Description |
+|--------|-------------|
+| **artemis-wallet** | Wallet abstraction layer with signing interfaces |
+| **artemis-wallet-mwa-android** | Mobile Wallet Adapter 2.0 implementation for Android |
+| **artemis-seed-vault** | Seed Vault integration for secure key custody |
+| **artemis-solana-pay** | Solana Pay protocol implementation |
+
+### Privacy
+
+| Module | Description |
+|--------|-------------|
+| **artemis-privacy** | Privacy toolkit with stealth addresses, encrypted memos, and confidential transfers |
+
+Features:
+- **Stealth Addresses** – Receive funds at one-time addresses for receiver privacy
+- **Encrypted Memos** – End-to-end encrypted on-chain messaging
+- **Confidential Transfers** – Hidden transfer amounts with homomorphic commitments
+- **Session Key Management** – Ephemeral keys with automatic rotation and cleanup
+
+### Program Interaction
+
+| Module | Description |
+|--------|-------------|
+| **artemis-anchor** | Type-safe Anchor program client with IDL parsing |
+| **artemis-universal** | Program interaction without IDL via runtime discovery |
+| **artemis-programs** | Common program instructions (System, Token, Associated Token) |
+
+### Tokens & NFTs
+
+| Module | Description |
+|--------|-------------|
+| **artemis-token2022** | Token-2022 extensions (transfer fees, interest, metadata) |
+| **artemis-metaplex** | Token Metadata program integration |
+| **artemis-mplcore** | MPL Core (Asset) program support |
+| **artemis-cnft** | Compressed NFT (Bubblegum) operations |
+| **artemis-candy-machine** | Candy Machine minting support |
+
+### DeFi & Ecosystem
+
+| Module | Description |
+|--------|-------------|
+| **artemis-jupiter** | Jupiter DEX aggregator integration |
+| **artemis-actions** | Solana Actions and Blinks support |
+| **artemis-nlp** | Natural language transaction parsing |
+| **artemis-streaming** | Zero-copy account streaming for real-time updates |
+
+### Gaming & DePIN
+
+| Module | Description |
+|--------|-------------|
+| **artemis-gaming** | Session keys, verifiable randomness, state proofs |
+| **artemis-depin** | DePIN device attestation utilities |
+
+### Developer Tools
+
+| Module | Description |
+|--------|-------------|
+| **artemis-compute** | Compute unit estimation and priority fee optimization |
+| **artemis-simulation** | Transaction simulation before submission |
+| **artemis-batch** | Batch transaction processing |
+| **artemis-errors** | Structured error handling and decoding |
+
 ---
 
-## 🚀 What's New in v2.0.0 - Revolutionary Features
+## Installation
 
-Artemis v2.0.0 introduces **six world-first features** that don't exist in any other Solana SDK:
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| 🗣️ **[artemis-nlp](#-natural-language-transactions)** | Build transactions from plain English | 🌟 **WORLD'S FIRST** |
-| 🔮 **[artemis-universal](#-universal-program-client)** | Interact with ANY program - no IDL needed | 🌟 **WORLD'S FIRST** |
-| 💱 **[artemis-jupiter](#-jupiter-dex-integration)** | First mobile DEX aggregator | 🥇 **FIRST KOTLIN** |
-| ⚡ **[artemis-actions](#-solana-actionsblinks)** | Handle Solana Actions/Blinks natively | 🥇 **FIRST ANDROID** |
-| ⚓ **[artemis-anchor](#%EF%B8%8F-anchor-program-client)** | Type-safe Anchor programs for Kotlin | 🥇 **FIRST KOTLIN** |
-| 📊 **[artemis-streaming](#-zero-copy-streaming)** | Battery-efficient real-time updates | 🥇 **FIRST MOBILE** |
-
-**[→ Full Originality Research Report](docs/ORIGINALITY_RESEARCH_REPORT.md)**
-
----
-
-## 📦 Installation
-
-### Maven (Kotlin/Android)
+### Gradle (Kotlin/Android)
 
 ```kotlin
 repositories {
@@ -39,151 +107,231 @@ repositories {
 }
 
 dependencies {
-    // Core SDK
-    implementation("xyz.selenus:artemis-core:2.0.0")
-    implementation("xyz.selenus:artemis-rpc:2.0.0")
-    implementation("xyz.selenus:artemis-tx:2.0.0")
+    // Core
+    implementation("xyz.selenus:artemis-core:2.1.0")
+    implementation("xyz.selenus:artemis-rpc:2.1.0")
+    implementation("xyz.selenus:artemis-tx:2.1.0")
     
-    // ⭐ Revolutionary v2.0.0 Features
-    implementation("xyz.selenus:artemis-nlp:2.0.0")        // Natural language transactions
-    implementation("xyz.selenus:artemis-universal:2.0.0")  // Universal program client
-    implementation("xyz.selenus:artemis-jupiter:2.0.0")    // Jupiter DEX integration
-    implementation("xyz.selenus:artemis-actions:2.0.0")    // Solana Actions/Blinks
-    implementation("xyz.selenus:artemis-anchor:2.0.0")     // Anchor program client
-    implementation("xyz.selenus:artemis-streaming:2.0.0")  // Zero-copy streaming
+    // Mobile Wallet
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.1.0")
+    implementation("xyz.selenus:artemis-seed-vault:2.1.0")
     
-    // Mobile Features
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.0.0")
-    implementation("xyz.selenus:artemis-seed-vault:2.0.0")
+    // Privacy
+    implementation("xyz.selenus:artemis-privacy:2.1.0")
+    
+    // Add additional modules as needed
 }
 ```
 
 ### NPM (React Native)
 
 ```bash
-npm install @selenus/artemis-solana-sdk@2.0.0
+npm install @selenus/artemis-solana-sdk
 ```
 
 ---
 
-## 🗣️ Natural Language Transactions
+## Usage Examples
 
-**Build blockchain transactions from plain English.** No forms, no technical knowledge needed.
+### Wallet Connection (Mobile Wallet Adapter)
+
+```kotlin
+val adapter = MwaWalletAdapter.create(context)
+
+// Connect to wallet
+val result = adapter.connect()
+if (result is WalletResult.Success) {
+    val publicKey = result.publicKey
+    println("Connected: ${publicKey.toBase58()}")
+}
+
+// Sign and send transaction
+val signature = adapter.signAndSendTransaction(transaction)
+```
+
+### Transaction Building
+
+```kotlin
+val rpc = RpcClient.create(Cluster.MAINNET_BETA)
+
+// Build a transfer instruction
+val transferIx = SystemProgram.transfer(
+    from = wallet.publicKey,
+    to = recipient,
+    lamports = 1_000_000_000 // 1 SOL
+)
+
+// Construct transaction
+val tx = Transaction.new {
+    feePayer(wallet.publicKey)
+    recentBlockhash(rpc.getLatestBlockhash())
+    instruction(transferIx)
+}
+
+// Sign and send
+val signature = wallet.signAndSend(tx)
+```
+
+### Privacy: Stealth Addresses
+
+```kotlin
+// Receiver generates stealth keys
+val stealthKeys = StealthAddress.generateKeys()
+val metaAddress = stealthKeys.toMetaAddress()
+
+// Publish meta-address (e.g., in profile, QR code)
+println("st:${metaAddress.toCompact()}")
+
+// Sender derives one-time address
+val (stealthPubkey, ephemeralPubkey) = StealthAddress.deriveAddress(metaAddress)
+
+// Sender transfers to stealth address
+val tx = SystemProgram.transfer(sender, stealthPubkey, amount)
+
+// Receiver scans for payments and derives spending key
+val spendingKey = StealthAddress.deriveSpendingKey(stealthKeys, ephemeralPubkey)
+```
+
+### Privacy: Encrypted Memos
+
+```kotlin
+// Encrypt a memo for a recipient
+val encrypted = EncryptedMemo.encrypt(
+    message = "Payment for invoice #123",
+    recipientPubkey = recipientPublicKey,
+    type = MemoType.PAYMENT_NOTE
+)
+
+// Attach to transaction
+val tx = Transaction.new {
+    instruction(transferIx)
+    instruction(MemoProgram.memo(encrypted.serialize()))
+}
+
+// Recipient decrypts
+val decrypted = EncryptedMemo.decrypt(memoData, recipientPrivateKey)
+println("Message: ${decrypted.message}")
+```
+
+### Jupiter DEX Integration
+
+```kotlin
+val jupiter = JupiterClient.create()
+
+// Get quote
+val quote = jupiter.quote {
+    inputMint(USDC_MINT)
+    outputMint(SOL_MINT)
+    amount(1_000_000) // 1 USDC
+    slippageBps(50)   // 0.5%
+}
+
+println("Output: ${quote.outAmount} lamports")
+println("Price impact: ${quote.priceImpactPct}%")
+
+// Build swap transaction
+val swap = jupiter.swap {
+    quote(quote)
+    userPublicKey(wallet.publicKey)
+}
+
+val signature = wallet.signAndSend(swap.transaction)
+```
+
+### Anchor Program Interaction
+
+```kotlin
+val idl = AnchorIdl.parse(idlJson)
+val program = AnchorProgram(idl, programId, rpc)
+
+// Build instruction
+val ix = program.methods
+    .instruction("initialize")
+    .args(mapOf("name" to "MyToken", "decimals" to 9))
+    .accounts {
+        account("mint", mintPubkey)
+        signer("authority", wallet.publicKey)
+        program("systemProgram", SystemProgram.ID)
+    }
+    .build()
+
+// Fetch account data
+val state = program.account.type("TokenState").fetch(stateAddress)
+println("Name: ${state.get<String>("name")}")
+```
+
+### Natural Language Transactions
 
 ```kotlin
 val nlp = NaturalLanguageBuilder.create(resolver)
 
-// Just type what you want to do
 val result = nlp.parse("send 1 SOL to alice.sol")
 
 when (result) {
     is ParseResult.Success -> {
-        println("I understood: ${result.intent.summary}")
-        // "Transfer 1 SOL to alice.sol (7xKX...abc)"
-        
-        val transaction = result.buildTransaction()
-        wallet.signAndSend(transaction)
+        println("Intent: ${result.intent.summary}")
+        val tx = result.buildTransaction()
+        wallet.signAndSend(tx)
     }
     is ParseResult.NeedsInfo -> {
-        println("Please provide: ${result.missing}")
+        println("Missing: ${result.missing}")
     }
 }
 ```
 
-**Supported Commands:**
-- `"send 1 SOL to alice.sol"` → Transfer transaction
-- `"swap 100 USDC for SOL"` → Jupiter swap
-- `"stake 10 SOL with Marinade"` → Staking transaction
-- `"buy 0.5 SOL worth of BONK"` → Token purchase
-- `"create token with 1M supply"` → Token creation
+Supported patterns:
+- `"send 1 SOL to alice.sol"` – Transfer
+- `"swap 100 USDC for SOL"` – Jupiter swap
+- `"stake 10 SOL with Marinade"` – Staking
+- `"create token with 1M supply"` – Token creation
 
-**[→ Complete NLP Guide](docs/guides/NLP_GUIDE.md)**
-
----
-
-## 🔮 Universal Program Client
-
-**Interact with ANY Solana program - no IDL required.** Artemis discovers program structures from on-chain data.
+### Universal Program Client
 
 ```kotlin
 val universal = UniversalProgramClient.create(rpc)
 
-// Discover ANY program's structure
-val program = universal.discover("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
+// Discover program structure from on-chain data
+val program = universal.discover(programId)
 
 // View discovered instructions
-program.instructions.forEach { instruction ->
-    println("${instruction.name}: ${instruction.discriminator.hex}")
-    println("  Accounts: ${instruction.accounts.size}")
+program.instructions.forEach { instr ->
+    println("${instr.name}: ${instr.discriminator.hex}")
 }
 
-// Build instructions using discovered patterns
-val ix = universal.buildInstruction(program, "transfer") {
+// Build instruction using discovered pattern
+val ix = program.instruction("transfer") {
     account("source", myWallet)
     account("destination", recipient)
     u64("amount", 1_000_000)
 }
 ```
 
-**How It Works:**
-1. Fetches recent program transactions
-2. Analyzes instruction patterns
-3. Infers account structures
-4. Caches discovered schemas
-
-**[→ Complete Universal Client Guide](docs/guides/UNIVERSAL_GUIDE.md)**
-
----
-
-## 💱 Jupiter DEX Integration
-
-**The first mobile DEX aggregator for Kotlin/Android.** Get the best swap prices directly in your app.
+### Real-Time Account Streaming
 
 ```kotlin
-val jupiter = JupiterClient.create()
+val stream = ZeroCopyAccountStream.create(wsClient)
 
-// Get a quote
-val quote = jupiter.quote {
-    inputMint(USDC_MINT)
-    outputMint(SOL_MINT)
-    amount(1_000_000) // 1 USDC (6 decimals)
-    slippageBps(50)   // 0.5%
+// Subscribe with zero-copy field access
+stream.subscribe(tokenAccount, TokenAccountSchema) { accessor ->
+    val balance = accessor.getU64("amount")
+    val owner = accessor.getPubkey("owner")
+    updateUI(balance)
 }
 
-println("Output: ${quote.outAmount} lamports")
-println("Price impact: ${quote.priceImpactPct}%")
-println("Route: ${quote.routePlan.map { it.swapInfo.label }}")
-
-// Build and send swap transaction
-val swap = jupiter.swap {
-    quote(quote)
-    userPublicKey(wallet.publicKey)
-    priorityFee(PriorityLevel.HIGH)
-}
-
-val signature = wallet.signAndSend(swap.transaction)
+// Or use Kotlin Flow
+stream.accountFlow(tokenAccount, TokenAccountSchema)
+    .map { it.getU64("amount") }
+    .distinctUntilChanged()
+    .collect { balance -> updateBalance(balance) }
 ```
 
-**Features:**
-- Smart routing across 20+ DEXes
-- Real-time price streaming
-- Dynamic slippage protection
-- Priority fee optimization
-- Transaction simulation
-
-**[→ Complete Jupiter Guide](docs/guides/JUPITER_GUIDE.md)**
-
----
-
-## ⚡ Solana Actions/Blinks
-
-**Handle Solana Actions and Blinks natively in your mobile app.** Scan QR codes, handle deep links, execute transactions.
+### Solana Actions/Blinks
 
 ```kotlin
 val actions = ActionsClient.create()
 
-// Scan a blink or action URL
-val action = actions.getAction("https://dial.to/donate/solana-foundation")
+// Fetch action metadata
+val action = actions.getAction("https://dial.to/donate/example")
 
 println("Title: ${action.title}")
 println("Description: ${action.description}")
@@ -192,220 +340,42 @@ println("Description: ${action.description}")
 val response = actions.executeAction(action) {
     account(wallet.publicKey)
     input("amount", "1.5")
-    input("message", "Great project!")
 }
 
-// Sign and send
 val signature = wallet.signAndSend(response.transaction)
-
-// Handle action chaining
-actions.confirmTransaction(response, signature)
 ```
 
-**Supports:**
-- Direct action URLs (`solana-action:...`)
-- Blink URLs (`https://dial.to/...`)
-- QR code scanning
-- Form inputs (text, number, email, date)
-- Action chaining
-- Identity verification
-
-**[→ Complete Actions Guide](docs/guides/ACTIONS_GUIDE.md)**
-
----
-
-## ⚓️ Anchor Program Client
-
-**Type-safe Anchor program interaction for Kotlin.** The same API you love from TypeScript, now in Kotlin.
+### Gaming: Verifiable Randomness
 
 ```kotlin
-// Load IDL
-val idl = AnchorIdl.parse(idlJson)
-val program = AnchorProgram(idl, programId, rpc)
+// Create commitment
+val (commitment, secret) = VerifiableRandomness.commit()
 
-// Build instructions (like Anchor TS)
-val tx = program.methods
-    .instruction("initialize")
-    .args(mapOf(
-        "name" to "MyToken",
-        "symbol" to "MTK",
-        "decimals" to 9
-    ))
-    .accounts {
-        account("mint", mintPubkey)
-        signer("authority", wallet.publicKey)
-        program("tokenProgram", TOKEN_PROGRAM_ID)
-        program("systemProgram", SYSTEM_PROGRAM_ID)
-    }
-    .build()
+// Submit commitment on-chain, wait for reveal phase
 
-// Fetch accounts
-val tokenState = program.account
-    .type("TokenState")
-    .fetch(stateAddress)
+// Reveal and generate verifiable random
+val proof = VerifiableRandomness.reveal(secret, commitment)
+val randomValue = proof.output
 
-println("Name: ${tokenState.get<String>("name")}")
-println("Supply: ${tokenState.get<Long>("totalSupply")}")
-
-// Watch accounts with Flow
-program.account
-    .type("TokenState")
-    .watch(stateAddress)
-    .collect { state -> updateUI(state) }
-```
-
-**Features:**
-- Complete IDL parsing
-- Type-safe instruction building
-- Automatic discriminator computation
-- PDA derivation helpers
-- Account deserialization
-- Event parsing
-
-**[→ Complete Anchor Guide](docs/guides/ANCHOR_GUIDE.md)**
-
----
-
-## 📊 Zero-Copy Streaming
-
-**Battery and memory efficient real-time updates.** Perfect for DeFi dashboards, live prices, and token balances.
-
-```kotlin
-val stream = ZeroCopyAccountStream.create(wsClient)
-
-// Subscribe with zero-copy field access
-stream.subscribe(tokenAccount, TokenAccountSchema) { accessor ->
-    // Direct buffer reads - no deserialization, no allocations
-    val balance = accessor.getU64("amount")
-    val owner = accessor.getPubkey("owner")
-    
-    // Only called when fields actually change
-    updateBalanceUI(balance)
-}
-
-// Or use reactive Flows
-stream.accountFlow(tokenAccount, TokenAccountSchema)
-    .map { it.getU64("amount") }
-    .distinctUntilChanged()  // Only emit on changes
-    .collect { balance -> 
-        updateBalance(balance) 
-    }
-```
-
-**Why Zero-Copy?**
-- ⚡ **10x faster** than full deserialization
-- 💾 **90% less memory** - no object allocations
-- 🔋 **Battery efficient** - minimal GC pressure
-- 📊 **Field-level updates** - only process what changed
-
-**[→ Complete Streaming Guide](docs/guides/STREAMING_GUIDE.md)**
-
----
-
-## 📊 SDK Comparison
-
-| Feature | Solana Mobile | solana-kmp | Sol4k | **Artemis v2.0** |
-|---------|---------------|------------|-------|------------------|
-| **NLP Transactions** | ❌ | ❌ | ❌ | ✅ **EXCLUSIVE** |
-| **Universal Client** | ❌ | ❌ | ❌ | ✅ **EXCLUSIVE** |
-| **Jupiter DEX** | ❌ | ❌ | ❌ | ✅ **EXCLUSIVE** |
-| **Solana Actions** | ❌ | ❌ | ❌ | ✅ **EXCLUSIVE** |
-| **Anchor Client** | ❌ | ❌ | ❌ | ✅ |
-| **Zero-Copy Stream** | ❌ | ❌ | ❌ | ✅ **EXCLUSIVE** |
-| Mobile Wallet Adapter | ✅ | ❌ | ❌ | ✅ |
-| Seed Vault | ✅ | ❌ | ❌ | ✅ |
-| Token-2022 | ❌ | ⚠️ | ❌ | ✅ |
-| WebSocket | ❌ | ❌ | ❌ | ✅ |
-
----
-
-## 🏗️ All Modules
-
-### Core
-```kotlin
-implementation("xyz.selenus:artemis-core:2.0.0")      // Pubkeys, base58, hashing
-implementation("xyz.selenus:artemis-rpc:2.0.0")       // RPC client
-implementation("xyz.selenus:artemis-tx:2.0.0")        // Transaction building
-implementation("xyz.selenus:artemis-vtx:2.0.0")       // Versioned transactions
-```
-
-### Revolutionary v2.0.0
-```kotlin
-implementation("xyz.selenus:artemis-nlp:2.0.0")       // 🌟 Natural language
-implementation("xyz.selenus:artemis-universal:2.0.0") // 🌟 Universal client
-implementation("xyz.selenus:artemis-jupiter:2.0.0")   // 🥇 Jupiter DEX
-implementation("xyz.selenus:artemis-actions:2.0.0")   // 🥇 Solana Actions
-implementation("xyz.selenus:artemis-anchor:2.0.0")    // 🥇 Anchor client
-implementation("xyz.selenus:artemis-streaming:2.0.0") // 🥇 Zero-copy streaming
-```
-
-### Mobile
-```kotlin
-implementation("xyz.selenus:artemis-wallet-mwa-android:2.0.0") // MWA 2.0
-implementation("xyz.selenus:artemis-seed-vault:2.0.0")         // Seed Vault
-implementation("xyz.selenus:artemis-wallet:2.0.0")             // Wallet abstractions
-implementation("xyz.selenus:artemis-solana-pay:2.0.0")         // Solana Pay
-```
-
-### Tokens & NFTs
-```kotlin
-implementation("xyz.selenus:artemis-token2022:2.0.0")  // Token-2022 extensions
-implementation("xyz.selenus:artemis-metaplex:2.0.0")   // Token Metadata
-implementation("xyz.selenus:artemis-mplcore:2.0.0")    // MPL Core v2
-implementation("xyz.selenus:artemis-cnft:2.0.0")       // Compressed NFTs
-```
-
-### Gaming & DePIN
-```kotlin
-implementation("xyz.selenus:artemis-gaming:2.0.0")     // VRF, state proofs
-implementation("xyz.selenus:artemis-depin:2.0.0")      // DePIN utilities
-implementation("xyz.selenus:artemis-privacy:2.0.0")    // Confidential transfers
+// Verify (anyone can verify)
+val valid = VerifiableRandomness.verify(commitment, proof)
 ```
 
 ---
 
-## 📖 Documentation
+## Target Audience
 
-| Guide | Description |
-|-------|-------------|
-| [Mobile App Guide](docs/MOBILE_APP_GUIDE.md) | Complete mobile integration |
-| [Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md) | How each feature works |
-| [NLP Guide](docs/guides/NLP_GUIDE.md) | Natural language transactions |
-| [Universal Client Guide](docs/guides/UNIVERSAL_GUIDE.md) | IDL-less program interaction |
-| [Jupiter Guide](docs/guides/JUPITER_GUIDE.md) | DEX integration |
-| [Actions Guide](docs/guides/ACTIONS_GUIDE.md) | Solana Actions/Blinks |
-| [Anchor Guide](docs/guides/ANCHOR_GUIDE.md) | Anchor programs |
-| [Streaming Guide](docs/guides/STREAMING_GUIDE.md) | Real-time updates |
+This SDK is intended for:
+
+- **Mobile dApp developers** building Android applications that interact with Solana
+- **Wallet developers** implementing transaction signing services
+- **Game developers** requiring session keys and verifiable randomness
+- **DeFi developers** integrating swaps and real-time data
+- **Privacy-focused applications** requiring stealth payments or encrypted messaging
 
 ---
 
-## 🚀 Quick Start
-
-```kotlin
-// 1. Initialize
-val rpc = RpcClient.create(Cluster.MAINNET_BETA)
-val jupiter = JupiterClient.create()
-val nlp = NaturalLanguageBuilder.create(resolver)
-
-// 2. Parse natural language
-val result = nlp.parse("swap 100 USDC for SOL")
-
-// 3. Execute with Jupiter
-if (result is ParseResult.Success && result.intent is SwapIntent) {
-    val intent = result.intent as SwapIntent
-    val quote = jupiter.quote {
-        inputMint(intent.fromToken.mint)
-        outputMint(intent.toToken.mint)
-        amount(intent.amount.toLamports())
-    }
-    val swap = jupiter.swap { quote(quote) }
-    wallet.signAndSend(swap.transaction)
-}
-```
-
----
-
-## 🛠️ Build
+## How to Build
 
 ```bash
 ./gradlew build
@@ -416,18 +386,24 @@ Run tests:
 ./gradlew test
 ```
 
----
-
-## 📄 License
-
-Apache License 2.0 - See [LICENSE](LICENSE)
-
----
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Run devnet integration tests:
+```bash
+./run-devnet-tests.sh
+```
 
 ---
 
-**Built with ❤️ by [Selenus Technologies](https://selenus.xyz)**
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+## License
+
+Apache License 2.0 – See [LICENSE](LICENSE)
+
+---
+
+**Built by [Bluefoot Labs](https://bluefootlabs.xyz)**
+
