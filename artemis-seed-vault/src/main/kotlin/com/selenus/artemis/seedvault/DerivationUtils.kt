@@ -1,9 +1,11 @@
 /*
- * Copyright (c) 2024-2025 Selenus Technologies. All rights reserved.
+ * Copyright (c) 2024-2026 Bluefoot Labs. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  * 
  * ORIGINAL IMPLEMENTATION - Enhanced HD derivation utilities for Solana.
  * Provides BIP32/BIP44 path generation and multi-account management.
+ * 
+ * Addresses Seed Vault SDK Issue #637: Add m/44'/501' to default pre-derived Solana accounts
  */
 package com.selenus.artemis.seedvault
 
@@ -24,6 +26,11 @@ import kotlinx.coroutines.sync.withLock
  * - Change addresses: m/44'/501'/account'/change'
  * - Hardened derivation for security
  * 
+ * Pre-derived paths (Issue #637 fix):
+ * - m/44'/501' (Solana root for compatibility with older wallets)
+ * - m/44'/501'/0' (First account, common Ledger format)
+ * - m/44'/501'/0'/0' (Standard BIP44 format)
+ * 
  * Features unique to this SDK:
  * - **Path validation**: Ensures correct format
  * - **Named accounts**: Human-readable account labels
@@ -42,6 +49,60 @@ object DerivationPath {
     const val HARDENED_OFFSET = 0x80000000.toInt()
     
     /**
+     * Default pre-derived paths for Solana.
+     * 
+     * These should be pre-derived by wallets on seed creation to ensure
+     * compatibility with various dApps and wallet implementations.
+     * 
+     * Issue #637: m/44'/501' should be included for older wallet compatibility.
+     */
+    object Defaults {
+        /** Solana root path - for maximum compatibility with older wallets */
+        const val SOLANA_ROOT = "m/44'/501'"
+        
+        /** First account without change - common Ledger/hardware wallet format */
+        const val FIRST_ACCOUNT_NO_CHANGE = "m/44'/501'/0'"
+        
+        /** Standard BIP44 first account - most common format */
+        const val FIRST_ACCOUNT = "m/44'/501'/0'/0'"
+        
+        /** Second account for separation of concerns */
+        const val SECOND_ACCOUNT = "m/44'/501'/1'/0'"
+        
+        /** Third account */
+        const val THIRD_ACCOUNT = "m/44'/501'/2'/0'"
+        
+        /**
+         * Get all default paths that should be pre-derived.
+         * This fixes Seed Vault SDK Issue #637.
+         */
+        fun all(): List<String> = listOf(
+            SOLANA_ROOT,           // m/44'/501' - for older wallet compat
+            FIRST_ACCOUNT_NO_CHANGE, // m/44'/501'/0' - Ledger format
+            FIRST_ACCOUNT,         // m/44'/501'/0'/0' - standard
+            SECOND_ACCOUNT,        // m/44'/501'/1'/0' - secondary
+            THIRD_ACCOUNT          // m/44'/501'/2'/0' - tertiary
+        )
+        
+        /**
+         * Get the recommended set of paths for new seed creation.
+         * Includes the first 3 standard accounts plus compatibility paths.
+         */
+        fun forNewSeed(): List<String> = all()
+        
+        /**
+         * Get extended paths for power users (first 10 accounts).
+         */
+        fun extended(): List<String> = buildList {
+            add(SOLANA_ROOT)
+            add(FIRST_ACCOUNT_NO_CHANGE)
+            for (i in 0..9) {
+                add("m/44'/501'/$i'/0'")
+            }
+        }
+    }
+    
+    /**
      * Generate a standard Solana derivation path.
      * 
      * Format: m/44'/501'/account'/change'
@@ -54,6 +115,21 @@ object DerivationPath {
         require(account >= 0) { "Account index must be non-negative" }
         require(change >= 0) { "Change index must be non-negative" }
         return "m/$PURPOSE'/$SOLANA_COIN_TYPE'/$account'/$change'"
+    }
+    
+    /**
+     * Generate Solana root path (for legacy compatibility).
+     * This is the m/44'/501' path that some older wallets use.
+     */
+    fun solanaRoot(): String = "m/$PURPOSE'/$SOLANA_COIN_TYPE'"
+    
+    /**
+     * Generate Ledger-style path (without change component).
+     * Format: m/44'/501'/account'
+     */
+    fun solanaLedger(account: Int = 0): String {
+        require(account >= 0) { "Account index must be non-negative" }
+        return "m/$PURPOSE'/$SOLANA_COIN_TYPE'/$account'"
     }
     
     /**

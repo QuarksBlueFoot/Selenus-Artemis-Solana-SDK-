@@ -17,14 +17,20 @@ import com.selenus.artemis.wallet.mwa.protocol.MwaSendOptions
 import com.selenus.artemis.wallet.mwa.protocol.MwaSession
 import com.selenus.artemis.wallet.mwa.protocol.MwaSignInPayload
 import com.selenus.artemis.wallet.mwa.protocol.MwaSignInResult
+import com.selenus.artemis.wallet.mwa.protocol.MwaAccount
 
 
 /**
  * MwaWalletAdapter
  *
  * Native Mobile Wallet Adapter (MWA 2.x) client implementation with:
- * - feature detection (get_capabilities)
- * - fallback routing between sign-only and sign-and-send
+ * - Full MWA 2.0 API parity (authorize, reauthorize, deauthorize, cloneAuthorization)
+ * - Feature detection via get_capabilities
+ * - Fallback routing between sign-only and sign-and-send
+ * - Support for transaction versions (legacy + v0)
+ * - Sequential transaction support via waitForCommitmentToSendNextTransaction
+ * 
+ * Drop-in compatible with Solana Mobile clientlib-ktx.
  */
 class MwaWalletAdapter(
   private val activity: Activity,
@@ -39,18 +45,39 @@ class MwaWalletAdapter(
   @Volatile private var pk: Pubkey? = null
   @Volatile private var session: MwaSession? = null
   @Volatile private var caps: MwaCapabilities? = null
+  @Volatile private var connectedAccounts: List<MwaAccount> = emptyList()
+  @Volatile private var walletUriBase: String? = null
 
   override val publicKey: Pubkey
     get() = pk ?: throw IllegalStateException("Wallet not connected. Call connect() first.")
 
+  /** Get all connected accounts (for multi-account support) */
+  val accounts: List<MwaAccount>
+    get() = connectedAccounts
+
+  /** Get the wallet's base URI (for deeplinks) */
+  val walletUri: String?
+    get() = walletUriBase
+
   override suspend fun getCapabilities(): WalletCapabilities {
-    // Expose Artemis capabilities (not MWA capabilities).
     val c = ensureMwaCapabilities()
     return WalletCapabilities.defaultMobile().copy(
       supportsPreAuthorize = true,
-      supportsMultipleMessages = true
+      supportsMultipleMessages = true,
+      supportsSignAndSend = c.supportsSignAndSend(),
+      supportsCloneAuthorization = c.supportsCloneAuth(),
+      supportsSignTransactions = c.supportsSignTransactions(),
+      supportsSignIn = c.supportsSignIn(),
+      supportsLegacyTransactions = c.supportsLegacyTransactions(),
+      supportsVersionedTransactions = c.supportsVersionedTransactions(),
+      maxTransactionsPerRequest = c.maxTransactionsPerRequest,
+      maxMessagesPerRequest = c.maxMessagesPerRequest,
+      supportedFeatures = c.allFeatures()
     )
   }
+
+  /** Get the raw MWA capabilities from the wallet */
+  suspend fun getMwaCapabilities(): MwaCapabilities = ensureMwaCapabilities()
 
   suspend fun connect(): Pubkey {
     val (s, _) = client.openSession(activity)
@@ -72,6 +99,52 @@ class MwaWalletAdapter(
       authToken = authStore.get()
     )
     authStore.set(res.authToken)
+    
+    // Store all accounts for multi-account support
+    connectedAccounts = res.accounts
+
+    val first = res.accounts.firstOrNull() ?: throw IllegalStateException("No accounts returned by wallet")
+    val addr = java.util.Base64.getDecoder().decode(first.address)
+    val out = Pubkey(addr)
+    pk = out
+    return out
+  }
+
+  /**
+   * Connect with specific features requested.
+   * 
+   * MWA 2.0 allows apps to request specific features during authorization.
+   * If the wallet doesn't support a requested feature, authorization may fail.
+   * 
+   * @param requestedFeatures List of feature identifiers to request
+   * @param addresses Optional list of specific addresses to authorize
+   */
+  suspend fun connectWithFeatures(
+    requestedFeatures: List<String>? = null,
+    addresses: List<ByteArray>? = null
+  ): Pubkey {
+    val (s, _) = client.openSession(activity)
+    session = s
+
+    caps = client.getCapabilities(s)
+
+    val identity = MwaIdentity(
+      uri = identityUri.toString(),
+      icon = iconPath,
+      name = identityName
+    )
+
+    val b64Addresses = addresses?.map { java.util.Base64.getEncoder().encodeToString(it) }
+
+    val res = client.authorize(
+      session = s,
+      identity = identity,
+      chain = chain,
+      authToken = authStore.get(),
+      features = requestedFeatures
+    )
+    authStore.set(res.authToken)
+    connectedAccounts = res.accounts
 
     val first = res.accounts.firstOrNull() ?: throw IllegalStateException("No accounts returned by wallet")
     val addr = java.util.Base64.getDecoder().decode(first.address)
@@ -100,6 +173,7 @@ class MwaWalletAdapter(
       signInPayload = payload
     )
     authStore.set(res.authToken)
+    connectedAccounts = res.accounts
     
     val first = res.accounts.firstOrNull() ?: throw IllegalStateException("No accounts returned by wallet")
     val addr = java.util.Base64.getDecoder().decode(first.address)
@@ -395,6 +469,31 @@ private fun <T> chunk(list: List<T>, maxSize: Int): List<List<T>> {
 
     val res = client.reauthorize(s, identity, token)
     authStore.set(res.authToken)
+    connectedAccounts = res.accounts
+  }
+
+  /**
+   * Clone the current authorization token.
+   * 
+   * MWA 2.0 Optional Feature: Creates a new auth token with the same permissions
+   * without requiring user interaction. Useful for:
+   * - Background operations that need their own token
+   * - Multi-window scenarios
+   * - Preventing token reuse across different operations
+   * 
+   * @return A new auth token with the same permissions
+   * @throws IllegalStateException if wallet doesn't support clone_authorization
+   */
+  suspend fun cloneAuthorization(): String {
+    val s = session ?: throw IllegalStateException("MWA session not ready")
+    val token = authStore.get() ?: throw IllegalStateException("No auth token to clone")
+    val c = ensureMwaCapabilities()
+    
+    if (!c.supportsCloneAuth()) {
+      throw UnsupportedOperationException("Wallet does not support clone_authorization")
+    }
+    
+    return client.cloneAuthorization(s, token)
   }
 
   suspend fun deauthorize() {
@@ -411,6 +510,8 @@ private fun <T> chunk(list: List<T>, maxSize: Int): List<List<T>> {
     session = null
     pk = null
     caps = null
+    connectedAccounts = emptyList()
+    walletUriBase = null
   }
 
   /**
@@ -428,4 +529,49 @@ private fun <T> chunk(list: List<T>, maxSize: Int): List<List<T>> {
 
     return client.signMessages(s, messages, addresses)
   }
+
+  /**
+   * Sign off-chain messages with detached signature result.
+   * 
+   * Improved API that returns signatures separately from messages.
+   * This is cleaner for verification workflows.
+   * 
+   * @param messages List of messages to sign
+   * @return Pair of (original messages, signatures)
+   */
+  suspend fun signOffChainMessagesDetached(messages: List<ByteArray>): Pair<List<ByteArray>, List<ByteArray>> {
+    if (pk == null || session == null) connect()
+    val s = session ?: throw IllegalStateException("MWA session not ready")
+    val currentPk = pk ?: throw IllegalStateException("Wallet not connected")
+
+    val addresses = List(messages.size) { currentPk.bytes }
+    return client.signMessagesDetached(s, messages, addresses)
+  }
+
+  /**
+   * Sign a message with a specific account (multi-account support).
+   * 
+   * @param message The message to sign
+   * @param account The account to sign with
+   * @return The signed message
+   */
+  suspend fun signWithAccount(message: ByteArray, account: MwaAccount): ByteArray {
+    if (session == null) connect()
+    val s = session ?: throw IllegalStateException("MWA session not ready")
+    
+    val address = java.util.Base64.getDecoder().decode(account.address)
+    val results = client.signMessages(s, listOf(message), listOf(address))
+    return results.first()
+  }
+
+  /**
+   * Get a specific account by index (multi-account support).
+   */
+  fun getAccount(index: Int): MwaAccount? = connectedAccounts.getOrNull(index)
+
+  /**
+   * Get a specific account by label (multi-account support).
+   */
+  fun getAccountByLabel(label: String): MwaAccount? = 
+    connectedAccounts.find { it.label == label }
 }

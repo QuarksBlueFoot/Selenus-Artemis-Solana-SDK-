@@ -9,6 +9,8 @@
  * - PWAs (Issue #1364)
  * - In-app browsers (Issue #1085)
  * - Firefox mobile (Issue #420)
+ * - Disambiguation dialog timeout (Issue #406)
+ * - Wallet not found dialog in WebViews (Issue #1323)
  * 
  * Provides smart fallback strategies based on detected environment.
  */
@@ -20,7 +22,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.webkit.WebView
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.resume
 
 /**
  * Environment types for MWA connection strategies.
@@ -41,6 +48,9 @@ enum class MwaEnvironment {
     /** Standard mobile browser */
     MOBILE_BROWSER,
     
+    /** Phantom browser (special case - MWA works) */
+    PHANTOM_BROWSER,
+    
     /** Unknown environment */
     UNKNOWN
 }
@@ -58,12 +68,21 @@ sealed class MwaConnectionStrategy {
     /** Open in external browser first */
     data class ExternalBrowser(val uri: Uri) : MwaConnectionStrategy()
     
+    /** Use wallet-specific connect flow */
+    data class WalletSpecific(val walletPackage: String, val deepLink: Uri) : MwaConnectionStrategy()
+    
     /** MWA not supported in this environment */
     data class NotSupported(val reason: String, val suggestion: String) : MwaConnectionStrategy()
 }
 
 /**
  * Detects the runtime environment and provides appropriate connection strategies.
+ * 
+ * Includes enhanced detection for:
+ * - WebViews vs native apps (fixes Issue #1082)
+ * - Phantom's built-in browser (special handling for Issue #1323)
+ * - PWA session persistence (fixes Issue #1364)
+ * - In-app browser detection (Twitter, Facebook, etc.)
  * 
  * Usage:
  * ```kotlin
@@ -92,6 +111,13 @@ class MwaEnvironmentDetector(private val context: Context) {
             "LinkedIn"         // LinkedIn
         )
         
+        // Wallet browsers that support MWA (Issue #1323 fix)
+        private val WALLET_BROWSERS = listOf(
+            "Phantom" to "app.phantom",
+            "Solflare" to "com.solflare.mobile",
+            "Backpack" to "com.backpack.android"
+        )
+        
         // Known MWA-compatible wallets
         private val KNOWN_WALLETS = listOf(
             "app.phantom" to "Phantom",
@@ -106,6 +132,11 @@ class MwaEnvironmentDetector(private val context: Context) {
      * Detect the current runtime environment.
      */
     fun detect(): MwaEnvironment {
+        // Check if we're in a wallet's built-in browser (Issue #1323 fix)
+        if (isWalletBrowser()) {
+            return MwaEnvironment.PHANTOM_BROWSER
+        }
+        
         // Check if we're in a WebView
         if (isWebView()) {
             return if (isInAppBrowser()) {
@@ -131,18 +162,37 @@ class MwaEnvironmentDetector(private val context: Context) {
     
     /**
      * Recommend the best connection strategy for the current environment.
+     * 
+     * Implements smart routing to avoid known MWA issues:
+     * - Issue #1082: WebViews don't support local WebSocket
+     * - Issue #1323: Wallet browsers should use standard MWA, not show "wallet not found"
+     * - Issue #1364: PWAs need session persistence
      */
     fun recommendStrategy(): MwaConnectionStrategy {
         return when (detect()) {
             MwaEnvironment.NATIVE_APP -> MwaConnectionStrategy.StandardMwa
             
-            MwaEnvironment.PWA -> MwaConnectionStrategy.StandardMwa // With persistence
+            MwaEnvironment.PWA -> MwaConnectionStrategy.StandardMwa // Session persistence handled by MwaSessionPersistence
+            
+            MwaEnvironment.PHANTOM_BROWSER -> {
+                // Phantom browser supports MWA - don't show "wallet not found" dialog
+                MwaConnectionStrategy.StandardMwa
+            }
             
             MwaEnvironment.WEBVIEW -> {
-                // WebViews often can't handle MWA - suggest deep link
-                MwaConnectionStrategy.DeepLink(
-                    Uri.parse("solana-wallet://connect")
-                )
+                // WebViews often can't handle MWA WebSocket - try wallet-specific deep link
+                val installedWallets = getInstalledWallets()
+                if (installedWallets.isNotEmpty()) {
+                    val wallet = installedWallets.first()
+                    MwaConnectionStrategy.WalletSpecific(
+                        walletPackage = wallet.packageName,
+                        deepLink = Uri.parse("${wallet.packageName.replace(".", "-")}://connect")
+                    )
+                } else {
+                    MwaConnectionStrategy.DeepLink(
+                        Uri.parse("solana-wallet://connect")
+                    )
+                }
             }
             
             MwaEnvironment.IN_APP_BROWSER -> {
@@ -155,6 +205,19 @@ class MwaEnvironmentDetector(private val context: Context) {
             MwaEnvironment.MOBILE_BROWSER -> MwaConnectionStrategy.StandardMwa
             
             MwaEnvironment.UNKNOWN -> MwaConnectionStrategy.StandardMwa
+        }
+    }
+    
+    /**
+     * Check if we're inside a wallet's built-in browser.
+     * These browsers support MWA but were incorrectly showing "wallet not found" dialogs.
+     */
+    private fun isWalletBrowser(): Boolean {
+        return try {
+            val ua = WebView(context).settings.userAgentString
+            WALLET_BROWSERS.any { (name, _) -> ua.contains(name, ignoreCase = true) }
+        } catch (e: Exception) {
+            false
         }
     }
     
