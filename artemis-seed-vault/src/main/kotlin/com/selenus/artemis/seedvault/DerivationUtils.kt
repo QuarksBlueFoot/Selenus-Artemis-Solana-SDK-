@@ -10,6 +10,7 @@
 package com.selenus.artemis.seedvault
 
 import com.selenus.artemis.runtime.Pubkey
+import android.net.Uri
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -266,7 +267,8 @@ class MultiAccountManager private constructor(
         accounts[index]?.let { return it }
         
         val path = DerivationPath.solana(index)
-        val keys = seedVault.requestPublicKeys(authToken, listOf(path))
+        val pathUri = BipDerivationPath.fromPathString(path).toUri()
+        val keys = seedVault.requestPublicKeys(authToken, listOf(pathUri))
         
         if (keys.isEmpty()) {
             throw SeedVaultException.Unknown("Failed to derive key for path: $path")
@@ -292,7 +294,8 @@ class MultiAccountManager private constructor(
      */
     suspend fun deriveAccounts(count: Int, startIndex: Int = 0): List<DerivedAccount> = mutex.withLock {
         val paths = DerivationPath.solanaAccounts(count, startIndex)
-        val keys = seedVault.requestPublicKeys(authToken, paths)
+        val pathUris = paths.map { BipDerivationPath.fromPathString(it).toUri() }
+        val keys = seedVault.requestPublicKeys(authToken, pathUris)
         
         val result = keys.mapIndexed { idx, pubkey ->
             val accountIndex = startIndex + idx
@@ -323,9 +326,10 @@ class MultiAccountManager private constructor(
         val activeAccount = getActiveAccount()
             ?: throw IllegalStateException("No active account")
         
+        val pathUri = BipDerivationPath.fromPathString(activeAccount.derivationPath).toUri()
         val signatures = seedVault.signWithDerivationPath(
             authToken,
-            activeAccount.derivationPath,
+            pathUri,
             listOf(message)
         )
         
@@ -340,9 +344,10 @@ class MultiAccountManager private constructor(
         val account = accounts[accountIndex]
             ?: throw IllegalArgumentException("Account $accountIndex not derived")
         
+        val pathUri = BipDerivationPath.fromPathString(account.derivationPath).toUri()
         val signatures = seedVault.signWithDerivationPath(
             authToken,
-            account.derivationPath,
+            pathUri,
             listOf(message)
         )
         
@@ -408,7 +413,8 @@ class MultiAccountManager private constructor(
     
     private suspend fun deriveAccountInternal(index: Int): DerivedAccount {
         val path = DerivationPath.solana(index)
-        val keys = seedVault.requestPublicKeys(authToken, listOf(path))
+        val pathUri = BipDerivationPath.fromPathString(path).toUri()
+        val keys = seedVault.requestPublicKeys(authToken, listOf(pathUri))
         
         return DerivedAccount(
             index = index,

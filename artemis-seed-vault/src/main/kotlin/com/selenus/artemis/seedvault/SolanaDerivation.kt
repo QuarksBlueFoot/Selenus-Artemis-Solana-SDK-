@@ -107,6 +107,7 @@ object SolanaDerivation {
             DerivationScheme.STANDARD -> "m/44'/501'/$accountIndex'/0'"
             DerivationScheme.LEDGER_LIVE -> "m/44'/501'/$accountIndex'"
             DerivationScheme.ED25519_BIP32 -> "m/44'/1022'/$accountIndex'/0'"
+            DerivationScheme.UNKNOWN -> "m/44'/501'/$accountIndex'/0'" // Default to standard
         }
     }
     
@@ -150,11 +151,14 @@ object SolanaDerivation {
      * @throws IllegalArgumentException if path is invalid
      */
     fun parse(path: String): ParsedDerivationPath {
-        val normalized = path.trim().lowercase()
+        val normalized = path.trim()
         
-        require(normalized.startsWith("m/")) { "Path must start with 'm/'" }
+        // Accept paths with or without m/ prefix
+        val withPrefix = if (normalized.lowercase().startsWith("m/")) normalized else "m/$normalized"
         
-        val parts = normalized.removePrefix("m/").split("/")
+        require(withPrefix.lowercase().startsWith("m/")) { "Path must start with 'm/'" }
+        
+        val parts = withPrefix.removePrefix("m/").removePrefix("M/").split("/")
         val components = parts.map { part ->
             val isHardened = part.endsWith("'") || part.endsWith("h")
             val value = part.removeSuffix("'").removeSuffix("h").toIntOrNull()
@@ -204,7 +208,7 @@ object SolanaDerivation {
     /**
      * Detect which scheme a path uses.
      */
-    fun detectScheme(path: String): DerivationScheme? {
+    fun detectScheme(path: String): DerivationScheme {
         return try {
             val parsed = parse(path)
             when {
@@ -214,10 +218,10 @@ object SolanaDerivation {
                     parsed.components[1].value == ED25519_COIN_TYPE -> DerivationScheme.ED25519_BIP32
                 parsed.components.size >= 4 && 
                     parsed.components[1].value == SOLANA_COIN_TYPE -> DerivationScheme.STANDARD
-                else -> null
+                else -> DerivationScheme.UNKNOWN
             }
         } catch (e: Exception) {
-            null
+            DerivationScheme.UNKNOWN
         }
     }
     
@@ -254,8 +258,57 @@ object SolanaDerivation {
      */
     fun nextAccount(currentPath: String): String {
         val currentIndex = extractAccountIndex(currentPath) ?: 0
-        val scheme = detectScheme(currentPath) ?: DerivationScheme.STANDARD
-        return forAccount(currentIndex + 1, scheme)
+        val scheme = detectScheme(currentPath)
+        val effectiveScheme = if (scheme == DerivationScheme.UNKNOWN) DerivationScheme.STANDARD else scheme
+        return forAccount(currentIndex + 1, effectiveScheme)
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ALIASES for test/public API compatibility
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    /**
+     * Parse a derivation path (alias for [parse]).
+     */
+    fun parsePath(path: String): ParsedDerivationPath? {
+        return try {
+            val normalized = path.trim()
+            val hasPrefix = normalized.startsWith("m/") || normalized.startsWith("M/")
+            val withPrefix = if (hasPrefix) normalized else "m/$normalized"
+            parse(withPrefix)
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    /**
+     * Check if path is a valid Solana derivation path (alias for [isSolanaPath]).
+     */
+    fun isValidSolanaPath(path: String): Boolean = isSolanaPath(path)
+    
+    /**
+     * Build a derivation path from components.
+     */
+    fun buildPath(purpose: Int, coinType: Int, account: Int, change: Int): String {
+        return "m/$purpose'/$coinType'/$account'/$change'"
+    }
+    
+    /**
+     * Build a Ledger Live style path.
+     */
+    fun buildLedgerLivePath(account: Int): String {
+        return "m/44'/501'/$account'"
+    }
+    
+    /**
+     * Get the next account path (alias for [nextAccount] with fallback).
+     */
+    fun nextAccountPath(currentPath: String): String {
+        return try {
+            nextAccount(currentPath)
+        } catch (e: Exception) {
+            currentPath
+        }
     }
 }
 
@@ -270,7 +323,15 @@ enum class DerivationScheme {
     LEDGER_LIVE,
     
     /** Ed25519-BIP32: m/44'/1022'/account'/change' */
-    ED25519_BIP32
+    ED25519_BIP32,
+    
+    /** Unknown or unrecognized derivation scheme */
+    UNKNOWN;
+    
+    companion object {
+        /** Alias for STANDARD for clarity in BIP44 contexts. */
+        val BIP44_STANDARD = STANDARD
+    }
 }
 
 /**
@@ -280,7 +341,17 @@ data class PathComponent(
     val value: Int,
     val isHardened: Boolean
 ) {
+    /** Alias for [value] for BIP-style access. */
+    val index: Int get() = value
+    /** Alias for [isHardened]. */
+    val hardened: Boolean get() = isHardened
+    
     override fun toString(): String = if (isHardened) "$value'" else "$value"
+    
+    /**
+     * Get the BIP32 integer value (with hardened offset if applicable).
+     */
+    fun toBip32Value(): Int = if (isHardened) value or 0x80000000.toInt() else value
 }
 
 /**
@@ -323,6 +394,24 @@ object WalletPresets {
             WalletType.GENERIC -> SolanaDerivation.multipleAccounts(numAccounts, DerivationScheme.STANDARD)
         }
     }
+    
+    /**
+     * Get Phantom wallet paths for a given number of accounts.
+     */
+    fun phantomPaths(accountCount: Int = 5): List<String> =
+        SolanaDerivation.multipleAccounts(accountCount, DerivationScheme.STANDARD)
+    
+    /**
+     * Get Solflare wallet paths for a given number of accounts.
+     */
+    fun solflarePaths(accountCount: Int = 5): List<String> =
+        SolanaDerivation.multipleAccounts(accountCount, DerivationScheme.STANDARD)
+    
+    /**
+     * Get Ledger Live paths for a given number of accounts.
+     */
+    fun ledgerLivePaths(accountCount: Int = 5): List<String> =
+        SolanaDerivation.multipleAccounts(accountCount, DerivationScheme.LEDGER_LIVE)
     
     enum class WalletType {
         PHANTOM,

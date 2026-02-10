@@ -82,7 +82,69 @@ sealed class DangerReason {
     data class ExcessiveTokenTransfer(val amount: Long, val mint: Pubkey) : DangerReason()
     data class SuspiciousPattern(val description: String) : DangerReason()
     data object DrainerSignature : DangerReason()
+    /** Transaction references an unknown/unverified program. */
+    data object UNKNOWN_PROGRAM : DangerReason()
+    /** Transaction has an empty program list. */
+    data object EMPTY_TRANSACTION : DangerReason()
 }
+
+/**
+ * High-level transaction category.
+ */
+enum class TransactionCategory {
+    TRANSFER,
+    SWAP,
+    NFT,
+    DEFI,
+    GOVERNANCE,
+    STAKE,
+    UNKNOWN
+}
+
+/**
+ * Result of program-level validation (simplified API).
+ */
+data class ProgramValidationResult(
+    val isSafe: Boolean,
+    val programs: List<ProgramDetail>,
+    val dangerReasons: List<DangerReason>
+)
+
+/**
+ * Details about a program in a transaction (for simplified API).
+ */
+data class ProgramDetail(
+    val id: String,
+    val name: String,
+    val isKnown: Boolean
+)
+
+/**
+ * Transaction summary with category (for simplified API).
+ */
+data class TransactionSummaryResult(
+    val category: TransactionCategory,
+    val requiresExtraScrutiny: Boolean,
+    val warnings: List<String>
+)
+
+/**
+ * Compute budget analysis result.
+ */
+data class ComputeBudgetAnalysis(
+    val computeUnits: Long,
+    val priorityFee: Long,
+    val isHighRisk: Boolean,
+    val reason: String? = null
+)
+
+/**
+ * Drainer pattern check result.
+ */
+data class DrainerCheckResult(
+    val isPotentialDrainer: Boolean,
+    val reasons: List<String>
+)
 
 /**
  * Transaction validator that analyzes transactions before signing.
@@ -268,6 +330,149 @@ class TransactionValidator {
         }
         return value
     }
+    
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SIMPLIFIED API - Program-level validation without raw bytes
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    /**
+     * Validate a list of program IDs (simplified API without raw transaction bytes).
+     * 
+     * @param programs List of program ID strings (base58)
+     * @return Validation result with safety assessment
+     */
+    fun validatePrograms(programs: List<String>): ProgramValidationResult {
+        if (programs.isEmpty()) {
+            return ProgramValidationResult(
+                isSafe = false,
+                programs = emptyList(),
+                dangerReasons = listOf(DangerReason.EMPTY_TRANSACTION)
+            )
+        }
+        
+        val details = programs.map { programId ->
+            val pubkey = try { Pubkey.fromBase58(programId) } catch (e: Exception) { null }
+            val name = pubkey?.let { PROGRAM_NAMES[it] } ?: "Unknown"
+            val isKnown = pubkey != null && pubkey in PROGRAM_NAMES
+            ProgramDetail(
+                id = programId,
+                name = name,
+                isKnown = isKnown
+            )
+        }
+        
+        val dangers = mutableListOf<DangerReason>()
+        val hasUnknown = details.any { !it.isKnown }
+        if (hasUnknown) {
+            dangers.add(DangerReason.UNKNOWN_PROGRAM)
+        }
+        
+        return ProgramValidationResult(
+            isSafe = dangers.isEmpty(),
+            programs = details,
+            dangerReasons = dangers
+        )
+    }
+    
+    /**
+     * Categorize and summarize a transaction by its programs (simplified API).
+     */
+    fun summarizeTransaction(programs: List<String>): TransactionSummaryResult {
+        val warnings = mutableListOf<String>()
+        var requiresExtraScrutiny = false
+        
+        val knownProgramIds = programs.mapNotNull { id ->
+            try { Pubkey.fromBase58(id) } catch (e: Exception) { null }
+        }
+        
+        // Check for unknown programs
+        val unknownCount = programs.count { id ->
+            val pubkey = try { Pubkey.fromBase58(id) } catch (e: Exception) { null }
+            pubkey == null || pubkey !in PROGRAM_NAMES
+        }
+        if (unknownCount > 0) {
+            warnings.add("Transaction references $unknownCount unknown program(s)")
+            requiresExtraScrutiny = true
+        }
+        
+        // Many programs = suspicious
+        if (programs.size > 10) {
+            warnings.add("Unusually high number of programs (${programs.size})")
+            requiresExtraScrutiny = true
+        }
+        
+        // Categorize
+        val category = categorizeTransaction(knownProgramIds)
+        
+        return TransactionSummaryResult(
+            category = category,
+            requiresExtraScrutiny = requiresExtraScrutiny,
+            warnings = warnings
+        )
+    }
+    
+    /**
+     * Analyze compute budget parameters for risk assessment.
+     */
+    fun analyzeComputeBudget(computeUnits: Long, priorityFee: Long): ComputeBudgetAnalysis {
+        val isHighRisk = computeUnits >= 1_400_000 && priorityFee == 0L
+        val reason = if (isHighRisk) "Max compute budget with zero priority fee" else null
+        
+        return ComputeBudgetAnalysis(
+            computeUnits = computeUnits,
+            priorityFee = priorityFee,
+            isHighRisk = isHighRisk,
+            reason = reason
+        )
+    }
+    
+    /**
+     * Check for common drainer/scam patterns in token operations.
+     */
+    fun checkDrainerPattern(
+        programId: String,
+        instruction: String,
+        delegateAddress: String,
+        amount: Long
+    ): DrainerCheckResult {
+        val reasons = mutableListOf<String>()
+        
+        // Check for unlimited approvals
+        if (instruction == "approve" && (amount == Long.MAX_VALUE || amount < 0)) {
+            reasons.add("Unlimited token approval detected")
+        }
+        
+        // Check if delegate is a known program (legitimate)
+        val delegatePubkey = try { Pubkey.fromBase58(delegateAddress) } catch (e: Exception) { null }
+        val isKnownDelegate = delegatePubkey != null && delegatePubkey in PROGRAM_NAMES
+        
+        if (instruction == "approve" && !isKnownDelegate && amount > 0) {
+            reasons.add("Token approval to unknown address")
+        }
+        
+        return DrainerCheckResult(
+            isPotentialDrainer = reasons.isNotEmpty(),
+            reasons = reasons
+        )
+    }
+    
+    private fun categorizeTransaction(programIds: List<Pubkey>): TransactionCategory {
+        val hasJupiter = JUPITER_V6 in programIds
+        val hasRaydium = RAYDIUM_AMM in programIds
+        val hasMetaplex = programIds.any { it.toBase58().startsWith("metaqbxx") }
+        val hasSystemOnly = programIds.all { it == SYSTEM_PROGRAM || it == COMPUTE_BUDGET }
+        val hasTokenProgram = TOKEN_PROGRAM in programIds || TOKEN_2022_PROGRAM in programIds
+        
+        return when {
+            hasJupiter || hasRaydium -> TransactionCategory.SWAP
+            hasMetaplex -> TransactionCategory.NFT
+            hasSystemOnly -> TransactionCategory.TRANSFER
+            hasTokenProgram && !hasJupiter && !hasRaydium -> TransactionCategory.TRANSFER
+            else -> TransactionCategory.UNKNOWN
+        }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════════
     
     private fun analyzeTransaction(parsed: ParsedMessage): ValidationResult {
         val warnings = mutableListOf<TransactionWarning>()

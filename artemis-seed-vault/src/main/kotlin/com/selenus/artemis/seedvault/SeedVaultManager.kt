@@ -88,11 +88,13 @@ class SeedVaultManager(private val context: Context) {
     /**
      * Creates an Intent to authorize the app to access the Seed Vault.
      * Use this with startActivityForResult or ActivityResultCaller.
+     * 
+     * @param purpose One of the PURPOSE_* constants from SeedVaultConstants
      */
-    fun buildAuthorizeIntent(purpose: String = "sign_transaction"): Intent {
+    fun buildAuthorizeIntent(purpose: Int = SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION): Intent {
         val intent = Intent(ACTION_AUTHORIZE_SEED_ACCESS).apply {
             setPackage(SERVICE_PACKAGE)
-            putExtra("purpose", purpose.toIntOrNull() ?: SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION)
+            putExtra(SeedVaultConstants.EXTRA_PURPOSE, purpose)
         }
         resolveComponent(context, intent)
         return intent
@@ -100,11 +102,13 @@ class SeedVaultManager(private val context: Context) {
 
     /**
      * Creates an Intent to create a new seed in the Seed Vault.
+     * NOTE: Uses implicit Intent (no package) per upstream contract.
+     * 
+     * @param purpose One of the PURPOSE_* constants from SeedVaultConstants
      */
-    fun buildCreateSeedIntent(purpose: String = "sign_transaction"): Intent {
+    fun buildCreateSeedIntent(purpose: Int = SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION): Intent {
         val intent = Intent(ACTION_CREATE_SEED).apply {
-            // setPackage(SERVICE_PACKAGE) // Create/Import might be handled by different activity
-            putExtra("purpose", purpose.toIntOrNull() ?: SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION)
+            putExtra(SeedVaultConstants.EXTRA_PURPOSE, purpose)
         }
         resolveComponent(context, intent)
         return intent
@@ -112,10 +116,72 @@ class SeedVaultManager(private val context: Context) {
 
     /**
      * Creates an Intent to import a seed into the Seed Vault.
+     * NOTE: Uses implicit Intent (no package) per upstream contract.
+     * 
+     * @param purpose One of the PURPOSE_* constants from SeedVaultConstants
      */
-    fun buildImportSeedIntent(purpose: String = "sign_transaction"): Intent {
+    fun buildImportSeedIntent(purpose: Int = SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION): Intent {
         val intent = Intent(ACTION_IMPORT_SEED).apply {
-           putExtra("purpose", purpose.toIntOrNull() ?: SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION)
+            putExtra(SeedVaultConstants.EXTRA_PURPOSE, purpose)
+        }
+        resolveComponent(context, intent)
+        return intent
+    }
+
+    /**
+     * Creates an Intent to sign transactions with the Seed Vault.
+     * 
+     * @param authToken The authorization token from authorize/createSeed/importSeed
+     * @param signingRequests The list of signing requests
+     */
+    fun buildSignTransactionsIntent(
+        authToken: Long,
+        signingRequests: ArrayList<android.os.Parcelable>
+    ): Intent {
+        val intent = Intent(SeedVaultConstants.ACTION_SIGN_TRANSACTION).apply {
+            putExtra(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken)
+            putParcelableArrayListExtra(SeedVaultConstants.EXTRA_SIGNING_REQUEST, signingRequests)
+        }
+        resolveComponent(context, intent)
+        return intent
+    }
+
+    /**
+     * Creates an Intent to sign messages with the Seed Vault.
+     */
+    fun buildSignMessagesIntent(
+        authToken: Long,
+        signingRequests: ArrayList<android.os.Parcelable>
+    ): Intent {
+        val intent = Intent(SeedVaultConstants.ACTION_SIGN_MESSAGE).apply {
+            putExtra(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken)
+            putParcelableArrayListExtra(SeedVaultConstants.EXTRA_SIGNING_REQUEST, signingRequests)
+        }
+        resolveComponent(context, intent)
+        return intent
+    }
+
+    /**
+     * Creates an Intent to request public keys for derivation paths.
+     */
+    fun buildGetPublicKeysIntent(
+        authToken: Long,
+        derivationPaths: ArrayList<android.net.Uri>
+    ): Intent {
+        val intent = Intent(SeedVaultConstants.ACTION_GET_PUBLIC_KEY).apply {
+            putExtra(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken)
+            putParcelableArrayListExtra(SeedVaultConstants.EXTRA_DERIVATION_PATH, derivationPaths)
+        }
+        resolveComponent(context, intent)
+        return intent
+    }
+
+    /**
+     * Creates an Intent to show seed settings. Requires privileged access.
+     */
+    fun buildSeedSettingsIntent(authToken: Long): Intent {
+        val intent = Intent(SeedVaultConstants.ACTION_SEED_SETTINGS).apply {
+            putExtra(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken)
         }
         resolveComponent(context, intent)
         return intent
@@ -123,18 +189,35 @@ class SeedVaultManager(private val context: Context) {
 
     /**
      * Parses the result Intent from an Authorize/Create/Import action.
+     * Returns the auth token and basic account info.
      */
     fun parseAuthorizationResult(data: Intent): SeedVaultAuthorization {
         val token = data.getLongExtra(SeedVaultConstants.EXTRA_AUTH_TOKEN, -1L)
         if (token == -1L) throw SeedVaultException.Unknown("Invalid auth token in result")
         
-        // Try to parse basic account info if available in extras, otherwise use placeholder
         val accountId = data.getLongExtra(SeedVaultConstants.EXTRA_ACCOUNT_ID, 0L)
         
-        // Account details might be fetched separately via getAccounts if not present
-        // Provide a dummy key for now until we fetch the real one. 
+        // Account details should be fetched separately via getAccounts() after authorization
         val dummyKey = Pubkey(ByteArray(32))
-        return SeedVaultAuthorization(token.toString(), SeedVaultAccount(accountId, "Parsed Account", dummyKey)) 
+        return SeedVaultAuthorization(token.toString(), SeedVaultAccount(accountId, "Authorized Account", dummyKey)) 
+    }
+
+    /**
+     * Parses signing response from an onActivityResult for sign transactions/messages.
+     * @return List of SigningResponse objects
+     */
+    fun parseSigningResult(data: Intent): List<SigningResponse> {
+        val responses = data.getParcelableArrayListExtra<SigningResponse>(SeedVaultConstants.EXTRA_SIGNING_RESPONSE)
+        return responses ?: emptyList()
+    }
+
+    /**
+     * Parses public key response from an onActivityResult for get public key.
+     * @return List of PublicKeyResponse objects
+     */
+    fun parsePublicKeyResult(data: Intent): List<PublicKeyResponse> {
+        val keys = data.getParcelableArrayListExtra<PublicKeyResponse>(SeedVaultConstants.EXTRA_PUBLIC_KEY)
+        return keys ?: emptyList()
     }
 
     suspend fun getAccounts(authToken: String): List<SeedVaultAccount> {
@@ -184,44 +267,48 @@ class SeedVaultManager(private val context: Context) {
     }
 
     /**
-     * Request public keys for specific derivation paths.
+     * Request public keys for specific derivation paths via IPC.
      * 
      * This is the Seed Vault equivalent of HD wallet key derivation.
      * @param authToken The authorization token from authorize/createSeed/importSeed
-     * @param derivationPaths List of BIP32/BIP44 derivation paths (e.g. "m/44'/501'/0'/0'")
+     * @param derivationPaths List of BIP32/BIP44 derivation path URIs
      * @return List of public keys corresponding to each derivation path
      */
-    suspend fun requestPublicKeys(authToken: String, derivationPaths: List<String>): List<Pubkey> {
+    suspend fun requestPublicKeys(authToken: String, derivationPaths: List<android.net.Uri>): List<Pubkey> {
         val params = Bundle().apply {
             putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
-            putStringArrayList("derivation_paths", ArrayList(derivationPaths))
+            putParcelableArrayList(SeedVaultConstants.EXTRA_DERIVATION_PATH, ArrayList(derivationPaths))
         }
         val response = performAction("requestPublicKeys", params)
         
-        val keys = response.getSerializable("public_keys") as? ArrayList<ByteArray>
+        val keys = response.getParcelableArrayList<Bundle>(SeedVaultConstants.EXTRA_PUBLIC_KEY)
             ?: throw SeedVaultException.Unknown("No public keys returned")
             
-        return keys.map { Pubkey(it) }
+        return keys.map { bundle ->
+            val raw = bundle.getByteArray("public_key_raw")
+                ?: throw SeedVaultException.Unknown("Missing public key bytes")
+            Pubkey(raw)
+        }
     }
 
     /**
-     * Sign payloads using a specific derivation path.
+     * Sign payloads using a specific derivation path via IPC.
      *
      * This allows signing with keys derived from arbitrary BIP32 paths,
      * not just the default account.
      * @param authToken The authorization token
-     * @param derivationPath The BIP32 derivation path for the signing key
+     * @param derivationPath The BIP32 derivation path URI for the signing key
      * @param payloads List of messages/transactions to sign
      * @return List of signatures
      */
     suspend fun signWithDerivationPath(
         authToken: String, 
-        derivationPath: String, 
+        derivationPath: android.net.Uri, 
         payloads: List<ByteArray>
     ): List<ByteArray> {
         val params = Bundle().apply {
             putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
-            putString("derivation_path", derivationPath)
+            putParcelable(SeedVaultConstants.EXTRA_DERIVATION_PATH, derivationPath)
             putSerializable(SeedVaultConstants.KEY_PAYLOADS, ArrayList(payloads))
         }
         
@@ -231,6 +318,28 @@ class SeedVaultManager(private val context: Context) {
             ?: throw SeedVaultException.Unknown("No signatures returned")
             
         return sigs
+    }
+
+    /**
+     * Resolve a BIP32 derivation path for a specific auth token.
+     * This uses the content provider's call() method per the upstream SDK contract.
+     * 
+     * @param authToken The authorization token
+     * @param derivationPath The BIP32 derivation path URI to resolve
+     * @return The resolved public key
+     */
+    suspend fun resolveDerivationPath(authToken: String, derivationPath: android.net.Uri): Pubkey {
+        val params = Bundle().apply {
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
+            putParcelable(SeedVaultConstants.EXTRA_DERIVATION_PATH, derivationPath)
+        }
+        
+        val response = performAction("resolveDerivationPath", params)
+        
+        val keyBytes = response.getByteArray(SeedVaultConstants.EXTRA_PUBLIC_KEY)
+            ?: throw SeedVaultException.Unknown("No public key returned from resolve")
+            
+        return Pubkey(keyBytes)
     }
 
     private suspend fun performAction(method: String, params: Bundle): Bundle = suspendCancellableCoroutine { cont ->
@@ -249,10 +358,16 @@ class SeedVaultManager(private val context: Context) {
             
             when (method) {
                 "authorize" -> service!!.authorize(params, callback)
+                "createSeed" -> service!!.createSeed(params, callback)
+                "importSeed" -> service!!.importSeed(params, callback)
+                "updateSeed" -> service!!.updateSeed(params, callback)
                 "getAccounts" -> service!!.getAccounts(params, callback)
+                "resolveDerivationPath" -> service!!.resolveDerivationPath(params, callback)
                 "signTransactions" -> service!!.signTransactions(params, callback)
                 "signMessages" -> service!!.signMessages(params, callback)
                 "deauthorize" -> service!!.deauthorize(params, callback)
+                "requestPublicKeys" -> service!!.resolveDerivationPath(params, callback)
+                "signWithDerivationPath" -> service!!.signTransactions(params, callback)
                 else -> {
                     if (cont.isActive) cont.resumeWithException(IllegalArgumentException("Unknown method: $method"))
                 }

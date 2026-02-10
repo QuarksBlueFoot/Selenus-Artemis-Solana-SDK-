@@ -31,6 +31,7 @@ dependencies {
   implementation(project(":artemis-core"))
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.androidx.datastore)
+  implementation(libs.androidx.security.crypto)
   // Artemis native Mobile Wallet Adapter client. No dependency on Solana Mobile clientlib.
   // No OkHttp dependency needed (native socket implementation).
   implementation(libs.kotlinx.serialization.json)

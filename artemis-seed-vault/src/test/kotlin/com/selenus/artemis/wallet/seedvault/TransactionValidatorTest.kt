@@ -4,10 +4,13 @@
  */
 package com.selenus.artemis.wallet.seedvault
 
+import com.selenus.artemis.seedvault.TransactionValidator
+import com.selenus.artemis.seedvault.TransactionCategory
+import com.selenus.artemis.seedvault.DangerReason
+import com.selenus.artemis.runtime.Pubkey
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
-import com.selenus.artemis.runtime.Pubkey
 
 class TransactionValidatorTest {
     

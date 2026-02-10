@@ -4,6 +4,10 @@
  */
 package com.selenus.artemis.wallet.seedvault
 
+import com.selenus.artemis.seedvault.SolanaDerivation
+import com.selenus.artemis.seedvault.DerivationScheme
+import com.selenus.artemis.seedvault.PathComponent
+import com.selenus.artemis.seedvault.WalletPresets
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach

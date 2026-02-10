@@ -33,6 +33,7 @@ data class EncryptedData(
     val nonce: ByteArray,
     val tag: ByteArray
 ) {
+
     /**
      * Serialize for storage or transmission.
      */
@@ -60,6 +61,9 @@ data class EncryptedData(
         return result
     }
     
+    /** Alias for [serialize]. */
+    fun toBytes(): ByteArray = serialize()
+    
     companion object {
         fun deserialize(data: ByteArray): EncryptedData {
             var offset = 0
@@ -79,6 +83,18 @@ data class EncryptedData(
             val tag = data.copyOfRange(offset, offset + tagLen)
             
             return EncryptedData(ciphertext, nonce, tag)
+        }
+        
+        /**
+         * Alias for [deserialize] with null safety.
+         */
+        fun fromBytes(data: ByteArray): EncryptedData? {
+            return try {
+                if (data.size < 12) return null // Minimum: 3 ints (12 bytes)
+                deserialize(data)
+            } catch (e: Exception) {
+                null
+            }
         }
         
         private fun writeInt(buf: ByteArray, offset: Int, value: Int) {
@@ -133,16 +149,14 @@ data class EncryptedData(
  * val decrypted = crypto.decrypt(encrypted, encKey)
  * ```
  */
-class SeedVaultCrypto {
+object SeedVaultCrypto {
     
     private val random = SecureRandom()
     
-    companion object {
-        private const val NONCE_SIZE = 12
-        private const val TAG_SIZE = 16
-        private const val KEY_SIZE = 32
-        private const val DOMAIN_SEPARATOR = "artemis:seedvault:crypto:v1"
-    }
+    private const val NONCE_SIZE = 12
+    private const val TAG_SIZE = 16
+    private const val KEY_SIZE = 32
+    private const val DOMAIN_SEPARATOR = "artemis:seedvault:crypto:v1"
     
     /**
      * Derive an encryption key from a signature.
@@ -163,6 +177,12 @@ class SeedVaultCrypto {
         digest.update(signature)
         return digest.digest()
     }
+    
+    /**
+     * Alias for [deriveEncryptionKey] for convenience.
+     */
+    fun deriveKey(signature: ByteArray, context: String): ByteArray =
+        deriveEncryptionKey(signature, context)
     
     /**
      * Derive a shared secret using ECDH-style derivation.
@@ -187,6 +207,12 @@ class SeedVaultCrypto {
         digest.update(peerPubkey.bytes)
         return digest.digest()
     }
+    
+    /**
+     * Overload accepting raw public key bytes.
+     */
+    fun deriveSharedSecret(mySignature: ByteArray, peerPubkeyBytes: ByteArray): ByteArray =
+        deriveSharedSecret(mySignature, Pubkey(peerPubkeyBytes))
     
     /**
      * Encrypt data using AES-256-GCM.
@@ -229,28 +255,31 @@ class SeedVaultCrypto {
      * @param encrypted The encrypted data container
      * @param key 32-byte encryption key
      * @param associatedData Optional authenticated data (must match encryption)
-     * @return Decrypted plaintext
-     * @throws javax.crypto.AEADBadTagException if authentication fails
+     * @return Decrypted plaintext, or null if authentication fails
      */
     fun decrypt(
         encrypted: EncryptedData,
         key: ByteArray,
         associatedData: ByteArray? = null
-    ): ByteArray {
+    ): ByteArray? {
         require(key.size == KEY_SIZE) { "Key must be 32 bytes" }
         
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        val spec = GCMParameterSpec(TAG_SIZE * 8, encrypted.nonce)
-        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), spec)
-        
-        if (associatedData != null) {
-            cipher.updateAAD(associatedData)
+        return try {
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            val spec = GCMParameterSpec(TAG_SIZE * 8, encrypted.nonce)
+            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), spec)
+            
+            if (associatedData != null) {
+                cipher.updateAAD(associatedData)
+            }
+            
+            // Recombine ciphertext and tag
+            val ciphertextWithTag = encrypted.ciphertext + encrypted.tag
+            
+            cipher.doFinal(ciphertextWithTag)
+        } catch (e: Exception) {
+            null
         }
-        
-        // Recombine ciphertext and tag
-        val ciphertextWithTag = encrypted.ciphertext + encrypted.tag
-        
-        return cipher.doFinal(ciphertextWithTag)
     }
     
     /**
@@ -309,10 +338,9 @@ class SeedVaultCrypto {
  */
 suspend fun SeedVaultManager.deriveEncryptionKey(
     authToken: String,
-    purpose: String,
-    crypto: SeedVaultCrypto = SeedVaultCrypto()
+    purpose: String
 ): ByteArray {
-    val message = crypto.createKeyDerivationMessage(purpose)
-    val signature = sign(authToken, listOf(message)).first()
-    return crypto.deriveEncryptionKey(signature, purpose)
+    val message = SeedVaultCrypto.createKeyDerivationMessage(purpose)
+    val signature = signMessages(authToken, listOf(message)).first()
+    return SeedVaultCrypto.deriveEncryptionKey(signature, purpose)
 }

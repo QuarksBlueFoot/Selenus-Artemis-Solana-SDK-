@@ -29,4 +29,6 @@ dependencies {
     implementation(project(":artemis-tx"))
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.annotation)
+    
+    testImplementation(libs.bundles.testing.android)
 }

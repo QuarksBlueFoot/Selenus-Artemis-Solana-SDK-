@@ -4,6 +4,8 @@
  */
 package com.selenus.artemis.wallet.seedvault
 
+import com.selenus.artemis.seedvault.SeedVaultCrypto
+import com.selenus.artemis.seedvault.EncryptedData
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -108,7 +110,7 @@ class SeedVaultCryptoTest {
         val tamperedCiphertext = encrypted.ciphertext.clone()
         tamperedCiphertext[0] = (tamperedCiphertext[0].toInt() xor 0xFF).toByte()
         
-        val tampered = EncryptedData(encrypted.nonce, tamperedCiphertext, encrypted.tag)
+        val tampered = EncryptedData(ciphertext = tamperedCiphertext, nonce = encrypted.nonce, tag = encrypted.tag)
         val decrypted = SeedVaultCrypto.decrypt(tampered, key)
         
         assertNull(decrypted)
@@ -125,7 +127,7 @@ class SeedVaultCryptoTest {
         val tamperedTag = encrypted.tag.clone()
         tamperedTag[0] = (tamperedTag[0].toInt() xor 0xFF).toByte()
         
-        val tampered = EncryptedData(encrypted.nonce, encrypted.ciphertext, tamperedTag)
+        val tampered = EncryptedData(ciphertext = encrypted.ciphertext, nonce = encrypted.nonce, tag = tamperedTag)
         val decrypted = SeedVaultCrypto.decrypt(tampered, key)
         
         assertNull(decrypted)
