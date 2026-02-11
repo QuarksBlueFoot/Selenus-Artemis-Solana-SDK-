@@ -70,4 +70,78 @@ data class VersionedMessage(
         
         return out.toByteArray()
     }
+
+    companion object {
+        /**
+         * Deserialize a VersionedMessage from wire bytes.
+         *
+         * Expects the first byte to be 0x80 (version 0 prefix).
+         */
+        fun deserialize(bytes: ByteArray): VersionedMessage {
+            var offset = 0
+
+            // Version prefix
+            val prefix = bytes[offset].toInt() and 0xFF
+            require(prefix and 0x80 != 0) { "Not a versioned message (prefix=0x${prefix.toString(16)})" }
+            offset++
+
+            // Header
+            val numRequiredSignatures = bytes[offset++].toInt() and 0xFF
+            val numReadonlySigned = bytes[offset++].toInt() and 0xFF
+            val numReadonlyUnsigned = bytes[offset++].toInt() and 0xFF
+            val header = MessageHeader(numRequiredSignatures, numReadonlySigned, numReadonlyUnsigned)
+
+            // Account keys
+            val (numKeys, keyLenBytes) = ShortVec.decodeLen(bytes, offset)
+            offset += keyLenBytes
+            val accountKeys = ArrayList<Pubkey>(numKeys)
+            for (i in 0 until numKeys) {
+                accountKeys.add(Pubkey(bytes.copyOfRange(offset, offset + 32)))
+                offset += 32
+            }
+
+            // Recent blockhash (32 bytes)
+            val blockhashBytes = bytes.copyOfRange(offset, offset + 32)
+            val recentBlockhash = com.selenus.artemis.runtime.Base58.encode(blockhashBytes)
+            offset += 32
+
+            // Instructions
+            val (numIx, ixLenBytes) = ShortVec.decodeLen(bytes, offset)
+            offset += ixLenBytes
+            val instructions = ArrayList<CompiledInstruction>(numIx)
+            for (i in 0 until numIx) {
+                val programIdIndex = bytes[offset++].toInt() and 0xFF
+                val (numAccounts, accLenBytes) = ShortVec.decodeLen(bytes, offset)
+                offset += accLenBytes
+                val accountIndexes = ByteArray(numAccounts)
+                System.arraycopy(bytes, offset, accountIndexes, 0, numAccounts)
+                offset += numAccounts
+                val (dataLen, dataLenBytes) = ShortVec.decodeLen(bytes, offset)
+                offset += dataLenBytes
+                val data = bytes.copyOfRange(offset, offset + dataLen)
+                offset += dataLen
+                instructions.add(CompiledInstruction(programIdIndex, accountIndexes, data))
+            }
+
+            // Address table lookups
+            val (numLookups, lookupLenBytes) = ShortVec.decodeLen(bytes, offset)
+            offset += lookupLenBytes
+            val lookups = ArrayList<MessageAddressTableLookup>(numLookups)
+            for (i in 0 until numLookups) {
+                val accountKey = Pubkey(bytes.copyOfRange(offset, offset + 32))
+                offset += 32
+                val (numWritable, wLenBytes) = ShortVec.decodeLen(bytes, offset)
+                offset += wLenBytes
+                val writableIndexes = bytes.copyOfRange(offset, offset + numWritable)
+                offset += numWritable
+                val (numReadonly, rLenBytes) = ShortVec.decodeLen(bytes, offset)
+                offset += rLenBytes
+                val readonlyIndexes = bytes.copyOfRange(offset, offset + numReadonly)
+                offset += numReadonly
+                lookups.add(MessageAddressTableLookup(accountKey, writableIndexes, readonlyIndexes))
+            }
+
+            return VersionedMessage(header, accountKeys, recentBlockhash, instructions, lookups)
+        }
+    }
 }

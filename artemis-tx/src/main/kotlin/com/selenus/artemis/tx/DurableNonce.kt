@@ -76,7 +76,7 @@ object DurableNonce {
         nonceAuthority: Pubkey
     ): Instruction {
         // Recent blockhashes sysvar
-        val recentBlockhashesSysvar = Pubkey.fromBase58("SysvarRecentB1telegramAhashes11111111111111111")
+        val recentBlockhashesSysvar = Pubkey.fromBase58("SysvarRecentB1ockhashes11111111111111111111")
         
         return Instruction(
             programId = SYSTEM_PROGRAM_ID,

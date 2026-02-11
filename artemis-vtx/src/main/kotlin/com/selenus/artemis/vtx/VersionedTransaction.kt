@@ -1,5 +1,6 @@
 package com.selenus.artemis.vtx
 
+import com.selenus.artemis.runtime.Pubkey
 import com.selenus.artemis.runtime.Signer
 import com.selenus.artemis.tx.ShortVec
 import java.io.ByteArrayOutputStream
@@ -20,6 +21,28 @@ data class VersionedTransaction(
     }
   }
 
+  /**
+   * Add an externally-produced signature for a specific public key.
+   *
+   * Matches sol4k VersionedTransaction.addSignature() for parity.
+   *
+   * @param publicKey The signer's public key
+   * @param signature The 64-byte Ed25519 signature
+   */
+  fun addSignature(publicKey: Pubkey, signature: ByteArray) {
+    require(signature.size == 64) { "Signature must be 64 bytes" }
+    // Find the index of this public key in the message account keys
+    val index = message.staticAccountKeys.indexOfFirst { it.bytes.contentEquals(publicKey.bytes) }
+    if (index == -1) {
+      // Append if not found (external signer scenario)
+      signatures.add(signature)
+    } else {
+      // Ensure signatures list is large enough
+      while (signatures.size <= index) signatures.add(ByteArray(64))
+      signatures[index] = signature
+    }
+  }
+
   fun serialize(): ByteArray {
     require(signatures.isNotEmpty()) { "No signatures present. Call sign() first." }
     val out = ByteArrayOutputStream()
@@ -35,6 +58,11 @@ data class VersionedTransaction(
   fun toBase64(): String = java.util.Base64.getEncoder().encodeToString(serialize())
 
   companion object {
+    /**
+     * Deserialize a versioned transaction from wire bytes.
+     *
+     * Matches sol4k VersionedTransaction.from() for parity.
+     */
     fun deserialize(bytes: ByteArray): VersionedTransaction {
       var offset = 0
 
@@ -52,6 +80,19 @@ data class VersionedTransaction(
       val message = MessageV0.deserialize(messageBytes)
 
       return VersionedTransaction(message, signatures)
+    }
+
+    /**
+     * Alias for deserialize, matching sol4k naming convention.
+     */
+    fun from(bytes: ByteArray): VersionedTransaction = deserialize(bytes)
+
+    /**
+     * Deserialize from a Base64-encoded string.
+     */
+    fun fromBase64(base64: String): VersionedTransaction {
+      val bytes = java.util.Base64.getDecoder().decode(base64)
+      return deserialize(bytes)
     }
   }
 }

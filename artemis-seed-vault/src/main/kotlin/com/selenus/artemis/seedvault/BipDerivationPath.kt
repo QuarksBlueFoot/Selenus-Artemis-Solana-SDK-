@@ -187,7 +187,7 @@ class Bip32DerivationPath(
     }
     
     companion object {
-        const val MAX_DEPTH = 8
+        const val MAX_DEPTH = 20
         private const val MASTER_KEY_INDICATOR = "m"
         private const val HARDENED_INDICATOR = "'"
         

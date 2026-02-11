@@ -17,6 +17,7 @@ internal data class MwaAuthorizeRequest(
   val features: List<String>? = null,
   val addresses: List<String>? = null,
   @SerialName("auth_token") val authToken: String? = null,
+  @Deprecated("MWA 2.0 uses 'chain' instead. This field is ignored by MWA 2.0 wallets.")
   val cluster: String? = null,
   @SerialName("sign_in_payload") val signInPayload: MwaSignInPayload? = null
 )

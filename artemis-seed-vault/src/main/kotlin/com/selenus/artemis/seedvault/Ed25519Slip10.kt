@@ -26,6 +26,7 @@ package com.selenus.artemis.seedvault
 import java.security.InvalidKeyException
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import org.bouncycastle.math.ec.rfc8032.Ed25519
 
 /**
  * SLIP-0010 Ed25519 key derivation.
@@ -182,6 +183,64 @@ object Ed25519Slip10 {
     fun deriveKey(seed: ByteArray, pathString: String): KeyDerivationMaterial {
         val path = BipDerivationPath.fromPathString(pathString)
         return deriveKey(seed, path)
+    }
+    
+    /**
+     * Derive the Ed25519 public key at a full BIP32 derivation path.
+     * 
+     * This is a convenience method matching the upstream Seed Vault SDK's
+     * Ed25519Slip10UseCase.derivePublicKey(). It derives the private key
+     * material and computes the corresponding Ed25519 public key.
+     * 
+     * @param seed The BIP39 seed
+     * @param path The derivation path
+     * @return The 32-byte Ed25519 public key
+     */
+    fun derivePublicKey(seed: ByteArray, path: Bip32DerivationPath): ByteArray {
+        val material = deriveKey(seed, path)
+        return publicKeyFromPrivate(material.privateKey)
+    }
+    
+    /**
+     * Derive the Ed25519 public key using a string path.
+     * 
+     * @param seed The BIP39 seed
+     * @param pathString Path string like "m/44'/501'/0'/0'"
+     * @return The 32-byte Ed25519 public key
+     */
+    fun derivePublicKey(seed: ByteArray, pathString: String): ByteArray {
+        val path = BipDerivationPath.fromPathString(pathString)
+        return derivePublicKey(seed, path)
+    }
+    
+    /**
+     * Derive the Ed25519 public key from a partial derivation root.
+     * 
+     * Matches upstream Ed25519Slip10UseCase.derivePublicKey(seed, path, rootKeyPair).
+     * Useful for bulk derivation with a cached root.
+     * 
+     * @param root Pre-derived root key material (from derivePartial)
+     * @param childPath Additional derivation levels from the root
+     * @return The 32-byte Ed25519 public key
+     */
+    fun derivePublicKey(root: KeyDerivationMaterial, childPath: Bip32DerivationPath): ByteArray {
+        val material = deriveFromPartial(root, childPath)
+        return publicKeyFromPrivate(material.privateKey)
+    }
+    
+    /**
+     * Compute the Ed25519 public key from a 32-byte private key.
+     * 
+     * @param privateKey The 32-byte Ed25519 private key (seed)
+     * @return The 32-byte Ed25519 public key
+     */
+    fun publicKeyFromPrivate(privateKey: ByteArray): ByteArray {
+        require(privateKey.size == PRIVATE_KEY_SIZE) {
+            "Private key must be $PRIVATE_KEY_SIZE bytes"
+        }
+        val publicKey = ByteArray(32)
+        Ed25519.generatePublicKey(privateKey, 0, publicKey, 0)
+        return publicKey
     }
     
     /**

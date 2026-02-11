@@ -95,23 +95,23 @@ object SeedVaultConstants {
     // ═══════════════════════════════════════════════════════════════════════════
     
     /** An unspecified error occurred. */
-    const val RESULT_UNSPECIFIED_ERROR = 1001  // RESULT_FIRST_USER + 1000
+    const val RESULT_UNSPECIFIED_ERROR = 1000  // RESULT_FIRST_USER + 999
     /** Invalid or unknown auth token. */
-    const val RESULT_INVALID_AUTH_TOKEN = 1002  // RESULT_FIRST_USER + 1001
+    const val RESULT_INVALID_AUTH_TOKEN = 1001  // RESULT_FIRST_USER + 1000
     /** Invalid transaction payload for signing purpose. */
-    const val RESULT_INVALID_PAYLOAD = 1003  // RESULT_FIRST_USER + 1002
+    const val RESULT_INVALID_PAYLOAD = 1002  // RESULT_FIRST_USER + 1001
     /** Legacy alias for RESULT_INVALID_PAYLOAD. */
     const val RESULT_INVALID_TRANSACTION = RESULT_INVALID_PAYLOAD
     /** User failed or declined authentication. */
-    const val RESULT_AUTHENTICATION_FAILED = 1004  // RESULT_FIRST_USER + 1003
+    const val RESULT_AUTHENTICATION_FAILED = 1003  // RESULT_FIRST_USER + 1002
     /** No seeds available to authorize. */
-    const val RESULT_NO_AVAILABLE_SEEDS = 1005  // RESULT_FIRST_USER + 1004
+    const val RESULT_NO_AVAILABLE_SEEDS = 1004  // RESULT_FIRST_USER + 1003
     /** Invalid purpose value. */
-    const val RESULT_INVALID_PURPOSE = 1006  // RESULT_FIRST_USER + 1005
+    const val RESULT_INVALID_PURPOSE = 1005  // RESULT_FIRST_USER + 1004
     /** Invalid BIP32 or BIP44 derivation path URI. */
-    const val RESULT_INVALID_DERIVATION_PATH = 1007  // RESULT_FIRST_USER + 1006
+    const val RESULT_INVALID_DERIVATION_PATH = 1006  // RESULT_FIRST_USER + 1005
     /** Implementation limit exceeded. */
-    const val RESULT_IMPLEMENTATION_LIMIT_EXCEEDED = 1008  // RESULT_FIRST_USER + 1007
+    const val RESULT_IMPLEMENTATION_LIMIT_EXCEEDED = 1007  // RESULT_FIRST_USER + 1006
 
     // ═══════════════════════════════════════════════════════════════════════════
     // BIP URI CONSTANTS
@@ -126,7 +126,7 @@ object SeedVaultConstants {
     /** Hardened index identifier in BIP URIs. */
     const val BIP_URI_HARDENED_INDEX_IDENTIFIER = "'"
     /** Maximum BIP32 derivation path depth. */
-    const val BIP32_URI_MAX_DEPTH = 8
+    const val BIP32_URI_MAX_DEPTH = 20
 
     // ═══════════════════════════════════════════════════════════════════════════
     // PERMISSIONED ACCOUNTS (PRIVILEGED ACCESS)

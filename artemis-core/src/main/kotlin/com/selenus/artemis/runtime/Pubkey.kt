@@ -1,5 +1,8 @@
 package com.selenus.artemis.runtime
 
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters
+import org.bouncycastle.crypto.signers.Ed25519Signer
+
 data class Pubkey(val bytes: ByteArray) {
   init { require(bytes.size == 32) { "Pubkey must be 32 bytes" } }
 
@@ -10,6 +13,28 @@ data class Pubkey(val bytes: ByteArray) {
       throw IllegalArgumentException("Invalid Base58 string", e)
     }
   )
+
+  /**
+   * Verify an Ed25519 signature against a message.
+   *
+   * Matches sol4k PublicKey.verify(signature, message) for parity.
+   *
+   * @param signature The 64-byte Ed25519 signature
+   * @param message The original message bytes that were signed
+   * @return true if the signature is valid for this public key and message
+   */
+  fun verify(signature: ByteArray, message: ByteArray): Boolean {
+    require(signature.size == 64) { "Signature must be 64 bytes" }
+    return try {
+      val pubKeyParams = Ed25519PublicKeyParameters(bytes, 0)
+      val signer = Ed25519Signer()
+      signer.init(false, pubKeyParams)
+      signer.update(message, 0, message.size)
+      signer.verifySignature(signature)
+    } catch (e: Exception) {
+      false
+    }
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

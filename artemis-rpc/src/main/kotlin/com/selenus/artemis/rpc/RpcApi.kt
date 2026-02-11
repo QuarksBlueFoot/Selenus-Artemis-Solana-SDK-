@@ -169,6 +169,22 @@ open class RpcApi(private val client: JsonRpcClient) {
     return simulateTransaction(transaction.serialize(), sigVerify, replaceRecentBlockhash, commitment)
   }
 
+  /**
+   * Simulate a transaction with typed response.
+   * Matches sol4k Connection.simulateTransaction() return type.
+   */
+  suspend fun simulateTransactionTyped(base64Tx: String, sigVerify: Boolean = false, replaceRecentBlockhash: Boolean = false, commitment: String = "processed"): TransactionSimulationResult {
+    val result = simulateTransaction(base64Tx, sigVerify, replaceRecentBlockhash, commitment)
+    val value = result["value"]?.jsonObject ?: throw RpcException("Missing value in simulateTransaction response")
+    return TransactionSimulationResult(
+      err = value["err"],
+      logs = value["logs"]?.jsonArray?.map { it.jsonPrimitive.content },
+      accounts = value["accounts"],
+      unitsConsumed = value["unitsConsumed"]?.jsonPrimitive?.longOrNull,
+      returnData = value["returnData"]
+    )
+  }
+
   suspend fun sendTransaction(base64Tx: String, skipPreflight: Boolean = false, maxRetries: Int? = null, preflightCommitment: String = "processed"): String {
     val params = buildJsonArray {
       add(JsonPrimitive(base64Tx))
@@ -338,6 +354,15 @@ suspend fun getConfirmedSignaturesForAddress2(address: String, limit: Int = 1000
   return client.call("getEpochInfo", params).resultObj().jsonObject
 }
 
+  /**
+   * Get epoch info with typed response.
+   * Matches sol4k Connection.getEpochInfo() return type.
+   */
+  suspend fun getEpochInfoTyped(commitment: String = "finalized"): EpochInfo {
+    val json = getEpochInfo(commitment)
+    return EpochInfo.fromJson(json)
+  }
+
   suspend fun getEpochSchedule(): JsonObject {
   return client.call("getEpochSchedule", null).resultObj().jsonObject
 }
@@ -417,6 +442,20 @@ suspend fun getConfirmedSignaturesForAddress2(address: String, limit: Int = 1000
   return client.call("getTokenSupply", params).resultObj().jsonObject
 }
 
+  /**
+   * Get token supply with typed response.
+   */
+  suspend fun getTokenSupplyTyped(mint: String, commitment: String = "confirmed"): TokenSupply {
+    val json = getTokenSupply(mint, commitment)
+    val value = json["value"]?.jsonObject ?: throw RpcException("Missing value in getTokenSupply response")
+    return TokenSupply(
+      amount = value["amount"]!!.jsonPrimitive.content,
+      decimals = value["decimals"]!!.jsonPrimitive.int,
+      uiAmount = value["uiAmount"]?.jsonPrimitive?.doubleOrNull,
+      uiAmountString = value["uiAmountString"]?.jsonPrimitive?.content
+    )
+  }
+
   suspend fun requestAirdrop(pubkey: String, lamports: Long, commitment: String = "confirmed"): String {
   val params = buildJsonArray {
     add(JsonPrimitive(pubkey))
@@ -429,6 +468,14 @@ suspend fun getConfirmedSignaturesForAddress2(address: String, limit: Int = 1000
   suspend fun getVersion(): JsonObject {
   return client.call("getVersion", null).resultObj().jsonObject
 }
+
+  /**
+   * Get version with typed response.
+   */
+  suspend fun getVersionTyped(): VersionInfo {
+    val json = getVersion()
+    return VersionInfo.fromJson(json)
+  }
 
 suspend fun getVoteAccounts(commitment: String = "confirmed"): JsonObject {
     val params = buildJsonArray { add(buildJsonObject { put("commitment", commitment) }) }

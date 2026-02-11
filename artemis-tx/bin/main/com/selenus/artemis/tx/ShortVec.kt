@@ -18,12 +18,23 @@ object ShortVec {
     return out.toByteArray()
   }
 
-  fun decodeLen(bytes: ByteArray): Pair<Int, Int> {
+  fun decodeLen(bytes: ByteArray): Pair<Int, Int> = decodeLen(bytes, 0)
+
+  /**
+   * Decode a ShortVec length starting at the given offset.
+   * 
+   * @param bytes The byte array
+   * @param offset The offset to start decoding from
+   * @return Pair of (decoded length, number of bytes consumed)
+   */
+  fun decodeLen(bytes: ByteArray, offset: Int): Pair<Int, Int> {
     var len = 0
     var size = 0
-    for (byte in bytes) {
+    var pos = offset
+    while (pos < bytes.size) {
       size++
-      val elem = byte.toInt() and 0xFF
+      val elem = bytes[pos].toInt() and 0xFF
+      pos++
       len = len or ((elem and 0x7F) shl ((size - 1) * 7))
       if ((elem and 0x80) == 0) {
         break

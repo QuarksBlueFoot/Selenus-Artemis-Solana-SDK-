@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonPrimitive
 import java.security.KeyPair
 
 class MwaClient(
@@ -191,9 +192,31 @@ class MwaClient(
     )
 
     val rsp = withTimeout(timeoutMs) { session.sendJsonRpc("sign_messages", params).await() }
-    val result: MwaSignMessagesResult = parseResult(rsp)
     
-    // Parse signed payloads - each contains message + signature (64 bytes at end)
+    // MWA 2.0 spec: the result may contain a structured detached response 
+    // with separate messages, signatures[][], and addresses[][].
+    // Fall back to the legacy heuristic (message || signature) if the structured
+    // fields are not present.
+    val resultJson = rsp["result"]
+    if (resultJson != null && resultJson is kotlinx.serialization.json.JsonObject) {
+      val signaturesArray = resultJson["signatures"]
+      if (signaturesArray != null && signaturesArray is kotlinx.serialization.json.JsonArray) {
+        // Structured detached response: { messages, signatures[][], addresses[][] }
+        val sigs = signaturesArray.map { sigGroup ->
+          if (sigGroup is kotlinx.serialization.json.JsonArray && sigGroup.isNotEmpty()) {
+            // Take the first signature for the first signer per message
+            val b64Sig = sigGroup[0].jsonPrimitive.content
+            java.util.Base64.getDecoder().decode(b64Sig)
+          } else {
+            ByteArray(64) // Empty signature placeholder
+          }
+        }
+        return messages to sigs
+      }
+    }
+    
+    // Legacy response: signed_payloads with message || signature
+    val result: MwaSignMessagesResult = parseResult(rsp)
     val signedPayloads = result.signedPayloads.map { java.util.Base64.getDecoder().decode(it) }
     
     // Extract signatures (last 64 bytes of each signed payload)

@@ -182,6 +182,11 @@ class MwaWalletAdapter(
     return res.signInResult ?: throw IllegalStateException("Wallet connected but returned no Sign In result")
   }
 
+  @Deprecated(
+    "MWA 2.0 makes sign_transactions optional. Use signAndSendTransaction() or check " +
+    "capabilities.supportsSignTransactions() before calling.",
+    replaceWith = ReplaceWith("signAndSendTransaction(message, SendTransactionOptions())")
+  )
   override suspend fun signMessage(message: ByteArray, request: WalletRequest): ByteArray {
     // For MWA we treat WalletAdapter.signMessage as "sign tx bytes".
     if (pk == null || session == null) connect()
@@ -190,17 +195,24 @@ class MwaWalletAdapter(
 
     // If wallet cannot sign transactions, fail loudly.
     if (!c.supportsSignTransactions()) {
-      throw IllegalStateException("Wallet does not support sign_transactions")
+      throw IllegalStateException("Wallet does not support sign_transactions. " +
+        "MWA 2.0 makes this feature optional. Use signAndSendTransaction() instead.")
     }
     return client.signTransactions(s, listOf(message)).first()
   }
 
+  @Deprecated(
+    "MWA 2.0 makes sign_transactions optional. Use signAndSendTransactions() or check " +
+    "capabilities.supportsSignTransactions() before calling.",
+    replaceWith = ReplaceWith("signAndSendTransactions(messages, SendTransactionOptions())")
+  )
   override suspend fun signMessages(messages: List<ByteArray>, request: WalletRequest): List<ByteArray> {
   if (pk == null || session == null) connect()
   val s = session ?: throw IllegalStateException("MWA session not ready")
   val c = ensureMwaCapabilities()
   if (!c.supportsSignTransactions()) {
-    throw IllegalStateException("Wallet does not support sign_transactions")
+    throw IllegalStateException("Wallet does not support sign_transactions. " +
+      "MWA 2.0 makes this feature optional. Use signAndSendTransactions() instead.")
   }
 
   val max = c.maxMessagesPerRequest ?: c.maxTransactionsPerRequest ?: messages.size
