@@ -47,12 +47,27 @@ subprojects {
     val publishingConfig: PublishingExtension.() -> Unit = {
         repositories {
             maven {
-                name = "MavenCentral"
-                url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
-                credentials {
-                    username = findProperty("CENTRAL_USERNAME") as String? ?: System.getenv("CENTRAL_USERNAME") ?: ""
-                    password = findProperty("CENTRAL_PASSWORD") as String? ?: System.getenv("CENTRAL_PASSWORD") ?: ""
-                }
+                name = "Staging"
+                url = uri(layout.buildDirectory.dir("../../build/staging-deploy"))
+            }
+        }
+    }
+
+    val signingConfig: SigningExtension.(String?) -> Unit = { pubName ->
+        val signingKeyId = findProperty("signing.keyId") as String? ?: System.getenv("SIGNING_KEY_ID")
+        val signingKey = System.getenv("SIGNING_KEY")
+        val signingPassword = findProperty("signing.password") as String? ?: System.getenv("SIGNING_PASSWORD")
+        isRequired = !signingKey.isNullOrEmpty() || System.getenv("GPG_SIGNING") == "true"
+        if (!signingKey.isNullOrEmpty()) {
+            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+        } else if (System.getenv("GPG_SIGNING") == "true") {
+            useGpgCmd()
+        }
+        if (isRequired) {
+            if (pubName != null) {
+                sign(extensions.getByType<PublishingExtension>().publications[pubName])
+            } else {
+                sign(extensions.getByType<PublishingExtension>().publications)
             }
         }
     }
@@ -80,16 +95,7 @@ subprojects {
             publishingConfig()
         }
 
-        configure<SigningExtension> {
-            val signingKeyId = findProperty("signing.keyId") as String? ?: System.getenv("SIGNING_KEY_ID")
-            val signingKey = System.getenv("SIGNING_KEY")
-            val signingPassword = findProperty("signing.password") as String? ?: System.getenv("SIGNING_PASSWORD")
-            
-            if (!signingKey.isNullOrEmpty()) {
-                useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-                sign(extensions.getByType<PublishingExtension>().publications["maven"])
-            }
-        }
+        configure<SigningExtension> { signingConfig("maven") }
     }
 
     plugins.withId("com.android.library") {
@@ -117,16 +123,7 @@ subprojects {
             publishingConfig()
         }
 
-        configure<SigningExtension> {
-            val signingKeyId = findProperty("signing.keyId") as String? ?: System.getenv("SIGNING_KEY_ID")
-            val signingKey = System.getenv("SIGNING_KEY")
-            val signingPassword = findProperty("signing.password") as String? ?: System.getenv("SIGNING_PASSWORD")
-            
-            if (!signingKey.isNullOrEmpty()) {
-                useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-                sign(extensions.getByType<PublishingExtension>().publications["maven"])
-            }
-        }
+        configure<SigningExtension> { signingConfig("maven") }
     }
 
     // Kotlin Multiplatform publishing (for artemis-core)
@@ -141,15 +138,6 @@ subprojects {
             publishingConfig()
         }
 
-        configure<SigningExtension> {
-            val signingKeyId = findProperty("signing.keyId") as String? ?: System.getenv("SIGNING_KEY_ID")
-            val signingKey = System.getenv("SIGNING_KEY")
-            val signingPassword = findProperty("signing.password") as String? ?: System.getenv("SIGNING_PASSWORD")
-            
-            if (!signingKey.isNullOrEmpty()) {
-                useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-                sign(extensions.getByType<PublishingExtension>().publications)
-            }
-        }
+        configure<SigningExtension> { signingConfig(null) }
     }
 }
