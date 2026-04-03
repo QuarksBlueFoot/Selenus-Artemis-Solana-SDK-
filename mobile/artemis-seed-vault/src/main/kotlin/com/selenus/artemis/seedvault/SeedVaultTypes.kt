@@ -29,6 +29,16 @@ data class SeedVaultAuthorization(
     val account: SeedVaultAccount
 )
 
+/**
+ * Raw result from the authorization Intent. Contains only the auth token
+ * and account ID — the actual public key must be resolved via ContentProvider
+ * using [SeedVaultManager.resolveAuthorization].
+ */
+data class SeedVaultTokenResult(
+    val authToken: Long,
+    val accountId: Long
+)
+
 sealed class SeedVaultException(message: String) : Exception(message) {
     class Unauthorized(message: String) : SeedVaultException(message)
     class UserRejected(message: String) : SeedVaultException(message)

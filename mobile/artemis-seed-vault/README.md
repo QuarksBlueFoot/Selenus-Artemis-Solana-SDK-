@@ -14,7 +14,7 @@ This module allows your Android application to interact with the system-level Se
 ## Installation
 
 ```kotlin
-implementation("xyz.selenus:artemis-seed-vault:1.0.5")
+implementation("xyz.selenus:artemis-seed-vault:2.1.1")
 ```
 
 ## Usage
@@ -37,9 +37,14 @@ startActivityForResult(intent, REQUEST_CODE_AUTHORIZE)
 // In onActivityResult
 override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     if (requestCode == REQUEST_CODE_AUTHORIZE && resultCode == Activity.RESULT_OK) {
-        val auth = seedVaultManager.parseAuthorizationResult(data!!)
-        val authToken = auth.authToken
-        // Store this authToken securely
+        val tokenResult = seedVaultManager.parseAuthorizationResult(data!!)
+        // Resolve the full authorization (fetches real public key from ContentProvider)
+        lifecycleScope.launch {
+            val auth = seedVaultManager.resolveAuthorization(tokenResult)
+            val authToken = auth.authToken
+            val publicKey = auth.account.publicKey
+            // Store authToken securely
+        }
     }
 }
 ```

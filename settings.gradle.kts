@@ -120,6 +120,15 @@ project(":artemis-candy-machine-presets").projectDir = file("compatibility/artem
 project(":artemis-presets").projectDir               = file("compatibility/artemis-presets")
 
 // =============================================================================
+// Interop — drop-in shims for Solana Mobile official SDK migration
+// =============================================================================
+include(":artemis-seedvault-compat")
+include(":artemis-mwa-compat")
+
+project(":artemis-seedvault-compat").projectDir = file("interop/artemis-seedvault-compat")
+project(":artemis-mwa-compat").projectDir       = file("interop/artemis-mwa-compat")
+
+// =============================================================================
 // Testing
 // =============================================================================
 include(":artemis-integration-tests")

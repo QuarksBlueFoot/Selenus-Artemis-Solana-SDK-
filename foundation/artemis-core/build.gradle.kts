@@ -1,7 +1,11 @@
-plugins { kotlin("multiplatform") }
+plugins {
+    kotlin("multiplatform")
+    id("com.android.library")
+}
 
 kotlin {
     jvm()
+    androidTarget()
 
     jvmToolchain(17)
 
@@ -27,6 +31,21 @@ kotlin {
             implementation(libs.junit.jupiter)
             runtimeOnly("org.junit.platform:junit-platform-launcher")
         }
+
+        androidMain {
+            kotlin.srcDir("src/jvmMain/kotlin")
+            dependencies {
+                implementation(libs.bouncycastle)
+            }
+        }
+    }
+}
+
+android {
+    namespace = "com.selenus.artemis.core"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
     }
 }
 

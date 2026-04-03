@@ -100,9 +100,10 @@ subprojects {
     }
 
     plugins.withId("com.android.library") {
-        apply(plugin = "maven-publish")
-        apply(plugin = "signing")
-        
+        // For standalone Android modules (mwa-android, seed-vault), configure publishing.
+        // KMP+Android modules get publishing from the multiplatform block instead.
+        val isKmp = plugins.hasPlugin("org.jetbrains.kotlin.multiplatform")
+
         extensions.configure<com.android.build.api.dsl.LibraryExtension> {
             publishing {
                 singleVariant("release") {
@@ -112,22 +113,27 @@ subprojects {
             }
         }
 
-        configure<PublishingExtension> {
-            publications {
-                create<MavenPublication>("maven") {
-                    afterEvaluate {
-                        from(components["release"])
-                        pomConfig()
+        if (!isKmp) {
+            apply(plugin = "maven-publish")
+            apply(plugin = "signing")
+
+            configure<PublishingExtension> {
+                publications {
+                    create<MavenPublication>("maven") {
+                        afterEvaluate {
+                            from(components["release"])
+                            pomConfig()
+                        }
                     }
                 }
+                publishingConfig()
             }
-            publishingConfig()
-        }
 
-        configure<SigningExtension> { signingConfig("maven") }
+            configure<SigningExtension> { signingConfig("maven") }
+        }
     }
 
-    // Kotlin Multiplatform publishing (for artemis-core)
+    // Kotlin Multiplatform publishing
     plugins.withId("org.jetbrains.kotlin.multiplatform") {
         extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension> {
             jvmToolchain(17)
@@ -144,6 +150,14 @@ subprojects {
         }
 
         configure<SigningExtension> { signingConfig(null) }
+
+        // For KMP modules with androidTarget(): publish release variant
+        afterEvaluate {
+            extensions.findByType<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension>()
+                ?.targets
+                ?.filterIsInstance<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinAndroidTarget>()
+                ?.forEach { it.publishLibraryVariants("release") }
+        }
     }
 }
 
@@ -175,9 +189,8 @@ tasks.register("checkDependencyRings") {
             "artemis-discriminators", "artemis-nft-compat", "artemis-tx-presets",
             "artemis-candy-machine-presets", "artemis-presets"
         )
-        val interop = setOf<String>(
-            // Ring 6: Future interop/shim modules
-            // "artemis-solana-mobile-compat", "artemis-seedvault-compat"
+        val interop = setOf(
+            "artemis-seedvault-compat", "artemis-mwa-compat"
         )
         val testing = setOf("artemis-integration-tests", "artemis-devnet-tests")
 

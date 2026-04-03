@@ -1,9 +1,12 @@
-plugins { 
-  kotlin("multiplatform") 
+plugins {
+  kotlin("multiplatform")
+  id("com.android.library")
 }
 
 kotlin {
   jvm()
+  androidTarget()
+
   sourceSets {
     commonMain.dependencies {
       implementation(project(":artemis-discriminators"))
@@ -19,4 +22,12 @@ kotlin {
       implementation(project(":artemis-programs"))
     }
   }
+}
+
+android {
+    namespace = "com.selenus.artemis.cnft"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
+    }
 }

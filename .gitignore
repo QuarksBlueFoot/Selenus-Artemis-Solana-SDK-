@@ -25,6 +25,7 @@ test-results/
 # Internal planning, comparative, and speculative docs (keep local only)
 docs/Ethos Lock In.md
 docs/Top 5 fixes first.md
+docs/1) KMP targets are still mostly theoreti.md
 docs/COMPETITIVE_ANALYSIS.md
 docs/SDK_PARITY_ANALYSIS.md
 docs/overview/why-artemis-vs-kotlin-sdks.md

@@ -231,9 +231,9 @@ class ShamirSecretSharing(
             // f(x) = secret[i] + a1*x + a2*x^2 + ... + a_{k-1}*x^{k-1}
             val coefficients = ByteArray(threshold)
             coefficients[0] = secret[byteIndex]
-            random.nextBytes(coefficients.sliceArray(1 until threshold).also { 
-                System.arraycopy(it, 0, coefficients, 1, it.size)
-            })
+            val randomCoeffs = ByteArray(threshold - 1)
+            random.nextBytes(randomCoeffs)
+            System.arraycopy(randomCoeffs, 0, coefficients, 1, randomCoeffs.size)
             
             // Evaluate polynomial at each x = 1, 2, ..., n
             for (shareIndex in 0 until totalShares) {

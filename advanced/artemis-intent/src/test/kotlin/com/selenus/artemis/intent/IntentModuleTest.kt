@@ -457,7 +457,7 @@ class IntentModuleTest {
 
         assertEquals("System Program", intent.programName)
         assertEquals("transfer", intent.method)
-        assertEquals(RiskLevel.MEDIUM, intent.riskLevel)
+        assertEquals(RiskLevel.LOW, intent.riskLevel)  // 1 SOL < 10 SOL threshold
         assertTrue(intent.summary.contains("SOL") || intent.summary.contains("transfer"))
     }
 

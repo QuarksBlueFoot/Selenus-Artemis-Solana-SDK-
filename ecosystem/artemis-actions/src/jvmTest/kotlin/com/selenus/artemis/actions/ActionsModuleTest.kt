@@ -52,7 +52,7 @@ class ActionsModuleTest {
         val url = "solana:7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
         val info = actions.parseActionUrl(url)
         
-        assertEquals(ActionUrlType.UNKNOWN, info.type) // Plain transfer, not action
+        assertEquals(ActionUrlType.SOLANA_PAY, info.type) // solana: scheme is Solana Pay
     }
     
     @Test

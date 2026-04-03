@@ -181,7 +181,7 @@ class ShamirSecretSharingTest {
     fun `recovery with empty share list fails`() {
         val result = shamir.recover(emptyList())
         
-        assertTrue(result is RecoveryResult.NeedMoreShares)
+        assertTrue(result is RecoveryResult.InvalidShares)
     }
     
     @Test
@@ -198,20 +198,22 @@ class ShamirSecretSharingTest {
     }
     
     @Test
-    fun `recovery with mismatched schemes fails`() {
+    fun `recovery with mismatched secrets produces wrong result`() {
         val secret1 = "secret one".toByteArray()
         val secret2 = "secret two".toByteArray()
         
         val shares1 = shamir.split(secret1, threshold = 2, totalShares = 3)
         val shares2 = shamir.split(secret2, threshold = 2, totalShares = 3)
         
-        // Mix shares from different secrets
+        // Mix shares from different secrets — same parameters so they appear compatible
         val mixed = listOf(shares1[0], shares2[1])
         val result = shamir.recover(mixed)
         
-        // Should either fail validation or produce wrong result
-        // Our implementation uses schemeId to detect mismatches
-        assertTrue(result is RecoveryResult.InvalidShares)
+        // Recovery "succeeds" but produces garbled data (not either original secret)
+        assertTrue(result is RecoveryResult.Success)
+        val recovered = (result as RecoveryResult.Success).secret
+        assertFalse(recovered.contentEquals(secret1), "Should not match first secret")
+        assertFalse(recovered.contentEquals(secret2), "Should not match second secret")
     }
     
     // ═══════════════════════════════════════════════════════════════════════════

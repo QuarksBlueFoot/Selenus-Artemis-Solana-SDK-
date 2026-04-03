@@ -1,7 +1,11 @@
-plugins { kotlin("multiplatform") }
+plugins {
+    kotlin("multiplatform")
+    id("com.android.library")
+}
 
 kotlin {
   jvm()
+  androidTarget()
 
   sourceSets {
     commonMain.dependencies {
@@ -20,5 +24,16 @@ kotlin {
     jvmTest.dependencies {
       implementation(libs.kotlinx.coroutines.core)
     }
+    androidMain {
+      kotlin.srcDir("src/jvmMain/kotlin")
+    }
   }
+}
+
+android {
+    namespace = "com.selenus.artemis.wallet"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
+    }
 }

@@ -1,10 +1,12 @@
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
+    id("com.android.library")
 }
 
 kotlin {
     jvm()
+    androidTarget()
 
     sourceSets {
         commonMain.dependencies {
@@ -20,5 +22,19 @@ kotlin {
         jvmTest.dependencies {
             implementation(kotlin("test"))
         }
+        androidMain {
+            kotlin.srcDir("src/jvmMain/kotlin")
+            dependencies {
+                implementation(libs.okhttp)
+            }
+        }
+    }
+}
+
+android {
+    namespace = "com.selenus.artemis.actions"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
     }
 }

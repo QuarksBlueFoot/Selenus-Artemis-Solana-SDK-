@@ -1,7 +1,11 @@
-plugins { kotlin("multiplatform") }
+plugins {
+    kotlin("multiplatform")
+    id("com.android.library")
+}
 
 kotlin {
   jvm()
+  androidTarget()
 
   sourceSets {
     commonMain.dependencies {
@@ -17,4 +21,12 @@ kotlin {
       implementation(project(":artemis-programs"))
     }
   }
+}
+
+android {
+    namespace = "com.selenus.artemis.vtx"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
+    }
 }

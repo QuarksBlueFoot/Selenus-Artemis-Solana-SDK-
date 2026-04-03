@@ -189,17 +189,28 @@ class SeedVaultManager(private val context: Context) {
 
     /**
      * Parses the result Intent from an Authorize/Create/Import action.
-     * Returns the auth token and basic account info.
+     * Returns the raw auth token and account ID from the Intent extras.
+     * Call [resolveAuthorization] to fetch the actual account details including the public key.
      */
-    fun parseAuthorizationResult(data: Intent): SeedVaultAuthorization {
+    fun parseAuthorizationResult(data: Intent): SeedVaultTokenResult {
         val token = data.getLongExtra(SeedVaultConstants.EXTRA_AUTH_TOKEN, -1L)
         if (token == -1L) throw SeedVaultException.Unknown("Invalid auth token in result")
         
         val accountId = data.getLongExtra(SeedVaultConstants.EXTRA_ACCOUNT_ID, 0L)
-        
-        // Account details should be fetched separately via getAccounts() after authorization
-        val dummyKey = Pubkey(ByteArray(32))
-        return SeedVaultAuthorization(token.toString(), SeedVaultAccount(accountId, "Authorized Account", dummyKey)) 
+        return SeedVaultTokenResult(token, accountId)
+    }
+
+    /**
+     * Resolves a [SeedVaultTokenResult] into a full [SeedVaultAuthorization] by fetching
+     * the actual account details (including the real public key) from the Seed Vault
+     * ContentProvider.
+     */
+    suspend fun resolveAuthorization(result: SeedVaultTokenResult): SeedVaultAuthorization {
+        val accounts = getAccounts(result.authToken.toString())
+        val account = accounts.firstOrNull { it.id == result.accountId }
+            ?: accounts.firstOrNull()
+            ?: throw SeedVaultException.Unknown("No accounts found for auth token ${result.authToken}")
+        return SeedVaultAuthorization(result.authToken.toString(), account)
     }
 
     /**
@@ -366,6 +377,10 @@ class SeedVaultManager(private val context: Context) {
                 "signTransactions" -> service!!.signTransactions(params, callback)
                 "signMessages" -> service!!.signMessages(params, callback)
                 "deauthorize" -> service!!.deauthorize(params, callback)
+                // The Seed Vault AIDL defines 9 IPC verbs. These higher-level
+                // operations map to the same IPC methods with different Bundle params:
+                // requestPublicKeys = resolveDerivationPath with multiple paths
+                // signWithDerivationPath = signTransactions with derivation path in params
                 "requestPublicKeys" -> service!!.resolveDerivationPath(params, callback)
                 "signWithDerivationPath" -> service!!.signTransactions(params, callback)
                 else -> {

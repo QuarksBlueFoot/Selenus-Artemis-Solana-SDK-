@@ -312,8 +312,13 @@ class TransactionValidator {
         val data = ByteArray(dataLen)
         buffer.get(data)
         
+        val resolvedProgramId = accounts.getOrNull(programIdIndex)
+            ?: throw SeedVaultException.InvalidRequest(
+                "Transaction references program account index $programIdIndex but only ${accounts.size} accounts provided"
+            )
+
         return ParsedInstruction(
-            programId = accounts.getOrNull(programIdIndex) ?: Pubkey(ByteArray(32)),
+            programId = resolvedProgramId,
             accountIndexes = accountIndexes,
             data = data
         )

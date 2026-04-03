@@ -8,10 +8,13 @@
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
+    id("com.android.library")
 }
 
 kotlin {
     jvm()
+    androidTarget()
+
     sourceSets {
         commonMain.dependencies {
             implementation(project(":artemis-core"))
@@ -25,5 +28,13 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.junit.jupiter)
         }
+    }
+}
+
+android {
+    namespace = "com.selenus.artemis.anchor"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
     }
 }

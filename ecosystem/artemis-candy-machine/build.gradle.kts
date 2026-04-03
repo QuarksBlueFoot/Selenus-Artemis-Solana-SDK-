@@ -1,7 +1,12 @@
-plugins { kotlin("multiplatform") }
+plugins {
+    kotlin("multiplatform")
+    id("com.android.library")
+}
 
 kotlin {
     jvm()
+    androidTarget()
+
     sourceSets {
         commonMain.dependencies {
             implementation(project(":artemis-core"))
@@ -15,5 +20,13 @@ kotlin {
         jvmTest.dependencies {
             implementation(kotlin("test"))
         }
+    }
+}
+
+android {
+    namespace = "com.selenus.artemis.candymachine"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
     }
 }
