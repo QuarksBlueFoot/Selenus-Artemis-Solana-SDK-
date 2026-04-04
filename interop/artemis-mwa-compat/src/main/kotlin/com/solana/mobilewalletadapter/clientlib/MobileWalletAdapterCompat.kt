@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
  */
 class MobileWalletAdapter(
     private val connectionIdentity: ConnectionIdentity,
-    private val blockchain: Blockchain = Solana.MainnetBeta,
+    private val blockchain: Blockchain = Solana.Mainnet,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val authStore: AuthTokenStore = InMemoryAuthTokenStore()
 ) {
@@ -105,7 +105,7 @@ class MobileWalletAdapter(
             identityUri = connectionIdentity.identityUri,
             iconPath = connectionIdentity.iconUri.toString(),
             identityName = connectionIdentity.identityName,
-            chain = blockchain.cluster,
+            chain = blockchain.fullName,
             authStore = authStore
         )
     }

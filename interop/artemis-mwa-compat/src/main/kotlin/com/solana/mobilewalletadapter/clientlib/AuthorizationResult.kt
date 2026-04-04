@@ -16,7 +16,8 @@ data class AuthorizationResult(
     val publicKey: ByteArray,
     val accountLabel: String?,
     val walletUriBase: Uri?,
-    val accounts: List<Account> = emptyList()
+    val accounts: List<Account> = emptyList(),
+    val signInResult: SignInWithSolana.Result? = null
 ) {
     data class Account(
         val publicKey: ByteArray,

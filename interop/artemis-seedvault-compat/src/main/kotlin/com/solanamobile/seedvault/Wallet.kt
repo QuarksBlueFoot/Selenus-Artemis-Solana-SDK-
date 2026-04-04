@@ -8,12 +8,17 @@
 package com.solanamobile.seedvault
 
 import android.app.Activity
+import android.content.ContentResolver
+import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
-import com.selenus.artemis.seedvault.ImplementationLimits
+import android.os.Bundle
+import android.util.ArrayMap
 import com.selenus.artemis.seedvault.SeedVaultWallet
+import com.selenus.artemis.seedvault.internal.SeedVaultConstants
 import com.selenus.artemis.seedvault.SigningRequest
 import com.selenus.artemis.seedvault.SigningResponse
 import com.selenus.artemis.seedvault.PublicKeyResponse
@@ -29,7 +34,7 @@ object Wallet {
 
     // ── Exceptions (upstream parity) ────────────────────────────────────────
     class NotModifiedException(message: String) : Exception(message)
-    class ActionFailedException(message: String, val resultCode: Int) : Exception(message)
+    class ActionFailedException(message: String) : Exception(message)
 
     // ── Seed Authorization ──────────────────────────────────────────────────
     @JvmStatic
@@ -121,6 +126,13 @@ object Wallet {
         SeedVaultWallet.seedSettings(context, authToken)
 
     @JvmStatic
+    fun onShowSeedSettingsResult(resultCode: Int, result: Intent?) {
+        if (resultCode != Activity.RESULT_OK && resultCode != Activity.RESULT_CANCELED) {
+            throw ActionFailedException("showSeedSettings failed with result=$resultCode")
+        }
+    }
+
+    @JvmStatic
     @Deprecated("Use showSeedSettings", ReplaceWith("showSeedSettings(context, authToken)"))
     fun seedSettings(context: Context, @WalletContractV1.AuthToken authToken: Long): Intent =
         showSeedSettings(context, authToken)
@@ -128,36 +140,84 @@ object Wallet {
     // ── Content Provider - Seeds ────────────────────────────────────────────
     @JvmStatic
     fun getAuthorizedSeeds(context: Context, projection: Array<String>): Cursor? =
-        SeedVaultWallet.getAuthorizedSeeds(context, projection)
+        getAuthorizedSeeds(context, projection, null, null)
 
     @JvmStatic
     fun getAuthorizedSeeds(
         context: Context,
         projection: Array<String>,
         filterOnColumn: String?,
-        value: String?
-    ): Cursor? = SeedVaultWallet.getAuthorizedSeeds(context, projection, filterOnColumn, value)
+        value: Any?
+    ): Cursor? {
+        val queryArgs = createSingleColumnQuery(
+            WalletContractV1.AUTHORIZED_SEEDS_ALL_COLUMNS, filterOnColumn, value)
+        return context.contentResolver.query(
+            WalletContractV1.AUTHORIZED_SEEDS_CONTENT_URI,
+            projection,
+            queryArgs,
+            null)
+    }
 
     @JvmStatic
     fun getAuthorizedSeed(
         context: Context,
         @WalletContractV1.AuthToken authToken: Long,
         projection: Array<String>
-    ): Cursor? = SeedVaultWallet.getAuthorizedSeed(context, authToken, projection)
+    ): Cursor? = context.contentResolver.query(
+        ContentUris.withAppendedId(WalletContractV1.AUTHORIZED_SEEDS_CONTENT_URI, authToken),
+        projection,
+        null,
+        null)
 
     @JvmStatic
-    fun deauthorizeSeed(context: Context, @WalletContractV1.AuthToken authToken: Long) =
-        SeedVaultWallet.deauthorizeSeed(context, authToken)
+    fun deauthorizeSeed(
+        context: Context,
+        @WalletContractV1.AuthToken authToken: Long
+    ) {
+        if (context.contentResolver.delete(
+                ContentUris.withAppendedId(WalletContractV1.AUTHORIZED_SEEDS_CONTENT_URI, authToken),
+                null) == 0) {
+            throw NotModifiedException("deauthorizeSeed for AuthToken=$authToken")
+        }
+    }
 
     @JvmStatic
     fun getUnauthorizedSeeds(context: Context, projection: Array<String>): Cursor? =
-        SeedVaultWallet.getUnauthorizedSeeds(context, projection)
+        getUnauthorizedSeeds(context, projection, null, null)
+
+    @JvmStatic
+    fun getUnauthorizedSeeds(
+        context: Context,
+        projection: Array<String>,
+        filterOnColumn: String?,
+        value: Any?
+    ): Cursor? {
+        val queryArgs = createSingleColumnQuery(
+            WalletContractV1.UNAUTHORIZED_SEEDS_ALL_COLUMNS, filterOnColumn, value)
+        return context.contentResolver.query(
+            WalletContractV1.UNAUTHORIZED_SEEDS_CONTENT_URI,
+            projection,
+            queryArgs,
+            null)
+    }
 
     @JvmStatic
     fun hasUnauthorizedSeedsForPurpose(
         context: Context,
         @WalletContractV1.Purpose purpose: Int
-    ): Boolean = SeedVaultWallet.hasUnauthorizedSeedsForPurpose(context, purpose)
+    ): Boolean {
+        val c = context.contentResolver.query(
+            ContentUris.withAppendedId(WalletContractV1.UNAUTHORIZED_SEEDS_CONTENT_URI, purpose.toLong()),
+            WalletContractV1.UNAUTHORIZED_SEEDS_ALL_COLUMNS,
+            null,
+            null)
+        if (c == null || !c.moveToFirst()) {
+            throw IllegalStateException("Cursor does not contain expected data")
+        }
+        val result = c.getShort(1).toInt() != 0
+        c.close()
+        return result
+    }
 
     // ── Content Provider - Accounts ─────────────────────────────────────────
     @JvmStatic
@@ -165,7 +225,7 @@ object Wallet {
         context: Context,
         @WalletContractV1.AuthToken authToken: Long,
         projection: Array<String>
-    ): Cursor? = SeedVaultWallet.getAccounts(context, authToken, projection)
+    ): Cursor? = getAccounts(context, authToken, projection, null, null)
 
     @JvmStatic
     fun getAccounts(
@@ -173,51 +233,136 @@ object Wallet {
         @WalletContractV1.AuthToken authToken: Long,
         projection: Array<String>,
         filterOnColumn: String?,
-        value: String?
-    ): Cursor? = SeedVaultWallet.getAccounts(context, authToken, projection, filterOnColumn, value)
+        value: Any?
+    ): Cursor? {
+        val queryArgs = createSingleColumnQuery(
+            WalletContractV1.ACCOUNTS_ALL_COLUMNS, filterOnColumn, value)
+        queryArgs.putLong(WalletContractV1.EXTRA_AUTH_TOKEN, authToken)
+        return context.contentResolver.query(
+            WalletContractV1.ACCOUNTS_CONTENT_URI,
+            projection,
+            queryArgs,
+            null)
+    }
 
     @JvmStatic
     fun getAccount(
         context: Context,
         @WalletContractV1.AuthToken authToken: Long,
-        @WalletContractV1.AccountId accountId: Long,
+        @WalletContractV1.AccountId id: Long,
         projection: Array<String>
-    ): Cursor? = SeedVaultWallet.getAccount(context, authToken, accountId, projection)
+    ): Cursor? {
+        val queryArgs = Bundle()
+        queryArgs.putLong(WalletContractV1.EXTRA_AUTH_TOKEN, authToken)
+        return context.contentResolver.query(
+            ContentUris.withAppendedId(WalletContractV1.ACCOUNTS_CONTENT_URI, id),
+            projection,
+            queryArgs,
+            null)
+    }
 
     @JvmStatic
     fun updateAccountName(
         context: Context,
         @WalletContractV1.AuthToken authToken: Long,
-        @WalletContractV1.AccountId accountId: Long,
+        @WalletContractV1.AccountId id: Long,
         name: String?
-    ) = SeedVaultWallet.updateAccountName(context, authToken, accountId, name)
+    ) {
+        val updateArgs = Bundle()
+        updateArgs.putLong(WalletContractV1.EXTRA_AUTH_TOKEN, authToken)
+        val updateValues = ContentValues(1)
+        updateValues.put(WalletContractV1.ACCOUNTS_ACCOUNT_NAME, name)
+        if (context.contentResolver.update(
+                ContentUris.withAppendedId(WalletContractV1.ACCOUNTS_CONTENT_URI, id),
+                updateValues,
+                updateArgs) == 0) {
+            throw NotModifiedException("updateAccountName for AuthToken=$authToken/id=$id")
+        }
+    }
 
     @JvmStatic
     fun updateAccountIsUserWallet(
         context: Context,
         @WalletContractV1.AuthToken authToken: Long,
-        @WalletContractV1.AccountId accountId: Long,
+        @WalletContractV1.AccountId id: Long,
         isUserWallet: Boolean
-    ) = SeedVaultWallet.updateAccountIsUserWallet(context, authToken, accountId, isUserWallet)
+    ) {
+        val updateArgs = Bundle()
+        updateArgs.putLong(WalletContractV1.EXTRA_AUTH_TOKEN, authToken)
+        val updateValues = ContentValues(1)
+        updateValues.put(WalletContractV1.ACCOUNTS_ACCOUNT_IS_USER_WALLET,
+            if (isUserWallet) 1.toShort() else 0.toShort())
+        if (context.contentResolver.update(
+                ContentUris.withAppendedId(WalletContractV1.ACCOUNTS_CONTENT_URI, id),
+                updateValues,
+                updateArgs) == 0) {
+            throw NotModifiedException("updateAccountIsUserWallet for AuthToken=$authToken/id=$id")
+        }
+    }
 
     @JvmStatic
     fun updateAccountIsValid(
         context: Context,
         @WalletContractV1.AuthToken authToken: Long,
-        @WalletContractV1.AccountId accountId: Long,
+        @WalletContractV1.AccountId id: Long,
         isValid: Boolean
-    ) = SeedVaultWallet.updateAccountIsValid(context, authToken, accountId, isValid)
+    ) {
+        val updateArgs = Bundle()
+        updateArgs.putLong(WalletContractV1.EXTRA_AUTH_TOKEN, authToken)
+        val updateValues = ContentValues(1)
+        updateValues.put(WalletContractV1.ACCOUNTS_ACCOUNT_IS_VALID,
+            if (isValid) 1.toShort() else 0.toShort())
+        if (context.contentResolver.update(
+                ContentUris.withAppendedId(WalletContractV1.ACCOUNTS_CONTENT_URI, id),
+                updateValues,
+                updateArgs) == 0) {
+            throw NotModifiedException("updateAccountIsValid for AuthToken=$authToken/id=$id")
+        }
+    }
 
     // ── Content Provider - Implementation Limits ────────────────────────────
     @JvmStatic
-    fun getImplementationLimits(context: Context): ImplementationLimits =
-        SeedVaultWallet.getImplementationLimits(context)
+    fun getImplementationLimits(
+        context: Context,
+        projection: Array<String>
+    ): Cursor? = getImplementationLimits(context, projection, null, null)
+
+    @JvmStatic
+    fun getImplementationLimits(
+        context: Context,
+        projection: Array<String>,
+        filterOnColumn: String?,
+        value: Any?
+    ): Cursor? {
+        val queryArgs = createSingleColumnQuery(
+            WalletContractV1.IMPLEMENTATION_LIMITS_ALL_COLUMNS, filterOnColumn, value)
+        return context.contentResolver.query(
+            WalletContractV1.IMPLEMENTATION_LIMITS_CONTENT_URI,
+            projection,
+            queryArgs,
+            null)
+    }
 
     @JvmStatic
     fun getImplementationLimitsForPurpose(
         context: Context,
         @WalletContractV1.Purpose purpose: Int
-    ): ImplementationLimits = SeedVaultWallet.getImplementationLimitsForPurpose(context, purpose)
+    ): ArrayMap<String, Long> {
+        val c = context.contentResolver.query(
+            ContentUris.withAppendedId(WalletContractV1.IMPLEMENTATION_LIMITS_CONTENT_URI, purpose.toLong()),
+            WalletContractV1.IMPLEMENTATION_LIMITS_ALL_COLUMNS,
+            null,
+            null)
+        if (c == null || !c.moveToNext()) {
+            throw UnsupportedOperationException("Failed to get implementation limits")
+        }
+        val map = ArrayMap<String, Long>(3)
+        map[WalletContractV1.IMPLEMENTATION_LIMITS_MAX_SIGNING_REQUESTS] = c.getShort(1).toLong()
+        map[WalletContractV1.IMPLEMENTATION_LIMITS_MAX_REQUESTED_SIGNATURES] = c.getShort(2).toLong()
+        map[WalletContractV1.IMPLEMENTATION_LIMITS_MAX_REQUESTED_PUBLIC_KEYS] = c.getShort(3).toLong()
+        c.close()
+        return map
+    }
 
     // ── Derivation Path Resolution ──────────────────────────────────────────
     @JvmStatic
@@ -226,4 +371,26 @@ object Wallet {
         derivationPath: Uri,
         @WalletContractV1.Purpose purpose: Int
     ): Uri = SeedVaultWallet.resolveDerivationPath(context, derivationPath, purpose)
+
+    // ── Private helpers ─────────────────────────────────────────────────────
+    private fun createSingleColumnQuery(
+        allColumns: Array<String>,
+        filterOnColumn: String?,
+        value: Any?
+    ): Bundle {
+        val queryArgs = Bundle()
+        if (filterOnColumn != null) {
+            requireNotNull(value) { "value cannot be null when filterOnColumn is specified" }
+            require(allColumns.contains(filterOnColumn)) {
+                "Column '$filterOnColumn' is not a valid column"
+            }
+            queryArgs.putString(
+                ContentResolver.QUERY_ARG_SQL_SELECTION,
+                "$filterOnColumn=?")
+            queryArgs.putStringArray(
+                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+                arrayOf(value.toString()))
+        }
+        return queryArgs
+    }
 }

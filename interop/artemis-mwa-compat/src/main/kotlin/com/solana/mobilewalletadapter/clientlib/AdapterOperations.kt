@@ -49,9 +49,9 @@ interface AdapterOperations {
 open class TransactionParams(
     val minContextSlot: Int? = null,
     val commitment: String? = null,
-    val skipPreflight: Boolean = false,
+    val skipPreflight: Boolean? = null,
     val maxRetries: Int? = null,
-    val waitForCommitmentToSendNextTransaction: Boolean = false
+    val waitForCommitmentToSendNextTransaction: Boolean? = null
 )
 
 object DefaultTransactionParams : TransactionParams()

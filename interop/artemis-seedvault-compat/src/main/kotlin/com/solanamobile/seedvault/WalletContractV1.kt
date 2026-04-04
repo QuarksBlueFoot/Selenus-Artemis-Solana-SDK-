@@ -9,7 +9,7 @@ package com.solanamobile.seedvault
 
 import android.net.Uri
 import androidx.annotation.IntDef
-import androidx.annotation.LongDef
+import androidx.annotation.IntRange
 import com.selenus.artemis.seedvault.internal.SeedVaultConstants
 
 /**
@@ -22,20 +22,27 @@ object WalletContractV1 {
 
     // ── Annotations (upstream parity) ───────────────────────────────────────
     @Retention(AnnotationRetention.SOURCE)
-    @LongDef
+    @IntRange(from = 0, to = Long.MAX_VALUE)
     annotation class AuthToken
 
     @Retention(AnnotationRetention.SOURCE)
-    @LongDef
+    @IntRange(from = 0, to = Long.MAX_VALUE)
     annotation class AccountId
 
     @Retention(AnnotationRetention.SOURCE)
-    @IntDef
+    @IntRange(from = 0, to = Int.MAX_VALUE.toLong())
     annotation class BipIndex
 
     @Retention(AnnotationRetention.SOURCE)
     @IntDef(PURPOSE_SIGN_SOLANA_TRANSACTION)
     annotation class Purpose
+
+    // ── Package & Permissions ───────────────────────────────────────────────
+    const val PACKAGE_SEED_VAULT = SeedVaultConstants.PACKAGE_SEED_VAULT
+    const val PERMISSION_ACCESS_SEED_VAULT = SeedVaultConstants.PERMISSION_ACCESS_SEED_VAULT
+    const val PERMISSION_ACCESS_SEED_VAULT_PRIVILEGED = SeedVaultConstants.PERMISSION_ACCESS_SEED_VAULT_PRIVILEGED
+    const val PERMISSION_SEED_VAULT_IMPL = SeedVaultConstants.PERMISSION_SEED_VAULT_IMPL
+    const val AUTHORITY_WALLET = SeedVaultConstants.AUTHORITY_WALLET
 
     // ── Purposes ────────────────────────────────────────────────────────────
     const val PURPOSE_SIGN_SOLANA_TRANSACTION = SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION
@@ -47,14 +54,11 @@ object WalletContractV1 {
     const val ACTION_GET_PUBLIC_KEY = SeedVaultConstants.ACTION_GET_PUBLIC_KEY
     const val ACTION_CREATE_SEED = SeedVaultConstants.ACTION_CREATE_SEED
     const val ACTION_IMPORT_SEED = SeedVaultConstants.ACTION_IMPORT_SEED
-    const val ACTION_GET_ACCOUNTS = SeedVaultConstants.ACTION_GET_ACCOUNTS
     const val ACTION_SEED_SETTINGS = SeedVaultConstants.ACTION_SEED_SETTINGS
 
     // ── Extras ──────────────────────────────────────────────────────────────
     const val EXTRA_PURPOSE = SeedVaultConstants.EXTRA_PURPOSE
     const val EXTRA_AUTH_TOKEN = SeedVaultConstants.EXTRA_AUTH_TOKEN
-    const val EXTRA_ACCOUNT_ID = SeedVaultConstants.EXTRA_ACCOUNT_ID
-    const val EXTRA_ACCOUNTS = SeedVaultConstants.EXTRA_ACCOUNTS
     const val EXTRA_SIGNING_REQUEST = SeedVaultConstants.EXTRA_SIGNING_REQUEST
     const val EXTRA_SIGNING_RESPONSE = SeedVaultConstants.EXTRA_SIGNING_RESPONSE
     const val EXTRA_DERIVATION_PATH = SeedVaultConstants.EXTRA_DERIVATION_PATH

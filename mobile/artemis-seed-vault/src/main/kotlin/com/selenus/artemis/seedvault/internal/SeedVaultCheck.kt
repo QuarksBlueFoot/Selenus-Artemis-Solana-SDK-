@@ -92,16 +92,7 @@ object SeedVaultCheck {
         val resolved = context.packageManager.queryIntentActivities(intent, 0)
         
         for (ri in resolved) {
-            // Check if the activity requires the permission we hold
             if (heldPermission == ri.activityInfo.permission) {
-                intent.setClassName(ri.activityInfo.packageName, ri.activityInfo.name)
-                return
-            }
-        }
-        
-        // Also check if no permission is required by the activity (some intents might be open)
-         for (ri in resolved) {
-            if (ri.activityInfo.permission == null) {
                 intent.setClassName(ri.activityInfo.packageName, ri.activityInfo.name)
                 return
             }

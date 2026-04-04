@@ -94,24 +94,24 @@ object SeedVaultConstants {
     // RESULT CODES (RESULT_FIRST_USER + offset)
     // ═══════════════════════════════════════════════════════════════════════════
     
-    /** An unspecified error occurred. */
-    const val RESULT_UNSPECIFIED_ERROR = 1000  // RESULT_FIRST_USER + 999
-    /** Invalid or unknown auth token. */
-    const val RESULT_INVALID_AUTH_TOKEN = 1001  // RESULT_FIRST_USER + 1000
-    /** Invalid transaction payload for signing purpose. */
-    const val RESULT_INVALID_PAYLOAD = 1002  // RESULT_FIRST_USER + 1001
+    /** An unspecified error occurred. RESULT_FIRST_USER(1) + 1000. */
+    const val RESULT_UNSPECIFIED_ERROR = 1001
+    /** Invalid or unknown auth token. RESULT_FIRST_USER(1) + 1001. */
+    const val RESULT_INVALID_AUTH_TOKEN = 1002
+    /** Invalid transaction payload for signing purpose. RESULT_FIRST_USER(1) + 1002. */
+    const val RESULT_INVALID_PAYLOAD = 1003
     /** Legacy alias for RESULT_INVALID_PAYLOAD. */
     const val RESULT_INVALID_TRANSACTION = RESULT_INVALID_PAYLOAD
-    /** User failed or declined authentication. */
-    const val RESULT_AUTHENTICATION_FAILED = 1003  // RESULT_FIRST_USER + 1002
-    /** No seeds available to authorize. */
-    const val RESULT_NO_AVAILABLE_SEEDS = 1004  // RESULT_FIRST_USER + 1003
-    /** Invalid purpose value. */
-    const val RESULT_INVALID_PURPOSE = 1005  // RESULT_FIRST_USER + 1004
-    /** Invalid BIP32 or BIP44 derivation path URI. */
-    const val RESULT_INVALID_DERIVATION_PATH = 1006  // RESULT_FIRST_USER + 1005
-    /** Implementation limit exceeded. */
-    const val RESULT_IMPLEMENTATION_LIMIT_EXCEEDED = 1007  // RESULT_FIRST_USER + 1006
+    /** User failed or declined authentication. RESULT_FIRST_USER(1) + 1003. */
+    const val RESULT_AUTHENTICATION_FAILED = 1004
+    /** No seeds available to authorize. RESULT_FIRST_USER(1) + 1004. */
+    const val RESULT_NO_AVAILABLE_SEEDS = 1005
+    /** Invalid purpose value. RESULT_FIRST_USER(1) + 1005. */
+    const val RESULT_INVALID_PURPOSE = 1006
+    /** Invalid BIP32 or BIP44 derivation path URI. RESULT_FIRST_USER(1) + 1006. */
+    const val RESULT_INVALID_DERIVATION_PATH = 1007
+    /** Implementation limit exceeded. RESULT_FIRST_USER(1) + 1007. */
+    const val RESULT_IMPLEMENTATION_LIMIT_EXCEEDED = 1008
 
     // ═══════════════════════════════════════════════════════════════════════════
     // BIP URI CONSTANTS
@@ -161,7 +161,7 @@ object SeedVaultConstants {
     const val RESOLVE_BIP32_DERIVATION_PATH_METHOD = "ResolveBipDerivationPath"
 
     /** Extra key for the resolved BIP32 derivation path result. */
-    const val EXTRA_RESOLVED_BIP32_DERIVATION_PATH = "ResolvedBip32DerivationPath"
+    const val EXTRA_RESOLVED_BIP32_DERIVATION_PATH = "ResolveBipDerivationPath_ResolvedBip32DerivationPath"
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CONTENT PROVIDER - AUTHORIZED SEEDS TABLE
@@ -179,7 +179,7 @@ object SeedVaultConstants {
         AUTHORIZED_SEEDS_SEED_NAME,
         AUTHORIZED_SEEDS_IS_BACKED_UP
     )
-    const val AUTHORIZED_SEEDS_MIME_SUBTYPE = "vnd.com.solanamobile.seedvault.authorizedseeds"
+    const val AUTHORIZED_SEEDS_MIME_SUBTYPE = "vnd.$AUTHORITY_WALLET_PROVIDER.$AUTHORIZED_SEEDS_TABLE"
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CONTENT PROVIDER - UNAUTHORIZED SEEDS TABLE
@@ -193,7 +193,7 @@ object SeedVaultConstants {
         UNAUTHORIZED_SEEDS_AUTH_PURPOSE,
         UNAUTHORIZED_SEEDS_HAS_UNAUTHORIZED_SEEDS
     )
-    const val UNAUTHORIZED_SEEDS_MIME_SUBTYPE = "vnd.com.solanamobile.seedvault.unauthorizedseeds"
+    const val UNAUTHORIZED_SEEDS_MIME_SUBTYPE = "vnd.$AUTHORITY_WALLET_PROVIDER.$UNAUTHORIZED_SEEDS_TABLE"
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CONTENT PROVIDER - ACCOUNTS TABLE
@@ -225,17 +225,17 @@ object SeedVaultConstants {
     const val IMPLEMENTATION_LIMITS_TABLE = "implementationlimits"
     val IMPLEMENTATION_LIMITS_CONTENT_URI: Uri = Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, IMPLEMENTATION_LIMITS_TABLE)
     const val IMPLEMENTATION_LIMITS_AUTH_PURPOSE = "_id"
-    const val IMPLEMENTATION_LIMITS_MAX_SIGNING_REQUESTS = "ImplementationLimits_MaxSigningRequests"
-    const val IMPLEMENTATION_LIMITS_MAX_REQUESTED_SIGNATURES = "ImplementationLimits_MaxRequestedSignatures"
-    const val IMPLEMENTATION_LIMITS_MAX_REQUESTED_PUBLIC_KEYS = "ImplementationLimits_MaxRequestedPublicKeys"
+    const val IMPLEMENTATION_LIMITS_MAX_SIGNING_REQUESTS = "MaxSigningRequests"
+    const val IMPLEMENTATION_LIMITS_MAX_REQUESTED_SIGNATURES = "MaxRequestedSignatures"
+    const val IMPLEMENTATION_LIMITS_MAX_REQUESTED_PUBLIC_KEYS = "MaxRequestedPublicKeys"
     val IMPLEMENTATION_LIMITS_ALL_COLUMNS = arrayOf(
         IMPLEMENTATION_LIMITS_AUTH_PURPOSE,
         IMPLEMENTATION_LIMITS_MAX_SIGNING_REQUESTS,
         IMPLEMENTATION_LIMITS_MAX_REQUESTED_SIGNATURES,
         IMPLEMENTATION_LIMITS_MAX_REQUESTED_PUBLIC_KEYS
     )
-    const val IMPLEMENTATION_LIMITS_MIME_SUBTYPE = "vnd.com.solanamobile.seedvault.implementationlimits"
-    const val ACCOUNTS_MIME_SUBTYPE = "vnd.com.solanamobile.seedvault.accounts"
+    const val IMPLEMENTATION_LIMITS_MIME_SUBTYPE = "vnd.$AUTHORITY_WALLET_PROVIDER.$IMPLEMENTATION_LIMITS_TABLE"
+    const val ACCOUNTS_MIME_SUBTYPE = "vnd.$AUTHORITY_WALLET_PROVIDER.$ACCOUNTS_TABLE"
 
     // ═══════════════════════════════════════════════════════════════════════════
     // LEGACY KEYS (kept for backward compatibility with older code)

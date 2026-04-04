@@ -9,33 +9,38 @@ package com.solana.mobilewalletadapter.clientlib
  *
  * Matches upstream `com.solana.mobilewalletadapter.clientlib.Blockchain`.
  */
-sealed class Blockchain(val cluster: String) {
-    override fun toString(): String = cluster
+sealed class Blockchain(
+    val name: String,
+    val cluster: String
+) {
+    val fullName: String get() = "$name:$cluster"
+
+    override fun toString(): String = fullName
 }
 
 /**
  * Solana blockchain variants.
  */
-sealed class Solana(cluster: String) : Blockchain(cluster) {
-    object MainnetBeta : Solana("solana:mainnet")
-    object Devnet : Solana("solana:devnet")
-    object Testnet : Solana("solana:testnet")
-
-    class Custom(cluster: String) : Solana(cluster)
+sealed class Solana {
+    object Mainnet : Blockchain("solana", "mainnet")
+    object Devnet : Blockchain("solana", "devnet")
+    object Testnet : Blockchain("solana", "testnet")
 }
 
 /**
  * Deprecated RPC cluster designation. Use [Blockchain] / [Solana] instead.
  */
-@Deprecated("Use Blockchain / Solana instead", ReplaceWith("Solana.MainnetBeta"))
+@Deprecated("Use Blockchain / Solana instead", ReplaceWith("Solana.Mainnet"))
 sealed class RpcCluster(val name: String) {
     object MainnetBeta : RpcCluster("mainnet-beta")
     object Devnet : RpcCluster("devnet")
     object Testnet : RpcCluster("testnet")
+    class Custom(name: String) : RpcCluster(name)
 
     fun toBlockchain(): Blockchain = when (this) {
-        MainnetBeta -> Solana.MainnetBeta
-        Devnet -> Solana.Devnet
-        Testnet -> Solana.Testnet
+        is MainnetBeta -> Solana.Mainnet
+        is Devnet -> Solana.Devnet
+        is Testnet -> Solana.Testnet
+        is Custom -> Solana.Mainnet // fallback
     }
 }
