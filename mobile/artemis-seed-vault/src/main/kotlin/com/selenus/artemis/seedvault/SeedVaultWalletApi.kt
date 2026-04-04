@@ -27,6 +27,7 @@ import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
+import android.os.Bundle
 import com.selenus.artemis.seedvault.internal.SeedVaultCheck
 import com.selenus.artemis.seedvault.internal.SeedVaultConstants
 import com.selenus.artemis.seedvault.internal.SeedVaultConstants.AUTHORITY_WALLET
@@ -493,6 +494,27 @@ object SeedVaultWallet {
     }
     
     /**
+     * Get a single account by ID.
+     */
+    fun getAccount(
+        context: Context,
+        authToken: Long,
+        accountId: Long,
+        projection: Array<String>
+    ): Cursor? {
+        val uri = SeedVaultConstants.ACCOUNTS_CONTENT_URI.buildUpon()
+            .appendQueryParameter(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toString())
+            .build()
+        return context.contentResolver.query(
+            uri,
+            projection,
+            "${SeedVaultConstants.ACCOUNTS_ACCOUNT_ID} = ?",
+            arrayOf(accountId.toString()),
+            null
+        )
+    }
+
+    /**
      * Update an account's name.
      */
     fun updateAccountName(
@@ -642,24 +664,21 @@ object SeedVaultWallet {
         derivationPath: Uri,
         purpose: Int
     ): Uri {
-        val cursor = context.contentResolver.query(
-            SeedVaultConstants.WALLET_PROVIDER_CONTENT_URI_BASE.buildUpon()
-                .appendPath(SeedVaultConstants.RESOLVE_BIP32_DERIVATION_PATH_METHOD)
-                .appendQueryParameter("derivation_path", derivationPath.toString())
-                .appendQueryParameter("purpose", purpose.toString())
-                .build(),
+        val extras = Bundle().apply {
+            putParcelable(SeedVaultConstants.EXTRA_DERIVATION_PATH, derivationPath)
+            putInt(SeedVaultConstants.EXTRA_PURPOSE, purpose)
+        }
+        
+        val result = context.contentResolver.call(
+            SeedVaultConstants.WALLET_PROVIDER_CONTENT_URI_BASE,
+            SeedVaultConstants.RESOLVE_BIP32_DERIVATION_PATH_METHOD,
             null,
-            null,
-            null,
-            null
+            extras
         )
         
-        cursor?.use {
-            if (it.moveToFirst()) {
-                val resolved = it.getString(0)
-                return Uri.parse(resolved)
-            }
-        }
+        @Suppress("DEPRECATION")
+        val resolved: Uri? = result?.getParcelable(SeedVaultConstants.EXTRA_RESOLVED_BIP32_DERIVATION_PATH)
+        if (resolved != null) return resolved
         
         // Fallback: resolve locally
         return resolveDerivationPathLocal(derivationPath, purpose)

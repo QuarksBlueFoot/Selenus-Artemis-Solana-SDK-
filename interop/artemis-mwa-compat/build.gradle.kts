@@ -26,4 +26,6 @@ dependencies {
     api(project(":artemis-wallet-mwa-android"))
     api(project(":artemis-wallet"))
     api(project(":artemis-core"))
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.kotlinx.coroutines.android)
 }

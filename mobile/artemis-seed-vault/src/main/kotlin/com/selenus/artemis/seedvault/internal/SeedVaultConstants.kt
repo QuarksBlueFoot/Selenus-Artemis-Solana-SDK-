@@ -157,8 +157,11 @@ object SeedVaultConstants {
     /** Base content URI for the wallet provider. */
     val WALLET_PROVIDER_CONTENT_URI_BASE: Uri = Uri.parse("content://$AUTHORITY_WALLET_PROVIDER")
     
-    /** Method to resolve BIP32 derivation paths. */
-    const val RESOLVE_BIP32_DERIVATION_PATH_METHOD = "resolve_bip32_derivation_path"
+    /** Method to resolve BIP32 derivation paths via ContentResolver.call(). */
+    const val RESOLVE_BIP32_DERIVATION_PATH_METHOD = "ResolveBipDerivationPath"
+
+    /** Extra key for the resolved BIP32 derivation path result. */
+    const val EXTRA_RESOLVED_BIP32_DERIVATION_PATH = "ResolvedBip32DerivationPath"
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CONTENT PROVIDER - AUTHORIZED SEEDS TABLE
@@ -169,11 +172,14 @@ object SeedVaultConstants {
     const val AUTHORIZED_SEEDS_AUTH_TOKEN = "_id"  // BaseColumns._ID
     const val AUTHORIZED_SEEDS_AUTH_PURPOSE = "AuthorizedSeeds_AuthPurpose"
     const val AUTHORIZED_SEEDS_SEED_NAME = "AuthorizedSeeds_SeedName"
+    const val AUTHORIZED_SEEDS_IS_BACKED_UP = "AuthorizedSeeds_IsBackedUp"
     val AUTHORIZED_SEEDS_ALL_COLUMNS = arrayOf(
         AUTHORIZED_SEEDS_AUTH_TOKEN,
         AUTHORIZED_SEEDS_AUTH_PURPOSE,
-        AUTHORIZED_SEEDS_SEED_NAME
+        AUTHORIZED_SEEDS_SEED_NAME,
+        AUTHORIZED_SEEDS_IS_BACKED_UP
     )
+    const val AUTHORIZED_SEEDS_MIME_SUBTYPE = "vnd.com.solanamobile.seedvault.authorizedseeds"
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CONTENT PROVIDER - UNAUTHORIZED SEEDS TABLE
@@ -181,12 +187,13 @@ object SeedVaultConstants {
     
     const val UNAUTHORIZED_SEEDS_TABLE = "unauthorizedseeds"
     val UNAUTHORIZED_SEEDS_CONTENT_URI: Uri = Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, UNAUTHORIZED_SEEDS_TABLE)
-    const val UNAUTHORIZED_SEEDS_AUTH_PURPOSE = "UnauthorizedSeeds_AuthPurpose"
+    const val UNAUTHORIZED_SEEDS_AUTH_PURPOSE = "_id"
     const val UNAUTHORIZED_SEEDS_HAS_UNAUTHORIZED_SEEDS = "UnauthorizedSeeds_HasUnauthorizedSeeds"
     val UNAUTHORIZED_SEEDS_ALL_COLUMNS = arrayOf(
         UNAUTHORIZED_SEEDS_AUTH_PURPOSE,
         UNAUTHORIZED_SEEDS_HAS_UNAUTHORIZED_SEEDS
     )
+    const val UNAUTHORIZED_SEEDS_MIME_SUBTYPE = "vnd.com.solanamobile.seedvault.unauthorizedseeds"
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CONTENT PROVIDER - ACCOUNTS TABLE
@@ -217,7 +224,7 @@ object SeedVaultConstants {
     
     const val IMPLEMENTATION_LIMITS_TABLE = "implementationlimits"
     val IMPLEMENTATION_LIMITS_CONTENT_URI: Uri = Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, IMPLEMENTATION_LIMITS_TABLE)
-    const val IMPLEMENTATION_LIMITS_AUTH_PURPOSE = "ImplementationLimits_AuthPurpose"
+    const val IMPLEMENTATION_LIMITS_AUTH_PURPOSE = "_id"
     const val IMPLEMENTATION_LIMITS_MAX_SIGNING_REQUESTS = "ImplementationLimits_MaxSigningRequests"
     const val IMPLEMENTATION_LIMITS_MAX_REQUESTED_SIGNATURES = "ImplementationLimits_MaxRequestedSignatures"
     const val IMPLEMENTATION_LIMITS_MAX_REQUESTED_PUBLIC_KEYS = "ImplementationLimits_MaxRequestedPublicKeys"
@@ -227,6 +234,8 @@ object SeedVaultConstants {
         IMPLEMENTATION_LIMITS_MAX_REQUESTED_SIGNATURES,
         IMPLEMENTATION_LIMITS_MAX_REQUESTED_PUBLIC_KEYS
     )
+    const val IMPLEMENTATION_LIMITS_MIME_SUBTYPE = "vnd.com.solanamobile.seedvault.implementationlimits"
+    const val ACCOUNTS_MIME_SUBTYPE = "vnd.com.solanamobile.seedvault.accounts"
 
     // ═══════════════════════════════════════════════════════════════════════════
     // LEGACY KEYS (kept for backward compatibility with older code)

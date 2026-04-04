@@ -25,4 +25,5 @@ android {
 dependencies {
     api(project(":artemis-seed-vault"))
     api(project(":artemis-core"))
+    implementation(libs.androidx.annotation)
 }
