@@ -25,10 +25,13 @@ implementation("com.selenus.artemis:artemis-wallet-mwa-android:2.x.x")
 
 // One-line setup
 val artemis = ArtemisMobile.create(
-    activity = this,
-    identityUri = Uri.parse("https://myapp.com"),
-    iconPath = "favicon.ico",
-    identityName = "MyApp"
+    activity     = this,
+    identityUri  = Uri.parse("https://myapp.example.com"),
+    iconPath     = "https://myapp.example.com/favicon.ico",  // must be absolute HTTPS URI
+    identityName = "MyApp",
+    rpcUrl       = "https://mainnet.helius-rpc.com/?api-key=YOUR_KEY",
+    wsUrl        = "wss://atlas-mainnet.helius-rpc.com/?api-key=YOUR_KEY",
+    dasUrl       = "https://mainnet.helius-rpc.com/?api-key=YOUR_KEY"  // null = no DAS support
 )
 
 // Connect
@@ -122,6 +125,67 @@ val result = session.sendBatch(ixs)
 
 ---
 
+---
+
+## Real-time account subscriptions
+
+`RealtimeEngine` (in `artemis-ws`) wraps the raw WebSocket layer and delivers typed callbacks.
+
+```kotlin
+artemis.realtime.connect()
+
+// Account changes
+val handle = artemis.realtime.subscribeAccount(
+    pubkey = wallet.publicKey.toBase58(),
+    commitment = "confirmed"
+) { info ->
+    println("lamports: ${info.lamports}, slot: ${info.slot}")
+}
+
+// Signature confirmation
+artemis.realtime.subscribeSignature(txSignature) { confirmed ->
+    println("confirmed: $confirmed")
+}
+
+// Unsubscribe
+handle.close()
+artemis.realtime.close()
+```
+
+---
+
+## NFT queries via DAS
+
+`HeliusDas` implements the `ArtemisDas` interface against the Helius DAS API. Pass `dasUrl` to `ArtemisMobile.create()` to enable it.
+
+```kotlin
+// All NFTs owned by a wallet
+val nfts: List<DigitalAsset> = artemis.das?.assetsByOwner(walletPubkey) ?: emptyList()
+
+// Single asset
+val asset: DigitalAsset? = artemis.das?.asset("GdR7...")
+
+// Collection
+val collection = artemis.das?.assetsByCollection("CollMintAddress...")
+```
+
+---
+
+## Transfer a compressed NFT
+
+```kotlin
+val result = artemis.marketplace.transferCnft(
+    wallet     = artemis.wallet,
+    dasClient  = myDasClient,
+    assetId    = "GdR7...",
+    merkleTree = Pubkey.fromBase58("tree..."),
+    newOwner   = recipientPubkey
+)
+println("signature: ${result.signature}, confirmed: ${result.confirmed}")
+```
+
+---
+
 ## Module Mapping
 
 | Solana Mobile SDK | Artemis Module |
@@ -130,5 +194,6 @@ val result = session.sendBatch(ixs)
 | `seedvault` | `artemis-seed-vault` |
 | sol4k `Connection` | `artemis-rpc` (`RpcApi`) |
 | Manual tx building | `artemis-vtx` (`TxEngine`) |
-| — | `artemis-tx-presets` (one-line operations) |
-| — | `artemis-wallet` (unified `WalletSession`) |
+| No equivalent | `artemis-tx-presets` (one-line operations) |
+| No equivalent | `artemis-wallet` (unified `WalletSession`) |
+| No equivalent | `artemis-cnft` (`ArtemisDas`, `HeliusDas`, `MarketplaceEngine`) |

@@ -1,5 +1,95 @@
 # Changelog
 
+## 2.2.0 - April 14, 2026
+
+Adds real-time subscriptions, Digital Asset Standard (DAS) queries, and marketplace primitives directly to the core mobile stack.
+
+### New: RealtimeEngine (artemis-ws)
+
+High-level account and signature subscription manager built on `SolanaWsClient`. Delivers typed `AccountNotification` callbacks without raw WebSocket bookkeeping.
+
+```kotlin
+val realtime = RealtimeEngine(endpoints = listOf("wss://atlas-mainnet.helius-rpc.com/?api-key=KEY"))
+realtime.connect()
+
+val handle = realtime.subscribeAccount(pubkey) { info ->
+    println("lamports: ${info.lamports}, slot: ${info.slot}")
+}
+
+realtime.subscribeSignature(signature) { confirmed ->
+    println("confirmed: $confirmed")
+}
+```
+
+- `subscribeAccount(pubkey, commitment, callback)` returns `SubscriptionHandle`
+- `subscribeSignature(sig, commitment, callback)` auto-removes on first notification
+- `subscribeProgram(programId, commitment)` delegates to raw `SolanaWsClient`
+- `close()` shuts down the WebSocket and clears all callbacks
+
+### New: ArtemisDas + HeliusDas (artemis-cnft)
+
+Typed DAS (Digital Asset Standard) interface for NFT/cNFT asset queries.
+
+```kotlin
+val das = HeliusDas("https://mainnet.helius-rpc.com/?api-key=KEY")
+
+val nfts: List<DigitalAsset> = das.assetsByOwner(walletPubkey)
+val asset: DigitalAsset? = das.asset("GdR7assetId...")
+val collection: List<DigitalAsset> = das.assetsByCollection("CollMint...")
+```
+
+`DigitalAsset` carries: `id`, `name`, `symbol`, `uri`, `owner`, `royaltyBasisPoints`, `isCompressed`, `frozen`, `collectionAddress`, `collectionVerified`.
+
+### New: MarketplaceEngine (artemis-cnft)
+
+High-level NFT transfer and protocol execution engine.
+
+```kotlin
+val marketplace = MarketplaceEngine(rpc, txEngine, das)
+
+// Fetch assets via DAS
+val assets = marketplace.getAssetsByOwner(walletPubkey)
+
+// Transfer a compressed NFT via Bubblegum
+val result = marketplace.transferCnft(
+    wallet     = walletAdapter,
+    dasClient  = dasClient,
+    assetId    = "GdR7...",
+    merkleTree = Pubkey.fromBase58("tree..."),
+    newOwner   = recipientPubkey
+)
+
+// Execute arbitrary protocol instructions (Tensor, etc.)
+val result = marketplace.executeInstructions(wallet, instructions)
+```
+
+### Updated: ArtemisMobile (artemis-wallet-mwa-android)
+
+`ArtemisMobile.create()` now wires the full v68 stack in one call.
+
+```kotlin
+val artemis = ArtemisMobile.create(
+    activity     = this,
+    identityUri  = Uri.parse("https://myapp.com"),
+    iconPath     = "https://myapp.com/favicon.ico",
+    identityName = "MyApp",
+    rpcUrl       = "https://mainnet.helius-rpc.com/?api-key=KEY",
+    wsUrl        = "wss://atlas-mainnet.helius-rpc.com/?api-key=KEY",
+    dasUrl       = "https://mainnet.helius-rpc.com/?api-key=KEY"
+)
+
+// rpc, wallet, txEngine, session, realtime, das, marketplace all ready
+artemis.realtime.connect()
+val nfts = artemis.das?.assetsByOwner(artemis.session.publicKey)
+```
+
+### Build changes
+
+- `artemis-cnft`: added `:artemis-wallet` to `commonMain` dependencies
+- `artemis-wallet-mwa-android`: added `:artemis-ws` and `:artemis-cnft` dependencies
+
+---
+
 ## 2.1.1 - April 3, 2026
 
 **Major Release**: Kotlin Multiplatform (KMP) conversion across Foundation, Mobile, and Ecosystem rings.

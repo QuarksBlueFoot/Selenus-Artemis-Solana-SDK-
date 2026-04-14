@@ -50,6 +50,7 @@ Feature-by-feature comparison of Artemis against the Kotlin/Android Solana SDK e
 | Slot subscriptions | No | No | N/A | N/A | Yes | Full |
 | Auto-reconnect | N/A | N/A | N/A | N/A | Yes | Full |
 | HTTP polling fallback | N/A | N/A | N/A | N/A | Yes | Full |
+| Typed subscription callbacks | No | No | N/A | N/A | `RealtimeEngine` | Full |
 
 ## Wallet / Mobile
 
@@ -100,8 +101,12 @@ Feature-by-feature comparison of Artemis against the Kotlin/Android Solana SDK e
 | Editions | No | No | N/A | Yes | Yes | Full |
 | Collections | No | No | N/A | Yes | Yes | Full |
 | MPL Core | No | No | N/A | Partial | Yes | Full |
-| Compressed NFTs | No | No | N/A | Partial | `artemis-cnft` | Full |
+| Compressed NFTs (Bubblegum) | No | No | N/A | Partial | `artemis-cnft` | Full |
+| cNFT transfer via MarketplaceEngine | No | No | N/A | No | `MarketplaceEngine` | Full |
 | Candy Machine v3 | No | No | N/A | No | `artemis-candy-machine` | Full |
+| DAS asset queries (getAssetsByOwner) | No | No | N/A | No | `ArtemisDas` / `HeliusDas` | Full |
+| DAS single asset lookup | No | No | N/A | No | `ArtemisDas.asset()` | Full |
+| DAS collection queries | No | No | N/A | No | `ArtemisDas.assetsByCollection()` | Full |
 
 ## Developer Tooling
 
@@ -119,6 +124,10 @@ These are features no other Kotlin Solana SDK provides:
 
 | Capability | Module | Description |
 |------------|--------|-------------|
+| Typed WebSocket subscriptions | `artemis-ws` | `RealtimeEngine`: account, signature, and program callbacks with structured types |
+| DAS queries (Helius/RPC standard) | `artemis-cnft` | `ArtemisDas` interface + `HeliusDas` implementation for asset queries |
+| cNFT transfer with proof resolution | `artemis-cnft` | `MarketplaceEngine` resolves Bubblegum proof and sends transfer in one call |
+| Full mobile stack wiring | `artemis-wallet-mwa-android` | `ArtemisMobile.create()` configures RPC, wallet, TxEngine, realtime, DAS, and marketplace |
 | Anchor IDL client | `artemis-anchor` | Parse Anchor IDL, Borsh serialization, type-safe instruction building |
 | Jupiter DEX integration | `artemis-jupiter` | Quotes, swaps, route optimization |
 | Solana Actions / Blinks | `artemis-actions` | Fetch and execute Solana Actions |

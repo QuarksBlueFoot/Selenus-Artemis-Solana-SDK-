@@ -12,6 +12,7 @@ Step-by-step migration from the standard Solana Mobile Kotlin dependencies to Ar
 | solana-kmp `PublicKey`, `Transaction` | `xyz.selenus:artemis-core`, `xyz.selenus:artemis-tx` | Core types and transaction model |
 | solana-kmp `VersionedTransaction` | `xyz.selenus:artemis-vtx` | Versioned transaction (v0) with address lookup tables |
 | sol4k primitives | `xyz.selenus:artemis-core` | PublicKey, Keypair, Base58, Ed25519 |
+| No equivalent | `xyz.selenus:artemis-cnft` | ArtemisDas (DAS queries), HeliusDas, MarketplaceEngine (cNFT transfers) |
 
 ## Gradle migration
 
@@ -32,15 +33,18 @@ dependencies {
 ```kotlin
 dependencies {
     // Foundation
-    implementation("xyz.selenus:artemis-core:2.1.1")
-    implementation("xyz.selenus:artemis-rpc:2.1.1")
-    implementation("xyz.selenus:artemis-tx:2.1.1")
-    implementation("xyz.selenus:artemis-programs:2.1.1")
+    implementation("xyz.selenus:artemis-core:2.2.0")
+    implementation("xyz.selenus:artemis-rpc:2.2.0")
+    implementation("xyz.selenus:artemis-tx:2.2.0")
+    implementation("xyz.selenus:artemis-programs:2.2.0")
 
     // Mobile
-    implementation("xyz.selenus:artemis-wallet:2.1.1")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.1.1")
-    implementation("xyz.selenus:artemis-seed-vault:2.1.1") // if using Saga
+    implementation("xyz.selenus:artemis-wallet:2.2.0")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.2.0")
+    implementation("xyz.selenus:artemis-seed-vault:2.2.0") // if using Saga
+
+    // NFT + DAS + marketplace (add if using cNFTs or DAS queries)
+    implementation("xyz.selenus:artemis-cnft:2.2.0")
 }
 ```
 
@@ -63,7 +67,7 @@ transact(sender) { authResult ->
 val adapter = MwaWalletAdapter(
     activity = this,
     identityUri = Uri.parse("https://myapp.example.com"),
-    iconPath = "favicon.ico",
+    iconPath = "https://myapp.example.com/favicon.ico",  // must be absolute HTTPS URI
     identityName = "My App"
 )
 adapter.connect()
