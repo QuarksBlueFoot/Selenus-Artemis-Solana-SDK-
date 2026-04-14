@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.Closeable
@@ -12,9 +13,9 @@ import java.io.Closeable
 /**
  * RealtimeEngine — high-level Solana account and program subscription manager.
  *
- * Wraps [SolanaWsClient] to expose a declarative, callback-based subscription API that
- * matches the v68 Artemis developer experience. Auto-reconnects with jittered backoff;
- * re-subscribes all active subscriptions on reconnect; sends heartbeat pings every 60 s.
+ * Wraps [SolanaWsClient] to expose a declarative, callback-based subscription API.
+ * Typed callbacks survive reconnects. [reconnect] rotates through [endpoints] so a
+ * failed primary node does not break the subscription surface.
  *
  * ```kotlin
  * val realtime = RealtimeEngine(
@@ -29,6 +30,9 @@ import java.io.Closeable
  *     println("lamports: ${info.lamports}")
  * }
  *
+ * // Rotate to the next endpoint and replay all subscriptions
+ * realtime.reconnect()
+ *
  * // later
  * handle.close()
  * realtime.close()
@@ -41,9 +45,30 @@ class RealtimeEngine(
 
     private var client: SolanaWsClient? = null
 
-    // Registered callbacks, kept so we can deliver parsed events.
+    // Endpoint rotation index — incremented by reconnect() for failover.
+    private var endpointIndex = 0
+
+    // Parsed event callbacks keyed by pubkey / signature.
     private val accountCallbacks = mutableMapOf<String, (AccountNotification) -> Unit>()
     private val signatureCallbacks = mutableMapOf<String, (confirmed: Boolean) -> Unit>()
+
+    // Raw subscription handles from SolanaWsClient, kept for clean unsubscribe.
+    private val accountHandles = mutableMapOf<String, SubscriptionHandle>()
+    private val signatureHandles = mutableMapOf<String, SubscriptionHandle>()
+
+    // Spec registry — lets reconnect() replay all typed subscriptions on a new client.
+    private data class AccountSpec(
+        val pubkey: String,
+        val commitment: String,
+        val callback: (AccountNotification) -> Unit
+    )
+    private data class SignatureSpec(
+        val signature: String,
+        val commitment: String,
+        val callback: (Boolean) -> Unit
+    )
+    private val accountSpecs = LinkedHashMap<String, AccountSpec>()
+    private val signatureSpecs = LinkedHashMap<String, SignatureSpec>()
 
     /**
      * Lightweight view of an account notification from the WebSocket subscription.
@@ -57,29 +82,58 @@ class RealtimeEngine(
     )
 
     /**
-     * Connect to the first endpoint and start the event loop.
-     * Falls back through [endpoints] on reconnect (handled by [SolanaWsClient] internally
-     * via its configured reconnect policy; we expose only the primary endpoint here since
-     * the client reconnects to the same URL).
+     * Connect to the first available endpoint and start the event loop.
+     * Use [reconnect] to rotate to the next endpoint on failure.
      */
     fun connect() {
-        val url = endpoints.firstOrNull()
-            ?: throw IllegalArgumentException("RealtimeEngine requires at least one endpoint")
+        val url = currentEndpointUrl()
         val wsClient = SolanaWsClient(url = url, scope = scope)
         client = wsClient
-
-        // Dispatch parsed events to registered callbacks
-        wsClient.events
-            .onEach { event -> dispatchEvent(event) }
-            .launchIn(scope)
-
+        attachEventDispatcher(wsClient)
         wsClient.connect()
+    }
+
+    /**
+     * Rotate to the next endpoint and rebuild the subscription surface.
+     *
+     * Closes the current [SolanaWsClient], picks the next URL from [endpoints],
+     * opens a fresh client, and replays every registered typed subscription so
+     * callers never need to re-subscribe manually after a node failure.
+     */
+    fun reconnect() {
+        client?.close()
+        client = null
+        endpointIndex = (endpointIndex + 1) % endpoints.size.coerceAtLeast(1)
+        val url = currentEndpointUrl()
+        val wsClient = SolanaWsClient(url = url, scope = scope)
+        client = wsClient
+        attachEventDispatcher(wsClient)
+        wsClient.connect()
+
+        // Replay all registered typed subscriptions on the new client.
+        scope.launch {
+            for ((pubkey, spec) in accountSpecs.toMap()) {
+                try {
+                    val rawHandle = wsClient.accountSubscribe(spec.pubkey, spec.commitment, "jsonParsed")
+                    accountHandles[pubkey] = rawHandle
+                    accountCallbacks[pubkey] = spec.callback
+                } catch (_: Exception) { /* best-effort */ }
+            }
+            for ((sig, spec) in signatureSpecs.toMap()) {
+                try {
+                    val rawHandle = wsClient.signatureSubscribe(spec.signature, spec.commitment)
+                    signatureHandles[sig] = rawHandle
+                    signatureCallbacks[sig] = spec.callback
+                } catch (_: Exception) { /* best-effort */ }
+            }
+        }
     }
 
     /**
      * Subscribe to account changes for [pubkey].
      *
      * The [callback] is invoked on every notification with a parsed [AccountNotification].
+     * The subscription is recorded in the spec registry and replayed automatically on [reconnect].
      * Returns a [SubscriptionHandle] that can be [SubscriptionHandle.close]d to unsubscribe.
      */
     suspend fun subscribeAccount(
@@ -88,20 +142,25 @@ class RealtimeEngine(
         callback: (AccountNotification) -> Unit
     ): SubscriptionHandle {
         val ws = requireConnected()
+        val spec = AccountSpec(pubkey, commitment, callback)
+        accountSpecs[pubkey] = spec
         accountCallbacks[pubkey] = callback
-        val handle = ws.accountSubscribe(pubkey, commitment, "jsonParsed")
-        // Wrap to also remove our callback on close
-        return SubscriptionHandle(handle.key) { h ->
+        val rawHandle = ws.accountSubscribe(pubkey, commitment, "jsonParsed")
+        accountHandles[pubkey] = rawHandle
+        return SubscriptionHandle(rawHandle.key) { _ ->
+            accountSpecs.remove(pubkey)
             accountCallbacks.remove(pubkey)
-            handle.close()
+            accountHandles.remove(pubkey)
+            rawHandle.close()
         }
     }
 
     /**
      * Subscribe to a specific transaction signature confirmation.
      *
-     * [callback] is invoked with `true` once the transaction is confirmed,
-     * and the subscription is automatically removed.
+     * [callback] is invoked with `true` once the transaction is confirmed.
+     * The subscription is auto-removed after the first notification.
+     * It is also recorded in the spec registry and replayed on [reconnect].
      */
     suspend fun subscribeSignature(
         signature: String,
@@ -109,11 +168,16 @@ class RealtimeEngine(
         callback: (confirmed: Boolean) -> Unit
     ): SubscriptionHandle {
         val ws = requireConnected()
+        val spec = SignatureSpec(signature, commitment, callback)
+        signatureSpecs[signature] = spec
         signatureCallbacks[signature] = callback
-        val handle = ws.signatureSubscribe(signature, commitment)
-        return SubscriptionHandle(handle.key) { h ->
+        val rawHandle = ws.signatureSubscribe(signature, commitment)
+        signatureHandles[signature] = rawHandle
+        return SubscriptionHandle(rawHandle.key) { _ ->
+            signatureSpecs.remove(signature)
             signatureCallbacks.remove(signature)
-            handle.close()
+            signatureHandles.remove(signature)
+            rawHandle.close()
         }
     }
 
@@ -139,9 +203,24 @@ class RealtimeEngine(
         client = null
         accountCallbacks.clear()
         signatureCallbacks.clear()
+        accountSpecs.clear()
+        signatureSpecs.clear()
+        accountHandles.clear()
+        signatureHandles.clear()
     }
 
     // ─── internal ────────────────────────────────────────────────────────────
+
+    private fun currentEndpointUrl(): String {
+        if (endpoints.isEmpty()) throw IllegalArgumentException("RealtimeEngine requires at least one endpoint")
+        return endpoints[endpointIndex % endpoints.size]
+    }
+
+    private fun attachEventDispatcher(wsClient: SolanaWsClient) {
+        wsClient.events
+            .onEach { event -> dispatchEvent(event) }
+            .launchIn(scope)
+    }
 
     private fun requireConnected(): SolanaWsClient =
         client ?: throw IllegalStateException("RealtimeEngine not connected. Call connect() first.")

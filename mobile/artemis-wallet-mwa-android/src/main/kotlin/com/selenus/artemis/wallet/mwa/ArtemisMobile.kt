@@ -9,6 +9,7 @@ import com.selenus.artemis.rpc.JsonRpcClient
 import com.selenus.artemis.rpc.RpcApi
 import com.selenus.artemis.vtx.TxEngine
 import com.selenus.artemis.wallet.WalletSession
+import com.selenus.artemis.wallet.WalletSessionManager
 import com.selenus.artemis.ws.RealtimeEngine
 
 /**
@@ -21,23 +22,29 @@ import com.selenus.artemis.ws.RealtimeEngine
  * val artemis = ArtemisMobile.create(
  *     activity     = this,
  *     identityUri  = Uri.parse("https://myapp.com"),
- *     iconPath     = "favicon.ico",
+ *     iconPath     = "https://myapp.com/favicon.ico",  // must be absolute HTTPS URI
  *     identityName = "MyApp",
  *     rpcUrl       = "https://mainnet.helius-rpc.com/?api-key=<KEY>",
  *     wsUrl        = "wss://atlas-mainnet.helius-rpc.com/?api-key=<KEY>"
  * )
  *
- * // Connect wallet
- * artemis.wallet.connect()
+ * // Gate all wallet ops through sessionManager — handles connect, retry, events
+ * val sig = artemis.sessionManager.withWallet { session ->
+ *     session.sendSol(recipient, 1_000_000_000L)
+ * }
  *
- * // Send SOL
- * val result = artemis.session.sendSol(recipient, 1_000_000_000L)
+ * // React to wallet lifecycle events
+ * artemis.sessionManager.onDisconnect { showConnectButton() }
+ * artemis.sessionManager.onSessionExpired { println("Reconnecting...") }
  *
  * // Watch account balance in real time
  * artemis.realtime.connect()
  * artemis.realtime.subscribeAccount(artemis.session.publicKey.toBase58()) { info ->
  *     println("lamports: ${info.lamports}")
  * }
+ *
+ * // Rotate to backup endpoint on failure
+ * artemis.realtime.reconnect()
  *
  * // Fetch all NFTs
  * val nfts = artemis.das?.assetsByOwner(artemis.session.publicKey)
@@ -52,6 +59,8 @@ class ArtemisMobile private constructor(
     val txEngine: TxEngine,
     /** Pre-wired session that routes signing through the wallet adapter. */
     val session: WalletSession,
+    /** Managed session lifecycle: lazy connect, invalidate, withWallet {}, and event callbacks. */
+    val sessionManager: WalletSessionManager,
     /** WebSocket subscription engine for real-time account and signature events. */
     val realtime: RealtimeEngine,
     /** Digital Asset Standard query layer (optional; requires a DAS-compatible endpoint). */
@@ -94,10 +103,14 @@ class ArtemisMobile private constructor(
                 chain = chain
             )
             val session = WalletSession.fromAdapter(wallet, txEngine)
+            val sessionManager = WalletSessionManager {
+                wallet.connect()
+                WalletSession.fromAdapter(wallet, txEngine)
+            }
             val realtime = RealtimeEngine(endpoints = listOf(wsUrl))
             val das: ArtemisDas? = dasUrl?.let { HeliusDas(it) }
             val marketplace = MarketplaceEngine(rpc, txEngine, das)
-            return ArtemisMobile(rpc, wallet, txEngine, session, realtime, das, marketplace)
+            return ArtemisMobile(rpc, wallet, txEngine, session, sessionManager, realtime, das, marketplace)
         }
     }
 }

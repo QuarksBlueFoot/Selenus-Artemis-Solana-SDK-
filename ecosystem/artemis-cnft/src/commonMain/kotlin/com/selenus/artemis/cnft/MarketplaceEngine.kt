@@ -41,6 +41,8 @@ class MarketplaceEngine(
     private val das: ArtemisDas? = null
 ) {
 
+    private val preflight = MarketplacePreflight(rpc, das)
+
     /**
      * Result returned from a marketplace transaction.
      */
@@ -77,15 +79,17 @@ class MarketplaceEngine(
     /**
      * Transfer a compressed NFT to a new owner using the Bubblegum protocol.
      *
-     * Fetches the asset proof via DAS, builds the Bubblegum transfer instruction,
-     * and routes it through [TxEngine] for signing and confirmation.
+     * Runs a [MarketplacePreflight] by default to verify ownership and frozen state
+     * before building the transaction. Set [runPreflight] to false to skip validation
+     * (useful when the caller has already confirmed asset state via DAS).
      *
-     * @param wallet    The wallet adapter that signs the transaction
-     * @param dasClient DAS client used to fetch the asset proof (may differ from [das])
-     * @param assetId   The asset ID of the cNFT
-     * @param merkleTree Merkle tree address the cNFT is stored in
-     * @param treeConfig Tree config PDA (derived from merkleTree if omitted)
-     * @param newOwner  Recipient's wallet address
+     * @param wallet      The wallet adapter that signs the transaction
+     * @param dasClient   DAS client used to fetch the asset proof
+     * @param assetId     The asset ID of the cNFT
+     * @param merkleTree  Merkle tree address the cNFT is stored in
+     * @param treeConfig  Tree config PDA (derived from merkleTree if omitted)
+     * @param newOwner    Recipient's wallet address
+     * @param runPreflight Whether to validate ownership and frozen state before building the tx
      */
     suspend fun transferCnft(
         wallet: WalletAdapter,
@@ -93,8 +97,17 @@ class MarketplaceEngine(
         assetId: String,
         merkleTree: Pubkey,
         newOwner: Pubkey,
-        treeConfig: Pubkey = BubblegumPdas.treeConfig(merkleTree)
+        treeConfig: Pubkey = BubblegumPdas.treeConfig(merkleTree),
+        runPreflight: Boolean = true
     ): MarketplaceResult {
+        if (runPreflight) {
+            val check = preflight.validateCnftTransfer(wallet.publicKey, assetId)
+            if (!check.valid) {
+                throw IllegalStateException(
+                    "MarketplacePreflight failed for $assetId: ${check.errors.joinToString("; ")}"
+                )
+            }
+        }
         val assetWithProof = MarketplaceToolkit.fetchAssetWithProof(dasClient, assetId)
         val proofArgs = DasProofParser.parseProofArgs(assetWithProof.asset, assetWithProof.proof)
         val proofAccounts = DasProofParser.proofAccountsFromProof(assetWithProof.proof)
