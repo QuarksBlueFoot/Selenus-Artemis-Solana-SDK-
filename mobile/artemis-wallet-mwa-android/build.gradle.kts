@@ -28,6 +28,7 @@ android {
 dependencies {
   implementation(project(":artemis-wallet"))
   implementation(project(":artemis-rpc"))
+  implementation(project(":artemis-vtx"))
   implementation(project(":artemis-core"))
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.androidx.datastore)
