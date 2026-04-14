@@ -2,52 +2,76 @@ package com.selenus.artemis.wallet.mwa
 
 import android.app.Activity
 import android.net.Uri
+import com.selenus.artemis.cnft.MarketplaceEngine
+import com.selenus.artemis.cnft.das.ArtemisDas
+import com.selenus.artemis.cnft.das.HeliusDas
 import com.selenus.artemis.rpc.JsonRpcClient
 import com.selenus.artemis.rpc.RpcApi
 import com.selenus.artemis.vtx.TxEngine
 import com.selenus.artemis.wallet.WalletSession
+import com.selenus.artemis.ws.RealtimeEngine
 
 /**
  * ArtemisMobile — single entry point for Solana mobile apps.
  *
- * Bundles the full Artemis stack into one object: RPC, wallet, transaction engine,
- * and a ready-to-use session. This is the "one import, one line" developer experience.
+ * Bundles the full Artemis v68 stack into one object: RPC, wallet, transaction engine,
+ * realtime subscriptions, DAS (NFT assets), and marketplace. Zero boilerplate.
  *
  * ```kotlin
  * val artemis = ArtemisMobile.create(
- *     activity = this,
- *     identityUri = Uri.parse("https://myapp.com"),
- *     iconPath = "favicon.ico",
- *     identityName = "MyApp"
+ *     activity     = this,
+ *     identityUri  = Uri.parse("https://myapp.com"),
+ *     iconPath     = "favicon.ico",
+ *     identityName = "MyApp",
+ *     rpcUrl       = "https://mainnet.helius-rpc.com/?api-key=<KEY>",
+ *     wsUrl        = "wss://atlas-mainnet.helius-rpc.com/?api-key=<KEY>"
  * )
  *
- * // Connect to wallet
+ * // Connect wallet
  * artemis.wallet.connect()
  *
- * // Send SOL in one call
+ * // Send SOL
  * val result = artemis.session.sendSol(recipient, 1_000_000_000L)
+ *
+ * // Watch account balance in real time
+ * artemis.realtime.connect()
+ * artemis.realtime.subscribeAccount(artemis.session.publicKey.toBase58()) { info ->
+ *     println("lamports: ${info.lamports}")
+ * }
+ *
+ * // Fetch all NFTs
+ * val nfts = artemis.das?.assetsByOwner(artemis.session.publicKey)
  * ```
  */
 class ArtemisMobile private constructor(
-    /** JSON-RPC client for all Solana queries. */
+    /** JSON-RPC client for all Solana queries and transaction submission. */
     val rpc: RpcApi,
-    /** MWA wallet adapter for signing and sending. */
+    /** MWA wallet adapter for connect / sign / send. */
     val wallet: MwaWalletAdapter,
-    /** Transaction execution pipeline with retry, simulation, and confirmation. */
+    /** Transaction execution pipeline: blockhash, simulation, retry, confirmation. */
     val txEngine: TxEngine,
     /** Pre-wired session that routes signing through the wallet adapter. */
-    val session: WalletSession
+    val session: WalletSession,
+    /** WebSocket subscription engine for real-time account and signature events. */
+    val realtime: RealtimeEngine,
+    /** Digital Asset Standard query layer (optional; requires a DAS-compatible endpoint). */
+    val das: ArtemisDas?,
+    /** High-level NFT/marketplace helpers. */
+    val marketplace: MarketplaceEngine
 ) {
     companion object {
+
         /**
          * Create a fully-wired Artemis mobile stack.
          *
-         * @param activity The Activity used for MWA wallet association
-         * @param rpcUrl Solana JSON-RPC endpoint
-         * @param identityUri Your app's identity URI (shown in wallet approval)
-         * @param iconPath Path to your app icon (relative to identityUri)
-         * @param identityName Human-readable app name (shown in wallet approval)
-         * @param chain Solana chain identifier (default: mainnet)
+         * @param activity      The Activity used for MWA wallet association
+         * @param identityUri   Your app's identity URI (shown in wallet approval dialog)
+         * @param iconPath      Path or full URL to your app icon
+         * @param identityName  Human-readable app name (shown in wallet approval dialog)
+         * @param rpcUrl        Solana JSON-RPC HTTP endpoint
+         * @param wsUrl         Solana WebSocket endpoint (defaults to wss based on rpcUrl)
+         * @param dasUrl        DAS-compatible RPC URL for NFT queries (null = no DAS)
+         * @param chain         Solana chain identifier (default: mainnet)
          */
         fun create(
             activity: Activity,
@@ -55,6 +79,8 @@ class ArtemisMobile private constructor(
             iconPath: String,
             identityName: String,
             rpcUrl: String = "https://api.mainnet-beta.solana.com",
+            wsUrl: String = rpcUrl.replace("https://", "wss://").replace("http://", "ws://"),
+            dasUrl: String? = null,
             chain: String = "solana:mainnet"
         ): ArtemisMobile {
             val client = JsonRpcClient(rpcUrl)
@@ -68,7 +94,11 @@ class ArtemisMobile private constructor(
                 chain = chain
             )
             val session = WalletSession.fromAdapter(wallet, txEngine)
-            return ArtemisMobile(rpc, wallet, txEngine, session)
+            val realtime = RealtimeEngine(endpoints = listOf(wsUrl))
+            val das: ArtemisDas? = dasUrl?.let { HeliusDas(it) }
+            val marketplace = MarketplaceEngine(rpc, txEngine, das)
+            return ArtemisMobile(rpc, wallet, txEngine, session, realtime, das, marketplace)
         }
     }
 }
+
