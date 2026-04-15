@@ -1,6 +1,6 @@
 # artemis-streaming - Zero-Copy Account Streaming
 
-## 🌟 First Zero-Copy Data Streaming for Mobile Blockchain
+## First Zero-Copy Data Streaming for Mobile Blockchain
 
 Ultra-efficient account data streaming using memory-mapped buffers and zero-copy deserialization. Critical for mobile devices where memory and CPU are limited.
 
@@ -10,19 +10,19 @@ Ultra-efficient account data streaming using memory-mapped buffers and zero-copy
 
 `artemis-streaming` provides a zero-copy approach to handling Solana account data on mobile devices:
 
-- ✅ **Zero-copy deserialization** - No memory allocation for reads
-- ✅ **Memory-mapped buffers** - Direct kernel memory access
-- ✅ **Streaming windows** - Process data larger than RAM
-- ✅ **Reactive subscriptions** - Kotlin Flow integration
-- ✅ **Automatic reconnection** - Resilient WebSocket management
-- ✅ **Bandwidth optimization** - Delta updates only
+- **Zero-copy deserialization** - No memory allocation for reads
+- **Memory-mapped buffers** - Direct kernel memory access
+- **Streaming windows** - Process data larger than RAM
+- **Reactive subscriptions** - Kotlin Flow integration
+- **Automatic reconnection** - Resilient WebSocket management
+- **Bandwidth optimization** - Delta updates only
 
 ---
 
 ## Installation
 
 ```kotlin
-implementation("xyz.selenus:artemis-streaming:2.0.0")
+implementation("xyz.selenus:artemis-streaming:2.2.0")
 ```
 
 ---

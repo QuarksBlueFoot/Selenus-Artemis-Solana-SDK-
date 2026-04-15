@@ -1,5 +1,7 @@
 package com.selenus.artemis.wallet
 
+import com.selenus.artemis.core.ArtemisEvent
+import com.selenus.artemis.core.ArtemisEventBus
 import com.selenus.artemis.runtime.Pubkey
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -53,7 +55,15 @@ interface WalletEvents {
  *                  Called only when no valid session exists.
  */
 class WalletSessionManager(
-    private val connector: suspend () -> WalletSession
+    private val connector: suspend () -> WalletSession,
+    /**
+     * When true (the default), session lifecycle transitions are mirrored to
+     * [ArtemisEventBus] so the framework-level event stream reflects wallet state.
+     * Set to false for unit tests that care only about direct callbacks.
+     */
+    private val publishToBus: Boolean = true,
+    /** Human-readable wallet label included in [ArtemisEvent.Wallet.Connected]. */
+    private val walletName: String? = null
 ) : WalletEvents {
 
     private val mutex = Mutex()
@@ -99,21 +109,23 @@ class WalletSessionManager(
     /**
      * Invalidate the current session without triggering a reconnect.
      * The next call to [get] or [withWallet] will establish a new connection.
-     * Fires [onSessionExpired].
+     * Fires [onSessionExpired] and publishes [ArtemisEvent.Wallet.SessionExpired].
      */
     suspend fun invalidate() = mutex.withLock {
         currentSession = null
         sessionExpiredCallback?.invoke()
+        if (publishToBus) ArtemisEventBus.emit(ArtemisEvent.Wallet.SessionExpired())
     }
 
     /**
      * Disconnect the current session and clear all state.
-     * Fires [onDisconnect].
+     * Fires [onDisconnect] and publishes [ArtemisEvent.Wallet.Disconnected].
      */
     suspend fun disconnect() = mutex.withLock {
         currentSession = null
         lastPublicKey = null
         disconnectCallback?.invoke()
+        if (publishToBus) ArtemisEventBus.emit(ArtemisEvent.Wallet.Disconnected(reason = "user"))
     }
 
     /**
@@ -168,6 +180,14 @@ class WalletSessionManager(
         val session = connector()
         updatePublicKey(session)
         currentSession = session
+        if (publishToBus) {
+            val pk = runCatching { session.publicKey.toBase58() }.getOrNull()
+            if (pk != null) {
+                ArtemisEventBus.emit(
+                    ArtemisEvent.Wallet.Connected(publicKey = pk, walletName = walletName)
+                )
+            }
+        }
         return session
     }
 
@@ -180,6 +200,14 @@ class WalletSessionManager(
         val prev = lastPublicKey
         if (prev != null && prev != newKey) {
             accountChangedCallback?.invoke(newKey)
+            if (publishToBus) {
+                ArtemisEventBus.emit(
+                    ArtemisEvent.Wallet.AccountChanged(
+                        previousKey = runCatching { prev.toBase58() }.getOrNull(),
+                        currentKey = runCatching { newKey.toBase58() }.getOrNull() ?: ""
+                    )
+                )
+            }
         }
         lastPublicKey = newKey
     }

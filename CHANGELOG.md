@@ -1,5 +1,106 @@
 # Changelog
 
+## Unreleased
+
+Production hardening pass. Closes the remaining reliability gaps from the v68 stack: explicit websocket state machine, DAS failover, standalone ATA handling, and a single framework event surface across every subsystem.
+
+### Added
+
+#### `ConnectionState` and observable transport state (`artemis-ws`)
+
+Five-state sealed class at [foundation/artemis-ws/src/commonMain/kotlin/com/selenus/artemis/ws/ConnectionState.kt](foundation/artemis-ws/src/commonMain/kotlin/com/selenus/artemis/ws/ConnectionState.kt): `Idle`, `Connecting`, `Connected`, `Reconnecting`, `Closed`. Every state carries a monotonic `epoch` so observers can tell a fresh connect from a reconnect that landed back on `Connected`.
+
+`RealtimeEngine` now exposes `state: StateFlow<ConnectionState>` and emits transitions on `connect()`, `reconnect()`, `close()`, and from the underlying transport events.
+
+```kotlin
+artemis.realtime.state
+    .onEach { state ->
+        when (state) {
+            is ConnectionState.Connected     -> hideOfflineBanner()
+            is ConnectionState.Reconnecting  -> showBanner("reconnecting")
+            is ConnectionState.Closed        -> showBanner("offline")
+            else -> Unit
+        }
+    }
+    .launchIn(scope)
+```
+
+#### `RpcFallbackDas` and `CompositeDas` (`artemis-cnft`)
+
+DAS resilience layer for production apps that cannot tolerate Helius downtime.
+
+`RpcFallbackDas` at [ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/das/RpcFallbackDas.kt](ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/das/RpcFallbackDas.kt) synthesizes the same `DigitalAsset` view from vanilla RPC: `getTokenAccountsByOwner` filtered to NFT semantics (amount == 1, decimals == 0), Metaplex metadata PDA derivation, `getAccountInfo`, and Borsh-decoded metadata.
+
+`CompositeDas` at [ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/das/CompositeDas.kt](ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/das/CompositeDas.kt) routes every query to the primary first, falls back on failure, and applies a 30-second cooldown so a burst of calls does not pay the primary timeout repeatedly. Emits `ArtemisEvent.Das.ProviderFailover` for telemetry.
+
+```kotlin
+val das: ArtemisDas = CompositeDas(
+    primary  = HeliusDas(rpcUrl = "https://mainnet.helius-rpc.com/?api-key=$KEY"),
+    fallback = RpcFallbackDas(rpc)
+)
+```
+
+#### `AtaEnsurer` standalone utility (`artemis-cnft`)
+
+Idempotent associated token account resolution and creation at [ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/AtaEnsurer.kt](ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/AtaEnsurer.kt).
+
+`resolve()` returns the destination ATA address plus a create instruction when the account does not exist on-chain. `resolveBatch()` does N targets in a single `getMultipleAccounts` call. Positive and negative caches keep a 10-second TTL so back-to-back transfers do not re-query. Token-2022 is supported via the `tokenProgram` parameter.
+
+```kotlin
+val ensurer = AtaEnsurer(rpc)
+val resolution = ensurer.resolve(payer = wallet.publicKey, owner = recipient, mint = usdcMint)
+
+val instructions = buildList {
+    resolution.createIx?.let(::add)
+    add(tokenTransfer(source, resolution.ata, amount))
+}
+```
+
+`MarketplacePreflight.validateNftTransfer` now accepts an optional `recipient` parameter and returns `prependIxs` containing the ATA create instruction when needed.
+
+#### `ArtemisEvent` framework event bus (`artemis-core`)
+
+Single `Flow<ArtemisEvent>` for every subsystem at [foundation/artemis-core/src/commonMain/kotlin/com/selenus/artemis/core/ArtemisEvent.kt](foundation/artemis-core/src/commonMain/kotlin/com/selenus/artemis/core/ArtemisEvent.kt).
+
+Sealed class hierarchy: `Wallet.Connected / Disconnected / SessionExpired / AccountChanged`, `Tx.Sent / Confirmed / Failed / Retrying`, `Realtime.StateChanged / AccountUpdated / SignatureObserved`, `Das.ProviderFailover`, plus `Custom` for app-defined events. Every event carries `timestamp` and a stable `Source` enum.
+
+`ArtemisEventBus` exposes filtered streams: `wallet()`, `tx()`, `realtime()`, `das()`, `bySource(source)`. Drop-oldest semantics so the bus never backpressures emitters.
+
+`WalletSessionManager`, `RealtimeEngine`, `TxEngine` (via `TxPipeline`), and `CompositeDas` are wired into the bus automatically. Apps observe one stream:
+
+```kotlin
+ArtemisEventBus.events
+    .onEach { event ->
+        when (event) {
+            is ArtemisEvent.Wallet.Connected      -> analytics.track("wallet_connected", event.publicKey)
+            is ArtemisEvent.Tx.Confirmed          -> refreshBalances()
+            is ArtemisEvent.Realtime.StateChanged -> banner.update(event.stateName)
+            is ArtemisEvent.Das.ProviderFailover  -> log.warn(event.reason)
+            else -> Unit
+        }
+    }
+    .launchIn(scope)
+```
+
+### Changed
+
+- `WalletSessionManager` constructor now takes optional `publishToBus` and `walletName` parameters. Default is `publishToBus = true`. Existing callers compile unchanged.
+- `RealtimeEngine` constructor now takes optional `publishToBus` parameter (default `true`). Existing callers compile unchanged.
+- `MarketplacePreflight.validateNftTransfer` signature extended with optional `recipient`, `payer`, and `tokenProgram` parameters. The old single-argument call site continues to work.
+- `MarketplacePreflight.PreflightResult` now includes `prependIxs: List<Instruction>` (default empty).
+- `artemis-cnft` `commonMain` now depends on `:artemis-programs` and `:artemis-nft-compat` for ATA derivation and metadata parsing.
+
+### Tests
+
+- New `ConnectionStateTest` at [foundation/artemis-ws/src/jvmTest/kotlin/com/selenus/artemis/ws/ConnectionStateTest.kt](foundation/artemis-ws/src/jvmTest/kotlin/com/selenus/artemis/ws/ConnectionStateTest.kt) covers state transitions and epoch ordering.
+- New `ArtemisEventBusTest` at [foundation/artemis-core/src/jvmTest/kotlin/com/selenus/artemis/core/ArtemisEventBusTest.kt](foundation/artemis-core/src/jvmTest/kotlin/com/selenus/artemis/core/ArtemisEventBusTest.kt) covers subsystem stream filtering and emission ordering.
+
+### Verification
+
+Affected modules compile clean and all jvmTest suites pass: `artemis-core`, `artemis-ws`, `artemis-vtx`, `artemis-wallet`, `artemis-cnft`. Downstream modules (`artemis-metaplex`, `artemis-jupiter`, `artemis-actions`, `artemis-anchor`, `artemis-solana-pay`, `artemis-token2022`, `artemis-candy-machine`, `artemis-mplcore`) are binary-compatible and compile unchanged.
+
+---
+
 ## 2.2.0 - April 14, 2026
 
 Adds real-time subscriptions, Digital Asset Standard (DAS) queries, and marketplace primitives directly to the core mobile stack.
@@ -96,10 +197,10 @@ val nfts = artemis.das?.assetsByOwner(artemis.session.publicKey)
 
 ### Kotlin Multiplatform
 
-- **Ring 1 Foundation** — All 9 modules converted to KMP (`kotlin("multiplatform")` with `jvm()` target):
+- **Ring 1 Foundation**: All 9 modules converted to KMP (`kotlin("multiplatform")` with `jvm()` target):
   `artemis-core`, `artemis-rpc`, `artemis-ws`, `artemis-tx`, `artemis-vtx`, `artemis-programs`, `artemis-errors`, `artemis-logging`, `artemis-compute`
-- **Ring 2 Mobile** — `artemis-wallet` converted to KMP; `artemis-wallet-mwa-android` and `artemis-seed-vault` remain Android-only as intended
-- **Ring 3 Ecosystem** — All 12 protocol modules converted to KMP:
+- **Ring 2 Mobile**: `artemis-wallet` converted to KMP; `artemis-wallet-mwa-android` and `artemis-seed-vault` remain Android-only as intended
+- **Ring 3 Ecosystem**: All 12 protocol modules converted to KMP:
   `artemis-discriminators`, `artemis-nft-compat`, `artemis-token2022`, `artemis-mplcore`, `artemis-anchor`, `artemis-solana-pay`, `artemis-candy-machine`, `artemis-candy-machine-presets`, `artemis-cnft`, `artemis-jupiter`, `artemis-actions`, `artemis-metaplex`
 
 ### Breaking Changes
@@ -364,7 +465,7 @@ import com.selenus.artemis.batch.BatchPlan
 
 This patch addresses API issues reported by integrators and improves documentation accuracy.
 
-### 🔧 Fixes
+### Fixes
 
 #### Token-2022 Module (`artemis-token2022`)
 - **Added** `Token2022Tlv` in correct package `com.selenus.artemis.token2022`
@@ -389,7 +490,7 @@ This patch addresses API issues reported by integrators and improves documentati
 - **Added** `MintInfo` for parsed mint accounts
 - **Added** `getAccountInfoParsed()`, `getTokenAccountInfoParsed()`, `getMintInfoParsed()` methods to `RpcApi`
 
-### 📚 Documentation
+### Documentation
 
 - **Updated** README.md with comprehensive API Reference section
   - Correct import paths for all modules
@@ -436,7 +537,7 @@ import com.selenus.artemis.depin.DeviceIdentity  // Contains LocationProof
 
 New privacy and gaming features following Solana Foundation standards and modern Android architecture patterns.
 
-### ⭐ New Features
+### New Features
 
 #### Privacy Module (`artemis-privacy`)
 Cryptographically-sound privacy features for confidential transactions and anonymous operations:
@@ -536,35 +637,33 @@ Production-ready gaming utilities with cryptographic guarantees:
 - **Mobile Wallet Adapter**: Updated to support structured transaction results with commitment tracking
 - **API Consistency**: All wallet methods now follow coroutine-first patterns with Flow
 
-### 🏗️ Architecture
+### Architecture
 
-All new features follow strict standards:
-- ✅ **Solana Foundation Standards**: All cryptographic implementations verified against official specifications
-- ✅ **2026 Android Architecture**: Kotlin Coroutines, Flow, StateFlow, modern concurrency patterns
-- ✅ **Solana Mobile Compatibility**: Drop-in replacement for Solana Mobile SDK
-- ✅ **BIP-39/SLIP-0010 Verified**: Cryptographic primitives match bitcoin/bips and satoshilabs/slips exactly
-- ✅ **Zero New Dependencies**: All features use existing BouncyCastle and SecureCrypto
-- ✅ **Mobile-First**: Optimized for Android performance and battery life
+- **Solana Foundation Standards**: cryptographic implementations verified against official specifications
+- **Modern Android architecture**: Kotlin Coroutines, Flow, StateFlow
+- **Solana Mobile compatibility**: drop-in replacement for the Solana Mobile SDK
+- **BIP-39 / SLIP-0010 verified**: cryptographic primitives match `bitcoin/bips` and `satoshilabs/slips`
+- **Zero new dependencies**: built on existing BouncyCastle and the in-repo SecureCrypto module
+- **Mobile-first**: tuned for Android performance and battery use
 
-### 📊 Verification
+### Verification
 
-- **Full Project Build**: All 297 Gradle tasks pass successfully
-- **Zero Compilation Errors**: Clean build across all 28+ modules
-- **Cryptographic Verification**: 
-  - BIP-39: PBKDF2-HMAC-SHA512 with 2048 iterations ✅
-  - SLIP-0010: Ed25519 derivation with "ed25519 seed" ✅
+- **Full project build**: 297 Gradle tasks pass on a clean checkout
+- **Zero compilation errors** across 28+ modules at the time of release
+- **Cryptographic verification**:
+  - BIP-39: PBKDF2-HMAC-SHA512 with 2048 iterations
+  - SLIP-0010: Ed25519 derivation with the `ed25519 seed` constant
   - All implementations match official specifications
 
-### 📚 Documentation
+### Release docs
 
-- Updated main README with comprehensive feature descriptions
-- Added module-specific documentation for new features
-- Created devnet integration test sample
-- Updated migration guides for Solana Mobile SDK users
+- Main README updated with feature descriptions
+- Module-specific documentation added for new features
+- Devnet integration test sample added
+- Migration guides updated for Solana Mobile SDK users
 
-### 🚀 Tested
+### Targeted use cases
 
-All new features are production-ready and have been designed for:
 - Mobile games (VRF, state proofs, reward distribution)
 - Privacy-focused dApps (confidential transfers, ring signatures)
 - NFT marketplaces (batch minting, dynamic metadata)

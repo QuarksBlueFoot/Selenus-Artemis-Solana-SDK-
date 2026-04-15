@@ -1,5 +1,7 @@
 package com.selenus.artemis.vtx
 
+import com.selenus.artemis.core.ArtemisEvent
+import com.selenus.artemis.core.ArtemisEventBus
 import com.selenus.artemis.rpc.RpcApi
 import com.selenus.artemis.rpc.BlockhashCache
 import com.selenus.artemis.rpc.TransactionSimulationResult
@@ -327,12 +329,22 @@ internal class TxPipeline(private val engine: TxEngine) {
                 prepare(ctx)
                 if (ctx.config.simulate) {
                     val simResult = simulate(ctx)
-                    if (simResult != null) return simResult // abort: simulation failed
+                    if (simResult != null) {
+                        ArtemisEventBus.emit(
+                            ArtemisEvent.Tx.Failed(
+                                signature = null,
+                                message = "simulation failed: ${(simResult as? TxResult.SimulationFailed)?.error ?: "unknown"}"
+                            )
+                        )
+                        return simResult
+                    }
                 }
                 sign(ctx)
                 send(ctx)
+                ArtemisEventBus.emit(ArtemisEvent.Tx.Sent(signature = ctx.signature!!))
                 if (ctx.config.awaitConfirmation) {
                     confirm(ctx)
+                    ArtemisEventBus.emit(ArtemisEvent.Tx.Confirmed(signature = ctx.signature!!))
                 }
                 return TxResult.Success(
                     signature = ctx.signature!!,
@@ -342,6 +354,13 @@ internal class TxPipeline(private val engine: TxEngine) {
             } catch (e: Throwable) {
                 lastError = e
                 if (attempt <= ctx.config.retries && isRetryable(e)) {
+                    ArtemisEventBus.emit(
+                        ArtemisEvent.Tx.Retrying(
+                            signature = ctx.signature,
+                            attempt = attempt,
+                            reason = e.message ?: e::class.simpleName ?: "unknown"
+                        )
+                    )
                     delay(300L * attempt)
                     continue
                 }
@@ -349,6 +368,12 @@ internal class TxPipeline(private val engine: TxEngine) {
             }
         }
 
+        ArtemisEventBus.emit(
+            ArtemisEvent.Tx.Failed(
+                signature = ctx.signature,
+                message = lastError?.message ?: "transaction failed"
+            )
+        )
         return TxResult.SendFailed(
             error = lastError ?: RuntimeException("Transaction failed"),
             attempts = ctx.attempts

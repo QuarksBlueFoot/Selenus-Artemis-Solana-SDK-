@@ -1,14 +1,20 @@
 package com.selenus.artemis.ws
 
+import com.selenus.artemis.core.ArtemisEvent
+import com.selenus.artemis.core.ArtemisEventBus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.Closeable
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * RealtimeEngine — high-level Solana account and program subscription manager.
@@ -40,13 +46,37 @@ import java.io.Closeable
  */
 class RealtimeEngine(
     private val endpoints: List<String>,
-    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+    /** Mirror state transitions and account/signature notifications to [ArtemisEventBus]. */
+    private val publishToBus: Boolean = true
 ) : Closeable {
 
     private var client: SolanaWsClient? = null
 
     // Endpoint rotation index — incremented by reconnect() for failover.
     private var endpointIndex = 0
+
+    // ─── ConnectionState surface ──────────────────────────────────────────────
+
+    private val epochCounter = AtomicLong(0)
+    private val _state = MutableStateFlow<ConnectionState>(ConnectionState.Idle())
+
+    /**
+     * Observable transport state. Collectors receive every state transition
+     * deterministically, including reconnect attempts and endpoint rotations.
+     *
+     * ```kotlin
+     * realtime.state.onEach { s ->
+     *     when (s) {
+     *         is ConnectionState.Connected -> hideBanner()
+     *         is ConnectionState.Reconnecting -> showBanner("reconnecting…")
+     *         is ConnectionState.Closed -> showBanner("offline")
+     *         else -> Unit
+     *     }
+     * }.launchIn(uiScope)
+     * ```
+     */
+    val state: StateFlow<ConnectionState> = _state.asStateFlow()
 
     // Parsed event callbacks keyed by pubkey / signature.
     private val accountCallbacks = mutableMapOf<String, (AccountNotification) -> Unit>()
@@ -87,6 +117,13 @@ class RealtimeEngine(
      */
     fun connect() {
         val url = currentEndpointUrl()
+        transitionTo(
+            ConnectionState.Connecting(
+                endpoint = url,
+                epoch = epochCounter.incrementAndGet(),
+                atMs = System.currentTimeMillis()
+            )
+        )
         val wsClient = SolanaWsClient(url = url, scope = scope)
         client = wsClient
         attachEventDispatcher(wsClient)
@@ -105,6 +142,16 @@ class RealtimeEngine(
         client = null
         endpointIndex = (endpointIndex + 1) % endpoints.size.coerceAtLeast(1)
         val url = currentEndpointUrl()
+        transitionTo(
+            ConnectionState.Reconnecting(
+                endpoint = url,
+                attempt = 1,
+                nextDelayMs = 0,
+                reason = "endpoint rotation",
+                epoch = epochCounter.incrementAndGet(),
+                atMs = System.currentTimeMillis()
+            )
+        )
         val wsClient = SolanaWsClient(url = url, scope = scope)
         client = wsClient
         attachEventDispatcher(wsClient)
@@ -207,6 +254,13 @@ class RealtimeEngine(
         signatureSpecs.clear()
         accountHandles.clear()
         signatureHandles.clear()
+        transitionTo(
+            ConnectionState.Closed(
+                reason = "close() called",
+                epoch = epochCounter.incrementAndGet(),
+                atMs = System.currentTimeMillis()
+            )
+        )
     }
 
     // ─── internal ────────────────────────────────────────────────────────────
@@ -218,8 +272,80 @@ class RealtimeEngine(
 
     private fun attachEventDispatcher(wsClient: SolanaWsClient) {
         wsClient.events
-            .onEach { event -> dispatchEvent(event) }
+            .onEach { event ->
+                updateStateFromTransport(event)
+                dispatchEvent(event)
+            }
             .launchIn(scope)
+    }
+
+    private fun updateStateFromTransport(event: WsEvent) {
+        val now = System.currentTimeMillis()
+        val url = currentEndpointUrl()
+        when (event) {
+            is WsEvent.Connected -> transitionTo(
+                ConnectionState.Connected(
+                    endpoint = url,
+                    subscriptions = accountSpecs.size + signatureSpecs.size,
+                    epoch = epochCounter.incrementAndGet(),
+                    atMs = now
+                )
+            )
+            is WsEvent.Disconnected -> transitionTo(
+                ConnectionState.Reconnecting(
+                    endpoint = url,
+                    attempt = 0,
+                    nextDelayMs = 0,
+                    reason = event.reason,
+                    epoch = epochCounter.incrementAndGet(),
+                    atMs = now
+                )
+            )
+            is WsEvent.Reconnecting -> transitionTo(
+                ConnectionState.Reconnecting(
+                    endpoint = url,
+                    attempt = event.attempt,
+                    nextDelayMs = event.inMs,
+                    reason = "transport retry",
+                    epoch = epochCounter.incrementAndGet(),
+                    atMs = now
+                )
+            )
+            is WsEvent.GaveUp -> transitionTo(
+                ConnectionState.Closed(
+                    reason = "reconnect budget exhausted",
+                    epoch = epochCounter.incrementAndGet(),
+                    atMs = now
+                )
+            )
+            else -> Unit
+        }
+    }
+
+    private fun transitionTo(next: ConnectionState) {
+        _state.value = next
+        if (publishToBus) {
+            val endpoint = when (next) {
+                is ConnectionState.Connected -> next.endpoint
+                is ConnectionState.Connecting -> next.endpoint
+                is ConnectionState.Reconnecting -> next.endpoint
+                else -> null
+            }
+            val label = when (next) {
+                is ConnectionState.Idle -> "Idle"
+                is ConnectionState.Connecting -> "Connecting"
+                is ConnectionState.Connected -> "Connected"
+                is ConnectionState.Reconnecting -> "Reconnecting(attempt=${next.attempt})"
+                is ConnectionState.Closed -> "Closed(${next.reason})"
+            }
+            ArtemisEventBus.emit(
+                ArtemisEvent.Realtime.StateChanged(
+                    stateName = label,
+                    endpoint = endpoint,
+                    epoch = next.epoch
+                )
+            )
+        }
     }
 
     private fun requireConnected(): SolanaWsClient =
@@ -247,6 +373,15 @@ class RealtimeEngine(
                 val pubkey = event.key?.removePrefix("acct:")?.substringBefore(":") ?: return
                 val notification = AccountNotification(pubkey, lamports, data, owner, slot)
                 accountCallbacks[pubkey]?.invoke(notification)
+                if (publishToBus) {
+                    ArtemisEventBus.emit(
+                        ArtemisEvent.Realtime.AccountUpdated(
+                            publicKey = pubkey,
+                            lamports = lamports,
+                            slot = slot
+                        )
+                    )
+                }
             }
             event.method == "signatureNotification" -> {
                 val sig = event.key?.removePrefix("sig:")?.substringBefore(":") ?: return
@@ -255,6 +390,11 @@ class RealtimeEngine(
                 val confirmed = err == null || err.toString() == "null"
                 signatureCallbacks[sig]?.invoke(confirmed)
                 signatureCallbacks.remove(sig) // auto-remove after first notification
+                if (publishToBus) {
+                    ArtemisEventBus.emit(
+                        ArtemisEvent.Realtime.SignatureObserved(signature = sig, confirmed = confirmed)
+                    )
+                }
             }
         }
     }

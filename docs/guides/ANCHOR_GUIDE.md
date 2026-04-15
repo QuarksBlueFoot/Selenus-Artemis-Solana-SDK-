@@ -1,6 +1,6 @@
 # artemis-anchor - Native Anchor Client Generator
 
-## 🌟 First Compile-Time Anchor Client Generator for Kotlin
+## First Compile-Time Anchor Client Generator for Kotlin
 
 Generate type-safe Kotlin clients from Anchor IDL files at compile time. Full instruction builders, account deserializers, and event parsers with zero runtime reflection.
 
@@ -10,12 +10,12 @@ Generate type-safe Kotlin clients from Anchor IDL files at compile time. Full in
 
 `artemis-anchor` provides a KSP (Kotlin Symbol Processing) plugin that generates complete program clients from Anchor IDL files, enabling:
 
-- ✅ **Compile-time code generation** from IDL
-- ✅ **Type-safe instruction builders** with named parameters
-- ✅ **Account deserializers** with proper discriminator handling
-- ✅ **Event parsing** for transaction logs
-- ✅ **PDA derivation helpers** with seed building
-- ✅ **Error code mapping** for friendly error messages
+- **Compile-time code generation** from IDL
+- **Type-safe instruction builders** with named parameters
+- **Account deserializers** with proper discriminator handling
+- **Event parsing** for transaction logs
+- **PDA derivation helpers** with seed building
+- **Error code mapping** for friendly error messages
 
 ---
 
@@ -29,8 +29,8 @@ plugins {
 }
 
 dependencies {
-    implementation("xyz.selenus:artemis-anchor:2.0.0")
-    ksp("xyz.selenus:artemis-anchor-processor:2.0.0")
+    implementation("xyz.selenus:artemis-anchor:2.2.0")
+    ksp("xyz.selenus:artemis-anchor-processor:2.2.0")
 }
 
 // Configure IDL source directory

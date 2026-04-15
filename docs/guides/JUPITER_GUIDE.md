@@ -1,6 +1,6 @@
 # artemis-jupiter - Native Jupiter DEX Integration
 
-## 🌟 First Native Kotlin Jupiter SDK for Mobile
+## First Native Kotlin Jupiter SDK for Mobile
 
 Complete Jupiter DEX integration with quote fetching, route building, and swap execution. Perfect for mobile wallets and DeFi applications.
 
@@ -10,19 +10,19 @@ Complete Jupiter DEX integration with quote fetching, route building, and swap e
 
 `artemis-jupiter` provides native Kotlin/JVM access to Jupiter's swap aggregator, enabling:
 
-- ✅ **Quote fetching** with optimal routes
-- ✅ **Slippage protection** and price impact warnings
-- ✅ **Route visualization** for user transparency
-- ✅ **Dynamic compute units** based on route complexity
-- ✅ **Priority fee integration** for fast execution
-- ✅ **Streaming price updates** for real-time UX
+- **Quote fetching** with optimal routes
+- **Slippage protection** and price impact warnings
+- **Route visualization** for user transparency
+- **Dynamic compute units** based on route complexity
+- **Priority fee integration** for fast execution
+- **Streaming price updates** for real-time UX
 
 ---
 
 ## Installation
 
 ```kotlin
-implementation("xyz.selenus:artemis-jupiter:2.0.0")
+implementation("xyz.selenus:artemis-jupiter:2.2.0")
 ```
 
 ---

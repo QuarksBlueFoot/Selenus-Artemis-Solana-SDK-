@@ -15,6 +15,8 @@ kotlin {
       implementation(project(":artemis-rpc"))
       implementation(project(":artemis-vtx"))
       implementation(project(":artemis-wallet"))
+      implementation(project(":artemis-programs"))
+      implementation(project(":artemis-nft-compat"))
       implementation(libs.kotlinx.serialization.json)
       implementation(libs.kotlinx.coroutines.core)
     }

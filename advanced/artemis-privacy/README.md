@@ -2,16 +2,16 @@
 
 **Production-ready privacy features for Solana transactions**
 
-> ⭐ **New in v1.5.0**: Confidential Transfers, Ring Signatures, and Mixing Pools
+> **New in v1.5.0**: Confidential Transfers, Ring Signatures, and Mixing Pools
 
 Artemis Privacy brings privacy-preserving cryptography to Solana mobile applications:
-- 🔒 **Confidential Transfers**: Hide transaction amounts using Pedersen commitments
+- **Confidential Transfers**: Hide transaction amounts using Pedersen commitments
 - 👥 **Ring Signatures**: Anonymous transactions with unlinkable signatures
 - 🌊 **Mixing Pools**: CoinJoin-style transaction mixing for privacy
 
 ## Features
 
-### 🔒 Confidential Transfers
+### Confidential Transfers
 
 Hide transaction amounts while proving validity using homomorphic encryption.
 
@@ -221,19 +221,19 @@ All implementations use **BouncyCastle** (already in Artemis Core dependencies):
 
 ### Standards Compliance
 
-✅ Compatible with Solana Foundation privacy proposals  
-✅ Follows Zcash Sapling range proof specification  
-✅ Ring signatures based on CryptoNote/Monero SAG  
-✅ Mixing pools follow CoinJoin best practices  
+Compatible with Solana Foundation privacy proposals  
+Follows Zcash Sapling range proof specification  
+Ring signatures based on CryptoNote/Monero SAG  
+Mixing pools follow CoinJoin best practices  
 
 ## Architecture
 
 All features follow modern 2026 Android patterns:
-- ✅ Kotlin Coroutines for crypto operations
-- ✅ Flow for pool coordination
-- ✅ StateFlow for real-time pool status
-- ✅ Zero additional dependencies (uses BouncyCastle)
-- ✅ Production-ready for mobile wallets
+- Kotlin Coroutines for crypto operations
+- Flow for pool coordination
+- StateFlow for real-time pool status
+- Zero additional dependencies (uses BouncyCastle)
+- Production-ready for mobile wallets
 
 ## License
 

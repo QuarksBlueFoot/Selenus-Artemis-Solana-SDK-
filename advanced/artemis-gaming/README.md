@@ -2,13 +2,13 @@
 
 **Production-ready Solana gaming utilities for Kotlin and Android**
 
-> ⭐ **v1.5.0**: Now includes Verifiable Randomness, Game State Proofs, and Reward Distribution
+> **v1.5.0**: Now includes Verifiable Randomness, Game State Proofs, and Reward Distribution
 
 Artemis Gaming provides everything modern mobile games need for Solana integration:
 - 🎲 **Verifiable Randomness**: Provably fair RNG with VRF and commit-reveal
-- 🏆 **Reward Distribution**: 4 payout strategies with Merkle claims
-- 🎮 **Game State Proofs**: Cryptographic state verification and fraud proofs
-- ⚡ **ArcanaFlow**: Low-latency frame batching for real-time games
+- **Reward Distribution**: 4 payout strategies with Merkle claims
+- **Game State Proofs**: Cryptographic state verification and fraud proofs
+- **ArcanaFlow**: Low-latency frame batching for real-time games
 - 💰 **Priority Fee Oracle**: Adaptive compute pricing
 - 🔑 **Session Keys**: Ephemeral keys for high-frequency actions
 
@@ -60,7 +60,7 @@ val finalSeed = beacon.finalize()  // Deterministic, fair seed
 
 **Use cases**: Card shuffling, loot boxes, matchmaking, battle outcomes
 
-### 🏆 Reward Distribution
+### Reward Distribution
 
 Flexible payout strategies with gas-efficient Merkle claims.
 
@@ -106,7 +106,7 @@ val isValid = rewardTree.verifyClaim(player1Pubkey, payouts2[0], proof)
 
 **Use cases**: Tournaments, battle royales, leaderboards, esports payouts
 
-### 🎮 Game State Proofs
+### Game State Proofs
 
 Cryptographic verification of game state transitions for off-chain gaming.
 
@@ -245,11 +245,11 @@ val txPlan = composer.compose(
 ## Architecture
 
 All gaming features follow modern 2026 Android patterns:
-- ✅ Kotlin Coroutines for async operations
-- ✅ Flow for reactive streams
-- ✅ Mobile-optimized (no heavy cryptographic operations)
-- ✅ Production-tested for real-time games
-- ✅ Compatible with Jetpack Compose
+- Kotlin Coroutines for async operations
+- Flow for reactive streams
+- Mobile-optimized (no heavy cryptographic operations)
+- Production-tested for real-time games
+- Compatible with Jetpack Compose
 
 ## License
 

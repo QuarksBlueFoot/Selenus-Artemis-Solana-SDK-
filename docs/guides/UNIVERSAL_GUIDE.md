@@ -1,6 +1,6 @@
 # artemis-universal - Universal Program Client
 
-## 🌟 First Dynamic Client Generator for Solana Programs
+## First Dynamic Client Generator for Solana Programs
 
 Call any Solana program by just providing its address. No IDL files, no code generation, no recompilation. Perfect for exploratory tools, debuggers, and dynamic integrations.
 
@@ -10,19 +10,19 @@ Call any Solana program by just providing its address. No IDL files, no code gen
 
 `artemis-universal` creates fully-typed program clients at runtime by fetching and analyzing on-chain IDL accounts. This enables:
 
-- ✅ Call **any** Anchor program dynamically
-- ✅ No code generation or recompilation needed
-- ✅ Perfect for exploratory and debugging tools
-- ✅ Type-safe instruction and account building
-- ✅ Automatic discriminator handling
-- ✅ IDL caching for performance
+- Call **any** Anchor program dynamically
+- No code generation or recompilation needed
+- Perfect for exploratory and debugging tools
+- Type-safe instruction and account building
+- Automatic discriminator handling
+- IDL caching for performance
 
 ---
 
 ## Installation
 
 ```kotlin
-implementation("xyz.selenus:artemis-universal:2.0.0")
+implementation("xyz.selenus:artemis-universal:2.2.0")
 ```
 
 ---

@@ -1,773 +1,314 @@
-# Artemis SDK - Mobile App Development Guide
+# Mobile app guide
 
-## Building Solana Mobile Apps with Artemis v2.1.1
+End-to-end walkthrough for building an Android Solana app on Artemis 2.2.0. The guide assumes you already know Kotlin, Coroutines, and Compose. Every code sample maps to a real API in the repo with a file path you can click into.
 
-This guide explains how to use Artemis SDK's v2.0 features in your Android/iOS mobile applications.
+For the architectural ring map, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For migration notes from the official Solana Mobile SDK, see [REPLACE_SOLANA_MOBILE_STACK.md](REPLACE_SOLANA_MOBILE_STACK.md).
 
----
-
-## 📱 Quick Start
-
-### 1. Add Dependencies
+## 1. Add dependencies
 
 ```kotlin
 // build.gradle.kts
 dependencies {
-    // Core SDK
-    implementation("xyz.selenus:artemis-core:2.1.1")
-    implementation("xyz.selenus:artemis-rpc:2.1.1")
-    implementation("xyz.selenus:artemis-tx:2.1.1")
-    
-    // Mobile Wallet Adapter
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.1.1")
-    
-    // v2.0 Features
-    implementation("xyz.selenus:artemis-anchor:2.1.1")     // Anchor programs
-    implementation("xyz.selenus:artemis-jupiter:2.1.1")    // DEX swaps
-    implementation("xyz.selenus:artemis-actions:2.1.1")    // Solana Actions/Blinks
-    implementation("xyz.selenus:artemis-universal:2.1.1")  // Any program
-    implementation("xyz.selenus:artemis-nlp:2.1.1")        // Natural language
-    implementation("xyz.selenus:artemis-streaming:2.1.1")  // Real-time updates
+    // Foundation
+    implementation("xyz.selenus:artemis-core:2.2.0")
+    implementation("xyz.selenus:artemis-rpc:2.2.0")
+    implementation("xyz.selenus:artemis-ws:2.2.0")
+    implementation("xyz.selenus:artemis-tx:2.2.0")
+    implementation("xyz.selenus:artemis-vtx:2.2.0")
+    implementation("xyz.selenus:artemis-programs:2.2.0")
+
+    // Mobile
+    implementation("xyz.selenus:artemis-wallet:2.2.0")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.2.0")
+    implementation("xyz.selenus:artemis-seed-vault:2.2.0") // Saga only
+
+    // NFT, DAS, marketplace
+    implementation("xyz.selenus:artemis-cnft:2.2.0")
+
+    // Optional
+    implementation("xyz.selenus:artemis-jupiter:2.2.0")
+    implementation("xyz.selenus:artemis-actions:2.2.0")
+    implementation("xyz.selenus:artemis-anchor:2.2.0")
+    implementation("xyz.selenus:artemis-metaplex:2.2.0")
 }
 ```
 
-### 2. Initialize the SDK
+The current published version is `2.2.0`. The `version` field in [../gradle.properties](../gradle.properties) is the source of truth.
+
+## 2. Initialize the stack with one call
+
+`ArtemisMobile.create()` builds the entire mobile stack: RPC client, MWA wallet adapter, transaction engine, session manager, websocket realtime, optional DAS, and marketplace. Source at [../mobile/artemis-wallet-mwa-android/src/main/kotlin/com/selenus/artemis/wallet/mwa/ArtemisMobile.kt](../mobile/artemis-wallet-mwa-android/src/main/kotlin/com/selenus/artemis/wallet/mwa/ArtemisMobile.kt).
 
 ```kotlin
-class MyApplication : Application() {
-    
-    lateinit var artemis: ArtemisClient
-    
-    override fun onCreate() {
-        super.onCreate()
-        
-        artemis = ArtemisClient.builder()
-            .endpoint(Cluster.MAINNET_BETA)
-            .commitment(Commitment.CONFIRMED)
-            .build()
-    }
-}
-```
+class MyActivity : ComponentActivity() {
 
----
+    private lateinit var artemis: ArtemisMobile
 
-## 🎯 Feature 1: Natural Language Transactions (artemis-nlp)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-**A deterministic, pattern-matching transaction builder that works offline.**
-
-### Use Case: Chat-Based Wallet Interface
-
-Build a wallet where users type commands like "send 1 SOL to alice.sol" instead of filling complex forms.
-
-```kotlin
-class ChatWalletViewModel(
-    private val nlpBuilder: NaturalLanguageBuilder,
-    private val wallet: WalletAdapter
-) : ViewModel() {
-    
-    private val _chatState = MutableStateFlow<ChatState>(ChatState.Idle)
-    val chatState = _chatState.asStateFlow()
-    
-    fun processMessage(userInput: String) = viewModelScope.launch {
-        _chatState.value = ChatState.Processing
-        
-        when (val result = nlpBuilder.parse(userInput)) {
-            is ParseResult.Success -> {
-                // Show confirmation to user
-                _chatState.value = ChatState.Confirmation(
-                    summary = result.intent.summary,
-                    details = result.intent.details,
-                    confidence = result.confidence,
-                    onConfirm = { executeTransaction(result) },
-                    onCancel = { _chatState.value = ChatState.Idle }
-                )
-            }
-            
-            is ParseResult.Ambiguous -> {
-                // Let user choose
-                _chatState.value = ChatState.ChooseIntent(
-                    options = listOf(result.primary) + result.alternatives,
-                    onSelect = { selected -> confirmIntent(selected) }
-                )
-            }
-            
-            is ParseResult.NeedsInfo -> {
-                // Ask for missing information
-                _chatState.value = ChatState.AskForInfo(
-                    question = "What's the ${result.missing.first()}?",
-                    hint = result.suggestion
-                )
-            }
-            
-            is ParseResult.Unknown -> {
-                _chatState.value = ChatState.Suggestions(
-                    message = "I didn't understand that. Try:",
-                    suggestions = result.suggestions
-                )
-            }
-        }
-    }
-    
-    private suspend fun executeTransaction(result: ParseResult.Success) {
-        val transaction = result.builder.buildTransaction()
-        val signedTx = wallet.signTransaction(transaction)
-        val signature = artemis.rpc.sendTransaction(signedTx)
-        
-        _chatState.value = ChatState.Success(
-            message = "Transaction sent!",
-            signature = signature
+        artemis = ArtemisMobile.create(
+            activity     = this,
+            identityUri  = Uri.parse("https://myapp.example.com"),
+            iconPath     = "https://myapp.example.com/favicon.ico", // absolute HTTPS
+            identityName = "My App",
+            rpcUrl       = "https://mainnet.helius-rpc.com/?api-key=$KEY",
+            wsUrl        = "wss://atlas-mainnet.helius-rpc.com/?api-key=$KEY",
+            dasUrl       = "https://mainnet.helius-rpc.com/?api-key=$KEY"
         )
+
+        setContent { MyApp(artemis) }
     }
 }
 ```
 
-### Composable UI
+The `dasUrl` parameter is optional. Pass `null` and `artemis.das` will be `null`. The marketplace and DAS query helpers degrade gracefully when DAS is unavailable.
+
+The constructor accepts a `chain` parameter that defaults to `"solana:mainnet"`. Pass `"solana:devnet"` for devnet builds.
+
+## 3. Connect a wallet
+
+`artemis.wallet` is the raw `MwaWalletAdapter`. `artemis.sessionManager` wraps it with lazy connect, auth token caching, and lifecycle callbacks. Source: [../mobile/artemis-wallet/src/commonMain/kotlin/com/selenus/artemis/wallet/WalletSessionManager.kt](../mobile/artemis-wallet/src/commonMain/kotlin/com/selenus/artemis/wallet/WalletSessionManager.kt).
 
 ```kotlin
-@Composable
-fun ChatWalletScreen(viewModel: ChatWalletViewModel) {
-    val state by viewModel.chatState.collectAsState()
-    var input by remember { mutableStateOf("") }
-    
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Chat history
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            // ... display chat messages
-        }
-        
-        // Suggestions
-        LazyRow {
-            items(getSuggestions()) { suggestion ->
-                SuggestionChip(
-                    text = suggestion,
-                    onClick = { input = suggestion }
-                )
-            }
-        }
-        
-        // Input
-        TextField(
-            value = input,
-            onValueChange = { input = it },
-            placeholder = { Text("Try: Send 1 SOL to alice.sol") },
-            trailingIcon = {
-                IconButton(onClick = { viewModel.processMessage(input) }) {
-                    Icon(Icons.Default.Send, "Send")
-                }
-            }
-        )
-    }
-}
+// React to lifecycle events
+artemis.sessionManager.onDisconnect { showConnectButton() }
+artemis.sessionManager.onAccountChanged { newKey -> refreshUi(newKey) }
+artemis.sessionManager.onSessionExpired { Log.i("Wallet", "session expired, reconnecting next call") }
 
-fun getSuggestions() = listOf(
-    "Send 1 SOL to...",
-    "Swap 100 USDC for SOL",
-    "Stake 10 SOL",
-    "Check my balance"
+// Trigger a connect (or use withWallet { } to connect lazily on first use)
+viewModelScope.launch {
+    val session = artemis.sessionManager.get()
+    val pubkey  = session.publicKey
+}
+```
+
+The `withWallet { }` helper is the cleanest pattern for one-shot operations. It connects on first call, retries once on session expiration, and propagates the result.
+
+```kotlin
+val signature = artemis.sessionManager.withWallet { session ->
+    session.sendSol(recipient, 1_000_000_000L)
+}
+```
+
+## 4. Send a transaction
+
+`WalletSession` exposes `send(ix)`, `sendBatch(ixs)`, `sendSol`, and `sendToken`. Each routes through the `TxEngine` pipeline so blockhash, simulation, signing, sending, and confirmation are handled automatically. Source: [../mobile/artemis-wallet/src/commonMain/kotlin/com/selenus/artemis/wallet/WalletSession.kt](../mobile/artemis-wallet/src/commonMain/kotlin/com/selenus/artemis/wallet/WalletSession.kt).
+
+```kotlin
+// SOL transfer
+val result = artemis.session.sendSol(recipient, 1_000_000_000L)
+
+// Single instruction
+val ix     = SystemProgram.transfer(artemis.session.publicKey, recipient, 500_000_000L)
+val result = artemis.session.send(ix)
+
+// Multiple instructions in one transaction
+val result = artemis.session.sendBatch(listOf(ix1, ix2, ix3))
+```
+
+For lower-level control, drop down to the engine:
+
+```kotlin
+val engine = artemis.txEngine
+val result = engine.execute(
+    instructions = listOf(transferIx),
+    feePayer     = artemis.session.publicKey,
+    externalSign = { unsignedTx -> artemis.wallet.signMessage(unsignedTx, SignTxRequest("signTransaction")) },
+    config       = TxConfig(retries = 3, simulate = true, computeUnitPrice = 1000L)
 )
 ```
 
----
+The pipeline emits `ArtemisEvent.Tx.Sent / Confirmed / Failed / Retrying` on the framework event bus on the way through. Source: [../foundation/artemis-vtx/src/commonMain/kotlin/com/selenus/artemis/vtx/TxEngine.kt](../foundation/artemis-vtx/src/commonMain/kotlin/com/selenus/artemis/vtx/TxEngine.kt).
 
-## 🔄 Feature 2: Jupiter DEX Integration (artemis-jupiter)
+## 5. Realtime account subscriptions
 
-**Complete DEX aggregator for the best swap prices.**
-
-### Use Case: Token Swap Screen
+`artemis.realtime` is a `RealtimeEngine` instance pre-wired to your `wsUrl`. Subscriptions survive reconnects and the engine rotates through endpoint failures. Source: [../foundation/artemis-ws/src/jvmMain/kotlin/com/selenus/artemis/ws/RealtimeEngine.kt](../foundation/artemis-ws/src/jvmMain/kotlin/com/selenus/artemis/ws/RealtimeEngine.kt).
 
 ```kotlin
-class SwapViewModel(
-    private val jupiter: JupiterClient,
-    private val wallet: WalletAdapter
-) : ViewModel() {
-    
-    private val _inputToken = MutableStateFlow(USDC)
-    private val _outputToken = MutableStateFlow(SOL)
-    private val _inputAmount = MutableStateFlow(0L)
-    
-    // Live quote updates
-    val quote: StateFlow<QuoteState> = combine(
-        _inputToken, _outputToken, _inputAmount
-    ) { input, output, amount ->
-        if (amount > 0) {
-            QuoteParams(input, output, amount)
-        } else null
-    }
-    .filterNotNull()
-    .debounce(300) // Debounce user input
-    .flatMapLatest { params ->
-        jupiter.streamQuotes(
-            inputMint = params.input.mint,
-            outputMint = params.output.mint,
-            amount = params.amount,
-            slippageBps = 50,
-            interval = 3.seconds
-        )
-    }
-    .map { quote -> 
-        QuoteState.Ready(
-            outputAmount = quote.outAmount,
-            priceImpact = quote.priceImpactPct,
-            route = quote.routePlan.map { it.swapInfo.label },
-            fee = quote.platformFee
-        )
-    }
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), QuoteState.Loading)
-    
-    fun executeSwap() = viewModelScope.launch {
-        val currentQuote = (quote.value as? QuoteState.Ready)?.quote ?: return@launch
-        
-        try {
-            // Build swap transaction
-            val swapResponse = jupiter.swap {
-                quote(currentQuote)
-                userPublicKey(wallet.publicKey)
-                priorityFee(PriorityLevel.MEDIUM)
-                dynamicSlippage(true)
-            }
-            
-            // Sign and send
-            val signedTx = wallet.signTransaction(swapResponse.transaction)
-            val signature = rpc.sendTransaction(signedTx)
-            
-            _swapState.value = SwapState.Success(signature)
-        } catch (e: Exception) {
-            _swapState.value = SwapState.Error(e.message)
-        }
-    }
+artemis.realtime.connect()
+
+val handle = artemis.realtime.subscribeAccount(
+    pubkey     = artemis.session.publicKey.toBase58(),
+    commitment = "confirmed"
+) { info ->
+    Log.d("Realtime", "lamports=${info.lamports} slot=${info.slot}")
 }
+
+// Confirmation watcher (auto-removes after first notification)
+artemis.realtime.subscribeSignature(txSignature) { confirmed ->
+    Log.d("Realtime", "confirmed=$confirmed")
+}
+
+// Unsubscribe
+handle.close()
 ```
 
-### Price Impact Warning
+Bind the typed transport state to a Compose banner:
 
 ```kotlin
 @Composable
-fun PriceImpactWarning(priceImpact: Double) {
-    val severity = when {
-        priceImpact < 0.01 -> Severity.LOW
-        priceImpact < 0.05 -> Severity.MEDIUM
-        else -> Severity.HIGH
-    }
-    
-    if (severity != Severity.LOW) {
-        Card(
-            backgroundColor = severity.color.copy(alpha = 0.1f)
-        ) {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Default.Warning,
-                    tint = severity.color,
-                    contentDescription = null
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "Price impact: ${(priceImpact * 100).format(2)}%",
-                    color = severity.color
-                )
-            }
-        }
+fun ConnectionBanner(realtime: RealtimeEngine) {
+    val state by realtime.state.collectAsState()
+
+    when (val s = state) {
+        is ConnectionState.Connected     -> Spacer(Modifier.height(0.dp))
+        is ConnectionState.Connecting    -> Banner("connecting")
+        is ConnectionState.Reconnecting  -> Banner("reconnecting (attempt ${s.attempt})")
+        is ConnectionState.Closed        -> Banner("offline")
+        is ConnectionState.Idle          -> Spacer(Modifier.height(0.dp))
     }
 }
 ```
 
----
+`ConnectionState` is at [../foundation/artemis-ws/src/commonMain/kotlin/com/selenus/artemis/ws/ConnectionState.kt](../foundation/artemis-ws/src/commonMain/kotlin/com/selenus/artemis/ws/ConnectionState.kt).
 
-## ⚡ Feature 3: Solana Actions/Blinks (artemis-actions)
+## 6. Framework event bus
 
-**Interact with Solana Actions from your mobile app.**
-
-### Use Case: Blink Scanner
+Every subsystem (wallet, tx, realtime, DAS) publishes through one `Flow<ArtemisEvent>`. Bind it once at the app level instead of wiring per-module listeners. Source: [../foundation/artemis-core/src/commonMain/kotlin/com/selenus/artemis/core/ArtemisEvent.kt](../foundation/artemis-core/src/commonMain/kotlin/com/selenus/artemis/core/ArtemisEvent.kt).
 
 ```kotlin
-class BlinkScannerViewModel(
-    private val actionsClient: ActionsClient,
-    private val wallet: WalletAdapter
-) : ViewModel() {
-    
-    fun handleScannedUrl(url: String) = viewModelScope.launch {
-        val urlInfo = actionsClient.parseActionUrl(url)
-        
-        when (urlInfo.type) {
-            ActionUrlType.DIRECT_ACTION,
-            ActionUrlType.BLINK -> {
-                loadAction(urlInfo.actionUrl!!)
-            }
-            ActionUrlType.SOLANA_PAY -> {
-                // Handle Solana Pay
-            }
-            else -> {
-                _state.value = ScanState.NotAnAction
-            }
-        }
-    }
-    
-    private suspend fun loadAction(url: String) {
-        val action = actionsClient.getAction(url)
-        
-        _state.value = ScanState.ActionLoaded(
-            title = action.title,
-            description = action.description,
-            iconUrl = action.icon,
-            buttons = action.links?.actions?.map { linkedAction ->
-                ActionButton(
-                    label = linkedAction.label,
-                    inputs = linkedAction.parameters ?: emptyList(),
-                    onClick = { inputs -> 
-                        executeAction(url, linkedAction, inputs)
-                    }
-                )
-            } ?: listOf(
-                ActionButton(
-                    label = action.label,
-                    onClick = { executeAction(url, null, emptyMap()) }
-                )
-            )
-        )
-    }
-    
-    private suspend fun executeAction(
-        actionUrl: String,
-        linkedAction: LinkedAction?,
-        inputs: Map<String, String>
-    ) {
-        val response = if (linkedAction != null) {
-            actionsClient.executeLinkedAction(action, linkedAction) {
-                account(wallet.publicKey)
-                inputs.forEach { (key, value) -> input(key, value) }
-            }
-        } else {
-            actionsClient.executeAction(actionUrl) {
-                account(wallet.publicKey)
-            }
-        }
-        
-        // Sign and send
-        val signedTx = wallet.signTransaction(response.transaction)
-        val signature = rpc.sendTransaction(signedTx)
-        
-        // Handle action chaining
-        actionsClient.confirmTransaction(response, signature)
-    }
-}
-```
+class AppEventCollector(private val scope: CoroutineScope) {
 
-### Action Card UI
-
-```kotlin
-@Composable
-fun ActionCard(action: ActionGetResponse, onExecute: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AsyncImage(
-                    model = action.icon,
-                    modifier = Modifier.size(48.dp).clip(CircleShape)
-                )
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text(action.title, style = MaterialTheme.typography.h6)
-                    Text(
-                        action.description,
-                        style = MaterialTheme.typography.body2,
-                        maxLines = 2
-                    )
+    fun start() {
+        ArtemisEventBus.events
+            .onEach { event ->
+                when (event) {
+                    is ArtemisEvent.Wallet.Connected      -> analytics.track("wallet_connected", event.publicKey)
+                    is ArtemisEvent.Wallet.Disconnected   -> analytics.track("wallet_disconnected")
+                    is ArtemisEvent.Tx.Confirmed          -> snackbar("transaction confirmed: ${event.signature}")
+                    is ArtemisEvent.Tx.Failed             -> snackbar("transaction failed: ${event.message}")
+                    is ArtemisEvent.Realtime.StateChanged -> banner.update(event.stateName)
+                    is ArtemisEvent.Das.ProviderFailover  -> Log.w("DAS", "fallback active: ${event.reason}")
+                    else -> Unit
                 }
             }
-            
-            Spacer(Modifier.height(16.dp))
-            
-            // Action buttons
-            action.links?.actions?.forEach { linkedAction ->
-                ActionInputForm(linkedAction)
-            } ?: Button(
-                onClick = onExecute,
-                enabled = !action.disabled,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(action.label)
-            }
-        }
+            .launchIn(scope)
     }
 }
 ```
 
----
-
-## 🔧 Feature 4: Anchor Program Integration (artemis-anchor)
-
-**Type-safe Anchor program clients for Kotlin.**
-
-### Use Case: NFT Marketplace
+For one slice at a time use the typed accessors:
 
 ```kotlin
-class MarketplaceViewModel(
-    private val rpc: RpcApi
-) : ViewModel() {
-    
-    // Load marketplace IDL
-    private val marketplaceProgram by lazy {
-        val idlJson = assets.open("marketplace_idl.json").readText()
-        val idl = AnchorIdl.parse(idlJson)
-        AnchorProgram(idl, MARKETPLACE_PROGRAM_ID, rpc)
-    }
-    
-    suspend fun listNft(nftMint: Pubkey, price: Long): String {
-        // Derive listing PDA
-        val listingPda = marketplaceProgram.pda.derive("listing") {
-            seed(nftMint)
-            seed(wallet.publicKey)
-        }
-        
-        // Build instruction using Anchor-style API
-        val instruction = marketplaceProgram.methods
-            .instruction("list_nft")
-            .args(mapOf("price" to price))
-            .accounts {
-                account("listing", listingPda.address)
-                account("nft_mint", nftMint)
-                signer("seller", wallet.publicKey)
-                program("token_program", TOKEN_PROGRAM_ID)
-                program("system_program", SYSTEM_PROGRAM_ID)
-            }
-            .build()
-        
-        val tx = Transaction(instruction)
-        val signedTx = wallet.signTransaction(tx)
-        return rpc.sendTransaction(signedTx)
-    }
-    
-    fun watchListings() = marketplaceProgram.account
-        .type("Listing")
-        .watchAll()
-        .map { listings ->
-            listings.map { listing ->
-                NftListing(
-                    mint = listing.get<Pubkey>("nft_mint"),
-                    price = listing.get<Long>("price"),
-                    seller = listing.get<Pubkey>("seller")
-                )
-            }
-        }
-}
+ArtemisEventBus.tx().onEach { ... }.launchIn(scope)
+ArtemisEventBus.wallet().onEach { ... }.launchIn(scope)
+ArtemisEventBus.realtime().onEach { ... }.launchIn(scope)
 ```
 
----
+## 7. NFT queries via DAS
 
-## 🌐 Feature 5: Universal Program Client (artemis-universal)
-
-**Interact with ANY Solana program - no IDL required.**
-
-### Use Case: Explore Unknown Programs
+`artemis.das` is non-null when you passed `dasUrl` to `ArtemisMobile.create()`. The default uses `HeliusDas` against the Helius DAS API. Source: [../ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/das/HeliusDas.kt](../ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/das/HeliusDas.kt).
 
 ```kotlin
-class ProgramExplorerViewModel(
-    private val universal: UniversalProgramClient
-) : ViewModel() {
-    
-    fun exploreProgram(programId: String) = viewModelScope.launch {
-        _state.value = ExplorerState.Discovering
-        
-        // Discover program structure from on-chain data
-        val program = universal.discover(programId)
-        
-        _state.value = ExplorerState.Discovered(
-            programId = program.programId.toBase58(),
-            isAnchor = program.isAnchorProgram,
-            confidence = program.confidence,
-            instructions = program.instructions.map { instr ->
-                DiscoveredInstruction(
-                    name = instr.name,
-                    discriminator = instr.discriminator.hex,
-                    accounts = instr.accounts.size,
-                    dataPattern = instr.dataPattern.description
-                )
-            },
-            accountTypes = program.accountTypes.map { type ->
-                DiscoveredAccountType(
-                    name = type.name,
-                    discriminator = type.discriminator.hex,
-                    fields = type.fieldPattern.fields.map { it.name }
-                )
-            },
-            stats = DiscoveryStats(
-                transactionsSampled = program.transactionsSampled,
-                accountsSampled = program.accountsSampled,
-                discoveredAt = program.discoveredAt
-            )
-        )
-    }
-    
-    fun callInstruction(
-        program: DiscoveredProgram,
-        instructionName: String,
-        args: Map<String, Any>
-    ) = viewModelScope.launch {
-        val ix = universal.buildInstruction(program, instructionName) {
-            args.forEach { (key, value) ->
-                when (value) {
-                    is Long -> u64(key, value)
-                    is String -> if (value.length == 44) {
-                        pubkey(key, Pubkey.fromBase58(value))
-                    } else {
-                        string(key, value)
-                    }
-                    // Add more types as needed
-                }
-            }
-        }
-        
-        // Build and send transaction
-        val tx = Transaction(ix.toInstruction())
-        val signedTx = wallet.signTransaction(tx)
-        val signature = rpc.sendTransaction(signedTx)
-        
-        _result.value = ExecutionResult.Success(signature)
-    }
-}
+val nfts: List<DigitalAsset> = artemis.das?.assetsByOwner(walletPubkey) ?: emptyList()
+val asset: DigitalAsset?     = artemis.das?.asset("GdR7assetId...")
+val collection               = artemis.das?.assetsByCollection("CollMint...")
 ```
 
----
-
-## 📊 Feature 6: Zero-Copy Streaming (artemis-streaming)
-
-**Memory-efficient real-time account updates for mobile.**
-
-### Use Case: DeFi Dashboard with Live Prices
+For production resilience wrap the primary DAS in `CompositeDas`, which falls back to `RpcFallbackDas` on Helius failure and applies a 30 second cooldown so a burst of calls does not pay the timeout repeatedly. Source: [../ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/das/CompositeDas.kt](../ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/das/CompositeDas.kt).
 
 ```kotlin
-class DeFiDashboardViewModel(
-    private val stream: ZeroCopyAccountStream
-) : ViewModel() {
-    
-    private val tokenAccounts = listOf(
-        "USDC_POOL_ACCOUNT" to TokenPoolSchema,
-        "SOL_POOL_ACCOUNT" to TokenPoolSchema,
-        "BONK_POOL_ACCOUNT" to TokenPoolSchema
-    )
-    
-    val prices: StateFlow<Map<String, TokenPrice>> = 
-        stream.subscribeBatchFlow(tokenAccounts)
-            .map { updates ->
-                updates.mapValues { (_, accessor) ->
-                    // Zero-copy field access - no full deserialization
-                    TokenPrice(
-                        reserve0 = accessor.getU64("reserve0"),
-                        reserve1 = accessor.getU64("reserve1"),
-                        lastUpdate = accessor.getI64("last_update_slot")
-                    )
-                }
-            }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyMap())
-    
-    // Monitor specific fields for changes
-    fun watchTokenBalance(tokenAccount: String): Flow<Long> {
-        return stream.accountFlow(tokenAccount, TokenAccountSchema)
-            .map { accessor -> accessor.getU64("amount") }
-            .distinctUntilChanged() // Only emit when balance changes
-    }
-    
-    // Get historical states for charts
-    fun getBalanceHistory(tokenAccount: String): List<BalancePoint> {
-        return stream.getHistory(tokenAccount).map { snapshot ->
-            BalancePoint(
-                timestamp = snapshot.timestamp,
-                balance = TokenAccountSchema.getU64(snapshot.data, "amount")
-            )
-        }
-    }
-}
+val das: ArtemisDas = CompositeDas(
+    primary  = HeliusDas(rpcUrl = "https://mainnet.helius-rpc.com/?api-key=$KEY"),
+    fallback = RpcFallbackDas(artemis.rpc)
+)
 ```
 
-### Battery-Efficient Implementation
+## 8. Compressed NFT transfer
 
 ```kotlin
-@Composable
-fun LivePriceDisplay(viewModel: DeFiDashboardViewModel) {
-    val prices by viewModel.prices.collectAsState()
-    
-    // Only recompose changed items
-    LazyColumn {
-        items(prices.entries.toList(), key = { it.key }) { (token, price) ->
-            PriceRow(
-                token = token,
-                price = price,
-                modifier = Modifier.animateItemPlacement()
-            )
-        }
-    }
-}
-
-@Composable
-fun PriceRow(token: String, price: TokenPrice, modifier: Modifier) {
-    // This row only recomposes when its specific price changes
-    Row(modifier = modifier.padding(16.dp)) {
-        Text(token, modifier = Modifier.weight(1f))
-        AnimatedPriceText(
-            price = price.calculatePrice(),
-            previousPrice = LocalPreviousPrice.current
-        )
-    }
-}
+val result = artemis.marketplace.transferCnft(
+    wallet     = artemis.wallet,
+    dasClient  = myDasClient,
+    assetId    = "GdR7assetId...",
+    merkleTree = Pubkey.fromBase58("tree..."),
+    newOwner   = recipientPubkey
+)
+println("signature=${result.signature} confirmed=${result.confirmed}")
 ```
 
----
+Preflight runs by default and validates ownership, frozen state, DAS record, and (for standard SPL NFTs) destination ATA presence. The validation result includes a `prependIxs: List<Instruction>` field with a create-ATA instruction when the destination ATA does not exist. Source: [../ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/MarketplacePreflight.kt](../ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/MarketplacePreflight.kt).
 
-## 🏗️ Architecture Best Practices
-
-### 1. Dependency Injection
+## 9. Token transfers with ATA handling
 
 ```kotlin
-@Module
-@InstallIn(SingletonComponent::class)
-object ArtemisModule {
-    
-    @Provides
-    @Singleton
-    fun provideRpcClient(): RpcApi = RpcClient.create(Cluster.MAINNET_BETA)
-    
-    @Provides
-    @Singleton
-    fun provideJupiterClient(): JupiterClient = JupiterClient.create()
-    
-    @Provides
-    @Singleton
-    fun provideActionsClient(): ActionsClient = ActionsClient.create()
-    
-    @Provides
-    @Singleton
-    fun provideNlpBuilder(resolver: EntityResolver): NaturalLanguageBuilder = 
-        NaturalLanguageBuilder.create(resolver)
-    
-    @Provides
-    @Singleton
-    fun provideUniversalClient(rpc: RpcApi): UniversalProgramClient = 
-        UniversalProgramClient.create(rpc)
-    
-    @Provides
-    @Singleton
-    fun provideAccountStream(wsClient: WebSocketClient): ZeroCopyAccountStream = 
-        ZeroCopyAccountStream.create(wsClient)
+val ensurer    = AtaEnsurer(artemis.rpc)
+val resolution = ensurer.resolve(
+    payer = artemis.session.publicKey,
+    owner = recipient,
+    mint  = usdcMint
+)
+
+val instructions = buildList {
+    resolution.createIx?.let(::add)
+    add(tokenTransfer(sourceAta, resolution.ata, amount))
 }
+
+artemis.session.sendBatch(instructions)
 ```
 
-### 2. Error Handling
+Batched variant for airdrops uses one `getMultipleAccounts` call for N destinations and caches results for 10 seconds. Source: [../ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/AtaEnsurer.kt](../ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/AtaEnsurer.kt).
 
-```kotlin
-sealed class ArtemisResult<T> {
-    data class Success<T>(val data: T) : ArtemisResult<T>()
-    data class Error<T>(val error: ArtemisError) : ArtemisResult<T>()
-}
+## 10. Manifest, deep links, and Sign-In With Solana
 
-sealed class ArtemisError {
-    data class RpcError(val code: Int, val message: String) : ArtemisError()
-    data class NetworkError(val cause: Throwable) : ArtemisError()
-    data class TransactionError(val logs: List<String>) : ArtemisError()
-    data class ValidationError(val message: String) : ArtemisError()
-}
+### Manifest entries for MWA
 
-// Extension function for safe calls
-suspend fun <T> safeArtemisCall(block: suspend () -> T): ArtemisResult<T> = try {
-    ArtemisResult.Success(block())
-} catch (e: RpcException) {
-    ArtemisResult.Error(ArtemisError.RpcError(e.code, e.message))
-} catch (e: IOException) {
-    ArtemisResult.Error(ArtemisError.NetworkError(e))
-}
-```
-
-### 3. Offline Support
-
-```kotlin
-class OfflineFirstRepository(
-    private val localCache: ArtemisCache,
-    private val remoteSource: RpcApi
-) {
-    suspend fun getTokenBalances(): Flow<List<TokenBalance>> = flow {
-        // Emit cached first
-        emit(localCache.getTokenBalances())
-        
-        // Then fetch fresh and update cache
-        try {
-            val fresh = remoteSource.getTokenAccountsByOwner(wallet)
-            localCache.saveTokenBalances(fresh)
-            emit(fresh)
-        } catch (e: Exception) {
-            // Network error - cached data already emitted
-        }
-    }
-}
-```
-
----
-
-## 📱 Platform-Specific Integration
-
-### Android Deep Links for Blinks
+The MWA spec requires your app to declare its identity URI and icon. Make sure your `AndroidManifest.xml` has internet permission and that your identity URI is reachable over HTTPS.
 
 ```xml
-<!-- AndroidManifest.xml -->
-<activity android:name=".BlinkHandlerActivity">
+<uses-permission android:name="android.permission.INTERNET" />
+```
+
+Solana Pay deep link handler:
+
+```xml
+<activity android:name=".PaymentActivity">
     <intent-filter>
-        <action android:name="android.intent.action.VIEW"/>
-        <category android:name="android.intent.category.DEFAULT"/>
-        <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="solana"/>
-        <data android:scheme="solana-action"/>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="solana" />
     </intent-filter>
 </activity>
 ```
 
+### Sign-In With Solana
+
+The Sign-In With Solana flow is implemented in the MWA protocol layer at [../mobile/artemis-wallet-mwa-android/src/main/kotlin/com/selenus/artemis/wallet/mwa/protocol/MwaSignIn.kt](../mobile/artemis-wallet-mwa-android/src/main/kotlin/com/selenus/artemis/wallet/mwa/protocol/MwaSignIn.kt).
+
+## 11. Lifecycle and cleanup
+
+`ArtemisMobile` does not own an Activity-scoped lifecycle. Wire cleanup at the appropriate scope:
+
 ```kotlin
-class BlinkHandlerActivity : ComponentActivity() {
-    
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        intent?.data?.let { uri ->
-            val actionsClient = ActionsClient.create()
-            val urlInfo = actionsClient.parseActionUrl(uri.toString())
-            
-            if (urlInfo.type != ActionUrlType.UNKNOWN) {
-                // Navigate to action handling screen
-                navigateToAction(urlInfo)
-            }
-        }
+class MainViewModel(private val artemis: ArtemisMobile) : ViewModel() {
+
+    init {
+        artemis.realtime.connect()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        artemis.realtime.close()
     }
 }
 ```
 
-### iOS Integration (via KMM)
+Foreground-only realtime is a reasonable default. Mobile devices throttle background websocket traffic aggressively, so reconnecting on resume is usually preferred over keeping the socket open across activity death.
+
+## 12. Testing
+
+The integration test module at [../testing/artemis-devnet-tests/](../testing/artemis-devnet-tests/) is a working reference for setting up a session against devnet. The script at [../run-devnet-tests.sh](../run-devnet-tests.sh) provisions a keypair if you do not have one and runs the JUnit suite.
+
+For unit tests, prefer the in-repo `WalletSession.local(keypair, txEngine)` constructor so you can drive the pipeline without a real wallet adapter:
 
 ```kotlin
-// shared/src/iosMain/kotlin
-actual class PlatformWallet : WalletAdapter {
-    actual suspend fun signTransaction(tx: Transaction): SignedTransaction {
-        // Use iOS-specific signing
-        return withContext(Dispatchers.Main) {
-            PhantomWalletIOS.signTransaction(tx)
-        }
-    }
-}
+val keypair = Keypair.random()
+val session = WalletSession.local(keypair, txEngine = TxEngine(rpc))
+val result  = session.sendSol(recipient, 1_000_000L)
 ```
 
----
+## License
 
-## 🎓 Learning Resources
-
-1. **Sample Apps:** Check `/samples` directory for complete examples
-2. **API Documentation:** Full KDoc at `docs.selenus.xyz`
-3. **Video Tutorials:** Coming soon on YouTube
-4. **Discord Community:** Join for support
-
----
-
-## 📄 License
-
-Artemis SDK is licensed under Apache 2.0. See [LICENSE](../LICENSE) for details.
-
----
-
-*Built with ❤️ by Selenus Technologies*
+Apache License 2.0. See [../LICENSE](../LICENSE).

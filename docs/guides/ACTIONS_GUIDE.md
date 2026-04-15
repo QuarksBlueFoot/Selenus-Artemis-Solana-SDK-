@@ -1,6 +1,6 @@
 # artemis-actions - Solana Actions & Blinks
 
-## 🌟 First Kotlin Implementation of Solana Actions
+## First Kotlin Implementation of Solana Actions
 
 Full implementation of the Solana Actions specification, enabling Blinks (Blockchain Links) support for mobile wallets. Create shareable, executable blockchain actions.
 
@@ -10,19 +10,19 @@ Full implementation of the Solana Actions specification, enabling Blinks (Blockc
 
 `artemis-actions` implements the complete [Solana Actions Specification](https://solana.com/docs/advanced/actions) for Kotlin/JVM, enabling:
 
-- ✅ **Action URL parsing** and validation
-- ✅ **Action metadata fetching** with icons and labels
-- ✅ **Transaction request handling** for any action
-- ✅ **Parameter validation** with type checking
-- ✅ **QR code generation** for Blinks
-- ✅ **Deep link handling** for mobile integration
+- **Action URL parsing** and validation
+- **Action metadata fetching** with icons and labels
+- **Transaction request handling** for any action
+- **Parameter validation** with type checking
+- **QR code generation** for Blinks
+- **Deep link handling** for mobile integration
 
 ---
 
 ## Installation
 
 ```kotlin
-implementation("xyz.selenus:artemis-actions:2.0.0")
+implementation("xyz.selenus:artemis-actions:2.2.0")
 ```
 
 ---

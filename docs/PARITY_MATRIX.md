@@ -1,4 +1,4 @@
-# Parity Matrix
+# Parity matrix
 
 Feature-by-feature comparison of Artemis against the Kotlin/Android Solana SDK ecosystem. Honest status for each capability.
 
@@ -31,7 +31,7 @@ Feature-by-feature comparison of Artemis against the Kotlin/Android Solana SDK e
 
 | Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
 |------------|-----------|-------|-------------------|--------------|---------|---------------|
-| JSON-RPC methods | ~20 | ~15 | Via solana-kmp | Via solana-kmp | 65+ | Full |
+| JSON-RPC methods | ~20 | ~15 | Via solana-kmp | Via solana-kmp | 80+ | Full |
 | Typed response wrappers | Some | Minimal | N/A | N/A | Yes (`*Typed`) | Full |
 | Batch requests | No | No | N/A | N/A | `batchRpc {}` DSL | Full |
 | Commitment config | Yes | Yes | N/A | N/A | Yes | Full |
@@ -49,8 +49,12 @@ Feature-by-feature comparison of Artemis against the Kotlin/Android Solana SDK e
 | Signature subscriptions | No | No | N/A | N/A | Yes | Full |
 | Slot subscriptions | No | No | N/A | N/A | Yes | Full |
 | Auto-reconnect | N/A | N/A | N/A | N/A | Yes | Full |
+| Deterministic resubscribe | N/A | N/A | N/A | N/A | Yes | Full |
+| Heartbeat | N/A | N/A | N/A | N/A | Yes | Full |
 | HTTP polling fallback | N/A | N/A | N/A | N/A | Yes | Full |
 | Typed subscription callbacks | No | No | N/A | N/A | `RealtimeEngine` | Full |
+| Typed `ConnectionState` StateFlow | No | No | N/A | N/A | `ConnectionState` | Full |
+| Endpoint rotation | No | No | N/A | N/A | Yes | Full |
 
 ## Wallet / Mobile
 
@@ -58,7 +62,9 @@ Feature-by-feature comparison of Artemis against the Kotlin/Android Solana SDK e
 |------------|-----------|-------|-------------------|--------------|---------|---------------|
 | Wallet abstraction | No | No | No (raw protocol) | No | `WalletSession` | Full |
 | MWA 2.0 client | No | No | Yes | No | `artemis-wallet-mwa-android` | Full |
-| MWA auth lifecycle | No | No | Yes | No | Yes | Full |
+| MWA auth lifecycle | No | No | Yes | No | `WalletSessionManager` | Full |
+| `withWallet { }` retry on session expiry | No | No | No | No | Yes | Full |
+| Wallet event callbacks (disconnect, account, expiry) | No | No | Partial | No | `WalletEvents` | Full |
 | Sign transaction | N/A | N/A | Yes | N/A | Yes | Full |
 | Sign and send | N/A | N/A | Yes | N/A | Yes | Full |
 | Seed Vault | No | No | Separate SDK | No | `artemis-seed-vault` | Full |
@@ -107,16 +113,23 @@ Feature-by-feature comparison of Artemis against the Kotlin/Android Solana SDK e
 | DAS asset queries (getAssetsByOwner) | No | No | N/A | No | `ArtemisDas` / `HeliusDas` | Full |
 | DAS single asset lookup | No | No | N/A | No | `ArtemisDas.asset()` | Full |
 | DAS collection queries | No | No | N/A | No | `ArtemisDas.assetsByCollection()` | Full |
+| DAS RPC fallback | No | No | N/A | No | `RpcFallbackDas` | Full |
+| DAS primary + fallback router | No | No | N/A | No | `CompositeDas` | Full |
+| Marketplace preflight (ownership, ATA, frozen) | No | No | N/A | No | `MarketplacePreflight` | Full |
+| Standalone ATA ensurer | No | No | N/A | No | `AtaEnsurer` | Full |
 
 ## Developer Tooling
 
 | Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
 |------------|-----------|-------|-------------------|--------------|---------|---------------|
-| Transaction simulation | No | No | N/A | N/A | `artemis-simulation` | Full |
+| Transaction simulation | No | No | N/A | N/A | `TxEngine` simulate stage | Full |
 | Compute estimation | No | No | N/A | N/A | `artemis-compute` | Full |
 | Priority fee helpers | No | No | N/A | N/A | Yes | Full |
 | Error decoding | Minimal | No | N/A | N/A | `artemis-errors` | Full |
 | Transaction engine (pipeline) | No | No | N/A | N/A | `TxEngine` | Full |
+| Retry pipeline with classified errors | No | No | N/A | N/A | `RetryPipeline` | Full |
+| Blockhash cache with TTL | No | No | N/A | N/A | `BlockhashCache` | Full |
+| Framework event bus | No | No | N/A | N/A | `ArtemisEventBus` | Full |
 
 ## Artemis-only capabilities
 

@@ -1,4 +1,4 @@
-# Dependency Rules
+# Dependency rules
 
 These rules are not guidelines. They are constraints. Violating them breaks the architecture.
 They are enforced at build time by `./gradlew checkDependencyRings`.
@@ -92,8 +92,9 @@ Forbidden:
 Interop modules let existing code that imports SolanaMobile SDK packages (`com.solanamobile.*`, `com.solana.mobilewalletadapter.*`) compile against Artemis without changing imports. They depend on Foundation, Mobile, and Ecosystem. They must not depend on Advanced or Compat.
 
 Modules:
-- `artemis-seedvault-compat` — shims `com.solanamobile.seedvault.Wallet` and `WalletContractV1`
-- `artemis-mwa-compat` — shims `com.solana.mobilewalletadapter.clientlib.MobileWalletAdapterCompat`
+
+- `artemis-seedvault-compat`: shims `com.solanamobile.seedvault.Wallet` and `WalletContractV1`
+- `artemis-mwa-compat`: shims `com.solana.mobilewalletadapter.clientlib.MobileWalletAdapterCompat`
 
 Allowed:
 - `artemis-seedvault-compat` depends on `artemis-seed-vault`, `artemis-core`

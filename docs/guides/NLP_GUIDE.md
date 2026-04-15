@@ -1,6 +1,6 @@
 # artemis-nlp - Natural Language Transaction Builder
 
-## 🌟 Natural Language Transaction Builder
+## Natural Language Transaction Builder
 
 Build Solana transactions by simply typing what you want to do in plain English. No forms, no technical knowledge, no learning curve.
 
@@ -10,18 +10,18 @@ Build Solana transactions by simply typing what you want to do in plain English.
 
 `artemis-nlp` is a module that parses natural language input and converts it into ready-to-sign Solana transactions. Unlike AI/LLM-based approaches, this uses deterministic pattern matching that:
 
-- ✅ Works completely **offline**
-- ✅ No external API calls
-- ✅ No privacy concerns
-- ✅ Instant response
-- ✅ Predictable behavior
+- Works completely **offline**
+- No external API calls
+- No privacy concerns
+- Instant response
+- Predictable behavior
 
 ---
 
 ## Installation
 
 ```kotlin
-implementation("xyz.selenus:artemis-nlp:2.0.0")
+implementation("xyz.selenus:artemis-nlp:2.2.0")
 ```
 
 ---
@@ -235,13 +235,13 @@ class ChatWalletViewModel(
                 val signature = wallet.signAndSend(tx)
                 
                 addMessage(ChatMessage.Bot(
-                    "✅ Transaction sent!\n\n" +
+                    "Transaction sent!\n\n" +
                     "Signature: `${signature.take(20)}...`"
                 ))
                 
                 _pendingTransaction.value = null
             } catch (e: Exception) {
-                addMessage(ChatMessage.Bot("❌ Failed: ${e.message}"))
+                addMessage(ChatMessage.Bot("Failed: ${e.message}"))
             }
         }
     }

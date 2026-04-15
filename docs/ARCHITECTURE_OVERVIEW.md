@@ -1,96 +1,102 @@
-# Architecture Overview
+# Architecture overview
 
-Artemis is organized into six rings. Each ring has a clear purpose and strict dependency rules. This is not a suggestion. It is how the repo is structured.
+Artemis is organized into six rings. Each ring has a clear purpose and strict dependency rules. This is not a suggestion. It is how the repo is structured and the build enforces it via `./gradlew checkDependencyRings`.
 
 ## Platform strategy
 
-**Ring 1 (Foundation) is Kotlin Multiplatform.** Common code compiles for JVM, Android, and future targets. No `java.*` imports in common source sets. Platform-specific implementations (crypto, transport, encoding) live behind `expect/actual` seams in platform source sets.
+Ring 1 (Foundation) is Kotlin Multiplatform. Common code compiles for JVM, Android, and future targets. No `java.*` imports in `commonMain` source sets. Platform-specific implementations (crypto, transport, encoding) live behind `expect/actual` seams in `jvmMain` and `androidMain`.
 
-**Ring 2 (Mobile) stays platform-native where appropriate.** `artemis-wallet` is KMP-safe as the portable signing abstraction. `artemis-wallet-mwa-android` and `artemis-seed-vault` remain Android-only.
+Ring 2 (Mobile) stays platform-native where appropriate. `artemis-wallet` is KMP-safe as the portable signing abstraction. `artemis-wallet-mwa-android` and `artemis-seed-vault` are Android-only.
 
-**Rings 3–5** sit on top of the portable foundation and migrate to KMP in waves.
+Rings 3 through 5 sit on top of the portable foundation. Most ecosystem modules are KMP. A small number of advanced modules remain JVM/Android only because their underlying dependencies are.
 
-**Ring 6 (Interop)** provides explicit legacy compatibility shims. Thin wrappers only.
+Ring 6 (Interop) provides explicit legacy compatibility shims. Thin wrappers only.
 
 ## The rings
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Ring 6: Interop                          │
-│   legacy shims (solana-mobile-compat, seedvault-compat, etc.)  │
-├─────────────────────────────────────────────────────────────────┤
-│                        Ring 5: Presets                           │
-│   discriminators, nft-compat, tx-presets, presets               │
-├─────────────────────────────────────────────────────────────────┤
-│                        Ring 4: Advanced                         │
-│   privacy, streaming, simulation, batch, scheduler, offline,   │
-│   portfolio, replay, gaming, depin, nlp, intent, universal     │
-├─────────────────────────────────────────────────────────────────┤
-│                        Ring 3: Ecosystem                        │
-│   token2022, metaplex, mplcore, cnft, candy-machine,           │
-│   solana-pay, anchor, jupiter, actions                         │
-├─────────────────────────────────────────────────────────────────┤
-│                        Ring 2: Mobile                           │
-│   wallet, wallet-mwa-android, seed-vault                       │
-├─────────────────────────────────────────────────────────────────┤
-│                        Ring 1: Foundation (KMP)                  │
-│   core, rpc, ws, tx, vtx, programs, errors, logging, compute   │
-└─────────────────────────────────────────────────────────────────┘
+```text
++-------------------------------------------------------------------+
+|                       Ring 6: Interop                              |
+|   legacy shims (artemis-mwa-compat, artemis-seedvault-compat)      |
++-------------------------------------------------------------------+
+|                       Ring 5: Presets                              |
+|   discriminators, nft-compat, tx-presets, presets                  |
++-------------------------------------------------------------------+
+|                       Ring 4: Advanced                             |
+|   privacy, streaming, simulation, batch, scheduler, offline,       |
+|   portfolio, replay, gaming, depin, nlp, intent, universal         |
++-------------------------------------------------------------------+
+|                       Ring 3: Ecosystem                            |
+|   token2022, metaplex, mplcore, cnft, candy-machine,               |
+|   solana-pay, anchor, jupiter, actions                             |
++-------------------------------------------------------------------+
+|                       Ring 2: Mobile                               |
+|   wallet, wallet-mwa-android, seed-vault                           |
++-------------------------------------------------------------------+
+|                       Ring 1: Foundation (KMP)                     |
+|   core, rpc, ws, tx, vtx, programs, errors, logging, compute       |
++-------------------------------------------------------------------+
 ```
 
 Higher rings may depend on lower rings. Lower rings never depend on higher rings. That is the whole model.
 
 ## Allowed dependency matrix
 
-| From \ To | Foundation | Mobile | Ecosystem | Advanced | Presets | Interop |
-|-----------|-----------|--------|-----------|----------|---------|---------|
-| **Foundation** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Mobile** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Ecosystem** | ✅ | ✅ (wallet interface only) | ✅ | ❌ | ❌ | ❌ |
-| **Advanced** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Presets** | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ |
-| **Interop** | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| From / To | Foundation | Mobile | Ecosystem | Advanced | Presets | Interop |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Foundation** | yes | no | no | no | no | no |
+| **Mobile** | yes | yes | no | no | no | no |
+| **Ecosystem** | yes | yes (wallet interface only) | yes | no | no | no |
+| **Advanced** | yes | yes | yes | yes | no | no |
+| **Presets** | yes | no | yes | no | yes | no |
+| **Interop** | yes | yes | yes | no | no | yes |
 
 Arrows point downward only. Any edge going upward is a bug.
 
 ## Ring 1: Foundation (KMP)
 
-This is the base layer. Every Solana app built with Artemis uses some or all of these modules. **Foundation is Kotlin Multiplatform.** Common code contains no `java.*` imports and compiles for JVM, Android, and future targets. Platform-specific crypto, transport, and encoding live in `jvmMain`/`androidMain` source sets behind `expect/actual` seams.
+This is the base layer. Every Solana app built with Artemis uses some or all of these modules. Foundation is Kotlin Multiplatform. Common code contains no `java.*` imports and compiles for JVM, Android, and future targets. Platform-specific crypto, transport, and encoding live in `jvmMain` and `androidMain` source sets behind `expect/actual` seams.
 
 **Modules:** `artemis-core`, `artemis-rpc`, `artemis-ws`, `artemis-tx`, `artemis-vtx`, `artemis-programs`, `artemis-errors`, `artemis-logging`, `artemis-compute`
 
 **What it covers:**
-- PublicKey, Keypair, PDA derivation, Base58/Base64 encoding
-- Full JSON-RPC client (broad method coverage, typed wrappers, batch DSL)
-- WebSocket subscriptions with auto-reconnect and polling fallback
-- Legacy and versioned (v0) transaction construction and serialization
+
+- Pubkey, Keypair, PDA derivation, Base58, Base64
+- Ed25519, SHA-256, secure random behind `expect/actual`
+- JSON-RPC client with 80+ methods, typed result wrappers, batch DSL, blockhash cache, endpoint pool, circuit breaker
+- Websocket subscriptions with auto-reconnect, deterministic resubscribe, polling fallback, and a typed `ConnectionState` StateFlow
+- Legacy and v0 versioned transaction construction and serialization
 - Address lookup tables
-- System, Token, Associated Token, Compute Budget, Stake program instructions
+- System (12 instruction builders), Token (9), Associated Token, Compute Budget, Stake (5)
 - Compute unit estimation and priority fee helpers
-- Structured error types and on-chain error decoding
+- Structured Solana error types and on-chain error decoding
 - Durable nonce support
 - Blockhash lifecycle management
+- `ArtemisEvent` and `ArtemisEventBus` for unified subsystem events
 
 **Rules:**
+
 - Foundation modules depend only on other foundation modules
 - No dependencies on ecosystem, mobile, advanced, or compatibility modules
 - Must remain stable, lightweight, and dependency-minimal
-- These modules are the primary replacement path for covered low-level functionality currently spread across solana-kmp, sol4k, and basic Solana Mobile dependencies
 
 ## Ring 2: Mobile
 
-This is the Solana Mobile Stack replacement layer. If you are building an Android Solana app, this ring plus foundation is your core dependency set.
+This is the Solana Mobile Stack replacement layer. If you are building an Android Solana app, this ring plus Foundation is your core dependency set.
 
 **Modules:** `artemis-wallet`, `artemis-wallet-mwa-android`, `artemis-seed-vault`
 
 **What it covers:**
-- Wallet abstraction with pluggable signing strategies (Local keypair, MWA Adapter, Raw signer)
-- Mobile Wallet Adapter 2.0 client
-- Seed Vault integration for Saga hardware-backed key custody
+
+- `WalletAdapter` interface and `WalletSession` with pluggable signing strategies (Local keypair, Adapter, Raw signer)
+- `WalletSessionManager` with lazy connect, auth token caching, retry on session expiration, and `onDisconnect / onAccountChanged / onSessionExpired` callbacks
+- Mobile Wallet Adapter 2.0 client: P-256 association, AES-128-GCM session cipher, HKDF-SHA256, MWA RPC, websocket transport, Sign-In With Solana
+- `ArtemisMobile.create()` for one-call setup
+- Saga Seed Vault integration for hardware-backed key custody
 - Convenience methods: `sendSol()`, `sendToken()`
-- Android lifecycle safety
 
 **Rules:**
+
 - Mobile modules depend on Foundation only
 - Never depend on ecosystem or advanced modules
 - This ring exists so mobile teams can adopt Artemis without pulling in the entire SDK
@@ -102,45 +108,41 @@ Optional protocol clients built on top of Foundation. Use them when you need spe
 **Modules:** `artemis-token2022`, `artemis-metaplex`, `artemis-mplcore`, `artemis-cnft`, `artemis-candy-machine`, `artemis-solana-pay`, `artemis-anchor`, `artemis-jupiter`, `artemis-actions`
 
 **What it covers:**
-- Token-2022 extensions (transfer fees, interest bearing, metadata pointer, confidential transfers, CPI guard, and more)
-- Token Metadata, editions, collections
+
+- Token-2022 mint and account extensions: transfer fees, interest bearing, non-transferable, permanent delegate, default account state, transfer hook, metadata pointer, group and member pointers, confidential transfers, CPI guard, immutable owner, mint close authority
+- Token Metadata: metadata account, master edition, collection
 - MPL Core (Asset) program
-- Compressed NFTs via Bubblegum
-- Candy Machine v3
-- Solana Pay protocol
-- Anchor IDL parsing, Borsh serialization, type-safe program client
-- Jupiter DEX aggregator (quotes, swaps, routing)
-- Solana Actions / Blinks
+- Compressed NFTs via Bubblegum, plus `ArtemisDas`, `HeliusDas`, `RpcFallbackDas`, `CompositeDas`, `MarketplaceEngine`, `MarketplacePreflight`, `AtaEnsurer`
+- Candy Machine v3 mintV2 builder, guard accounts planner, manifest parser
+- Solana Pay URL parsing, `SolanaPayManager`
+- Anchor IDL parsing, Borsh serializer, type-safe `AnchorProgram` client
+- Jupiter DEX aggregator: quotes, swaps, routing
+- Solana Actions and Blinks fetch/execute
 
 **Rules:**
+
 - Ecosystem modules depend on Foundation
-- May depend on selected Mobile abstractions (e.g., wallet signing interface) if needed
+- May depend on the wallet signing interface in `artemis-wallet`
 - Should not depend on advanced modules
 - Each module is independently optional
 
 ## Ring 4: Advanced
 
-Power features and experimental modules. These are real capabilities, not required for core adoption. Teams that need them know they need them.
+Power features and experimental modules. These are real capabilities but not required for core adoption. Some are full implementations and some are interface-plus-helpers starting points. None of them are pulled in unless an app explicitly asks for them.
 
 **Modules:** `artemis-privacy`, `artemis-streaming`, `artemis-universal`, `artemis-simulation`, `artemis-batch`, `artemis-scheduler`, `artemis-offline`, `artemis-portfolio`, `artemis-replay`, `artemis-gaming`, `artemis-depin`, `artemis-nlp`, `artemis-intent`, `artemis-preview`
 
-**What it covers:**
-- Privacy: stealth addresses, encrypted memos, confidential transfers
-- Zero-copy account streaming
-- Transaction simulation and analysis
-- Automatic transaction batching
-- Network-aware transaction scheduling
-- Offline transaction queuing
-- Real-time portfolio tracking
-- Transaction replay
-- Gaming: session keys, verifiable randomness, state proofs
-- DePIN device attestation
-- Natural language transaction parsing
-- Human-readable transaction intent decoding
-- IDL-less program discovery
-- Transaction preview CLI (simulates and renders transaction effects)
+**What it covers (status varies, see [../README.md](../README.md) for the per-module table):**
+
+- Privacy: stealth addresses, encrypted memos, confidential transfers, ring signatures, Shamir secret sharing
+- Gaming: session keys, verifiable randomness wrappers, state proof helpers
+- Intent: per-program human-readable intent decoders
+- Portfolio: live portfolio fetcher and snapshot
+- Offline: offline transaction queue with persistent store and retry
+- Streaming, simulation, batch, scheduler, replay, depin, nlp, universal, preview: helper-level primitives intended as a starting point for app-specific extensions
 
 **Rules:**
+
 - Advanced modules may depend on Foundation, Mobile, and Ecosystem
 - Advanced modules must never leak into the core adoption path
 - Nothing in Ring 1, 2, or 3 should ever depend on an advanced module
@@ -152,88 +154,92 @@ Artemis-native convenience helpers and bundled patterns. These improve ergonomic
 **Modules:** `artemis-discriminators`, `artemis-nft-compat`, `artemis-tx-presets`, `artemis-candy-machine-presets`, `artemis-presets`
 
 **What it covers:**
+
 - Program discriminator utilities
-- NFT compatibility layer across Metaplex, MPL Core, and cNFT
-- Pre-composed transaction patterns (ATA creation + priority fees + resend)
+- NFT metadata parsing and PDA derivation that is independent of `artemis-metaplex`
+- Pre-composed transaction patterns: `Artemis.transferToken`, ATA creation plus priority fees plus resend
 - Candy Machine mint presets
 - Preset registry for composing multiple optional modules
 
 **Rules:**
+
 - May depend on Foundation and Ecosystem
 - Nothing critical depends on Presets modules
 - Useful, not foundational
 
-## Ring 6: Interop / Legacy Shims
+## Ring 6: Interop / Legacy shims
 
-Explicit source-compat or migration-compat surface for teams migrating from other SDKs. Thin wrappers only. Nothing depends on this ring.
+Explicit source-compat or migration-compat surface for teams migrating from other SDKs. Thin wrappers only. Nothing in the core path depends on this ring.
 
-**Modules (planned):** `artemis-solana-mobile-compat`, `artemis-seedvault-compat`
+**Modules:** `artemis-mwa-compat`, `artemis-seedvault-compat`
 
 **What it covers:**
+
 - Source compatibility wrappers for selected Solana Mobile SDK APIs
 - Source compatibility wrappers for selected Seed Vault APIs
-- Migration helpers with documented version/scope coverage
+- Migration helpers with documented version and scope coverage
 
 **Rules:**
+
 - May depend on Foundation, Mobile, and Ecosystem
 - Cannot depend on Advanced or Presets
 - Nothing else depends on Interop modules
-- Shims wrap public APIs only — no copied internals
-- Every shimmed class/method must have a compile-proof test
+- Shims wrap public APIs only. No copied internals.
+- Every shimmed class and method has a compile-proof test
 - Compatibility targets documented by version and scope
 
 ## Directory layout
 
-```
+```text
 selenus-artemis-solana-sdk/
-├── foundation/          Ring 1 (KMP)
-│   ├── artemis-core/
-│   │   ├── src/commonMain/kotlin/    Portable code
-│   │   ├── src/commonTest/kotlin/    Portable tests
-│   │   ├── src/jvmMain/kotlin/       JVM/Android actuals
-│   │   └── src/jvmTest/kotlin/       JVM-specific tests
-│   ├── artemis-rpc/
-│   ├── artemis-ws/
-│   ├── artemis-tx/
-│   ├── artemis-vtx/
-│   ├── artemis-programs/
-│   ├── artemis-errors/
-│   ├── artemis-logging/
-│   └── artemis-compute/
-├── mobile/              Ring 2
-│   ├── artemis-wallet/
-│   ├── artemis-wallet-mwa-android/
-│   └── artemis-seed-vault/
-├── ecosystem/           Ring 3
-│   ├── artemis-token2022/
-│   ├── artemis-metaplex/
-│   ├── artemis-mplcore/
-│   ├── artemis-cnft/
-│   ├── artemis-candy-machine/
-│   ├── artemis-solana-pay/
-│   ├── artemis-anchor/
-│   ├── artemis-jupiter/
-│   └── artemis-actions/
-├── advanced/            Ring 4
-│   ├── artemis-privacy/
-│   ├── artemis-streaming/
-│   ├── artemis-universal/
-│   └── ... (14 modules)
-├── compatibility/       Ring 5 (Presets)
-│   ├── artemis-discriminators/
-│   ├── artemis-nft-compat/
-│   ├── artemis-tx-presets/
-│   ├── artemis-candy-machine-presets/
-│   └── artemis-presets/
-├── interop/             Ring 6 (planned)
-│   ├── artemis-solana-mobile-compat/
-│   └── artemis-seedvault-compat/
-├── testing/
-│   ├── artemis-integration-tests/
-│   └── artemis-devnet-tests/
-├── samples/
-│   └── solana-mobile-compose-mint-app/
-└── docs/
+|-- foundation/              Ring 1 (KMP)
+|   |-- artemis-core/
+|   |   |-- src/commonMain/kotlin/   Portable code
+|   |   |-- src/commonTest/kotlin/   Portable tests
+|   |   |-- src/jvmMain/kotlin/      JVM and Android actuals
+|   |   `-- src/jvmTest/kotlin/      JVM-specific tests
+|   |-- artemis-rpc/
+|   |-- artemis-ws/
+|   |-- artemis-tx/
+|   |-- artemis-vtx/
+|   |-- artemis-programs/
+|   |-- artemis-errors/
+|   |-- artemis-logging/
+|   `-- artemis-compute/
+|-- mobile/                  Ring 2
+|   |-- artemis-wallet/
+|   |-- artemis-wallet-mwa-android/
+|   `-- artemis-seed-vault/
+|-- ecosystem/               Ring 3
+|   |-- artemis-token2022/
+|   |-- artemis-metaplex/
+|   |-- artemis-mplcore/
+|   |-- artemis-cnft/
+|   |-- artemis-candy-machine/
+|   |-- artemis-solana-pay/
+|   |-- artemis-anchor/
+|   |-- artemis-jupiter/
+|   `-- artemis-actions/
+|-- advanced/                Ring 4
+|   |-- artemis-privacy/
+|   |-- artemis-streaming/
+|   |-- artemis-universal/
+|   `-- ...
+|-- compatibility/           Ring 5 (Presets)
+|   |-- artemis-discriminators/
+|   |-- artemis-nft-compat/
+|   |-- artemis-tx-presets/
+|   |-- artemis-candy-machine-presets/
+|   `-- artemis-presets/
+|-- interop/                 Ring 6
+|   |-- artemis-mwa-compat/
+|   `-- artemis-seedvault-compat/
+|-- testing/
+|   |-- artemis-integration-tests/
+|   `-- artemis-devnet-tests/
+|-- samples/
+|   `-- solana-mobile-compose-mint-app/
+`-- docs/
 ```
 
 ## What a typical mobile app needs
@@ -242,34 +248,32 @@ Most Android Solana apps need exactly this:
 
 ```kotlin
 // Foundation
-implementation("xyz.selenus:artemis-core:2.1.1")
-implementation("xyz.selenus:artemis-rpc:2.1.1")
-implementation("xyz.selenus:artemis-tx:2.1.1")
-implementation("xyz.selenus:artemis-programs:2.1.1")
+implementation("xyz.selenus:artemis-core:2.2.0")
+implementation("xyz.selenus:artemis-rpc:2.2.0")
+implementation("xyz.selenus:artemis-ws:2.2.0")
+implementation("xyz.selenus:artemis-tx:2.2.0")
+implementation("xyz.selenus:artemis-vtx:2.2.0")
+implementation("xyz.selenus:artemis-programs:2.2.0")
 
 // Mobile
-implementation("xyz.selenus:artemis-wallet:2.1.1")
-implementation("xyz.selenus:artemis-wallet-mwa-android:2.1.1")
+implementation("xyz.selenus:artemis-wallet:2.2.0")
+implementation("xyz.selenus:artemis-wallet-mwa-android:2.2.0")
 ```
 
-Add versioned transactions if your app uses address lookup tables:
+Add ecosystem modules based on what the app does:
 
 ```kotlin
-implementation("xyz.selenus:artemis-vtx:2.1.1")
-```
-
-Add ecosystem modules based on what your app does:
-
-```kotlin
-// Token-2022 support
-implementation("xyz.selenus:artemis-token2022:2.1.1")
+// Token-2022
+implementation("xyz.selenus:artemis-token2022:2.2.0")
 
 // Jupiter swaps
-implementation("xyz.selenus:artemis-jupiter:2.1.1")
+implementation("xyz.selenus:artemis-jupiter:2.2.0")
 
-// NFT operations
-implementation("xyz.selenus:artemis-metaplex:2.1.1")
-implementation("xyz.selenus:artemis-cnft:2.1.1")
+// NFTs, DAS, marketplace
+implementation("xyz.selenus:artemis-metaplex:2.2.0")
+implementation("xyz.selenus:artemis-cnft:2.2.0")
 ```
+
+The current published version is `2.2.0`. The `version` field in [../gradle.properties](../gradle.properties) is the source of truth.
 
 Everything else is optional. You pull it in when you need it.

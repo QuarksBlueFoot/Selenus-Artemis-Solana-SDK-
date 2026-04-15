@@ -8,13 +8,13 @@ A modular, mobile-first Solana SDK for React Native, powered by the Artemis Kotl
 
 | Feature | @solana/web3.js | Solana Mobile RN | **Artemis** |
 |---------|-----------------|------------------|-------------|
-| Base58 (Native) | ❌ (JS polyfill) | ⚠️ Partial | ✅ **Native Kotlin/Swift** |
-| Ed25519 (Native) | ❌ (JS polyfill) | ⚠️ Partial | ✅ **Native** |
-| MWA 2.0 | ❌ | ✅ | ✅ **Parity** |
-| Seed Vault | ❌ | ✅ | ✅ **Parity** |
-| iOS Support | ✅ | ❌ | ✅ |
-| DePIN Proofs | ❌ | ❌ | ✅ |
-| Solana Pay | ⚠️ | ❌ | ✅ **Native** |
+| Base58 (Native) | ❌ (JS polyfill) | ⚠️ Partial | **Native Kotlin/Swift** |
+| Ed25519 (Native) | ❌ (JS polyfill) | ⚠️ Partial | **Native** |
+| MWA 2.0 | ❌ | | **Parity** |
+| Seed Vault | ❌ | | **Parity** |
+| iOS Support | | ❌ | |
+| DePIN Proofs | ❌ | ❌ | |
+| Solana Pay | ⚠️ | ❌ | **Native** |
 
 ## Features
 
@@ -30,15 +30,15 @@ A modular, mobile-first Solana SDK for React Native, powered by the Artemis Kotl
 
 | Feature | iOS | Android |
 |---------|-----|---------|
-| Base58 Encode/Decode | ✅ | ✅ |
-| Base58Check | ✅ | ✅ |
-| Ed25519 Keypair | ✅ | ✅ |
-| Ed25519 Signing | ✅ | ✅ |
-| SHA256 | ✅ | ✅ |
-| Mobile Wallet Adapter | ❌ | ✅ |
-| Seed Vault | ❌ | ✅ |
-| DePIN Proofs | ✅ | ✅ |
-| Solana Pay | ✅ | ✅ |
+| Base58 Encode/Decode | | |
+| Base58Check | | |
+| Ed25519 Keypair | | |
+| Ed25519 Signing | | |
+| SHA256 | | |
+| Mobile Wallet Adapter | ❌ | |
+| Seed Vault | ❌ | |
+| DePIN Proofs | | |
+| Solana Pay | | |
 
 > **Note**: Mobile Wallet Adapter (MWA) is Android-only as it's part of the Solana Mobile Stack. 
 > For iOS wallet connections, use WalletConnect or other iOS-compatible protocols.
