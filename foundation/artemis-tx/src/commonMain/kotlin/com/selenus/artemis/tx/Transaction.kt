@@ -120,14 +120,15 @@ class Transaction(
     val msg = compileMessage()
     val msgBytes = msg.serialize()
     val requiredSigners = msg.accountKeys.take(msg.header.numRequiredSignatures)
-    
-    val orderedSignatures = requiredSigners.map { pk ->
-      signatures[pk] ?: ByteArray(64)
+
+    // Pre-size the builder for the exact wire length so the hot signing path
+    // never reallocates the backing buffer.
+    val out = ByteArrayBuilder(initialCapacity = ShortVec.MAX_BYTES + requiredSigners.size * 64 + msgBytes.size)
+    out.writeShortVec(requiredSigners.size)
+    for (pk in requiredSigners) {
+      val sig = signatures[pk] ?: ByteArray(64)
+      out.write(sig)
     }
-    
-    val out = ByteArrayBuilder()
-    out.write(ShortVec.encodeLen(orderedSignatures.size))
-    for (sig in orderedSignatures) out.write(sig)
     out.write(msgBytes)
     return out.toByteArray()
   }
@@ -213,8 +214,10 @@ class Transaction(
 
 data class SignedTransaction(val signatures: List<ByteArray>, val messageBytes: ByteArray) {
   fun serialize(): ByteArray {
-    val out = ByteArrayBuilder()
-    out.write(ShortVec.encodeLen(signatures.size))
+    val out = ByteArrayBuilder(
+      initialCapacity = ShortVec.MAX_BYTES + signatures.size * 64 + messageBytes.size
+    )
+    out.writeShortVec(signatures.size)
     for (sig in signatures) out.write(sig)
     out.write(messageBytes)
     return out.toByteArray()

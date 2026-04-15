@@ -191,33 +191,65 @@ object TransactionIntentDecoder {
             val accounts = mutableListOf<String>()
             repeat(numAccountIndexes) {
                 val accountIndex = bytes[offset++].toInt() and 0xFF
-                // For versioned transactions, index might refer to lookup table
-                // For now, use static accounts or mark as lookup
+                // For v0 transactions an index that falls outside the static account
+                // range refers to an entry in an address lookup table. The raw tx
+                // blob does not carry the resolved keys, so the decoder flags the
+                // slot with the numeric index. Callers that have ATL data available
+                // can reinvoke [decodeWithLookupResolver] below for full resolution.
                 accounts.add(accountKeys.getOrNull(accountIndex) ?: "lookup:$accountIndex")
             }
-            
+
             // Instruction data
             val (dataLen, dataLenBytes) = ShortVec.decodeLen(bytes.sliceArray(offset until bytes.size))
             offset += dataLenBytes
-            
+
             val data = bytes.sliceArray(offset until offset + dataLen)
             offset += dataLen
-            
+
             val intent = decodeInstruction(programId, accounts, data, instructionIndex)
             intents.add(intent)
         }
-        
-        // Note: We skip address lookup tables for now
-        // Full implementation would resolve them for complete account list
-        
-        return analyze(intents).copy(
-            warnings = analyze(intents).warnings + 
-                if (intents.any { intent -> intent.accounts.any { it.pubkey.startsWith("lookup:") } }) {
-                    listOf("Some accounts are from lookup tables and may not be fully resolved")
+
+        val baseAnalysis = analyze(intents)
+        val hasUnresolvedLookups = intents.any { intent -> intent.accounts.any { it.pubkey.startsWith("lookup:") } }
+        return if (hasUnresolvedLookups) {
+            baseAnalysis.copy(
+                warnings = baseAnalysis.warnings +
+                    "Some accounts reference address lookup tables. Call decodeWithLookupResolver() to resolve them."
+            )
+        } else {
+            baseAnalysis
+        }
+    }
+
+    /**
+     * Same as [decode] but accepts a caller-supplied lookup resolver that maps
+     * `"lookup:<index>"` slot markers to real base58 account keys.
+     *
+     * The resolver is invoked for every index the decoder could not resolve
+     * against the static account set. Returning `null` leaves the marker in
+     * place so downstream warnings still fire.
+     */
+    fun decodeWithLookupResolver(
+        compiledMessage: ByteArray,
+        resolver: (lookupIndex: Int) -> String?
+    ): TransactionIntentAnalysis {
+        val initial: TransactionIntentAnalysis = decodeFromBytes(compiledMessage)
+        val resolvedIntents: List<TransactionIntent> = initial.intents.map { intent ->
+            val resolvedAccounts: List<AccountRole> = intent.accounts.map { acc ->
+                val pk = acc.pubkey
+                if (pk.startsWith("lookup:")) {
+                    val idx = pk.removePrefix("lookup:").toIntOrNull()
+                        ?: return@map acc
+                    val resolved = resolver(idx) ?: return@map acc
+                    acc.copy(pubkey = resolved)
                 } else {
-                    emptyList()
+                    acc
                 }
-        )
+            }
+            intent.copy(accounts = resolvedAccounts)
+        }
+        return analyze(resolvedIntents)
     }
     
     /**

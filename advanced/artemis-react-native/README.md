@@ -1,47 +1,46 @@
 # Artemis Solana SDK for React Native
 
-A modular, mobile-first Solana SDK for React Native, powered by the Artemis Kotlin SDK on Android and native Swift on iOS.
+A modular, mobile-first Solana SDK for React Native. Powered by the Artemis Kotlin SDK on Android and native Swift on iOS.
 
-> **Complete parity with Solana Mobile SDK**: MWA 2.0, Seed Vault, and more, with cross-platform native performance.
+Parity with the Solana Mobile Stack where the platform allows: MWA 2.0, Seed Vault on Android, plus native Base58 and Ed25519 on both platforms.
 
 ## Why Artemis for React Native?
 
-| Feature | @solana/web3.js | Solana Mobile RN | **Artemis** |
-|---------|-----------------|------------------|-------------|
-| Base58 (Native) | ❌ (JS polyfill) | ⚠️ Partial | **Native Kotlin/Swift** |
-| Ed25519 (Native) | ❌ (JS polyfill) | ⚠️ Partial | **Native** |
-| MWA 2.0 | ❌ | | **Parity** |
-| Seed Vault | ❌ | | **Parity** |
-| iOS Support | | ❌ | |
-| DePIN Proofs | ❌ | ❌ | |
-| Solana Pay | ⚠️ | ❌ | **Native** |
+| Feature | @solana/web3.js | Solana Mobile RN | Artemis |
+| --- | --- | --- | --- |
+| Base58 (native) | JS polyfill | partial | native Kotlin and Swift |
+| Ed25519 (native) | JS polyfill | partial | native |
+| MWA 2.0 | no | yes | parity |
+| Seed Vault | no | yes | parity |
+| iOS support | yes | no | yes |
+| DePIN proofs | no | no | yes |
+| Solana Pay | partial | no | native |
 
 ## Features
 
-- **Cross-Platform Base58**: Native Base58 encoding/decoding on both iOS and Android.
-- **Mobile Wallet Adapter (MWA)**: Seamless integration with Solana Mobile Stack (SMS) on Android.
-- **SignIn With Solana (SIWS)**: Authentication using the MWA 2.0 standardized flow.
-- **Seed Vault Access**: (For Wallet Apps) Direct management of keys in the secure system Seed Vault.
-- **Ed25519 Crypto**: Native key generation and signing on both platforms.
-- **High Performance**: Uses native modules (Kotlin/Swift) for heavy lifting.
-- **Modular**: Only pay for what you use.
+- **Cross-platform Base58**: native Base58 encoding and decoding on both iOS and Android.
+- **Mobile Wallet Adapter**: direct integration with the Solana Mobile Stack on Android.
+- **Sign-In With Solana**: authentication through the MWA 2.0 SIWS flow.
+- **Seed Vault access**: for wallet apps, direct management of keys in the system Seed Vault on Saga.
+- **Ed25519 crypto**: native key generation and signing on both platforms.
+- **High performance**: heavy lifting runs in native Kotlin and Swift.
+- **Modular**: pay only for what you import.
 
-## Platform Support
+## Platform support
 
 | Feature | iOS | Android |
-|---------|-----|---------|
-| Base58 Encode/Decode | | |
-| Base58Check | | |
-| Ed25519 Keypair | | |
-| Ed25519 Signing | | |
-| SHA256 | | |
-| Mobile Wallet Adapter | ❌ | |
-| Seed Vault | ❌ | |
-| DePIN Proofs | | |
-| Solana Pay | | |
+| --- | --- | --- |
+| Base58 encode and decode | yes | yes |
+| Base58Check | yes | yes |
+| Ed25519 keypair | yes | yes |
+| Ed25519 signing | yes | yes |
+| SHA-256 | yes | yes |
+| Mobile Wallet Adapter | no | yes |
+| Seed Vault | no | yes |
+| DePIN proofs | yes | yes |
+| Solana Pay | yes | yes |
 
-> **Note**: Mobile Wallet Adapter (MWA) is Android-only as it's part of the Solana Mobile Stack. 
-> For iOS wallet connections, use WalletConnect or other iOS-compatible protocols.
+Mobile Wallet Adapter is Android only because it is part of the Solana Mobile Stack. For iOS wallet connections, use WalletConnect or another iOS-compatible protocol.
 
 ## Installation
 

@@ -8,6 +8,7 @@ import org.bouncycastle.crypto.agreement.X25519Agreement
 import org.bouncycastle.crypto.digests.SHA256Digest
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator
 import org.bouncycastle.crypto.params.HKDFParameters
+import java.math.BigInteger
 import java.security.SecureRandom
 
 /**
@@ -138,42 +139,102 @@ object X25519Exchange {
   }
   
   /**
-   * Convert Ed25519 public key to X25519 public key.
-   * 
-   * Note: This conversion is one-way (Ed25519 → X25519).
-   * Used when you want to receive encrypted messages using your Ed25519 signing key.
+   * Convert an Ed25519 public key to an X25519 public key.
+   *
+   * Ed25519 is defined over the twisted Edwards curve and X25519 is defined
+   * over the birationally equivalent Montgomery curve Curve25519. The map
+   * from Edwards y-coordinate to Montgomery u-coordinate is:
+   *
+   * ```
+   * u = (1 + y) / (1 - y)  mod p,   p = 2^255 - 19
+   * ```
+   *
+   * An Ed25519 public key encodes a point as the 32-byte little-endian y-coordinate
+   * with the high bit of the last byte holding the sign of x. The sign bit is
+   * discarded here because the Montgomery u-coordinate is independent of x's sign.
+   *
+   * This is the standard conversion used by Signal's X3DH and libsodium's
+   * `crypto_sign_ed25519_pk_to_curve25519`, implemented directly in Kotlin against
+   * a BigInteger field so it is verifiable and portable across any JVM target.
+   *
+   * The conversion is one-way: Ed25519 to X25519. Receiving encrypted messages to
+   * an Ed25519 identity key works by running this on the recipient's Ed25519 public
+   * key and then an X25519 ECDH handshake.
    */
   fun ed25519PublicKeyToX25519(ed25519PublicKey: ByteArray): ByteArray {
     require(ed25519PublicKey.size == 32) { "Ed25519 public key must be 32 bytes" }
-    
-    // Use BouncyCastle's conversion
-    // Ed25519 uses Edwards curve, X25519 uses Montgomery curve
-    // The birational equivalence allows conversion
-    val x25519Key = ByteArray(32)
-    
-    // Import ed25519 point and convert to Montgomery form
-    val edPubKey = org.bouncycastle.math.ec.rfc8032.Ed25519.validatePublicKeyPartialExport(
-      ed25519PublicKey, 0
-    )
-    
-    if (edPubKey == null) {
-      // Fallback: use BouncyCastle's point conversion
-      convertEdwardsToMontgomery(ed25519PublicKey, x25519Key)
-    } else {
-      System.arraycopy(edPubKey, 0, x25519Key, 0, 32)
-    }
-    
-    return x25519Key
+    return edwardsYToMontgomeryU(ed25519PublicKey)
   }
-  
-  private fun convertEdwardsToMontgomery(edwards: ByteArray, montgomery: ByteArray) {
-    // Edwards point (x, y) to Montgomery u-coordinate
-    // u = (1 + y) / (1 - y)
-    // This is handled by BouncyCastle internally when using Ed25519.validatePublicKeyPartialExport
-    // For direct conversion, we'd need field arithmetic
-    
-    // Simplified: just use the x-coordinate directly for now
-    // Full implementation would use proper birational map
-    System.arraycopy(edwards, 0, montgomery, 0, 32)
+
+  /**
+   * Convert an Ed25519 private key seed (32 bytes) to an X25519 private key.
+   *
+   * The Ed25519 private scalar is derived by hashing the seed with SHA-512 and
+   * taking the first 32 bytes, then clamping per RFC 8032:
+   *
+   * - clear the three least significant bits of the first byte
+   * - clear the highest bit of the last byte
+   * - set the second highest bit of the last byte
+   *
+   * The clamped scalar is already a valid X25519 private key, so it can be used
+   * directly with [computeSharedSecret].
+   */
+  fun ed25519PrivateKeyToX25519(ed25519Seed: ByteArray): ByteArray {
+    require(ed25519Seed.size == 32) { "Ed25519 seed must be 32 bytes" }
+    val md = java.security.MessageDigest.getInstance("SHA-512")
+    val hash = md.digest(ed25519Seed)
+    val scalar = hash.copyOfRange(0, 32)
+    // Clamp per RFC 8032 section 5.1.5.
+    scalar[0] = (scalar[0].toInt() and 0xF8).toByte()
+    scalar[31] = (scalar[31].toInt() and 0x7F).toByte()
+    scalar[31] = (scalar[31].toInt() or 0x40).toByte()
+    return scalar
+  }
+
+  // ─── Internal field arithmetic for the Edwards -> Montgomery birational map ──
+
+  /** The Curve25519 prime field modulus: 2^255 - 19. */
+  private val P: BigInteger = BigInteger.valueOf(2).pow(255).subtract(BigInteger.valueOf(19))
+
+  /**
+   * Decode a compressed Ed25519 public key (32 bytes little-endian, high bit of last
+   * byte holds the sign of x) into the Montgomery u-coordinate serialization used by
+   * X25519. Never returns a zero-filled result unless the input actually encodes the
+   * additive identity (which is not a valid Ed25519 public key in practice).
+   */
+  private fun edwardsYToMontgomeryU(compressed: ByteArray): ByteArray {
+    // Strip the sign-of-x bit from the last byte to recover y.
+    val yBytes = compressed.copyOf(32)
+    yBytes[31] = (yBytes[31].toInt() and 0x7F).toByte()
+
+    val y = decodeLittleEndian(yBytes)
+    val one = BigInteger.ONE
+    // numerator = (1 + y) mod p
+    val numerator = one.add(y).mod(P)
+    // denominator = (1 - y) mod p. Reject y == 1 which would be a point at infinity.
+    val denominator = one.subtract(y).mod(P)
+    require(denominator.signum() != 0) {
+      "Invalid Ed25519 public key: y == 1 has no Montgomery u"
+    }
+    val u = numerator.multiply(denominator.modInverse(P)).mod(P)
+    return encodeLittleEndian(u, 32)
+  }
+
+  private fun decodeLittleEndian(bytes: ByteArray): BigInteger {
+    // BigInteger is big-endian, so reverse to get the numerical value.
+    val be = bytes.reversedArray()
+    return BigInteger(1, be)
+  }
+
+  private fun encodeLittleEndian(value: BigInteger, length: Int): ByteArray {
+    val be = value.toByteArray()
+    // Drop an optional leading zero sign byte.
+    val src = if (be.size > length && be[0] == 0.toByte()) be.copyOfRange(1, be.size) else be
+    val out = ByteArray(length)
+    // Copy big-endian bytes into the little-endian output, right-aligned.
+    for (i in src.indices) {
+      out[i] = src[src.size - 1 - i]
+    }
+    return out
   }
 }

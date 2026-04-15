@@ -8,13 +8,19 @@ data class MessageAddressTableLookup(
     val readonlyIndexes: ByteArray
 ) {
     fun serialize(): ByteArray {
-        val out = ByteArrayBuilder()
-        out.write(accountKey.bytes)
-        out.write(ShortVec.encodeLen(writableIndexes.size))
-        out.write(writableIndexes)
-        out.write(ShortVec.encodeLen(readonlyIndexes.size))
-        out.write(readonlyIndexes)
+        val out = ByteArrayBuilder(
+            initialCapacity = 32 + ShortVec.MAX_BYTES + writableIndexes.size + ShortVec.MAX_BYTES + readonlyIndexes.size
+        )
+        serializeInto(out)
         return out.toByteArray()
+    }
+
+    internal fun serializeInto(out: ByteArrayBuilder) {
+        out.write(accountKey.bytes)
+        out.writeShortVec(writableIndexes.size)
+        out.write(writableIndexes)
+        out.writeShortVec(readonlyIndexes.size)
+        out.write(readonlyIndexes)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -46,28 +52,42 @@ data class VersionedMessage(
     val addressTableLookups: List<MessageAddressTableLookup>
 ) {
     fun serialize(): ByteArray {
-        val out = ByteArrayBuilder()
+        val out = ByteArrayBuilder(initialCapacity = estimateSize())
         // Version 0 prefix (0x80)
         out.write(0x80)
-        
-        out.write(byteArrayOf(
-            header.numRequiredSignatures.toByte(),
-            header.numReadonlySigned.toByte(),
-            header.numReadonlyUnsigned.toByte()
-        ))
-        
-        out.write(ShortVec.encodeLen(accountKeys.size))
+
+        out.write(header.numRequiredSignatures)
+        out.write(header.numReadonlySigned)
+        out.write(header.numReadonlyUnsigned)
+
+        out.writeShortVec(accountKeys.size)
         for (k in accountKeys) out.write(k.bytes)
-        
+
         out.write(com.selenus.artemis.runtime.Base58.decode(recentBlockhash))
-        
-        out.write(ShortVec.encodeLen(instructions.size))
-        for (ix in instructions) out.write(ix.serialize())
-        
-        out.write(ShortVec.encodeLen(addressTableLookups.size))
-        for (lookup in addressTableLookups) out.write(lookup.serialize())
-        
+
+        out.writeShortVec(instructions.size)
+        for (ix in instructions) ix.serializeInto(out)
+
+        out.writeShortVec(addressTableLookups.size)
+        for (lookup in addressTableLookups) lookup.serializeInto(out)
+
         return out.toByteArray()
+    }
+
+    private fun estimateSize(): Int {
+        var bytes = 1 + 3 // version prefix + header
+        bytes += ShortVec.MAX_BYTES + accountKeys.size * 32
+        bytes += 32 // recent blockhash
+        bytes += ShortVec.MAX_BYTES
+        for (ix in instructions) {
+            bytes += 1 + ShortVec.MAX_BYTES + ix.accountIndexes.size + ShortVec.MAX_BYTES + ix.data.size
+        }
+        bytes += ShortVec.MAX_BYTES
+        for (lookup in addressTableLookups) {
+            bytes += 32 + ShortVec.MAX_BYTES + lookup.writableIndexes.size +
+                ShortVec.MAX_BYTES + lookup.readonlyIndexes.size
+        }
+        return bytes
     }
 
     companion object {

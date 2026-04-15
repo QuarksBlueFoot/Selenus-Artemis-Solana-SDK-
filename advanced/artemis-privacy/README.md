@@ -5,9 +5,10 @@
 > **New in v1.5.0**: Confidential Transfers, Ring Signatures, and Mixing Pools
 
 Artemis Privacy brings privacy-preserving cryptography to Solana mobile applications:
-- **Confidential Transfers**: Hide transaction amounts using Pedersen commitments
-- 👥 **Ring Signatures**: Anonymous transactions with unlinkable signatures
-- 🌊 **Mixing Pools**: CoinJoin-style transaction mixing for privacy
+
+- **Confidential transfers**: hide transaction amounts using Pedersen commitments
+- **Ring signatures**: anonymous transactions with unlinkable signatures
+- **Mixing pools**: CoinJoin-style transaction mixing for privacy
 
 ## Features
 
@@ -145,7 +146,7 @@ val efficientSignature = RingSignature.sign(
 
 **Use cases**: Private voting, anonymous donations, whistleblower protection, privacy-preserving DeFi
 
-### 🌊 Mixing Pools
+### Mixing pools
 
 CoinJoin-style transaction mixing for breaking on-chain traceability.
 

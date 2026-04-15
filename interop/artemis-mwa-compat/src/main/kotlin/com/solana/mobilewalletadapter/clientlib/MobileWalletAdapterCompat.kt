@@ -185,7 +185,14 @@ internal class MwaAdapterOperations(
     override suspend fun signMessages(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
+    ): Array<SignedMessageResult> = signMessagesDetached(messages, addresses)
+
+    override suspend fun signMessagesDetached(
+        messages: Array<ByteArray>,
+        addresses: Array<ByteArray>
     ): Array<SignedMessageResult> {
+        // Route through the Artemis MWA client which speaks the MWA 2.0
+        // sign_messages RPC end-to-end and returns detached signatures.
         return messages.map { msg ->
             val sig = adapter.signArbitraryMessage(
                 msg,
@@ -193,6 +200,24 @@ internal class MwaAdapterOperations(
             )
             SignedMessageResult(message = msg, signatures = listOf(sig))
         }.toTypedArray()
+    }
+
+    override suspend fun getCapabilities(): GetCapabilitiesResult {
+        // The Artemis MwaWalletAdapter exposes WalletCapabilities, which is a
+        // superset of MWA 2.0 GetCapabilitiesResult plus a few Artemis-specific
+        // feature flags. Map the subset that the upstream API surface defines.
+        val caps = runCatching { adapter.getCapabilities() }.getOrNull()
+        val versions = buildList {
+            if (caps?.supportsLegacyTransactions != false) add("legacy")
+            if (caps?.supportsVersionedTransactions != false) add("0")
+        }
+        return GetCapabilitiesResult(
+            supportsCloneAuthorization = caps?.supportsCloneAuthorization ?: false,
+            supportsSignAndSendTransactions = caps?.supportsSignAndSend ?: true,
+            maxTransactionsPerSigningRequest = caps?.maxTransactionsPerRequest ?: 0,
+            maxMessagesPerSigningRequest = caps?.maxMessagesPerRequest ?: 0,
+            supportedTransactionVersions = versions
+        )
     }
 }
 

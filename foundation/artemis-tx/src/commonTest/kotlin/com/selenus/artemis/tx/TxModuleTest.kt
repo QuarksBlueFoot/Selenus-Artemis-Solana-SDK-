@@ -3,6 +3,7 @@ package com.selenus.artemis.tx
 import com.selenus.artemis.runtime.Base58
 import com.selenus.artemis.runtime.Pubkey
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -264,6 +265,101 @@ class TxModuleTest {
         val encoded = ShortVec.encodeLen(0)
         assertEquals(1, encoded.size)
         assertEquals(0, encoded[0].toInt())
+    }
+
+    @Test
+    fun testShortVecEncodeMaxSingleByte() {
+        // 127 == 0x7F is the largest single-byte short-vec value.
+        val encoded = ShortVec.encodeLen(127)
+        assertEquals(1, encoded.size)
+        assertEquals(0x7F, encoded[0].toInt() and 0xFF)
+    }
+
+    @Test
+    fun testShortVecEncode128IsTwoBytes() {
+        val encoded = ShortVec.encodeLen(128)
+        assertEquals(2, encoded.size)
+        assertEquals(0x80, encoded[0].toInt() and 0xFF)
+        assertEquals(0x01, encoded[1].toInt() and 0xFF)
+    }
+
+    @Test
+    fun testShortVecEncode16383IsTwoBytes() {
+        // 16383 == 0x3FFF is the largest two-byte short-vec value.
+        val encoded = ShortVec.encodeLen(16383)
+        assertEquals(2, encoded.size)
+        assertEquals(0xFF, encoded[0].toInt() and 0xFF)
+        assertEquals(0x7F, encoded[1].toInt() and 0xFF)
+    }
+
+    @Test
+    fun testShortVecEncode16384IsThreeBytes() {
+        val encoded = ShortVec.encodeLen(16384)
+        assertEquals(3, encoded.size)
+    }
+
+    @Test
+    fun testShortVecRoundTrip() {
+        for (value in listOf(0, 1, 42, 127, 128, 255, 1000, 16383, 16384, 65535)) {
+            val (decoded, consumed) = ShortVec.decodeLen(ShortVec.encodeLen(value))
+            assertEquals(value, decoded, "round-trip failed for $value")
+            assertEquals(ShortVec.encodeLen(value).size, consumed)
+        }
+    }
+
+    @Test
+    fun testShortVecEncodeIntoMatchesEncodeLen() {
+        for (value in listOf(0, 127, 128, 16383, 16384)) {
+            val direct = ShortVec.encodeLen(value)
+            val buffer = ByteArray(ShortVec.MAX_BYTES)
+            val written = ShortVec.encodeLenInto(value, buffer, 0)
+            assertEquals(direct.size, written)
+            for (i in 0 until written) {
+                assertEquals(direct[i], buffer[i])
+            }
+        }
+    }
+
+    // ===== ByteArrayBuilder Tests =====
+
+    @Test
+    fun testByteArrayBuilderWriteShortVecMatchesEncodeLen() {
+        val builder = ByteArrayBuilder()
+        builder.writeShortVec(16384)
+        assertContentEquals(ShortVec.encodeLen(16384), builder.toByteArray())
+    }
+
+    @Test
+    fun testByteArrayBuilderResetReusesBuffer() {
+        val builder = ByteArrayBuilder()
+        builder.write(byteArrayOf(1, 2, 3))
+        assertEquals(3, builder.length)
+        builder.reset()
+        assertEquals(0, builder.length)
+        builder.write(byteArrayOf(9, 8))
+        assertContentEquals(byteArrayOf(9, 8), builder.toByteArray())
+    }
+
+    @Test
+    fun testByteArrayBuilderViewIsZeroCopy() {
+        val builder = ByteArrayBuilder()
+        val payload = ByteArray(64) { it.toByte() }
+        builder.write(payload)
+        val view = builder.view()
+        assertEquals(0, view.offset)
+        assertEquals(64, view.length)
+        assertEquals(payload[7], view[7])
+        assertContentEquals(payload, view.toByteArray())
+    }
+
+    @Test
+    fun testByteArrayBuilderPutShortLE() {
+        val builder = ByteArrayBuilder()
+        builder.putShortLE(0x1234)
+        val bytes = builder.toByteArray()
+        assertEquals(2, bytes.size)
+        assertEquals(0x34, bytes[0].toInt() and 0xFF)
+        assertEquals(0x12, bytes[1].toInt() and 0xFF)
     }
 
     // ===== SignedTransaction Tests =====

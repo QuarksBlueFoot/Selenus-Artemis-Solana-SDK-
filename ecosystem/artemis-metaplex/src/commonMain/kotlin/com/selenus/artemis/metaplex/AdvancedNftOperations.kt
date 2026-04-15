@@ -319,7 +319,10 @@ object AdvancedNftOperations {
                 collection = null,
                 uses = null
             ),
-            collectionDetails = true
+            // Marks this mint as a sized collection NFT (CollectionDetails::V1
+            // with a starting size of 0; the size is incremented on-chain as
+            // members are verified).
+            collectionDetails = TokenMetadataInstructions.CollectionDetails.V1(size = 0)
         ))
         
         // Mint collection NFT to authority

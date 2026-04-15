@@ -41,7 +41,49 @@ interface AdapterOperations {
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
     ): Array<SignedMessageResult>
+
+    /**
+     * Sign messages and return the signatures detached from the original
+     * payload. This is the preferred method in MWA 2.0 because it avoids
+     * the legacy concatenation format and lets the caller keep the original
+     * messages for client-side display.
+     */
+    suspend fun signMessagesDetached(
+        messages: Array<ByteArray>,
+        addresses: Array<ByteArray>
+    ): Array<SignedMessageResult> = signMessages(messages, addresses)
+
+    /**
+     * Return the capability descriptor advertised by the connected wallet.
+     *
+     * MWA 2.0 wallets implement `get_capabilities` so dapps can query
+     * supported feature flags before issuing extension methods. Default
+     * implementations return an empty capability set so legacy adapters keep
+     * compiling.
+     */
+    suspend fun getCapabilities(): GetCapabilitiesResult =
+        GetCapabilitiesResult(
+            supportsCloneAuthorization = false,
+            supportsSignAndSendTransactions = true,
+            maxTransactionsPerSigningRequest = 0,
+            maxMessagesPerSigningRequest = 0,
+            supportedTransactionVersions = listOf("legacy", "0")
+        )
 }
+
+/**
+ * Capability descriptor returned by `get_capabilities`.
+ *
+ * The fields mirror the MWA 2.0 specification verbatim so callers that read
+ * `result.supportsSignAndSendTransactions` continue to work without changes.
+ */
+data class GetCapabilitiesResult(
+    val supportsCloneAuthorization: Boolean,
+    val supportsSignAndSendTransactions: Boolean,
+    val maxTransactionsPerSigningRequest: Int,
+    val maxMessagesPerSigningRequest: Int,
+    val supportedTransactionVersions: List<String>
+)
 
 /**
  * Parameters for sign-and-send transaction requests.

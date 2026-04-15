@@ -124,9 +124,15 @@ project(":artemis-presets").projectDir               = file("compatibility/artem
 // =============================================================================
 include(":artemis-seedvault-compat")
 include(":artemis-mwa-compat")
+include(":artemis-sol4k-compat")
+include(":artemis-solana-kmp-compat")
+include(":artemis-metaplex-android-compat")
 
-project(":artemis-seedvault-compat").projectDir = file("interop/artemis-seedvault-compat")
-project(":artemis-mwa-compat").projectDir       = file("interop/artemis-mwa-compat")
+project(":artemis-seedvault-compat").projectDir       = file("interop/artemis-seedvault-compat")
+project(":artemis-mwa-compat").projectDir             = file("interop/artemis-mwa-compat")
+project(":artemis-sol4k-compat").projectDir           = file("interop/artemis-sol4k-compat")
+project(":artemis-solana-kmp-compat").projectDir      = file("interop/artemis-solana-kmp-compat")
+project(":artemis-metaplex-android-compat").projectDir = file("interop/artemis-metaplex-android-compat")
 
 // =============================================================================
 // Testing

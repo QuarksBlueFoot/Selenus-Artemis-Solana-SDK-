@@ -21,6 +21,29 @@ object TokenMetadataInstructions {
   data class Collection(val verified: Boolean, val key: Pubkey)
   data class Uses(val useMethod: Int, val remaining: Long, val total: Long)
 
+  /**
+   * Metaplex Token Metadata `CollectionDetails` enum as serialized by the program.
+   *
+   * The on-chain Rust definition is:
+   *
+   * ```rust
+   * pub enum CollectionDetails {
+   *     V1 { size: u64 },
+   *     V2 { padding: [u8; 8] },
+   * }
+   * ```
+   *
+   * Borsh encodes this as a 1-byte variant index followed by the payload. `V1` is
+   * the standard sized-collection marker used by Candy Machine v3 collection NFTs;
+   * `V2` is reserved padding and is almost never set by callers. The shape is
+   * explicit here so that passing `null` omits the field entirely (the optional
+   * wrapper is `None`) while passing a variant serializes the full layout.
+   */
+  sealed class CollectionDetails {
+    data class V1(val size: Long) : CollectionDetails()
+    data object V2 : CollectionDetails()
+  }
+
   private fun serializeDataV2(data: DataV2): ByteArray {
     val out = DynBuf()
     
@@ -68,7 +91,12 @@ object TokenMetadataInstructions {
   }
 
   /**
-   * Create Metadata Account V3
+   * Create Metadata Account V3.
+   *
+   * Serializes the `CreateMetadataAccountV3` args struct matching the on-chain
+   * layout: `DataV2 || Option<isMutable> || Option<CollectionDetails>`. Passing
+   * `null` for [collectionDetails] writes a `None` byte. Passing a [CollectionDetails]
+   * variant writes `Some` plus the Borsh-encoded enum body.
    */
   fun createMetadataAccountV3(
     metadata: Pubkey,
@@ -78,13 +106,27 @@ object TokenMetadataInstructions {
     updateAuthority: Pubkey,
     data: DataV2,
     isMutable: Boolean = true,
-    collectionDetails: Boolean = false // simplified for now
+    collectionDetails: CollectionDetails? = null
   ): Instruction {
     val body = DynBuf()
     body.writeByte(33) // Instruction: CreateMetadataAccountV3
     body.write(serializeDataV2(data))
     body.writeByte(if (isMutable) 1 else 0)
-    body.writeByte(if (collectionDetails) 1 else 0) // Collection Details (simplified)
+    if (collectionDetails == null) {
+      body.writeByte(0) // Option::None
+    } else {
+      body.writeByte(1) // Option::Some
+      when (collectionDetails) {
+        is CollectionDetails.V1 -> {
+          body.writeByte(0) // variant index 0 = V1
+          body.write(longToBytesLE(collectionDetails.size))
+        }
+        is CollectionDetails.V2 -> {
+          body.writeByte(1) // variant index 1 = V2
+          repeat(8) { body.writeByte(0) } // reserved padding[8]
+        }
+      }
+    }
 
     return Instruction(
       programId = PROGRAM_ID,

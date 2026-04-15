@@ -492,7 +492,7 @@ This patch addresses API issues reported by integrators and improves documentati
 
 ### Documentation
 
-- **Updated** README.md with comprehensive API Reference section
+- **Updated** README.md with a full API reference section
   - Correct import paths for all modules
   - Code samples for Token-2022, Compute, Gaming, Privacy, DePIN
 - **Updated** Migration Guide with accurate package names
@@ -713,7 +713,7 @@ Patch release fixing Maven Central publishing for multiplatform modules.
 
 ## 1.3.0
 
-Major release with comprehensive test coverage across all modules and documentation updates.
+Major release. Unit tests across all modules plus documentation updates.
 
 ### Added
 
@@ -918,7 +918,7 @@ Metaplex-compatible capabilities (optional module)
 
 - MWA feature detection via get_capabilities
 - Automatic fallback routing between sign-and-send and sign-only
-- Adapter helper signThenSendViaRpc for seamless routing
+- Adapter helper `signThenSendViaRpc` that routes between sign-and-send and sign-only automatically
 
 ## 50 highlights
 

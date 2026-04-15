@@ -46,10 +46,13 @@ class VersionedTransaction(
     }
 
     fun serialize(): ByteArray {
-        val out = ByteArrayBuilder()
-        out.write(ShortVec.encodeLen(signatures.size))
+        val msgBytes = message.serialize()
+        val out = ByteArrayBuilder(
+            initialCapacity = ShortVec.MAX_BYTES + signatures.size * 64 + msgBytes.size
+        )
+        out.writeShortVec(signatures.size)
         for (sig in signatures) out.write(sig)
-        out.write(message.serialize())
+        out.write(msgBytes)
         return out.toByteArray()
     }
 

@@ -9,12 +9,12 @@ Comprehensive integration test for all innovative Artemis SDK features added in 
 - **Ring Signatures** - Anonymous group signatures for mixing
 - **Mixing Pool** - CoinJoin-style transaction privacy
 
-### 🎮 Gaming Module
+### Gaming Module
 - **Verifiable Randomness** - VRF and commit-reveal for provably fair gaming
 - **Game State Proofs** - Merkle state trees and fraud proofs
 - **Reward Distribution** - Multiple payout strategies (Winner Takes All, Linear, Exponential, Poker-style)
 
-### 🎨 Metaplex Module
+### Metaplex Module
 - **Batch NFT Operations** - Mint multiple NFTs efficiently
 - **Dynamic Metadata** - Time-based metadata updates
 - **Collection Management** - Create and manage NFT collections
@@ -90,7 +90,7 @@ The test will output detailed results for each module:
    Network Health: ok
    Balance: 2.0 SOL
 
-   ✅ Setup complete
+   Setup complete
 
 🔐 PRIVACY MODULE TESTS
 ─────────────────────────────────────────────────────────────
@@ -102,21 +102,21 @@ The test will output detailed results for each module:
    ✓ Encrypted amount: 1000000 lamports
      Commitment: ...
    ✓ Decrypted amount: 1000000 lamports
-   ✅ Confidential transfer cryptography VERIFIED
+   Confidential transfer cryptography VERIFIED
 
 [... continues for all 8 test sections ...]
 
 ═══════════════════════════════════════════════════════════════
-   ✅ ALL TESTS COMPLETED SUCCESSFULLY
+   ALL TESTS COMPLETED SUCCESSFULLY
 ═══════════════════════════════════════════════════════════════
 ```
 
 ## What This Tests
 
-- ✅ **Cryptographic Primitives** - All crypto operations work correctly
-- ✅ **Data Structures** - Serialization and deserialization
-- ✅ **Instruction Building** - Transaction construction
-- ✅ **Integration** - Modules work together seamlessly
+- **Cryptographic Primitives** - All crypto operations work correctly
+- **Data Structures** - Serialization and deserialization
+- **Instruction Building** - Transaction construction
+- **Integration** - Modules work together seamlessly
 - ⚠️ **Note**: Does not submit to blockchain (saves devnet SOL)
 
 ## Real Blockchain Testing

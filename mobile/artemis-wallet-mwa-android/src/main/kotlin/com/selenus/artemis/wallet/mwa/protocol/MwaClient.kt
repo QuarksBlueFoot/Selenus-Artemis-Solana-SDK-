@@ -202,13 +202,19 @@ class MwaClient(
       val signaturesArray = resultJson["signatures"]
       if (signaturesArray != null && signaturesArray is kotlinx.serialization.json.JsonArray) {
         // Structured detached response: { messages, signatures[][], addresses[][] }
-        val sigs = signaturesArray.map { sigGroup ->
+        val sigs = signaturesArray.mapIndexed { idx, sigGroup ->
           if (sigGroup is kotlinx.serialization.json.JsonArray && sigGroup.isNotEmpty()) {
-            // Take the first signature for the first signer per message
+            // Structured MWA 2.0 response: signatures[i] is the list of signatures
+            // produced for message i. Take the first signature for the first signer.
             val b64Sig = sigGroup[0].jsonPrimitive.content
             java.util.Base64.getDecoder().decode(b64Sig)
           } else {
-            ByteArray(64) // Empty signature placeholder
+            // A well-behaved wallet never returns an empty signature group for a
+            // message it signed. Surface this as an error instead of silently
+            // returning zero-filled bytes that would produce an invalid on-chain tx.
+            throw IllegalStateException(
+              "MWA signMessagesDetached: wallet returned empty signature array for message index $idx"
+            )
           }
         }
         return messages to sigs

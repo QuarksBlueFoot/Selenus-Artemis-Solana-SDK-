@@ -41,7 +41,7 @@ data class MessageV0(
     out.write(header.numReadonlyUnsigned)
 
     // static account keys
-    out.write(ShortVec.encodeLen(staticAccountKeys.size))
+    out.writeShortVec(staticAccountKeys.size)
     staticAccountKeys.forEach { out.write(it.bytes) }
 
     // recent blockhash (base58 -> 32 bytes)
@@ -50,22 +50,22 @@ data class MessageV0(
     out.write(bh)
 
     // instructions
-    out.write(ShortVec.encodeLen(instructions.size))
+    out.writeShortVec(instructions.size)
     instructions.forEach { ix ->
       out.write(ix.programIdIndex)
-      out.write(ShortVec.encodeLen(ix.accountIndexes.size))
+      out.writeShortVec(ix.accountIndexes.size)
       out.write(ix.accountIndexes)
-      out.write(ShortVec.encodeLen(ix.data.size))
+      out.writeShortVec(ix.data.size)
       out.write(ix.data)
     }
 
     // address table lookups
-    out.write(ShortVec.encodeLen(addressTableLookups.size))
+    out.writeShortVec(addressTableLookups.size)
     addressTableLookups.forEach { lut ->
       out.write(lut.accountKey.bytes)
-      out.write(ShortVec.encodeLen(lut.writableIndexes.size))
+      out.writeShortVec(lut.writableIndexes.size)
       out.write(lut.writableIndexes)
-      out.write(ShortVec.encodeLen(lut.readonlyIndexes.size))
+      out.writeShortVec(lut.readonlyIndexes.size)
       out.write(lut.readonlyIndexes)
     }
 

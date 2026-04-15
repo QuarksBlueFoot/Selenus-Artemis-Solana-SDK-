@@ -35,9 +35,9 @@ sealed interface RemainingAccountRule {
   data class PnftTokenRecord(override val guard: GuardType = GuardType.unknown) : RemainingAccountRule
 
   /**
-   * Placeholder for guards that require additional accounts (rare on mobile).
-   *
-   * We keep it typed and explicit so the planner can fail early if unsupported.
+   * Marker for guards that require additional remaining accounts but do not map to
+   * one of the built-in Artemis rules yet. Keeping the variant typed lets the
+   * planner fail early with a clear error instead of silently dropping accounts.
    */
   data class Custom(
     override val guard: GuardType,

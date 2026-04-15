@@ -288,17 +288,51 @@ class TransactionValidator {
             parseInstruction(buffer, accounts)
         }
         
-        // Address lookup tables (skip for now, just note they exist)
+        // Address lookup table descriptors: each entry is
+        //   accountKey(32) || compact-u16 writable indexes || compact-u16 readonly indexes
+        //
+        // The descriptor payload is parsed so any corrupt entry raises an error
+        // instead of silently passing the validator. The validator intentionally
+        // does not resolve the referenced ATL accounts to their actual keys
+        // because it has no RPC surface; callers that need full resolution run
+        // the tx through TxEngine with the ATL accounts supplied separately.
         val numLookups = readCompactU16(buffer)
-        
+        val lookupDescriptors = (0 until numLookups).map {
+            val key = ByteArray(32)
+            buffer.get(key)
+            val writableCount = readCompactU16(buffer)
+            val writableIndexes = IntArray(writableCount) { buffer.get().toInt() and 0xFF }
+            val readonlyCount = readCompactU16(buffer)
+            val readonlyIndexes = IntArray(readonlyCount) { buffer.get().toInt() and 0xFF }
+            LookupDescriptor(
+                accountKey = Pubkey(key),
+                writableIndexes = writableIndexes.toList(),
+                readonlyIndexes = readonlyIndexes.toList()
+            )
+        }
+
         return ParsedMessage(
             isVersioned = true,
             numRequiredSignatures = numRequiredSignatures,
             accounts = accounts,
             instructions = instructions,
-            hasLookupTables = numLookups > 0
+            hasLookupTables = numLookups > 0,
+            lookupDescriptors = lookupDescriptors
         )
     }
+
+    /**
+     * Parsed address lookup table descriptor from a v0 transaction message.
+     *
+     * The validator captures the referenced lookup table key plus the writable
+     * and readonly index vectors so downstream code can reason about them
+     * without reparsing the raw message bytes.
+     */
+    data class LookupDescriptor(
+        val accountKey: Pubkey,
+        val writableIndexes: List<Int>,
+        val readonlyIndexes: List<Int>
+    )
     
     private fun parseInstruction(buffer: ByteBuffer, accounts: List<Pubkey>): ParsedInstruction {
         val programIdIndex = buffer.get().toInt() and 0xFF
@@ -588,13 +622,18 @@ class TransactionValidator {
 
 /**
  * Parsed transaction message.
+ *
+ * For versioned (v0) messages, [lookupDescriptors] holds the full list of
+ * referenced address lookup tables including writable and readonly index
+ * vectors. Legacy messages always have an empty list.
  */
 data class ParsedMessage(
     val isVersioned: Boolean,
     val numRequiredSignatures: Int,
     val accounts: List<Pubkey>,
     val instructions: List<ParsedInstruction>,
-    val hasLookupTables: Boolean = false
+    val hasLookupTables: Boolean = false,
+    val lookupDescriptors: List<TransactionValidator.LookupDescriptor> = emptyList()
 )
 
 /**

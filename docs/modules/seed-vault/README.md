@@ -1,6 +1,6 @@
 # Artemis Seed Vault
 
-The `artemis-seed-vault` module provides a comprehensive, Coroutine-first implementation of the [Solana Seed Vault](https://github.com/solana-mobile/seed-vault-sdk) protocol. It is designed to be a drop-in replacement for the official SDK while offering a more idiomatic Kotlin API.
+The `artemis-seed-vault` module is a Coroutine-first implementation of the [Solana Seed Vault](https://github.com/solana-mobile/seed-vault-sdk) protocol. It is a drop-in replacement for the official SDK with an idiomatic Kotlin API.
 
 ## Features
 

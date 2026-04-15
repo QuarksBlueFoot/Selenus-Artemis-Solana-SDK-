@@ -131,6 +131,39 @@ object TransactionConfirmation {
     )
     
     /**
+     * Pluggable signature subscription provider.
+     *
+     * Callers that have a websocket or event-driven subscription channel provide
+     * an implementation; the confirmation engine uses it instead of polling when
+     * a `Subscription` or `Hybrid` strategy is selected. Omitting the provider is
+     * legal: the engine gracefully falls back to polling.
+     *
+     * The subscription must complete when the signature reaches at least the
+     * requested [Commitment], reports an error, or the caller-supplied timeout
+     * elapses.
+     */
+    interface SignatureSubscription {
+        /**
+         * Wait for [signature] to reach [commitment]. Returns `true` on success,
+         * `false` on logical error (signature marked failed), and throws on
+         * network error. The implementation is responsible for timeout handling
+         * against the [timeoutMs] budget.
+         */
+        suspend fun awaitConfirmation(
+            signature: String,
+            commitment: Commitment,
+            timeoutMs: Long
+        ): SubscriptionOutcome
+    }
+
+    /** Result of a [SignatureSubscription] wait. */
+    sealed interface SubscriptionOutcome {
+        data class Confirmed(val slot: Long) : SubscriptionOutcome
+        data class Failed(val error: TransactionError, val slot: Long?) : SubscriptionOutcome
+        data object TimedOut : SubscriptionOutcome
+    }
+
+    /**
      * Interface for RPC status queries (implemented by RPC client).
      */
     interface StatusProvider {
@@ -168,22 +201,34 @@ object TransactionConfirmation {
     // ========================================================================
     
     /**
-     * Confirms a single transaction with configurable strategy.
+     * Confirms a single transaction with the configured strategy.
+     *
+     * `Polling` always uses [provider]. `Subscription` and `Hybrid` additionally
+     * use [subscription] when supplied; if `subscription` is null the engine
+     * silently falls back to polling (provided the strategy allows it) so that
+     * callers without a websocket layer still get a working confirmation path.
      */
     suspend fun confirm(
         signature: String,
         provider: StatusProvider,
-        options: ConfirmOptions = ConfirmOptions()
+        options: ConfirmOptions = ConfirmOptions(),
+        subscription: SignatureSubscription? = null
     ): ConfirmationResult {
         val startTime = currentTimeMillis()
-        
+
         return when (val strategy = options.strategy) {
             is ConfirmationStrategy.Polling -> {
                 confirmWithPolling(signature, provider, options, strategy, startTime)
             }
             is ConfirmationStrategy.Subscription -> {
-                // Subscription would use WebSocket - fallback to polling for now
-                if (strategy.fallbackToPolling) {
+                if (subscription != null) {
+                    confirmWithSubscription(
+                        signature, provider, options, subscription,
+                        fallbackPollIntervalMs = strategy.pollIntervalMs,
+                        allowFallback = strategy.fallbackToPolling,
+                        startTime = startTime
+                    )
+                } else if (strategy.fallbackToPolling) {
                     confirmWithPolling(
                         signature, provider, options,
                         ConfirmationStrategy.Polling(intervalMs = strategy.pollIntervalMs),
@@ -192,19 +237,91 @@ object TransactionConfirmation {
                 } else {
                     ConfirmationResult.NetworkError(
                         signature = signature,
-                        message = "WebSocket subscription not implemented",
+                        message = "Subscription strategy requires a SignatureSubscription or fallbackToPolling=true",
                         cause = null
                     )
                 }
             }
             is ConfirmationStrategy.Hybrid -> {
-                // Try subscription first with timeout, then fall back
-                confirmWithPolling(
+                // Try subscription first within the subscriptionTimeoutMs budget.
+                if (subscription != null) {
+                    val budget = min(strategy.subscriptionTimeoutMs, options.timeoutMs)
+                    val outcome = runCatching {
+                        subscription.awaitConfirmation(signature, options.commitment, budget)
+                    }.getOrNull()
+
+                    when (outcome) {
+                        is SubscriptionOutcome.Confirmed -> ConfirmationResult.Confirmed(
+                            signature = signature,
+                            slot = outcome.slot,
+                            commitment = options.commitment,
+                            confirmationTimeMs = currentTimeMillis() - startTime
+                        )
+                        is SubscriptionOutcome.Failed -> ConfirmationResult.Failed(
+                            signature = signature,
+                            error = outcome.error,
+                            slot = outcome.slot
+                        )
+                        SubscriptionOutcome.TimedOut, null -> confirmWithPolling(
+                            signature, provider, options,
+                            ConfirmationStrategy.Polling(intervalMs = strategy.pollIntervalMs),
+                            startTime
+                        )
+                    }
+                } else {
+                    confirmWithPolling(
+                        signature, provider, options,
+                        ConfirmationStrategy.Polling(intervalMs = strategy.pollIntervalMs),
+                        startTime
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun confirmWithSubscription(
+        signature: String,
+        provider: StatusProvider,
+        options: ConfirmOptions,
+        subscription: SignatureSubscription,
+        fallbackPollIntervalMs: Long,
+        allowFallback: Boolean,
+        startTime: Long
+    ): ConfirmationResult {
+        val outcome = runCatching {
+            subscription.awaitConfirmation(signature, options.commitment, options.timeoutMs)
+        }.getOrElse { throwable ->
+            if (allowFallback) {
+                return confirmWithPolling(
                     signature, provider, options,
-                    ConfirmationStrategy.Polling(intervalMs = strategy.pollIntervalMs),
+                    ConfirmationStrategy.Polling(intervalMs = fallbackPollIntervalMs),
                     startTime
                 )
             }
+            return ConfirmationResult.NetworkError(
+                signature = signature,
+                message = "subscription error: ${throwable.message ?: throwable::class.simpleName}",
+                cause = throwable
+            )
+        }
+
+        return when (outcome) {
+            is SubscriptionOutcome.Confirmed -> ConfirmationResult.Confirmed(
+                signature = signature,
+                slot = outcome.slot,
+                commitment = options.commitment,
+                confirmationTimeMs = currentTimeMillis() - startTime
+            )
+            is SubscriptionOutcome.Failed -> ConfirmationResult.Failed(
+                signature = signature,
+                error = outcome.error,
+                slot = outcome.slot
+            )
+            SubscriptionOutcome.TimedOut -> ConfirmationResult.Timeout(
+                signature = signature,
+                lastStatus = null,
+                elapsedMs = currentTimeMillis() - startTime
+            )
         }
     }
     
