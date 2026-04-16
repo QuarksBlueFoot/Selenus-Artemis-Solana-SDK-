@@ -103,10 +103,18 @@ class ArtemisMobile private constructor(
                 chain = chain
             )
             val session = WalletSession.fromAdapter(wallet, txEngine)
-            val sessionManager = WalletSessionManager {
-                wallet.connect()
-                WalletSession.fromAdapter(wallet, txEngine)
-            }
+            val sessionManager = WalletSessionManager(
+                connector = {
+                    wallet.connect()
+                    WalletSession.fromAdapter(wallet, txEngine)
+                },
+                // Silent reauthorize path: uses the persisted auth token stored
+                // in MwaWalletAdapter.authStore, so the wallet UI does not open.
+                silentConnector = {
+                    wallet.reauthorize()
+                    WalletSession.fromAdapter(wallet, txEngine)
+                }
+            )
             val realtime = RealtimeEngine(endpoints = listOf(wsUrl))
             val das: ArtemisDas? = dasUrl?.let { HeliusDas(it) }
             val marketplace = MarketplaceEngine(rpc, txEngine, das)

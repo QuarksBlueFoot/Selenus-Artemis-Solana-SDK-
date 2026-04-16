@@ -33,14 +33,44 @@ class MarketplacePreflight(
      *
      * @param valid         True if all checks passed and the transaction should succeed.
      * @param errors        Human-readable descriptions of each check that failed.
-     * @param prependIxs    Instructions the caller should prepend to fix recoverable state
-     *                      (e.g. a missing destination ATA). Empty when nothing is needed.
+     * @param warnings      Non-fatal advisories the UI should surface (for example a
+     *                      royalty fee that will be enforced on the chain side).
+     * @param prependIxs    Instructions the caller should prepend to fix recoverable
+     *                      state (a missing destination ATA, etc.).
+     * @param royalty       Structured royalty information for the asset if it could be
+     *                      resolved. Apps render this alongside the transaction approval
+     *                      dialog so users see the effective take-rate before signing.
      */
     data class PreflightResult(
         val valid: Boolean,
         val errors: List<String> = emptyList(),
-        val prependIxs: List<Instruction> = emptyList()
+        val warnings: List<String> = emptyList(),
+        val prependIxs: List<Instruction> = emptyList(),
+        val royalty: RoyaltyInfo? = null
     )
+
+    /**
+     * Structured royalty metadata used by preflight results.
+     *
+     * Surfacing royalties in the preflight surface lets marketplace apps show
+     * the effective creator fee before the user signs. Royalty enforcement
+     * itself is handled by the on-chain program (Metaplex Token Metadata
+     * enforces on pNFTs; Bubblegum honors it for compressed NFTs); the
+     * preflight layer only reports the declared value so the UI can warn
+     * users when a trade will pay a non-zero fee.
+     *
+     * @param basisPoints Royalty in hundredths of a percent. 500 means 5%.
+     * @param verifiedCollection Whether the asset belongs to a verified Metaplex
+     *                           collection. Unverified collections do not legally
+     *                           enforce creator royalties on-chain.
+     */
+    data class RoyaltyInfo(
+        val basisPoints: Int,
+        val verifiedCollection: Boolean
+    ) {
+        /** Royalty as a percent, e.g. 5.0 for a 500 basis-point fee. */
+        val percent: Double get() = basisPoints / 100.0
+    }
 
     /**
      * Validate a compressed NFT (cNFT) transfer before executing it.
@@ -59,6 +89,7 @@ class MarketplacePreflight(
         assetId: String
     ): PreflightResult {
         val errors = mutableListOf<String>()
+        val warnings = mutableListOf<String>()
         val d = das
         if (d == null) {
             return PreflightResult(
@@ -93,7 +124,21 @@ class MarketplacePreflight(
             errors += "Asset $assetId is frozen and cannot be transferred"
         }
 
-        return PreflightResult(valid = errors.isEmpty(), errors = errors)
+        val royalty = RoyaltyInfo(
+            basisPoints = asset.royaltyBasisPoints,
+            verifiedCollection = asset.collectionVerified
+        )
+        if (royalty.basisPoints > 0) {
+            warnings += "Asset carries a ${royalty.percent}% creator royalty" +
+                if (!royalty.verifiedCollection) " (collection is not verified, royalty may not be enforced)" else ""
+        }
+
+        return PreflightResult(
+            valid = errors.isEmpty(),
+            errors = errors,
+            warnings = warnings,
+            royalty = royalty
+        )
     }
 
     /**
@@ -118,6 +163,7 @@ class MarketplacePreflight(
         tokenProgram: Pubkey = ProgramIds.TOKEN_PROGRAM
     ): PreflightResult {
         val errors = mutableListOf<String>()
+        val warnings = mutableListOf<String>()
         val prepend = mutableListOf<Instruction>()
         return try {
             val result = rpc.getTokenAccountsByOwner(
@@ -138,10 +184,35 @@ class MarketplacePreflight(
                     errors += "Unable to verify destination ATA for recipient ${recipient.toBase58()}"
                 } else if (ataResolution.createIx != null) {
                     prepend += ataResolution.createIx
+                    warnings += "Destination ATA does not exist and will be created (rent will be paid by ${payer.toBase58()})"
                 }
             }
 
-            PreflightResult(valid = errors.isEmpty(), errors = errors, prependIxs = prepend)
+            // Best-effort royalty surface: if the caller provided a DAS client we
+            // reuse it, since mints that live in a DAS indexer have the authoritative
+            // royalty data. For non-DAS mints we skip the royalty block rather than
+            // guess, so the UI never renders fabricated numbers.
+            val royalty: RoyaltyInfo? = das?.let { dasClient ->
+                runCatching { dasClient.asset(mint.toBase58()) }.getOrNull()?.let { asset ->
+                    val info = RoyaltyInfo(
+                        basisPoints = asset.royaltyBasisPoints,
+                        verifiedCollection = asset.collectionVerified
+                    )
+                    if (info.basisPoints > 0) {
+                        warnings += "Asset carries a ${info.percent}% creator royalty" +
+                            if (!info.verifiedCollection) " (collection unverified)" else ""
+                    }
+                    info
+                }
+            }
+
+            PreflightResult(
+                valid = errors.isEmpty(),
+                errors = errors,
+                warnings = warnings,
+                prependIxs = prepend,
+                royalty = royalty
+            )
         } catch (e: Exception) {
             PreflightResult(
                 valid = false,
