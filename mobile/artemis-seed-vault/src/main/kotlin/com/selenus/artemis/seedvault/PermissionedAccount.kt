@@ -8,7 +8,7 @@
  * 
  * When an app holds PERMISSION_ACCESS_SEED_VAULT_PRIVILEGED, derivation paths of the form
  * m/44'/[coin]'/10000'/0/X are special: they can be used for signing without any user
- * authentication UI. This enables system-level wallet apps to provide seamless signing.
+ * authentication UI. This enables system-level wallet apps to provide direct signing.
  */
 package com.selenus.artemis.seedvault
 

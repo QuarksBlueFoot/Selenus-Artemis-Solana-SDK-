@@ -10,7 +10,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-core module (now merged into artemis-runtime).
+ * Tests for artemis-core module (now merged into artemis-runtime).
  * Tests SolanaResult, StateManager, and Flow utilities.
  */
 class CoreModuleTest {

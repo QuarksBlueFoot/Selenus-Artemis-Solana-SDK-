@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 
 /**
- * Unit tests for [RealtimeEngine] — event parsing and callback dispatch.
+ * Unit tests for [RealtimeEngine] - event parsing and callback dispatch.
  *
  * These tests exercise the parser logic in [RealtimeEngine.dispatchEvent] without
  * opening a real WebSocket. We build [WsEvent.Notification] payloads that match
@@ -99,7 +99,7 @@ class RealtimeEngineTest {
 
     // ─── AccountNotification parsing via dispatchEvent ────────────────────────
     // We test the parse logic indirectly by calling dispatchEvent via reflection
-    // — or more idiomatically, by verifying the AccountNotification schema maps correctly.
+    // - or more idiomatically, by verifying the AccountNotification schema maps correctly.
     // Since dispatchEvent is private, we exercise it through the data-structure contracts.
 
     @Test

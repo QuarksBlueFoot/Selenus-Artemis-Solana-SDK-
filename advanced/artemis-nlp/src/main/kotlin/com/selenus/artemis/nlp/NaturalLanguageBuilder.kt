@@ -416,7 +416,7 @@ data class TransactionIntent(
 )
 
 /**
- * Intent type - comprehensive list of all supported operations.
+ * Intent type - list of supported operations.
  */
 enum class IntentType {
     // Transfers
@@ -1510,7 +1510,7 @@ class MemoPattern : TransactionPattern() {
 }
 
 // ===========================================
-// Additional Comprehensive Patterns
+// Additional Patterns
 // ===========================================
 
 class CreateAtaPattern : TransactionPattern() {

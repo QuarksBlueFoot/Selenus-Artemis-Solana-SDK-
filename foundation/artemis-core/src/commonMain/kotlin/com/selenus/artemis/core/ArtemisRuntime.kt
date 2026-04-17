@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 
 /**
- * ArtemisRuntime — KMP-safe central orchestration surface.
+ * ArtemisRuntime - KMP-safe central orchestration surface.
  *
  * The Android entrypoint [com.selenus.artemis.wallet.mwa.ArtemisMobile] wires
  * the full mobile stack (RPC, MWA wallet, transaction engine, realtime, DAS,

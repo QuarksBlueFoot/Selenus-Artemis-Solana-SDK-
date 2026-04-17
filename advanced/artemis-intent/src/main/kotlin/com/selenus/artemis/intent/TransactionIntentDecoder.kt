@@ -25,14 +25,14 @@ import java.nio.ByteBuffer
  * 
  * // Display to user
  * println("Summary: ${analysis.summary}")
- * println("Risk: ${analysis.overallRisk.emoji} ${analysis.overallRisk.name}")
- * 
+ * println("Risk: [${analysis.overallRisk.tag}] ${analysis.overallRisk.name}")
+ *
  * for (intent in analysis.intents) {
  *     println("- ${intent.summary}")
  * }
- * 
+ *
  * for (warning in analysis.warnings) {
- *     println("⚠️ $warning")
+ *     println("WARN: $warning")
  * }
  * ```
  */
@@ -315,17 +315,17 @@ object TransactionIntentDecoder {
         if (ProgramRegistry.isSuspicious(programId)) {
             return TransactionIntent(
                 instructionIndex = instructionIndex,
-                programName = "⚠️ SUSPICIOUS PROGRAM",
+                programName = "SUSPICIOUS PROGRAM",
                 programId = programId,
                 method = "unknown",
-                summary = "🚨 INTERACTION WITH SUSPICIOUS PROGRAM",
+                summary = "INTERACTION WITH SUSPICIOUS PROGRAM",
                 accounts = accounts.mapIndexed { i, acc ->
                     AccountRole(acc, "Account $i", false, false)
                 },
                 args = emptyMap(),
                 riskLevel = RiskLevel.CRITICAL,
                 warnings = listOf(
-                    "🚨 This program has been flagged as suspicious",
+                    "This program has been flagged as suspicious",
                     "Do NOT approve this transaction unless you are absolutely certain"
                 )
             )
@@ -415,28 +415,28 @@ object TransactionIntentDecoder {
         // Check for unlimited approvals
         if (intents.any { it.method in listOf("approve", "approveChecked") && 
                           (it.args["isUnlimited"] == true || it.args["amount"] == Long.MAX_VALUE) }) {
-            additionalWarnings.add("🚨 Contains UNLIMITED token approval")
+            additionalWarnings.add("Contains UNLIMITED token approval")
         }
-        
+
         // Check for authority changes
         if (intents.any { it.method == "setAuthority" }) {
-            additionalWarnings.add("⚠️ Modifies token authorities")
+            additionalWarnings.add("Modifies token authorities")
         }
-        
+
         // Check for token burns
         if (intents.any { it.method in listOf("burn", "burnChecked") }) {
-            additionalWarnings.add("🔥 Burns tokens permanently")
+            additionalWarnings.add("Burns tokens permanently")
         }
-        
+
         // Check for stake operations
         if (intents.any { it.programName == "Stake" }) {
-            additionalWarnings.add("📊 Involves staking operations")
+            additionalWarnings.add("Involves staking operations")
         }
-        
+
         // Check for unknown programs
         val unknownPrograms = intents.count { it.method.startsWith("unknown") }
         if (unknownPrograms > 0) {
-            additionalWarnings.add("⚠️ $unknownPrograms unknown program(s) - review carefully")
+            additionalWarnings.add("$unknownPrograms unknown program(s) - review carefully")
         }
         
         return TransactionIntentAnalysis(
@@ -493,7 +493,7 @@ object TransactionIntentDecoder {
                 listOf("Instruction not fully decoded - review program documentation")
             } else {
                 listOf(
-                    "⚠️ Unknown program - cannot decode instruction",
+                    "Unknown program - cannot decode instruction",
                     "Review the program address before approving"
                 )
             }

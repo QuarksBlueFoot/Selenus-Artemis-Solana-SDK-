@@ -29,7 +29,7 @@ import com.selenus.artemis.tx.Instruction
  * ```
  *
  * Each method returns a list of instructions. The caller is responsible for
- * assembling them into a transaction and signing. This keeps the API composable —
+ * assembling them into a transaction and signing. This keeps the API composable -
  * you can combine instructions from different helpers into a single transaction.
  */
 object Artemis {

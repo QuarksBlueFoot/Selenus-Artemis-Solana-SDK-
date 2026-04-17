@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 import kotlin.test.assertFailsWith
 
 /**
- * Comprehensive tests for artemis-presets module.
+ * Tests for artemis-presets module.
  * Tests ArtemisPreset, PresetRegistry, PresetProvider.
  */
 class PresetsModuleTest {

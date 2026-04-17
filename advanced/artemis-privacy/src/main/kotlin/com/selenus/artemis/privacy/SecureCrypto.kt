@@ -9,7 +9,7 @@ import org.bouncycastle.jcajce.provider.digest.Keccak
 import java.security.SecureRandom
 
 /**
- * Artemis Privacy Module - Comprehensive cryptographic utilities for mobile-first privacy.
+ * Artemis Privacy Module - cryptographic utilities for mobile-first privacy.
  * 
  * Features:
  * - AES-256-GCM encryption/decryption

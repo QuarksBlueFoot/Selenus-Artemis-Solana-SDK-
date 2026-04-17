@@ -18,7 +18,7 @@ import com.selenus.artemis.rpc.RpcApi
 import com.selenus.artemis.rpc.JsonRpcClient
 
 /**
- * Comprehensive tests for artemis-preview module v1.2.0 enhancements
+ * Tests for artemis-preview module v1.2.0 enhancements
  * 
  * Tests TransactionSimulator with simulation, error decoding,
  * balance changes prediction, and compute unit estimation

@@ -16,7 +16,7 @@ import com.selenus.artemis.runtime.Base58
 import com.selenus.artemis.programs.SystemProgram
 
 /**
- * Comprehensive tests for artemis-compute module v1.2.0 enhancements
+ * Tests for artemis-compute module v1.2.0 enhancements
  * 
  * Tests ComputeOptimizer with per-program profiling, presets,
  * and intelligent compute unit allocation

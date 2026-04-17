@@ -2,16 +2,16 @@
 set -euo pipefail
 
 # =============================================================================
-# Artemis SDK — Maven Central Publisher (Central Portal API)
+# Artemis SDK - Maven Central Publisher (Central Portal API)
 # =============================================================================
 # Publishes all modules to Maven Central via the Central Portal REST API.
 # https://central.sonatype.com/api/v1/publisher/upload
 #
 # Prerequisites:
-#   CENTRAL_USERNAME / CENTRAL_PASSWORD  — Central Portal token (generate at
+#   CENTRAL_USERNAME / CENTRAL_PASSWORD  - Central Portal token (generate at
 #       https://central.sonatype.com/account -> Generate Token)
-#   SIGNING_KEY    — Armored GPG private key (or supply secret.asc file)
-#   SIGNING_PASSWORD — GPG key passphrase (empty string if no passphrase)
+#   SIGNING_KEY    - Armored GPG private key (or supply secret.asc file)
+#   SIGNING_PASSWORD - GPG key passphrase (empty string if no passphrase)
 # =============================================================================
 
 # ---- Load credentials from local.properties if available --------------------
@@ -43,7 +43,7 @@ for var in CENTRAL_USERNAME CENTRAL_PASSWORD; do
     fi
 done
 if [ -z "${SIGNING_KEY:-}" ]; then
-    echo "Warning: SIGNING_KEY is not set — artifacts will NOT be signed."
+    echo "Warning: SIGNING_KEY is not set - artifacts will NOT be signed."
     echo "         Maven Central requires signed artifacts. Continuing for staging only."
 fi
 [ "$fail" -ne 0 ] && exit 1
@@ -103,7 +103,7 @@ HTTP_CODE=$(curl --silent --output /tmp/central-response.json --write-out "%{htt
 echo ""
 if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
     DEPLOYMENT_ID=$(cat /tmp/central-response.json)
-    echo "SUCCESS — Upload accepted by Central Portal."
+    echo "SUCCESS - Upload accepted by Central Portal."
     echo "   HTTP Status : ${HTTP_CODE}"
     echo "   Deployment  : ${DEPLOYMENT_ID}"
     echo ""
@@ -113,7 +113,7 @@ if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
     echo "   Central Portal will validate, sign-check, and publish automatically."
     echo "   Artifacts will appear on Maven Central within ~30 minutes."
 else
-    echo "FAILED — Central Portal returned HTTP ${HTTP_CODE}" >&2
+    echo "FAILED - Central Portal returned HTTP ${HTTP_CODE}" >&2
     echo "   Response:" >&2
     cat /tmp/central-response.json >&2
     echo "" >&2

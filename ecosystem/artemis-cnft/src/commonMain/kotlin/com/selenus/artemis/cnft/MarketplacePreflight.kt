@@ -7,7 +7,7 @@ import com.selenus.artemis.runtime.Pubkey
 import com.selenus.artemis.tx.Instruction
 
 /**
- * MarketplacePreflight — validates asset and ownership state before executing marketplace transactions.
+ * MarketplacePreflight - validates asset and ownership state before executing marketplace transactions.
  *
  * Run before [MarketplaceEngine.transferCnft] or [MarketplaceEngine.executeInstructions] to catch
  * common failure conditions (wrong owner, frozen asset, missing DAS record) before submitting
@@ -145,13 +145,13 @@ class MarketplacePreflight(
      * Validate that [wallet] holds a standard (non-compressed) SPL NFT with [mint].
      *
      * Checks that the wallet has a token account for [mint] with a non-zero balance.
-     * If [recipient] is supplied, also ensures the destination ATA exists — and when
+     * If [recipient] is supplied, also ensures the destination ATA exists - and when
      * it doesn't, surfaces a `createAssociatedTokenAccount` instruction via
      * [PreflightResult.prependIxs] so the caller can prepend it to the outgoing tx.
      *
      * @param wallet    Wallet that will sign the transfer
      * @param mint      Mint address of the NFT
-     * @param recipient Destination wallet (optional — enables ATA auto-create)
+     * @param recipient Destination wallet (optional - enables ATA auto-create)
      * @param payer     Account that pays the ATA rent if creation is needed. Defaults to [wallet].
      * @param tokenProgram Token program for the mint ([ProgramIds.TOKEN_2022_PROGRAM] for Token-2022).
      */
@@ -222,7 +222,7 @@ class MarketplacePreflight(
     }
 
     /**
-     * Pure ATA ensure helper — returns the destination ATA address for [recipient]
+     * Pure ATA ensure helper - returns the destination ATA address for [recipient]
      * and a create instruction if the account does not exist yet.
      *
      * Thin proxy over [AtaEnsurer] so callers who already know the mint is valid

@@ -39,7 +39,7 @@ object NoopMetaplexLogger : MetaplexLogger
  * })
  * ```
  *
- * Shim internals call `MetaplexLogging.logger.i("nft", "fetched $mint")` — a
+ * Shim internals call `MetaplexLogging.logger.i("nft", "fetched $mint")` - a
  * single lookup, no allocation when the sink is the default no-op.
  */
 object MetaplexLogging {

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertThrows
 
 /**
- * Comprehensive tests for Base58 encoding/decoding with Solana SDK parity.
+ * Tests for Base58 encoding/decoding with Solana SDK parity.
  */
 class Base58Test {
 

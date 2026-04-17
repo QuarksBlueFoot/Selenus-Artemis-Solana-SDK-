@@ -6,7 +6,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-errors module.
+ * Tests for artemis-errors module.
  * Tests ArtemisError types and error handling patterns.
  */
 class ErrorsModuleTest {

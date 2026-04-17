@@ -10,11 +10,11 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 
 /**
- * ArtemisEvent — unified framework event surface.
+ * ArtemisEvent - unified framework event surface.
  *
  * Every subsystem in the SDK (wallet, transactions, realtime, DAS) publishes
  * lifecycle events through [ArtemisEventBus]. Apps observe a single stream
- * and decide what to react to — no more per-module listener wiring.
+ * and decide what to react to - no more per-module listener wiring.
  *
  * ```kotlin
  * ArtemisEventBus.events
@@ -43,7 +43,7 @@ sealed class ArtemisEvent {
     /** Wall-clock millis when the event was created. */
     abstract val timestamp: Long
 
-    /** Stable subsystem tag — useful for filtering, metrics, and logging. */
+    /** Stable subsystem tag - useful for filtering, metrics, and logging. */
     abstract val source: Source
 
     enum class Source { WALLET, TX, REALTIME, DAS, CUSTOM }
@@ -144,7 +144,7 @@ sealed class ArtemisEvent {
     }
 
     /**
-     * Custom event — escape hatch for apps that want to multiplex their own
+     * Custom event - escape hatch for apps that want to multiplex their own
      * events through the bus. Attach any tag you like.
      */
     data class Custom(
@@ -157,10 +157,10 @@ sealed class ArtemisEvent {
 }
 
 /**
- * ArtemisEventBus — the single shared stream for every [ArtemisEvent].
+ * ArtemisEventBus - the single shared stream for every [ArtemisEvent].
  *
  * A [SharedFlow] sized to absorb bursts from wallet+realtime+tx without losing events.
- * Collectors never backpressure the emitter — instead, the bus drops the oldest event
+ * Collectors never backpressure the emitter - instead, the bus drops the oldest event
  * when it can't keep up, which is the right tradeoff for a UI-facing event surface.
  */
 object ArtemisEventBus {

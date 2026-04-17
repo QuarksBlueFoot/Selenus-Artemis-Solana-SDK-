@@ -205,7 +205,7 @@ class ShamirSecretSharingTest {
         val shares1 = shamir.split(secret1, threshold = 2, totalShares = 3)
         val shares2 = shamir.split(secret2, threshold = 2, totalShares = 3)
         
-        // Mix shares from different secrets — same parameters so they appear compatible
+        // Mix shares from different secrets - same parameters so they appear compatible
         val mixed = listOf(shares1[0], shares2[1])
         val result = shamir.recover(mixed)
         

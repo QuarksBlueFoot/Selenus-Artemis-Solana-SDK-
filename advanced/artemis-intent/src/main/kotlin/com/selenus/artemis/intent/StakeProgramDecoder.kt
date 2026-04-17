@@ -118,7 +118,7 @@ object StakeProgramDecoder : InstructionDecoder {
                 "authorityType" to authTypeName
             ),
             riskLevel = RiskLevel.HIGH,
-            warnings = listOf("⚠️ Stake authority will be changed - verify new authority carefully")
+            warnings = listOf("Stake authority will be changed - verify new authority carefully")
         )
     }
     
@@ -215,7 +215,7 @@ object StakeProgramDecoder : InstructionDecoder {
         val warnings = mutableListOf<String>()
         val riskLevel = when {
             solAmount > 1000 -> {
-                warnings.add("⚠️ Large stake withdrawal")
+                warnings.add("Large stake withdrawal")
                 RiskLevel.HIGH
             }
             solAmount > 100 -> {
@@ -300,7 +300,7 @@ object StakeProgramDecoder : InstructionDecoder {
                 "stakeAccount" to stakeAccount
             ),
             riskLevel = RiskLevel.HIGH,
-            warnings = listOf("⚠️ Lockup changes can prevent withdrawal until lockup expires")
+            warnings = listOf("Lockup changes can prevent withdrawal until lockup expires")
         )
     }
     
@@ -380,7 +380,7 @@ object StakeProgramDecoder : InstructionDecoder {
             accounts = emptyList(),
             args = mapOf("discriminator" to discriminator),
             riskLevel = RiskLevel.MEDIUM,
-            warnings = listOf("⚠️ Unknown instruction - review carefully")
+            warnings = listOf("Unknown instruction - review carefully")
         )
     }
 }

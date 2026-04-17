@@ -11,7 +11,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * WalletEvents — lifecycle callbacks for wallet state changes.
+ * WalletEvents - lifecycle callbacks for wallet state changes.
  *
  * Implement to react when the user switches accounts, the session expires,
  * or the wallet explicitly disconnects. The same transitions are also
@@ -37,7 +37,7 @@ interface WalletEvents {
 }
 
 /**
- * WalletSessionManager — MWA session lifecycle with a typed state machine.
+ * WalletSessionManager - MWA session lifecycle with a typed state machine.
  *
  * Handles connection persistence, silent reauthorize, invalidation, and
  * wallet event propagation so apps never touch raw adapter state.

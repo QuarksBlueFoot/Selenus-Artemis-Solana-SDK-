@@ -111,7 +111,7 @@ class JsonRpcClient(
    * in the same order as the requests, regardless of server response ordering.
    *
    * This is significantly more efficient than individual calls when you need
-   * multiple pieces of data — saves HTTP round-trips and reduces latency on mobile.
+   * multiple pieces of data - saves HTTP round-trips and reduces latency on mobile.
    *
    * ```kotlin
    * val responses = client.callBatch(listOf(

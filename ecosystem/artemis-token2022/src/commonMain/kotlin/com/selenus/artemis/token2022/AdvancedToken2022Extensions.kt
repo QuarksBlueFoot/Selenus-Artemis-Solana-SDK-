@@ -7,7 +7,7 @@ import com.selenus.artemis.tx.Instruction
 /**
  * Artemis Advanced Token-2022 Extensions
  * 
- * Comprehensive support for Token-2022 extensions beyond basic transfers.
+ * Support for Token-2022 extensions beyond basic transfers.
  * Implements the full range of Token Extensions Program features:
  * 
  * - Transfer Fees (royalties on every transfer)

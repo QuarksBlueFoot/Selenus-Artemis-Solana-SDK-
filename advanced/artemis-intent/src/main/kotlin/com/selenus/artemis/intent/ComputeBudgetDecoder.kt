@@ -138,17 +138,17 @@ object ComputeBudgetDecoder : InstructionDecoder {
         val typicalCostSol = typicalCostLamports / 1_000_000_000.0
         
         val priorityLevel = when {
-            microLamportsPerCu >= VERY_HIGH_PRIORITY_THRESHOLD -> "🚀 VERY HIGH"
-            microLamportsPerCu >= HIGH_PRIORITY_THRESHOLD -> "⚡ HIGH"
-            microLamportsPerCu >= MEDIUM_PRIORITY_THRESHOLD -> "📈 MEDIUM"
-            microLamportsPerCu >= LOW_PRIORITY_THRESHOLD -> "📊 LOW"
-            else -> "📉 MINIMAL"
+            microLamportsPerCu >= VERY_HIGH_PRIORITY_THRESHOLD -> "VERY HIGH"
+            microLamportsPerCu >= HIGH_PRIORITY_THRESHOLD -> "HIGH"
+            microLamportsPerCu >= MEDIUM_PRIORITY_THRESHOLD -> "MEDIUM"
+            microLamportsPerCu >= LOW_PRIORITY_THRESHOLD -> "LOW"
+            else -> "MINIMAL"
         }
         
         val warnings = mutableListOf<String>()
         val riskLevel = when {
             microLamportsPerCu >= VERY_HIGH_PRIORITY_THRESHOLD -> {
-                warnings.add("⚠️ Very high priority fee - ~${"%.6f".format(typicalCostSol)} SOL extra")
+                warnings.add("Very high priority fee - ~${"%.6f".format(typicalCostSol)} SOL extra")
                 RiskLevel.MEDIUM
             }
             microLamportsPerCu >= HIGH_PRIORITY_THRESHOLD -> {
@@ -217,7 +217,7 @@ object ComputeBudgetDecoder : InstructionDecoder {
             accounts = emptyList(),
             args = mapOf("discriminator" to discriminator),
             riskLevel = RiskLevel.MEDIUM,
-            warnings = listOf("⚠️ Unknown instruction - review carefully")
+            warnings = listOf("Unknown instruction - review carefully")
         )
     }
 }

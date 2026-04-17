@@ -17,7 +17,7 @@ import java.io.Closeable
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * RealtimeEngine — high-level Solana account and program subscription manager.
+ * RealtimeEngine - high-level Solana account and program subscription manager.
  *
  * Wraps [SolanaWsClient] to expose a declarative, callback-based subscription API.
  * Typed callbacks survive reconnects. [reconnect] rotates through [endpoints] so a
@@ -53,7 +53,7 @@ class RealtimeEngine(
 
     private var client: SolanaWsClient? = null
 
-    // Endpoint rotation index — incremented by reconnect() for failover.
+    // Endpoint rotation index - incremented by reconnect() for failover.
     private var endpointIndex = 0
 
     // ─── ConnectionState surface ──────────────────────────────────────────────
@@ -86,7 +86,7 @@ class RealtimeEngine(
     private val accountHandles = mutableMapOf<String, SubscriptionHandle>()
     private val signatureHandles = mutableMapOf<String, SubscriptionHandle>()
 
-    // Spec registry — lets reconnect() replay all typed subscriptions on a new client.
+    // Spec registry - lets reconnect() replay all typed subscriptions on a new client.
     private data class AccountSpec(
         val pubkey: String,
         val commitment: String,
@@ -230,7 +230,7 @@ class RealtimeEngine(
 
     /**
      * Subscribe to all account changes made by [programId].
-     * Returns the raw [SubscriptionHandle] — events are delivered via [SolanaWsClient.events].
+     * Returns the raw [SubscriptionHandle] - events are delivered via [SolanaWsClient.events].
      */
     suspend fun subscribeProgram(
         programId: String,
@@ -369,7 +369,7 @@ class RealtimeEngine(
                     else -> dataArr?.jsonPrimitive?.content
                 }
 
-                // Key format: "acct:<pubkey>:..." — extract pubkey
+                // Key format: "acct:<pubkey>:..." - extract pubkey
                 val pubkey = event.key?.removePrefix("acct:")?.substringBefore(":") ?: return
                 val notification = AccountNotification(pubkey, lamports, data, owner, slot)
                 accountCallbacks[pubkey]?.invoke(notification)

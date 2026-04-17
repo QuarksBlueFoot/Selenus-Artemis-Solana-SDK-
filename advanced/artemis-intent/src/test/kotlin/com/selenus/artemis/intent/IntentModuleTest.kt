@@ -13,16 +13,16 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
 /**
- * Comprehensive tests for artemis-intent module.
+ * Tests for artemis-intent module.
  * 
  * Tests the Transaction Intent Protocol - world's first semantic
  * transaction decoding for mobile wallets.
  */
 class IntentModuleTest {
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
     // TransactionIntent Tests
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
 
     @Test
     fun `create transaction intent with all fields`() {
@@ -93,9 +93,9 @@ class IntentModuleTest {
         assertTrue(intent.warnings.contains("High compute budget requested"))
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
     // AccountRole Tests
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
 
     @Test
     fun `account role with all permissions`() {
@@ -127,9 +127,9 @@ class IntentModuleTest {
         assertFalse(role.isWritable)
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
     // RiskLevel Tests
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
 
     @Test
     fun `risk levels are ordered correctly`() {
@@ -149,17 +149,17 @@ class IntentModuleTest {
     }
 
     @Test
-    fun `risk levels have emojis`() {
-        assertEquals("ℹ️", RiskLevel.INFO.emoji)
-        assertEquals("✅", RiskLevel.LOW.emoji)
-        assertEquals("⚠️", RiskLevel.MEDIUM.emoji)
-        assertEquals("🔴", RiskLevel.HIGH.emoji)
-        assertEquals("🚨", RiskLevel.CRITICAL.emoji)
+    fun `risk levels have short tags`() {
+        assertEquals("INFO", RiskLevel.INFO.tag)
+        assertEquals("LOW", RiskLevel.LOW.tag)
+        assertEquals("MED", RiskLevel.MEDIUM.tag)
+        assertEquals("HIGH", RiskLevel.HIGH.tag)
+        assertEquals("CRIT", RiskLevel.CRITICAL.tag)
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
     // TransactionIntentAnalysis Tests
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
 
     @Test
     fun `analysis from empty intents`() {
@@ -413,9 +413,9 @@ class IntentModuleTest {
         assertTrue(analysis.programsInvolved.contains("Token Program"))
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
     // TransactionIntentDecoder Tests
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
 
     @Test
     fun `decode empty bytes returns empty analysis`() {
@@ -473,9 +473,9 @@ class IntentModuleTest {
         assertTrue(intent.isPartialDecode || intent.programName.contains("Unknown"))
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
     // ProgramRegistry Tests
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ------------------------------------------------------------------------
 
     @Test
     fun `known programs are registered`() {

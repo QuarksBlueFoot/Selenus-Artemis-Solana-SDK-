@@ -1,6 +1,6 @@
 # Artemis SDK - Devnet Integration Test
 
-Comprehensive integration test for all innovative Artemis SDK features added in January 2026.
+Devnet integration test for the Artemis SDK features added in January 2026.
 
 ## Features Tested
 

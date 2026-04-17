@@ -13,7 +13,7 @@ import com.selenus.artemis.vtx.TxConfig
 import com.selenus.artemis.vtx.TxEngine
 
 /**
- * ArtemisClient — unified SDK entrypoint.
+ * ArtemisClient - unified SDK entrypoint.
  *
  * ONE canonical entry point for the entire Artemis SDK. Creates and wires
  * together Connection, TxEngine, BlockhashCache, and WalletSession so

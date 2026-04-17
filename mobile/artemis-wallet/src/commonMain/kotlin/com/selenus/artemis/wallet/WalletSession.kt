@@ -10,10 +10,10 @@ import com.selenus.artemis.vtx.TxEngine
 import com.selenus.artemis.vtx.TxResult
 
 /**
- * WalletSession — Unified signing session for any wallet type.
+ * WalletSession - Unified signing session for any wallet type.
  *
  * This is the "one interface, any wallet, zero mental overhead" abstraction.
- * Devs never care what wallet type is being used — MWA, Seed Vault, or local
+ * Devs never care what wallet type is being used - MWA, Seed Vault, or local
  * keypair all look the same.
  *
  * ```kotlin
@@ -155,7 +155,7 @@ class WalletSession private constructor(
 }
 
 /**
- * Signing strategy — internal abstraction that normalizes different wallet types.
+ * Signing strategy - internal abstraction that normalizes different wallet types.
  *
  * Each variant adapts a different signing source into the common `Signer` interface
  * used by TxEngine. This is the strategy pattern that makes WalletSession work.
@@ -170,7 +170,7 @@ sealed class SignerStrategy {
     abstract suspend fun signMessage(message: ByteArray): ByteArray
 
     /**
-     * Local keypair signer — for dev mode, server-side, and testing.
+     * Local keypair signer - for dev mode, server-side, and testing.
      */
     class Local(private val keypair: Keypair) : SignerStrategy() {
         override val publicKey: Pubkey = keypair.publicKey
@@ -182,7 +182,7 @@ sealed class SignerStrategy {
     }
 
     /**
-     * WalletAdapter-based signer — wraps MWA, Seed Vault, or any WalletAdapter.
+     * WalletAdapter-based signer - wraps MWA, Seed Vault, or any WalletAdapter.
      *
      * This bridges the WalletAdapter interface (async, request-based) to the
      * Signer interface (sync, direct) that TxEngine expects.
@@ -211,7 +211,7 @@ sealed class SignerStrategy {
     }
 
     /**
-     * Raw Signer wrapper — for any existing Signer implementation.
+     * Raw Signer wrapper - for any existing Signer implementation.
      */
     class Raw(private val signer: Signer) : SignerStrategy() {
         override val publicKey: Pubkey = signer.publicKey

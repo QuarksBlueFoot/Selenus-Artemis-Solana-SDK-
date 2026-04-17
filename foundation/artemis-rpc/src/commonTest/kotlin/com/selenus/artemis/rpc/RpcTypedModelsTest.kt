@@ -8,7 +8,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Tests for typed RPC response models — verifying fromJson parsing.
+ * Tests for typed RPC response models - verifying fromJson parsing.
  */
 class RpcTypedModelsTest {
 

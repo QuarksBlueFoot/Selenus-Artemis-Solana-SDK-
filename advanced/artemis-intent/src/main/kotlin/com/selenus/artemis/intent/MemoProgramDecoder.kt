@@ -57,14 +57,14 @@ object MemoProgramDecoder : InstructionDecoder {
         
         for ((pattern, warning) in SUSPICIOUS_PATTERNS) {
             if (lowerMemo.contains(pattern)) {
-                warnings.add("⚠️ $warning")
+                warnings.add("$warning")
                 riskLevel = maxOf(riskLevel, RiskLevel.MEDIUM)
             }
         }
         
         // Check for executable content or scripts
         if (lowerMemo.contains("<script") || lowerMemo.contains("javascript:")) {
-            warnings.add("🚨 Contains potentially malicious script content")
+            warnings.add("Contains potentially malicious script content")
             riskLevel = RiskLevel.HIGH
         }
         
@@ -91,7 +91,7 @@ object MemoProgramDecoder : InstructionDecoder {
             programName = "Memo",
             programId = ProgramRegistry.MEMO_PROGRAM,
             method = "memo",
-            summary = "📝 Memo: \"$displayMemo\"",
+            summary = "Memo: \"$displayMemo\"",
             accounts = signers.mapIndexed { i, signer ->
                 AccountRole(
                     pubkey = signer,

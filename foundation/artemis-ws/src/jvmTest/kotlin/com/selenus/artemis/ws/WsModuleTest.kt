@@ -9,7 +9,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-ws module.
+ * Tests for artemis-ws module.
  * Tests WsEvent, SolanaWsClient, and related utilities.
  */
 class WsModuleTest {

@@ -128,7 +128,7 @@ object AssociatedTokenDecoder : InstructionDecoder {
             accounts = emptyList(),
             args = mapOf("discriminator" to discriminator),
             riskLevel = RiskLevel.MEDIUM,
-            warnings = listOf("⚠️ Unknown instruction - review carefully")
+            warnings = listOf("Unknown instruction - review carefully")
         )
     }
 }

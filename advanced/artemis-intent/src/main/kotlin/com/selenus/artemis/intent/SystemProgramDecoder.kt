@@ -75,7 +75,7 @@ object SystemProgramDecoder : InstructionDecoder {
         val warnings = mutableListOf<String>()
         val riskLevel = when {
             solAmount > 100 -> {
-                warnings.add("⚠️ Large SOL transfer")
+                warnings.add("Large SOL transfer")
                 RiskLevel.HIGH
             }
             solAmount > 10 -> {
@@ -181,7 +181,7 @@ object SystemProgramDecoder : InstructionDecoder {
                 "ownerName" to ownerName
             ),
             riskLevel = RiskLevel.MEDIUM,
-            warnings = listOf("⚠️ Account ownership will be transferred")
+            warnings = listOf("Account ownership will be transferred")
         )
     }
     
@@ -340,7 +340,7 @@ object SystemProgramDecoder : InstructionDecoder {
                 "newAuthority" to newAuthority
             ),
             riskLevel = RiskLevel.HIGH,
-            warnings = listOf("⚠️ Nonce authority will be transferred - verify carefully")
+            warnings = listOf("Nonce authority will be transferred - verify carefully")
         )
     }
     
@@ -388,7 +388,7 @@ object SystemProgramDecoder : InstructionDecoder {
             accounts = emptyList(),
             args = mapOf("discriminator" to discriminator),
             riskLevel = RiskLevel.MEDIUM,
-            warnings = listOf("⚠️ Unknown instruction - review carefully")
+            warnings = listOf("Unknown instruction - review carefully")
         )
     }
 }

@@ -9,7 +9,7 @@ pluginManagement {
 rootProject.name = "selenus-artemis-kotlin-solana-sdk"
 
 // =============================================================================
-// Foundation — core primitives, RPC, transactions, common programs
+// Foundation - core primitives, RPC, transactions, common programs
 // These modules must remain stable, lightweight, and dependency-minimal.
 // =============================================================================
 include(":artemis-core")
@@ -33,7 +33,7 @@ project(":artemis-logging").projectDir    = file("foundation/artemis-logging")
 project(":artemis-compute").projectDir    = file("foundation/artemis-compute")
 
 // =============================================================================
-// Mobile — wallet abstraction, MWA, Seed Vault, Compose
+// Mobile - wallet abstraction, MWA, Seed Vault, Compose
 // Depends on Foundation only. This is the Solana Mobile Stack replacement layer.
 // =============================================================================
 include(":artemis-wallet")
@@ -47,7 +47,7 @@ project(":artemis-seed-vault").projectDir         = file("mobile/artemis-seed-va
 // project(":artemis-compose").projectDir          = file("mobile/artemis-compose")
 
 // =============================================================================
-// Ecosystem — protocol clients and integrations (tokens, NFTs, DeFi)
+// Ecosystem - protocol clients and integrations (tokens, NFTs, DeFi)
 // Depends on Foundation. Optional for all apps.
 // =============================================================================
 include(":artemis-token2022")
@@ -71,7 +71,7 @@ project(":artemis-jupiter").projectDir      = file("ecosystem/artemis-jupiter")
 project(":artemis-actions").projectDir      = file("ecosystem/artemis-actions")
 
 // =============================================================================
-// Advanced — power features, experimental modules
+// Advanced - power features, experimental modules
 // These must never become required for core/mobile adoption.
 // =============================================================================
 include(":artemis-privacy")
@@ -105,7 +105,7 @@ project(":artemis-intent").projectDir     = file("advanced/artemis-intent")
 project(":artemis-preview").projectDir    = file("advanced/artemis-preview")
 
 // =============================================================================
-// Compatibility / Presets — migration helpers and bundled patterns
+// Compatibility / Presets - migration helpers and bundled patterns
 // =============================================================================
 include(":artemis-discriminators")
 include(":artemis-nft-compat")
@@ -120,7 +120,7 @@ project(":artemis-candy-machine-presets").projectDir = file("compatibility/artem
 project(":artemis-presets").projectDir               = file("compatibility/artemis-presets")
 
 // =============================================================================
-// Interop — drop-in shims for Solana Mobile official SDK migration
+// Interop - drop-in shims for Solana Mobile official SDK migration
 // =============================================================================
 include(":artemis-seedvault-compat")
 include(":artemis-mwa-compat")
@@ -152,7 +152,7 @@ project(":artemis-integration-tests").projectDir = file("testing/artemis-integra
 project(":artemis-devnet-tests").projectDir      = file("testing/artemis-devnet-tests")
 
 // =============================================================================
-// Samples — opt-in only
+// Samples - opt-in only
 // =============================================================================
 if (providers.gradleProperty("enableAndroidSamples").orNull == "true") {
     include(":samples:solana-mobile-compose-mint-app")

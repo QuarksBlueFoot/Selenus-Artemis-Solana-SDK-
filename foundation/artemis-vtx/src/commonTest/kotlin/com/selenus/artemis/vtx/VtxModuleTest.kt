@@ -16,7 +16,7 @@ import com.selenus.artemis.runtime.Base58
 import com.selenus.artemis.programs.SystemProgram
 
 /**
- * Comprehensive tests for artemis-vtx module v1.2.0 enhancements
+ * Tests for artemis-vtx module v1.2.0 enhancements
  * 
  * Tests VersionedTransactionBuilder, TransactionV0Extensions,
  * and DynamicPriorityFeeManager

@@ -26,7 +26,7 @@ import com.selenus.artemis.seedvault.PublicKeyResponse
 /**
  * Compatibility shim for `com.solanamobile.seedvault.Wallet`.
  *
- * Drop-in replacement — migrate from the Solana Mobile Seed Vault SDK
+ * Drop-in replacement - migrate from the Solana Mobile Seed Vault SDK
  * by simply swapping the dependency to `artemis-seedvault-compat`.
  * No code changes required in your app.
  */

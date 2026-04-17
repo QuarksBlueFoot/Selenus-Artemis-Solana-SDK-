@@ -281,7 +281,7 @@ class WalletSessionTest {
 
     @Test
     fun `ArtemisClient blockhash caching defaults to true`() {
-        // Verified via the builder — blockhash caching is on by default
+        // Verified via the builder - blockhash caching is on by default
         val client = ArtemisClient {
             rpc = "https://api.devnet.solana.com"
             // blockhashCaching not set, defaults to true
@@ -303,10 +303,10 @@ class WalletSessionTest {
 
     @Test
     fun `ArtemisClient has airdrop methods`() {
-        // Structural test — verify airdrop methods exist and are callable
+        // Structural test - verify airdrop methods exist and are callable
         val client = ArtemisClient.devnet()
         assertNotNull(client)
-        // Methods exist (compile-time) — actual call would need real devnet
+        // Methods exist (compile-time) - actual call would need real devnet
         client.close()
     }
 

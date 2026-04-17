@@ -3,7 +3,7 @@ package com.selenus.artemis.wallet
 import com.selenus.artemis.runtime.Pubkey
 
 /**
- * WalletSessionState — typed state machine for the MWA wallet lifecycle.
+ * WalletSessionState - typed state machine for the MWA wallet lifecycle.
  *
  * The Solana Mobile Stack treats MWA as a protocol with explicit lifecycle
  * phases: the dapp requests authorization, the wallet runs its UX and

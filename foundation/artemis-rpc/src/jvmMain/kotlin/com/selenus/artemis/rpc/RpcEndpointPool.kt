@@ -47,7 +47,7 @@ class RpcEndpointPool(
     ) {
         fun isOpen(threshold: Int, cooldownMs: Long): Boolean {
             if (consecutiveFailures.get() < threshold) return false
-            // Circuit is open — check if cooldown has elapsed (half-open)
+            // Circuit is open - check if cooldown has elapsed (half-open)
             return System.currentTimeMillis() - lastFailureTime.get() < cooldownMs
         }
     }
@@ -70,7 +70,7 @@ class RpcEndpointPool(
                 return healthy.minByOrNull { it.avgLatencyMs.get() }!!.url
             }
 
-            // All circuits open — pick the one with oldest failure (half-open candidate)
+            // All circuits open - pick the one with oldest failure (half-open candidate)
             return states.minByOrNull { it.lastFailureTime.get() }!!.url
         }
     }

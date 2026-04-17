@@ -20,7 +20,7 @@ interface Ed25519Signer {
 }
 
 /**
- * web3-solana `SolanaSigner` — the primary wallet / signing abstraction.
+ * web3-solana `SolanaSigner` - the primary wallet / signing abstraction.
  *
  * Concrete instances include keypair-backed signers and MWA adapters. Both
  * `signTransaction(transaction)` and `signTransaction(message)` are provided
@@ -28,7 +28,7 @@ interface Ed25519Signer {
  * `signAndSendTransaction` and the low-level `sign(bytes)`.
  *
  * Two deprecated byte-array entry points exist in upstream that throw
- * `NotImplementedError`. The shim preserves them verbatim — downstream code
+ * `NotImplementedError`. The shim preserves them verbatim - downstream code
  * catches the throw.
  */
 abstract class SolanaSigner : Ed25519Signer {
@@ -40,7 +40,7 @@ abstract class SolanaSigner : Ed25519Signer {
     abstract suspend fun signAndSendTransaction(transaction: Transaction): Result<String>
 
     /**
-     * Sign [transaction] and return it with the added signature. Not send —
+     * Sign [transaction] and return it with the added signature. Not send -
      * the caller submits it through whatever send path they own.
      */
     open suspend fun signTransaction(transaction: Transaction): Result<Transaction> {

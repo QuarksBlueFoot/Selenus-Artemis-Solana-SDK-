@@ -4,7 +4,7 @@ package com.selenus.artemis.intent
  * Registry of known Solana programs with their instruction decoders.
  * 
  * This is the core of Artemis's Transaction Intent Protocol - the first
- * Solana SDK to provide comprehensive instruction decoding for mobile apps.
+ * Solana SDK to provide instruction decoding for mobile apps.
  */
 object ProgramRegistry {
     

@@ -132,7 +132,7 @@ object Token2022Program {
   }
 
   /**
-   * TransferChecked — the recommended transfer instruction for Token-2022.
+   * TransferChecked - the recommended transfer instruction for Token-2022.
    *
    * Unlike [transfer], this validates the mint and expected decimals,
    * preventing incorrect amount interpretation and enforcing transfer-fee

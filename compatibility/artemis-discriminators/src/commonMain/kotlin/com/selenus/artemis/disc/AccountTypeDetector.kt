@@ -5,7 +5,7 @@ import com.selenus.artemis.runtime.PlatformBase64
 import com.selenus.artemis.runtime.Pubkey
 
 /**
- * AccountTypeDetector - Comprehensive account type detection via discriminators
+ * AccountTypeDetector - account type detection via discriminators via discriminators
  * 
  * Features:
  * - Anchor discriminator detection

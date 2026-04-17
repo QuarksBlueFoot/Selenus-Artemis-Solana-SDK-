@@ -15,7 +15,7 @@ import com.selenus.artemis.seedvault.internal.SeedVaultConstants
 /**
  * Compatibility shim for `com.solanamobile.seedvault.WalletContractV1`.
  *
- * Drop-in replacement — use this instead of the Solana Mobile Seed Vault SDK.
+ * Drop-in replacement - use this instead of the Solana Mobile Seed Vault SDK.
  * All constants match the upstream protocol exactly.
  */
 object WalletContractV1 {

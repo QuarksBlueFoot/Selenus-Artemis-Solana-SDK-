@@ -9,7 +9,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-tx module.
+ * Tests for artemis-tx module.
  * Tests Message, Transaction, AccountMeta, and related types.
  */
 class TxModuleTest {

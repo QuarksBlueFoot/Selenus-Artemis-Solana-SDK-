@@ -9,7 +9,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-depin module.
+ * Tests for artemis-depin module.
  * Tests TelemetryBatcher and DeviceIdentity.
  */
 class DepinModuleTest {

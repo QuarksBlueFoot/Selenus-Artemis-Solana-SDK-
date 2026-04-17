@@ -12,7 +12,7 @@ import com.selenus.artemis.tx.Instruction
 import kotlinx.coroutines.delay
 
 /**
- * TxEngine — production-grade transaction execution pipeline.
+ * TxEngine - production-grade transaction execution pipeline.
  *
  * This is Artemis's core differentiator. Transactions are processed through
  * a staged pipeline: prepare → simulate → sign → send → confirm, with automatic
@@ -192,7 +192,7 @@ class TxEngine(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TxConfig — Transaction execution configuration
+// TxConfig - Transaction execution configuration
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -239,7 +239,7 @@ data class TxConfig(
 )
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TxContext — Mutable state machine for the pipeline
+// TxContext - Mutable state machine for the pipeline
 // ═══════════════════════════════════════════════════════════════════════════════
 
 internal data class TxContext(
@@ -261,7 +261,7 @@ internal data class TxContext(
 )
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TxResult — Sealed result hierarchy
+// TxResult - Sealed result hierarchy
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -315,7 +315,7 @@ sealed class TxResult {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TxPipeline — Staged execution pipeline
+// TxPipeline - Staged execution pipeline
 // ═══════════════════════════════════════════════════════════════════════════════
 
 internal class TxPipeline(private val engine: TxEngine) {
@@ -464,7 +464,7 @@ internal class TxPipeline(private val engine: TxEngine) {
             buf.write(msgBytes)
             val unsignedBytes = buf.toByteArray()
 
-            // Pass to external signer — returns fully signed tx bytes
+            // Pass to external signer - returns fully signed tx bytes
             val signedBytes = ctx.externalSign.invoke(unsignedBytes)
 
             // Deserialize the signed transaction
@@ -573,7 +573,7 @@ internal class ConfirmationTimeoutException(val signature: String) :
     RuntimeException("Transaction $signature was not confirmed in time")
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TxBuilder — Fluent developer-facing API
+// TxBuilder - Fluent developer-facing API
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -667,7 +667,7 @@ class TxBuilder internal constructor(private val engine: TxEngine) {
 }
 
 /**
- * Mutable builder for [TxConfig] — used inside [TxBuilder.config] blocks.
+ * Mutable builder for [TxConfig] - used inside [TxBuilder.config] blocks.
  */
 class TxConfigBuilder internal constructor(base: TxConfig) {
     var simulate: Boolean = base.simulate

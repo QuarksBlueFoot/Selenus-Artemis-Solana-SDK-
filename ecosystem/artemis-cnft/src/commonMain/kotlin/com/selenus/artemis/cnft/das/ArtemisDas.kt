@@ -3,7 +3,7 @@ package com.selenus.artemis.cnft.das
 import com.selenus.artemis.runtime.Pubkey
 
 /**
- * DigitalAsset — typed representation of a DAS (Digital Asset Standard) asset.
+ * DigitalAsset - typed representation of a DAS (Digital Asset Standard) asset.
  *
  * Maps the subset of DAS fields used by most applications. Full raw JSON is
  * preserved in [raw] for callers that need fields not surfaced here.
@@ -32,7 +32,7 @@ data class DigitalAsset(
 )
 
 /**
- * ArtemisDas — Digital Asset Standard query interface.
+ * ArtemisDas - Digital Asset Standard query interface.
  *
  * Abstracts the Helius DAS API behind a typed surface so apps can
  * switch RPC providers without changing call sites.

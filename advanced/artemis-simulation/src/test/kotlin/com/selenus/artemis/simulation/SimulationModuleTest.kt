@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 
 /**
- * Comprehensive tests for artemis-simulation module.
+ * Tests for artemis-simulation module.
  * 
  * Tests the Predictive Simulator - world's first AI-powered
  * transaction analysis and prediction for mobile.

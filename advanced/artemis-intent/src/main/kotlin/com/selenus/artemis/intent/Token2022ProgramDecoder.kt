@@ -104,7 +104,7 @@ object Token2022ProgramDecoder : InstructionDecoder {
             ),
             riskLevel = RiskLevel.MEDIUM,
             warnings = if (closeAuthority != null) {
-                listOf("⚠️ Close authority can permanently close this mint")
+                listOf("Close authority can permanently close this mint")
             } else {
                 emptyList()
             }
@@ -152,7 +152,7 @@ object Token2022ProgramDecoder : InstructionDecoder {
         
         val warnings = mutableListOf<String>()
         if (feePercentage > 5.0) {
-            warnings.add("⚠️ High transfer fee: $feePercentage%")
+            warnings.add("High transfer fee: $feePercentage%")
         }
         
         return TransactionIntent(
@@ -356,7 +356,7 @@ object Token2022ProgramDecoder : InstructionDecoder {
                 "subInstruction" to subInstruction
             ),
             riskLevel = RiskLevel.MEDIUM,
-            warnings = listOf("🔐 Confidential transfer - amounts are encrypted")
+            warnings = listOf("Confidential transfer - amounts are encrypted")
         )
     }
     
@@ -391,7 +391,7 @@ object Token2022ProgramDecoder : InstructionDecoder {
             ),
             riskLevel = if (isFrozenDefault) RiskLevel.HIGH else RiskLevel.LOW,
             warnings = if (isFrozenDefault) {
-                listOf("⚠️ New accounts will be frozen by default")
+                listOf("New accounts will be frozen by default")
             } else {
                 emptyList()
             }
@@ -474,14 +474,14 @@ object Token2022ProgramDecoder : InstructionDecoder {
             programName = "Token-2022",
             programId = ProgramRegistry.TOKEN_2022_PROGRAM,
             method = "initializeNonTransferableMint",
-            summary = "🔒 Make token non-transferable (soulbound)",
+            summary = "Make token non-transferable (soulbound)",
             accounts = listOf(
                 AccountRole(mint, "Mint", false, true)
             ),
             args = mapOf("mint" to mint),
             riskLevel = RiskLevel.HIGH,
             warnings = listOf(
-                "🚨 IRREVERSIBLE: Tokens cannot be transferred after minting",
+                "IRREVERSIBLE: Tokens cannot be transferred after minting",
                 "This creates soulbound/non-transferable tokens"
             )
         )
@@ -499,14 +499,14 @@ object Token2022ProgramDecoder : InstructionDecoder {
             programName = "Token-2022",
             programId = ProgramRegistry.TOKEN_2022_PROGRAM,
             method = "initializePermanentDelegate",
-            summary = "⚠️ Set permanent delegate authority",
+            summary = "Set permanent delegate authority",
             accounts = listOf(
                 AccountRole(mint, "Mint", false, true)
             ),
             args = mapOf("mint" to mint),
             riskLevel = RiskLevel.CRITICAL,
             warnings = listOf(
-                "🚨 CRITICAL: Permanent delegate can transfer or burn tokens from ANY holder",
+                "CRITICAL: Permanent delegate can transfer or burn tokens from ANY holder",
                 "This authority cannot be revoked - use with extreme caution"
             )
         )
@@ -531,7 +531,7 @@ object Token2022ProgramDecoder : InstructionDecoder {
             args = mapOf("mint" to mint),
             riskLevel = RiskLevel.HIGH,
             warnings = listOf(
-                "⚠️ Transfer hook will execute custom program on each transfer",
+                "Transfer hook will execute custom program on each transfer",
                 "Review the hook program carefully before proceeding"
             )
         )
@@ -572,7 +572,7 @@ object Token2022ProgramDecoder : InstructionDecoder {
             accounts = emptyList(),
             args = mapOf("subInstruction" to subInstruction),
             riskLevel = RiskLevel.MEDIUM,
-            warnings = listOf("⚠️ Unknown instruction - review carefully")
+            warnings = listOf("Unknown instruction - review carefully")
         )
     }
 }

@@ -11,7 +11,7 @@ import com.selenus.artemis.runtime.Pubkey
 import com.selenus.artemis.runtime.Base58
 
 /**
- * Comprehensive tests for artemis-discriminators module v1.2.0 enhancements
+ * Tests for artemis-discriminators module v1.2.0 enhancements
  * 
  * Tests AccountTypeDetector, AnchorDiscriminators, and DiscriminatorRegistry
  */

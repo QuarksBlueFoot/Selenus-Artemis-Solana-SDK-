@@ -13,7 +13,7 @@ import com.selenus.artemis.wallet.WalletSessionManager
 import com.selenus.artemis.ws.RealtimeEngine
 
 /**
- * ArtemisMobile — single entry point for Solana mobile apps.
+ * ArtemisMobile - single entry point for Solana mobile apps.
  *
  * Bundles the full Artemis v68 stack into one object: RPC, wallet, transaction engine,
  * realtime subscriptions, DAS (NFT assets), and marketplace. Zero boilerplate.
@@ -28,7 +28,7 @@ import com.selenus.artemis.ws.RealtimeEngine
  *     wsUrl        = "wss://atlas-mainnet.helius-rpc.com/?api-key=<KEY>"
  * )
  *
- * // Gate all wallet ops through sessionManager — handles connect, retry, events
+ * // Gate all wallet ops through sessionManager - handles connect, retry, events
  * val sig = artemis.sessionManager.withWallet { session ->
  *     session.sendSol(recipient, 1_000_000_000L)
  * }

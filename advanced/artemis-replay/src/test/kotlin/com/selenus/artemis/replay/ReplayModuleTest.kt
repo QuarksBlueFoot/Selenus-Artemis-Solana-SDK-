@@ -10,7 +10,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-replay module.
+ * Tests for artemis-replay module.
  * Tests ReplayRecorder, ReplayPlayer, and replay models.
  */
 class ReplayModuleTest {

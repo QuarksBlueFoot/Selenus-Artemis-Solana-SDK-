@@ -27,7 +27,7 @@ import com.selenus.artemis.tx.CompiledInstruction as ArtemisCompiledInstruction
 import com.selenus.artemis.tx.Transaction as ArtemisTransaction
 
 /**
- * web3-solana `AccountMeta` — declares how an account is used by an
+ * web3-solana `AccountMeta` - declares how an account is used by an
  * instruction. A top-level data class, NOT nested inside `Instruction`.
  */
 data class AccountMeta(
@@ -110,7 +110,7 @@ class TransactionInstruction(
 }
 
 /**
- * web3-solana `Message` — the compiled transaction message.
+ * web3-solana `Message` - the compiled transaction message.
  *
  * Upstream declares this as a `sealed class` with abstract properties that
  * both `LegacyMessage` and `VersionedMessage` implement. The shim preserves
@@ -350,7 +350,7 @@ class VersionedMessage internal constructor(
 }
 
 /**
- * web3-solana `Transaction` — signed message ready to send.
+ * web3-solana `Transaction` - signed message ready to send.
  *
  * Upstream exposes this as a `data class` with `signatures` and `message`
  * fields. The shim preserves the shape and adds Artemis-backed serialization.

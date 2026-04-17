@@ -67,7 +67,7 @@ class SignatureOrderingTest {
         val vtx1 = VersionedTransaction(msg)
         vtx1.sign(listOf(payer, cosigner))
 
-        // Sign in REVERSE order — must produce identical signature placement
+        // Sign in REVERSE order - must produce identical signature placement
         val vtx2 = VersionedTransaction(msg)
         vtx2.sign(listOf(cosigner, payer))
 
@@ -76,7 +76,7 @@ class SignatureOrderingTest {
         for (i in vtx1.signatures.indices) {
             assertTrue(
                 vtx1.signatures[i].contentEquals(vtx2.signatures[i]),
-                "Signature at index $i differs — signer order affected placement"
+                "Signature at index $i differs - signer order affected placement"
             )
         }
     }

@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
 
 /**
- * TransactionSimulator - Comprehensive transaction simulation and preview
+ * TransactionSimulator - Transaction simulation and preview
  * 
  * Features:
  * - Pre-flight simulation with detailed results
@@ -39,7 +39,7 @@ class TransactionSimulator(
     }
 
     /**
-     * Simulation result with comprehensive details
+     * Simulation result with detailed info
      */
     data class SimulationResult(
         val success: Boolean,

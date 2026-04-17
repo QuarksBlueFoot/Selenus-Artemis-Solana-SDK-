@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 import kotlin.test.assertFailsWith
 
 /**
- * Tests for RpcEndpointPool — health scoring, circuit breaker, and failover logic.
+ * Tests for RpcEndpointPool - health scoring, circuit breaker, and failover logic.
  */
 class EndpointPoolTest {
 
@@ -80,7 +80,7 @@ class EndpointPoolTest {
         Thread.sleep(10) // ensure different timestamps
         pool.reportFailure(ep2)
 
-        // Both open — should pick ep1 (oldest failure = half-open candidate)
+        // Both open - should pick ep1 (oldest failure = half-open candidate)
         assertEquals(ep1, pool.selectEndpoint())
     }
 
@@ -104,7 +104,7 @@ class EndpointPoolTest {
     fun `JsonRpcClient pool constructor compiles`() {
         val pool = RpcEndpointPool(listOf(ep1, ep2))
         val client = JsonRpcClient(pool)
-        // Should not throw — just verifying construction
+        // Should not throw - just verifying construction
         assertTrue(true)
     }
 

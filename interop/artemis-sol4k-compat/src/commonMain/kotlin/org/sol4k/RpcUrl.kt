@@ -1,7 +1,7 @@
 /*
  * Drop-in source compatibility with org.sol4k.RpcUrl.
  *
- * IMPORTANT: sol4k 0.7.x has a typo in this enum — `MAINNNET` has three N's.
+ * IMPORTANT: sol4k 0.7.x has a typo in this enum - `MAINNNET` has three N's.
  * The shim MUST preserve it verbatim, otherwise sol4k users who wrote
  * `RpcUrl.MAINNNET` in their app will see a compile error when they swap in
  * the Artemis shim. A corrected alias `MAINNET` is added on the side so

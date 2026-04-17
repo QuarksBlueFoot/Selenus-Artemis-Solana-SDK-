@@ -11,7 +11,7 @@ import com.selenus.artemis.wallet.SignTxRequest
 import com.selenus.artemis.wallet.WalletAdapter
 
 /**
- * MarketplaceEngine — high-level interface for listing and buying NFTs.
+ * MarketplaceEngine - high-level interface for listing and buying NFTs.
  *
  * Abstracts cNFT (Bubblegum) transfer flows into simple `list()` and `buy()` surfaces.
  * For regular SPL NFTs, direct token-transfer instructions are composed automatically.

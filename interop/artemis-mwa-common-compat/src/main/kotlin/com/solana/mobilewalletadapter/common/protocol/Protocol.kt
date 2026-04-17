@@ -19,7 +19,7 @@ import javax.crypto.SecretKey
 
 /**
  * Transport-level message sink. The upstream Java interface declares each
- * method with `@NonNull` annotations — Kotlin compiles the same behavior
+ * method with `@NonNull` annotations - Kotlin compiles the same behavior
  * through its null-safety types.
  */
 interface MessageReceiver {

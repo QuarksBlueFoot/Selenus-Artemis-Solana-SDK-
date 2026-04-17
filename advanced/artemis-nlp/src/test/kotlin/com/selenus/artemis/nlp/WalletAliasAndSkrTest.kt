@@ -226,7 +226,7 @@ class WalletAliasAndSkrTest {
                 
                 // Check that the recipient was resolved to mom's address
                 val recipient = result.intent.entities["recipient"]
-                println("✓ Send to alias 'mom': recipient = ${recipient?.resolvedValue}")
+                println("[+] Send to alias 'mom': recipient = ${recipient?.resolvedValue}")
                 println("  Summary: ${result.intent.summary}")
             }
             is ParseResult.NeedsInfo -> {
@@ -248,7 +248,7 @@ class WalletAliasAndSkrTest {
                 assertTrue(result.confidence >= 0.8)
                 
                 val recipient = result.intent.entities["recipient"]
-                println("✓ Send to .skr key 'main.skr': recipient = ${recipient?.resolvedValue}")
+                println("[+] Send to .skr key 'main.skr': recipient = ${recipient?.resolvedValue}")
                 println("  Summary: ${result.intent.summary}")
             }
             is ParseResult.NeedsInfo -> {
@@ -269,7 +269,7 @@ class WalletAliasAndSkrTest {
                 assertTrue(result.intent.type in listOf(IntentType.TRANSFER_TOKEN, IntentType.TRANSFER_SOL))
                 
                 val recipient = result.intent.entities["recipient"]
-                println("✓ Transfer tokens to alias 'savings': recipient = ${recipient?.resolvedValue}")
+                println("[+] Transfer tokens to alias 'savings': recipient = ${recipient?.resolvedValue}")
                 println("  Summary: ${result.intent.summary}")
             }
             is ParseResult.NeedsInfo -> {
@@ -288,7 +288,7 @@ class WalletAliasAndSkrTest {
         
         when (result) {
             is ParseResult.Success -> {
-                println("✓ Complex command parsed successfully")
+                println("[+] Complex command parsed successfully")
                 println("  Intent: ${result.intent.type}")
                 println("  Summary: ${result.intent.summary}")
                 println("  Entities: ${result.intent.entities.mapValues { it.value.resolvedValue }}")
@@ -310,7 +310,7 @@ class WalletAliasAndSkrTest {
         when (result) {
             is ParseResult.Success -> {
                 assertEquals(IntentType.CHECK_BALANCE, result.intent.type)
-                println("✓ Balance query for alias 'mom'")
+                println("[+] Balance query for alias 'mom'")
                 println("  Summary: ${result.intent.summary}")
             }
             is ParseResult.NeedsInfo -> {

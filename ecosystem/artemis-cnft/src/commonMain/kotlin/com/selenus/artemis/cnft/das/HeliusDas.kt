@@ -13,7 +13,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
 /**
- * HeliusDas — [ArtemisDas] implementation backed by the Helius DAS API.
+ * HeliusDas - [ArtemisDas] implementation backed by the Helius DAS API.
  *
  * Uses the Helius JSON-RPC DAS endpoints (`getAssetsByOwner`, `getAsset`,
  * `getAssetsByGroup`). Compatible with any DAS-compliant provider

@@ -14,7 +14,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
- * RpcFallbackDas — [ArtemisDas] implementation that only needs a vanilla Solana RPC endpoint.
+ * RpcFallbackDas - [ArtemisDas] implementation that only needs a vanilla Solana RPC endpoint.
  *
  * Intended as a resilience layer for [CompositeDas]: when Helius / QuickNode DAS is
  * unreachable, rate-limited, or returns an error, this implementation synthesizes the
@@ -85,7 +85,7 @@ class RpcFallbackDas(
         limit: Int
     ): List<DigitalAsset> {
         if (!enableCollectionScan) {
-            // Don't silently mislead callers — an RPC collection scan is a mainnet-breaking call.
+            // Don't silently mislead callers - an RPC collection scan is a mainnet-breaking call.
             return emptyList()
         }
         // Reserved: expensive getProgramAccounts with memcmp on the Metadata account

@@ -38,7 +38,7 @@ data class AccountMeta(
         fun writable(pubkey: String) = AccountMeta(pubkey, isSigner = false, isWritable = true)
         fun readonly(pubkey: String) = AccountMeta(pubkey, isSigner = false, isWritable = false)
 
-        // Pubkey-typed overloads — bridge core DSL → artemis-tx Pubkey types
+        // Pubkey-typed overloads - bridge core DSL → artemis-tx Pubkey types
         fun signerWritable(pubkey: com.selenus.artemis.runtime.Pubkey) = AccountMeta(pubkey.toBase58(), isSigner = true, isWritable = true)
         fun signer(pubkey: com.selenus.artemis.runtime.Pubkey) = AccountMeta(pubkey.toBase58(), isSigner = true, isWritable = false)
         fun writable(pubkey: com.selenus.artemis.runtime.Pubkey) = AccountMeta(pubkey.toBase58(), isSigner = false, isWritable = true)

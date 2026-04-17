@@ -198,7 +198,7 @@ object TokenProgramDecoder : InstructionDecoder {
         val warnings = mutableListOf<String>()
         val riskLevel = when {
             amount > 1_000_000_000_000L -> {
-                warnings.add("⚠️ Very large token transfer")
+                warnings.add("Very large token transfer")
                 RiskLevel.HIGH
             }
             amount > 100_000_000_000L -> {
@@ -249,11 +249,11 @@ object TokenProgramDecoder : InstructionDecoder {
         val warnings = mutableListOf<String>()
         val riskLevel = when {
             isUnlimitedApproval -> {
-                warnings.add("🚨 UNLIMITED approval - delegate can spend ALL your tokens")
+                warnings.add("UNLIMITED approval - delegate can spend ALL your tokens")
                 RiskLevel.CRITICAL
             }
             amount > 1_000_000_000_000L -> {
-                warnings.add("⚠️ Very large approval amount")
+                warnings.add("Very large approval amount")
                 RiskLevel.HIGH
             }
             else -> {
@@ -268,7 +268,7 @@ object TokenProgramDecoder : InstructionDecoder {
             programId = ProgramRegistry.TOKEN_PROGRAM,
             method = "approve",
             summary = if (isUnlimitedApproval) {
-                "⚠️ UNLIMITED approval to ${delegate.take(8)}..."
+                "UNLIMITED approval to ${delegate.take(8)}..."
             } else {
                 "Approve ${delegate.take(8)}... to spend $amount tokens"
             },
@@ -340,11 +340,11 @@ object TokenProgramDecoder : InstructionDecoder {
         val warnings = mutableListOf<String>()
         val riskLevel = when {
             !hasNewAuthority -> {
-                warnings.add("🚨 Authority will be permanently removed - IRREVERSIBLE")
+                warnings.add("Authority will be permanently removed - IRREVERSIBLE")
                 RiskLevel.CRITICAL
             }
             authorityType == 2 -> {
-                warnings.add("⚠️ Account ownership will be transferred")
+                warnings.add("Account ownership will be transferred")
                 RiskLevel.HIGH
             }
             else -> {
@@ -359,7 +359,7 @@ object TokenProgramDecoder : InstructionDecoder {
             programId = ProgramRegistry.TOKEN_PROGRAM,
             method = "setAuthority",
             summary = if (!hasNewAuthority) {
-                "🚨 PERMANENTLY REMOVE $authorityTypeName authority"
+                "PERMANENTLY REMOVE $authorityTypeName authority"
             } else {
                 "Change $authorityTypeName authority"
             },
@@ -433,7 +433,7 @@ object TokenProgramDecoder : InstructionDecoder {
             programName = "SPL Token",
             programId = ProgramRegistry.TOKEN_PROGRAM,
             method = "burn",
-            summary = "🔥 Burn $amount tokens permanently",
+            summary = "Burn $amount tokens permanently",
             accounts = listOf(
                 AccountRole(source, "Token Account", false, true),
                 AccountRole(mint, "Mint", false, true),
@@ -445,7 +445,7 @@ object TokenProgramDecoder : InstructionDecoder {
                 "amount" to amount
             ),
             riskLevel = RiskLevel.HIGH,
-            warnings = listOf("⚠️ Burned tokens are permanently destroyed and cannot be recovered")
+            warnings = listOf("Burned tokens are permanently destroyed and cannot be recovered")
         )
     }
     
@@ -491,7 +491,7 @@ object TokenProgramDecoder : InstructionDecoder {
             programName = "SPL Token",
             programId = ProgramRegistry.TOKEN_PROGRAM,
             method = "freezeAccount",
-            summary = "❄️ Freeze token account - transfers disabled",
+            summary = "Freeze token account - transfers disabled",
             accounts = listOf(
                 AccountRole(account, "Account to Freeze", false, true),
                 AccountRole(mint, "Mint", false, false),
@@ -502,7 +502,7 @@ object TokenProgramDecoder : InstructionDecoder {
                 "mint" to mint
             ),
             riskLevel = RiskLevel.HIGH,
-            warnings = listOf("⚠️ Frozen accounts cannot send or receive tokens until thawed")
+            warnings = listOf("Frozen accounts cannot send or receive tokens until thawed")
         )
     }
     
@@ -519,7 +519,7 @@ object TokenProgramDecoder : InstructionDecoder {
             programName = "SPL Token",
             programId = ProgramRegistry.TOKEN_PROGRAM,
             method = "thawAccount",
-            summary = "🔓 Unfreeze token account - transfers enabled",
+            summary = "Unfreeze token account - transfers enabled",
             accounts = listOf(
                 AccountRole(account, "Account to Thaw", false, true),
                 AccountRole(mint, "Mint", false, false),
@@ -558,7 +558,7 @@ object TokenProgramDecoder : InstructionDecoder {
         val warnings = mutableListOf<String>()
         val riskLevel = when {
             humanAmount > 1_000_000 -> {
-                warnings.add("⚠️ Very large token transfer")
+                warnings.add("Very large token transfer")
                 RiskLevel.HIGH
             }
             humanAmount > 10_000 -> {
@@ -617,11 +617,11 @@ object TokenProgramDecoder : InstructionDecoder {
         val warnings = mutableListOf<String>()
         val riskLevel = when {
             isUnlimited -> {
-                warnings.add("🚨 UNLIMITED approval - delegate can spend ALL your tokens")
+                warnings.add("UNLIMITED approval - delegate can spend ALL your tokens")
                 RiskLevel.CRITICAL
             }
             humanAmount > 1_000_000 -> {
-                warnings.add("⚠️ Very large approval amount")
+                warnings.add("Very large approval amount")
                 RiskLevel.HIGH
             }
             else -> {
@@ -636,7 +636,7 @@ object TokenProgramDecoder : InstructionDecoder {
             programId = ProgramRegistry.TOKEN_PROGRAM,
             method = "approveChecked",
             summary = if (isUnlimited) {
-                "⚠️ UNLIMITED approval to ${delegate.take(8)}..."
+                "UNLIMITED approval to ${delegate.take(8)}..."
             } else {
                 "Approve ${"%.${decimals}f".format(humanAmount)} tokens to ${delegate.take(8)}..."
             },
@@ -722,7 +722,7 @@ object TokenProgramDecoder : InstructionDecoder {
             programName = "SPL Token",
             programId = ProgramRegistry.TOKEN_PROGRAM,
             method = "burnChecked",
-            summary = "🔥 Burn ${"%.${decimals}f".format(humanAmount)} tokens permanently",
+            summary = "Burn ${"%.${decimals}f".format(humanAmount)} tokens permanently",
             accounts = listOf(
                 AccountRole(source, "Token Account", false, true),
                 AccountRole(mint, "Mint", false, true),
@@ -736,7 +736,7 @@ object TokenProgramDecoder : InstructionDecoder {
                 "humanReadableAmount" to humanAmount
             ),
             riskLevel = RiskLevel.HIGH,
-            warnings = listOf("⚠️ Burned tokens are permanently destroyed and cannot be recovered")
+            warnings = listOf("Burned tokens are permanently destroyed and cannot be recovered")
         )
     }
     
@@ -854,7 +854,7 @@ object TokenProgramDecoder : InstructionDecoder {
             accounts = emptyList(),
             args = mapOf("discriminator" to discriminator),
             riskLevel = RiskLevel.MEDIUM,
-            warnings = listOf("⚠️ Unknown instruction - review carefully")
+            warnings = listOf("Unknown instruction - review carefully")
         )
     }
 }

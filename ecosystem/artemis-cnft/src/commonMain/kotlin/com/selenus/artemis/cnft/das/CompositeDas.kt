@@ -8,12 +8,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * CompositeDas — resilient [ArtemisDas] that composes a primary provider with a fallback.
+ * CompositeDas - resilient [ArtemisDas] that composes a primary provider with a fallback.
  *
  * Routes every query to [primary] first. If the primary throws or returns a
  * "not useful" result, automatically re-issues the same call against [fallback].
  * A short-lived failure memo keeps the primary "cooled off" so a burst of calls
- * doesn't pay the primary timeout on every request — once the primary fails, we
+ * doesn't pay the primary timeout on every request - once the primary fails, we
  * skip straight to the fallback for [cooldownMs] milliseconds.
  *
  * This is the recommended way to wire a DAS client in production:
@@ -74,7 +74,7 @@ class CompositeDas(
     )
 
     /**
-     * Signal that the primary is healthy again — clears the cooldown. Apps can call this
+     * Signal that the primary is healthy again - clears the cooldown. Apps can call this
      * after a manual retry policy or a provider rotation succeeds.
      */
     suspend fun resetCooldown() {

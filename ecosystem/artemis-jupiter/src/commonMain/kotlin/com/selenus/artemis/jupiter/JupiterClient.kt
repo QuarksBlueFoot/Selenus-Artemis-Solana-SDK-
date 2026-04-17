@@ -6,7 +6,7 @@
  * 
  * JupiterClient - Complete Jupiter DEX aggregator integration for Kotlin/Android.
  * 
- * This provides the most comprehensive Jupiter integration for mobile:
+ * This provides the Jupiter integration for mobile:
  * - Quote fetching with smart routing
  * - Transaction building with priority fee optimization
  * - Dynamic slippage protection

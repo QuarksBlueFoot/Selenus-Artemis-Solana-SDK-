@@ -58,7 +58,7 @@ class NlpDevnetTest {
             is ParseResult.Success -> {
                 assertEquals(IntentType.TRANSFER_SOL, result.intent.type)
                 assertTrue(result.confidence >= 0.8)
-                println("✓ Transfer SOL: ${result.intent.summary}")
+                println("[+] Transfer SOL: ${result.intent.summary}")
             }
             is ParseResult.NeedsInfo -> {
                 println("Needs: ${result.missing}")
@@ -76,7 +76,7 @@ class NlpDevnetTest {
         when (result) {
             is ParseResult.Success -> {
                 assertEquals(IntentType.SWAP, result.intent.type)
-                println("✓ Swap: ${result.intent.summary}")
+                println("[+] Swap: ${result.intent.summary}")
             }
             else -> {
                 println("Result: $result")
@@ -91,7 +91,7 @@ class NlpDevnetTest {
         when (result) {
             is ParseResult.Success -> {
                 assertEquals(IntentType.STAKE, result.intent.type)
-                println("✓ Stake: ${result.intent.summary}")
+                println("[+] Stake: ${result.intent.summary}")
             }
             else -> {
                 println("Result: $result")
@@ -106,7 +106,7 @@ class NlpDevnetTest {
         when (result) {
             is ParseResult.Success -> {
                 assertEquals(IntentType.AIRDROP, result.intent.type)
-                println("✓ Airdrop: ${result.intent.summary}")
+                println("[+] Airdrop: ${result.intent.summary}")
             }
             else -> {
                 println("Result: $result")
@@ -121,7 +121,7 @@ class NlpDevnetTest {
         when (result) {
             is ParseResult.Success -> {
                 assertEquals(IntentType.CHECK_BALANCE, result.intent.type)
-                println("✓ Balance: ${result.intent.summary}")
+                println("[+] Balance: ${result.intent.summary}")
             }
             else -> {
                 println("Result: $result")
@@ -136,7 +136,7 @@ class NlpDevnetTest {
         when (result) {
             is ParseResult.Success -> {
                 assertEquals(IntentType.WRAP_SOL, result.intent.type)
-                println("✓ Wrap SOL: ${result.intent.summary}")
+                println("[+] Wrap SOL: ${result.intent.summary}")
             }
             else -> {
                 println("Result: $result")
@@ -151,7 +151,7 @@ class NlpDevnetTest {
         when (result) {
             is ParseResult.Success -> {
                 assertEquals(IntentType.SWAP, result.intent.type)
-                println("✓ Buy: ${result.intent.summary}")
+                println("[+] Buy: ${result.intent.summary}")
             }
             else -> {
                 println("Result: $result")
@@ -166,7 +166,7 @@ class NlpDevnetTest {
         when (result) {
             is ParseResult.Success -> {
                 assertEquals(IntentType.CREATE_ATA, result.intent.type)
-                println("✓ Create ATA: ${result.intent.summary}")
+                println("[+] Create ATA: ${result.intent.summary}")
             }
             else -> {
                 println("Result: $result")
@@ -183,15 +183,15 @@ class NlpDevnetTest {
         val usdcMint = resolver.resolveTokenSymbol("USDC")
         assertNotNull(usdcMint)
         assertEquals("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", usdcMint)
-        println("✓ USDC resolved to: $usdcMint")
+        println("[+] USDC resolved to: $usdcMint")
         
         val solMint = resolver.resolveTokenSymbol("SOL")
         assertNotNull(solMint)
-        println("✓ SOL resolved to: $solMint")
+        println("[+] SOL resolved to: $solMint")
         
         val bonkMint = resolver.resolveTokenSymbol("BONK")
         assertNotNull(bonkMint)
-        println("✓ BONK resolved to: $bonkMint")
+        println("[+] BONK resolved to: $bonkMint")
     }
     
     @Test
@@ -199,11 +199,11 @@ class NlpDevnetTest {
         val tokenProgram = resolver.resolveProgramName("token")
         assertNotNull(tokenProgram)
         assertEquals("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", tokenProgram)
-        println("✓ Token program: $tokenProgram")
+        println("[+] Token program: $tokenProgram")
         
         val jupiter = resolver.resolveProgramName("jupiter")
         assertNotNull(jupiter)
-        println("✓ Jupiter program: $jupiter")
+        println("[+] Jupiter program: $jupiter")
     }
     
     // ===========================================
@@ -214,7 +214,7 @@ class NlpDevnetTest {
     @Disabled("Requires devnet SOL - enable when testing manually")
     fun `test balance check on devnet`() = runBlocking {
         val balance = resolver.getBalance(testKeypair.publicKey.toBase58())
-        println("✓ Balance: $balance SOL")
+        println("[+] Balance: $balance SOL")
         assertTrue(balance >= 0)
     }
     
@@ -253,12 +253,12 @@ class NlpDevnetTest {
             
             when (simResult) {
                 is SimulationResult.Success -> {
-                    println("✓ Simulation succeeded")
+                    println("[+] Simulation succeeded")
                     println("  Units consumed: ${simResult.unitsConsumed}")
                     println("  Estimated fee: ${simResult.estimatedFee} lamports")
                 }
                 is SimulationResult.Failed -> {
-                    println("✗ Simulation failed: ${simResult.error}")
+                    println("[-] Simulation failed: ${simResult.error}")
                 }
             }
         }
@@ -310,7 +310,7 @@ class NlpDevnetTest {
             val result = nlb.parse(phrase)
             when (result) {
                 is ParseResult.Success -> {
-                    println("✓ '$phrase' -> ${result.intent.type}")
+                    println("[+] '$phrase' -> ${result.intent.type}")
                 }
                 else -> {
                     println("? '$phrase' -> $result")
@@ -333,7 +333,7 @@ class NlpDevnetTest {
             val result = nlb.parse(phrase)
             when (result) {
                 is ParseResult.Success -> {
-                    println("✓ '$phrase' -> ${result.intent.type}")
+                    println("[+] '$phrase' -> ${result.intent.type}")
                 }
                 else -> {
                     println("? '$phrase' -> $result")
@@ -355,7 +355,7 @@ class NlpDevnetTest {
             val result = nlb.parse(phrase)
             when (result) {
                 is ParseResult.Success -> {
-                    println("✓ '$phrase' -> ${result.intent.type}")
+                    println("[+] '$phrase' -> ${result.intent.type}")
                 }
                 else -> {
                     println("? '$phrase' -> $result")

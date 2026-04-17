@@ -8,7 +8,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-wallet module.
+ * Tests for artemis-wallet module.
  * Tests WalletAdapter, WalletCapabilities, and related utilities.
  */
 class WalletModuleTest {

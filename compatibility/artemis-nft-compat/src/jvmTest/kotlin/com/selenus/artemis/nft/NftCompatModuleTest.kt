@@ -7,7 +7,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-nft-compat module.
+ * Tests for artemis-nft-compat module.
  * Tests Pdas, MetaplexIds, and NFT model parsers.
  */
 class NftCompatModuleTest {

@@ -9,7 +9,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonObject
 
 /**
- * AtaEnsurer — idempotent Associated Token Account resolution and creation.
+ * AtaEnsurer - idempotent Associated Token Account resolution and creation.
  *
  * Standalone utility that apps can drop in front of any token-transfer flow to
  * guarantee the destination ATA exists before the transfer hits the chain.
@@ -24,7 +24,7 @@ import kotlinx.serialization.json.jsonObject
  * [AtaEnsurer] prevents this by fetching the destination ATA once and, if it's
  * missing, producing a `createAssociatedTokenAccount` instruction that the caller
  * prepends to the transaction. On-chain, ATA program creation is idempotent, but
- * on-chain failure costs gas — this lets you skip the call entirely.
+ * on-chain failure costs gas - this lets you skip the call entirely.
  *
  * ```kotlin
  * val ensurer = AtaEnsurer(rpc)
@@ -181,7 +181,7 @@ class AtaEnsurer(
         cache[ata.toBase58()] = CacheEntry(existed = true, atMs = clock())
     }
 
-    /** Drop all cached results — forces a fresh on-chain check on the next call. */
+    /** Drop all cached results - forces a fresh on-chain check on the next call. */
     fun invalidate() {
         cache.clear()
     }

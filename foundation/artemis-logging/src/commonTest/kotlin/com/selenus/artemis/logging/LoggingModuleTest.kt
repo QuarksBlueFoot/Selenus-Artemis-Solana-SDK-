@@ -5,7 +5,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-logging module.
+ * Tests for artemis-logging module.
  * Tests Log, Logger, and factory patterns.
  */
 class LoggingModuleTest {

@@ -8,7 +8,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-candy-machine-presets module.
+ * Tests for artemis-candy-machine-presets module.
  * Tests CandyMachineMintPresets and related utilities.
  */
 class CandyMachinePresetsModuleTest {

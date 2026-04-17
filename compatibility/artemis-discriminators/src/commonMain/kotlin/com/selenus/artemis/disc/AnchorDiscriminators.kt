@@ -14,7 +14,7 @@ object AnchorDiscriminators {
     return hash.copyOfRange(0, 8)
   }
 
-  /** Alias for [global] — instruction discriminator is sha256("global:<name>")[0..8]. */
+  /** Alias for [global] - instruction discriminator is sha256("global:<name>")[0..8]. */
   fun instruction(name: String): ByteArray = global(name)
 
   /** Account discriminator: first 8 bytes of sha256("account:<TypeName>"). */

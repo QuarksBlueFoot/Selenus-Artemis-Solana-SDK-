@@ -60,7 +60,7 @@ class SeedVaultAuthFlowTest {
 
         // Verify the key has actual content (not all zeros)
         assertFalse(account.publicKey.bytes.all { it == 0.toByte() },
-            "Account public key must not be all zeros — that indicates unresolved dummy data")
+            "Account public key must not be all zeros - that indicates unresolved dummy data")
     }
 
     @Test

@@ -424,7 +424,7 @@ class SolanaPayManager(
                 val status = entry["confirmationStatus"]?.jsonPrimitive?.content ?: commitment
                 val err = entry["err"]
                 if (err != null && err !is JsonNull) {
-                    null // Transaction failed — don't count as payment
+                    null // Transaction failed - don't count as payment
                 } else {
                     VerificationResult(
                         signature = sig,

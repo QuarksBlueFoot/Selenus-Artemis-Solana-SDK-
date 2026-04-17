@@ -2,7 +2,7 @@
  * Copyright (c) 2024-2026 Selenus Technologies. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  * 
- * Jupiter DEX Module Tests - Comprehensive testing of Jupiter integration.
+ * Jupiter DEX Module Tests of Jupiter integration.
  */
 package com.selenus.artemis.jupiter
 

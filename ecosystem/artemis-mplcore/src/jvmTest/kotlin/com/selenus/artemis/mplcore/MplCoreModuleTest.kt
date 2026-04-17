@@ -7,7 +7,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-mplcore module.
+ * Tests for artemis-mplcore module.
  * Tests MplCorePdas, MplCorePrograms, MplCoreArgs, and related utilities.
  */
 class MplCoreModuleTest {

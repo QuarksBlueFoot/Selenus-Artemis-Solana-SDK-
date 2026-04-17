@@ -3,7 +3,7 @@ package com.selenus.artemis.seedvault
 import com.selenus.artemis.runtime.Pubkey
 
 /**
- * SeedVaultKeyStore — [ArtemisKeyStore] backed by the Solana Seed Vault.
+ * SeedVaultKeyStore - [ArtemisKeyStore] backed by the Solana Seed Vault.
  *
  * Keys are held in the device's secure element and never leave hardware.
  * All signing operations are dispatched to the Seed Vault system service via IPC.

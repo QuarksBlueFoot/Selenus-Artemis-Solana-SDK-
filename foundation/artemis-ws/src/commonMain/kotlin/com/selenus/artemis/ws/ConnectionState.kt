@@ -1,7 +1,7 @@
 package com.selenus.artemis.ws
 
 /**
- * ConnectionState — explicit transport state for realtime subscriptions.
+ * ConnectionState - explicit transport state for realtime subscriptions.
  *
  * A typed state machine for the websocket lifecycle. Exposed as a
  * [kotlinx.coroutines.flow.StateFlow] by [RealtimeEngine.state] so UI
@@ -71,7 +71,7 @@ sealed class ConnectionState {
     ) : ConnectionState()
 
     /**
-     * Terminal state — [RealtimeEngine.close] was called or the max reconnect budget was exhausted.
+     * Terminal state - [RealtimeEngine.close] was called or the max reconnect budget was exhausted.
      * A new [RealtimeEngine] instance is required to resume.
      */
     data class Closed(

@@ -77,21 +77,21 @@ data class AccountRole(
 /**
  * Risk levels for transaction instructions.
  */
-enum class RiskLevel(val displayName: String, val emoji: String) : Comparable<RiskLevel> {
+enum class RiskLevel(val displayName: String, val tag: String) : Comparable<RiskLevel> {
     /** Safe, read-only or informational */
-    INFO("Informational", "ℹ️"),
-    
+    INFO("Informational", "INFO"),
+
     /** Standard operations, minimal risk */
-    LOW("Low Risk", "✅"),
-    
+    LOW("Low Risk", "LOW"),
+
     /** Operations that transfer value or modify state */
-    MEDIUM("Medium Risk", "⚠️"),
-    
+    MEDIUM("Medium Risk", "MED"),
+
     /** Operations that could result in significant loss */
-    HIGH("High Risk", "🔴"),
-    
+    HIGH("High Risk", "HIGH"),
+
     /** Potentially dangerous operations - requires extra caution */
-    CRITICAL("Critical - Review Carefully", "🚨")
+    CRITICAL("Critical - Review Carefully", "CRIT")
 }
 
 /**

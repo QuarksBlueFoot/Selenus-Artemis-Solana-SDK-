@@ -197,7 +197,7 @@ class TxEngineTest {
         val ix2 = Instruction(dummyProgram, emptyList(), ByteArray(0))
         val signer = Keypair.generate()
 
-        // This is a structural test — we verify the builder compiles and chains
+        // This is a structural test - we verify the builder compiles and chains
         // We can't call send() without a real RPC, which is expected
         val dummyRpc = createDummyRpcForBuilderTest()
         if (dummyRpc != null) {
@@ -365,7 +365,7 @@ class TxEngineTest {
         if (dummyRpc != null) {
             val engine = TxEngine(dummyRpc)
             assertNotNull(engine)
-            // Method exists (compile-time check) — actual call would need real RPC
+            // Method exists (compile-time check) - actual call would need real RPC
         }
     }
 
@@ -375,11 +375,11 @@ class TxEngineTest {
         if (dummyRpc != null) {
             val engine = TxEngine(dummyRpc)
             assertNotNull(engine)
-            // Method exists (compile-time check) — actual call would need real RPC
+            // Method exists (compile-time check) - actual call would need real RPC
         }
     }
 
-    // Utility to create a dummy RpcApi — returns null if instantiation fails
+    // Utility to create a dummy RpcApi - returns null if instantiation fails
     // (RpcApi requires constructor args that may fail without network)
     private fun createDummyRpcForBuilderTest(): com.selenus.artemis.rpc.RpcApi? {
         return try {

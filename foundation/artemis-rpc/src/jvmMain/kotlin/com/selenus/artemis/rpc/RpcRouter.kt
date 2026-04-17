@@ -1,7 +1,7 @@
 package com.selenus.artemis.rpc
 
 /**
- * Method-based RPC routing — directs specific RPC methods to designated endpoints.
+ * Method-based RPC routing - directs specific RPC methods to designated endpoints.
  *
  * This is the "smart routing" layer that lets apps use optimal endpoints per method:
  * - Archive nodes for historical queries

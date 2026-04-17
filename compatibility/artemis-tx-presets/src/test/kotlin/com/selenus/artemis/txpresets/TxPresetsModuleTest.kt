@@ -8,7 +8,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-tx-presets module.
+ * Tests for artemis-tx-presets module.
  * Tests TxComposerPresets and related utilities.
  */
 class TxPresetsModuleTest {

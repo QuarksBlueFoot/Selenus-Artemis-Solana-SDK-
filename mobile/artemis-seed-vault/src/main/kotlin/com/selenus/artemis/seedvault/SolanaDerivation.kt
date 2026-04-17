@@ -8,7 +8,7 @@
  * - #637: Add m/44'/501' to default accounts
  * - #4: Support Ed25519-BIP32 derivation scheme
  * 
- * Provides comprehensive derivation path utilities for all Solana wallet types.
+ * Provides derivation path utilities for all Solana wallet types.
  */
 package com.selenus.artemis.seedvault
 

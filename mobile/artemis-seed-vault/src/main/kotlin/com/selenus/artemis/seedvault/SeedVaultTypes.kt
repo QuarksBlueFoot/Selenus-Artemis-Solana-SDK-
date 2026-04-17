@@ -31,7 +31,7 @@ data class SeedVaultAuthorization(
 
 /**
  * Raw result from the authorization Intent. Contains only the auth token
- * and account ID — the actual public key must be resolved via ContentProvider
+ * and account ID - the actual public key must be resolved via ContentProvider
  * using [SeedVaultManager.resolveAuthorization].
  */
 data class SeedVaultTokenResult(

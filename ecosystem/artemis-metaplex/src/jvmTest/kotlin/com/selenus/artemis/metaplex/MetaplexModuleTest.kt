@@ -7,7 +7,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-metaplex module.
+ * Tests for artemis-metaplex module.
  * Tests MetaplexIds, MetadataPdas, TokenMetadata.
  */
 class MetaplexModuleTest {

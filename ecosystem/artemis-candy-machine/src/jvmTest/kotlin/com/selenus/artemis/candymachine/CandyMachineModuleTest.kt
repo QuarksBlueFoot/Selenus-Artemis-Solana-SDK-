@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 
 /**
- * Comprehensive tests for artemis-candy-machine module.
+ * Tests for artemis-candy-machine module.
  * Tests CandyMachinePdas, CandyMachineIds, and related utilities.
  */
 class CandyMachineModuleTest {

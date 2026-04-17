@@ -7,7 +7,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for artemis-programs module.
+ * Tests for artemis-programs module.
  * Tests SystemProgram, TokenProgram, and related instruction builders.
  */
 class ProgramsModuleTest {
