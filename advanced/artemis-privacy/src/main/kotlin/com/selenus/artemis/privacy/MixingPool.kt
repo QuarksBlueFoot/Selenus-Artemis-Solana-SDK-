@@ -295,17 +295,23 @@ object MixingPool {
     }
     
     /**
-     * Gets the shuffled outputs for building the mixing transaction.
-     * Outputs are shuffled to break the link between inputs and outputs.
+     * Return the shuffled outputs used when the coordinator builds the
+     * mixing transaction.
+     *
+     * The shuffle MUST use a cryptographically secure PRNG: any deterministic
+     * shuffle keyed on a public value (like the round id) lets observers
+     * re-derive the input-to-output mapping and defeats the entire mixing
+     * privacy guarantee. This implementation reads from `SecureRandom`, which
+     * on the JVM pulls from the OS entropy pool, so the permutation cannot be
+     * reproduced by anyone outside the coordinator.
      */
     fun getShuffledOutputs(round: MixingRound): List<Pubkey>? {
         if (round.status != RoundStatus.SIGNING) return null
-        
+
         val outputs = round.participants.mapNotNull { it.revealedOutput }
         if (outputs.size != round.participants.size) return null
-        
-        // Shuffle deterministically based on round ID
-        return outputs.shuffled(java.util.Random(round.id.toLongHash()))
+
+        return outputs.shuffled(java.security.SecureRandom())
     }
     
     // ========================================================================

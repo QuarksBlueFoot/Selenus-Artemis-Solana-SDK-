@@ -17,14 +17,25 @@ import com.selenus.artemis.seedvault.internal.SeedVaultCheck
  * Provides device-level Seed Vault availability and access checks.
  */
 object SeedVault {
-    const val SEEDVAULT_MIN_API_INT = SeedVaultCheck.MIN_API_FOR_SEED_VAULT_PRIVILEGED
+    /**
+     * Minimum Android API level at which the privileged Seed Vault provider
+     * is reachable. Upstream publishes this under the exact name
+     * `MIN_API_FOR_SEED_VAULT_PRIVILEGED`; an alias is kept for the legacy
+     * Artemis name [SEEDVAULT_MIN_API_INT] so both call sites compile.
+     */
+    const val MIN_API_FOR_SEED_VAULT_PRIVILEGED: Int = SeedVaultCheck.MIN_API_FOR_SEED_VAULT_PRIVILEGED
+
+    /** Legacy alias for [MIN_API_FOR_SEED_VAULT_PRIVILEGED]. */
+    const val SEEDVAULT_MIN_API_INT: Int = MIN_API_FOR_SEED_VAULT_PRIVILEGED
 
     enum class AccessType {
         NONE,
         STANDARD,
-        PRIVILEGED;
+        PRIVILEGED,
+        /** Seed Vault simulator present on non-SMS devices (dev builds). */
+        SIMULATED;
 
-        fun isGranted(): Boolean = this == STANDARD || this == PRIVILEGED
+        fun isGranted(): Boolean = this == STANDARD || this == PRIVILEGED || this == SIMULATED
     }
 
     @JvmStatic

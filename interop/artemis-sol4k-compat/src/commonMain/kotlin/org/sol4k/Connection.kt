@@ -48,6 +48,18 @@ class Connection @JvmOverloads constructor(
     val commitment: Commitment = Commitment.FINALIZED
 ) {
 
+    /**
+     * Convenience constructor matching sol4k's `Connection(RpcUrl, Commitment)`.
+     *
+     * Using the enum variant lets callers stay on the cluster preset layer
+     * without having to know the actual URL string.
+     */
+    @JvmOverloads
+    constructor(
+        rpcUrl: RpcUrl,
+        commitment: Commitment = Commitment.FINALIZED
+    ) : this(rpcUrl.value, commitment)
+
     private val client: JsonRpcClient = JsonRpcClient(rpcUrl)
     private val rpc: RpcApi = RpcApi(client)
 

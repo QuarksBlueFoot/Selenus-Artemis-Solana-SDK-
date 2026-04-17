@@ -25,3 +25,6 @@ typealias Bip32DerivationPath = com.selenus.artemis.seedvault.Bip32DerivationPat
 
 /** Drop-in alias for the upstream `Bip44DerivationPath`. */
 typealias Bip44DerivationPath = com.selenus.artemis.seedvault.Bip44DerivationPath
+
+/** Drop-in alias for the upstream `BipLevel`. */
+typealias BipLevel = com.selenus.artemis.seedvault.BipLevel

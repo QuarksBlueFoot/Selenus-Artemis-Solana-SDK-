@@ -4,6 +4,13 @@
  */
 package com.solana.mobilewalletadapter.clientlib
 
+// Explicit import of the nested SIWS Payload class. Although this file
+// declares a `typealias SignInWithSolana = common.protocol.SignInWithSolana`
+// below, Kotlin does not always resolve type references to nested classes
+// through a typealias at declaration sites. Pulling the nested type in by
+// its full name makes `SignInWithSolanaPayload` unambiguous.
+import com.solana.mobilewalletadapter.common.protocol.SignInWithSolana.Payload as SignInWithSolanaPayload
+
 /**
  * Operations available inside an MWA `transact` block.
  *
@@ -18,7 +25,7 @@ interface AdapterOperations {
         authToken: String? = null,
         features: List<String>? = null,
         addresses: List<ByteArray>? = null,
-        signInPayload: SignInWithSolana.Payload? = null
+        signInPayload: SignInWithSolanaPayload? = null
     ): AuthorizationResult
 
     suspend fun reauthorize(
@@ -123,37 +130,40 @@ data class SignedMessageResult(
 }
 
 /**
- * Sign In With Solana (SIWS) payload and result types.
+ * `SignInWithSolana` at the ktx package level points at the verified
+ * common-module class so `import com.solana.mobilewalletadapter.clientlib.SignInWithSolana`
+ * resolves to the same type `import com.solana.mobilewalletadapter.common.protocol.SignInWithSolana`
+ * does. This matches the upstream behaviour (clientlib-ktx re-exports the
+ * SIWS type from common).
  */
-object SignInWithSolana {
-    data class Payload(
-        val domain: String? = null,
-        val address: String? = null,
-        val statement: String? = null,
-        val uri: String? = null,
-        val version: String? = null,
-        val chainId: String? = null,
-        val nonce: String? = null,
-        val issuedAt: String? = null,
-        val expirationTime: String? = null,
-        val notBefore: String? = null,
-        val requestId: String? = null,
-        val resources: List<String>? = null
-    )
+typealias SignInWithSolana = com.solana.mobilewalletadapter.common.protocol.SignInWithSolana
 
-    data class Result(
-        val account: AuthorizationResult.Account,
-        val signInMessage: ByteArray,
-        val signature: ByteArray,
-        val signatureType: String? = null
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is Result) return false
-            return signInMessage.contentEquals(other.signInMessage) &&
-                    signature.contentEquals(other.signature)
-        }
+/**
+ * `SignInResult` data class upstream exposes at the ktx package level,
+ * distinct from the inner class on `MobileWalletAdapterClient.AuthorizationResult`.
+ * Apps import `com.solana.mobilewalletadapter.clientlib.SignInResult` so this
+ * file re-exports it.
+ */
+data class SignInResult(
+    val publicKey: ByteArray,
+    val signedMessage: ByteArray,
+    val signature: ByteArray,
+    val signatureType: String?
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is SignInResult) return false
+        return publicKey.contentEquals(other.publicKey) &&
+            signedMessage.contentEquals(other.signedMessage) &&
+            signature.contentEquals(other.signature) &&
+            signatureType == other.signatureType
+    }
 
-        override fun hashCode(): Int = signInMessage.contentHashCode()
+    override fun hashCode(): Int {
+        var result = publicKey.contentHashCode()
+        result = 31 * result + signedMessage.contentHashCode()
+        result = 31 * result + signature.contentHashCode()
+        result = 31 * result + (signatureType?.hashCode() ?: 0)
+        return result
     }
 }

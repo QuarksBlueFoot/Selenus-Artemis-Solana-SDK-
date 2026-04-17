@@ -39,3 +39,33 @@ TEST_RESULTS_v2.0.0.md
 DEVNET_TESTING_GUIDE.md
 README.old.md
 publish_output.log
+
+# AI-assisted local tooling. Never committed.
+.claude/
+memory/
+.cursor/
+.aider*
+.continue/
+.codeium/
+**/.ai-context/
+*.claude.md
+CLAUDE.md
+CLAUDE.local.md
+.copilot/
+.github/copilot-instructions.md
+docs/Untitled*.md
+d:/tmp/Untitled*.md
+
+# Editor scratch
+*.swp
+*.swo
+*~
+.vscode/settings.json
+.vscode/launch.json
+
+# Local audit artefacts
+/tmp/mwa-audit/
+audit-notes.md
+scratch/
+notes/
+

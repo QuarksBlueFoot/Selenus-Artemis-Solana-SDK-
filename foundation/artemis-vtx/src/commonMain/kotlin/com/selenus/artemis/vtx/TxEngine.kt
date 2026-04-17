@@ -444,13 +444,22 @@ internal class TxPipeline(private val engine: TxEngine) {
 
     private suspend fun sign(ctx: TxContext) {
         if (ctx.externalSign != null) {
-            // External/async signing path (WalletAdapter: MWA, Seed Vault)
-            // Serialize unsigned tx with zero-filled signature slots
+            // External / async signing path (MWA, Seed Vault).
+            //
+            // The MWA 2.0 spec requires the unsigned payload to be laid out as
+            //   [compact-u16 signature_count] [zero-filled 64-byte slots]* [message_bytes]
+            // Upstream has a known bug (solana-mobile/mobile-wallet-adapter #1371)
+            // where callers accidentally serialize with `requireAllSignatures=true`
+            // and fail before the wallet UI even opens. We always emit the
+            // zero-filled layout so the wallet can apply the signatures and
+            // re-serialize the blob without any extra preconditions.
             val tx = ctx.transaction!!
             val numRequired = tx.message.header.numRequiredSignatures
             val msgBytes = tx.message.serialize()
-            val buf = com.selenus.artemis.tx.ByteArrayBuilder()
-            buf.write(com.selenus.artemis.tx.ShortVec.encodeLen(numRequired))
+            val buf = com.selenus.artemis.tx.ByteArrayBuilder(
+                initialCapacity = com.selenus.artemis.tx.ShortVec.MAX_BYTES + numRequired * 64 + msgBytes.size
+            )
+            buf.writeShortVec(numRequired)
             repeat(numRequired) { buf.write(ByteArray(64)) }
             buf.write(msgBytes)
             val unsignedBytes = buf.toByteArray()

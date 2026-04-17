@@ -10,13 +10,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":artemis-core"))
-            api(project(":artemis-rpc"))
             api(project(":artemis-tx"))
             api(project(":artemis-vtx"))
             api(project(":artemis-programs"))
-            api(project(":artemis-cnft"))
             implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.kotlinx.serialization.json)
         }
         jvmTest.dependencies {
             implementation(kotlin("test"))
@@ -25,7 +22,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.selenus.artemis.interop.solanakmp"
+    namespace = "com.selenus.artemis.interop.web3solana"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()

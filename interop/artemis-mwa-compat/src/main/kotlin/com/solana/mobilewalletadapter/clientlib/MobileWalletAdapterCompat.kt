@@ -12,6 +12,7 @@ import android.net.Uri
 import com.selenus.artemis.wallet.mwa.MwaWalletAdapter
 import com.selenus.artemis.wallet.mwa.AuthTokenStore
 import com.selenus.artemis.wallet.mwa.InMemoryAuthTokenStore
+import com.solana.mobilewalletadapter.common.protocol.SignInWithSolana.Payload as SignInWithSolanaPayload
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
@@ -44,7 +45,7 @@ class MobileWalletAdapter(
      */
     suspend fun <T> transact(
         sender: ActivityResultSender,
-        signInPayload: SignInWithSolana.Payload? = null,
+        signInPayload: SignInWithSolanaPayload? = null,
         block: suspend AdapterOperations.(authResult: AuthorizationResult) -> T
     ): TransactionResult<T> {
         return try {
@@ -129,7 +130,7 @@ internal class MwaAdapterOperations(
         authToken: String?,
         features: List<String>?,
         addresses: List<ByteArray>?,
-        signInPayload: SignInWithSolana.Payload?
+        signInPayload: SignInWithSolanaPayload?
     ): AuthorizationResult {
         val pubkey = adapter.connect()
         return AuthorizationResult(

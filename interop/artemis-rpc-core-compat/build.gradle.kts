@@ -12,9 +12,7 @@ kotlin {
             api(project(":artemis-core"))
             api(project(":artemis-rpc"))
             api(project(":artemis-tx"))
-            api(project(":artemis-vtx"))
-            api(project(":artemis-programs"))
-            api(project(":artemis-cnft"))
+            api(project(":artemis-web3-solana-compat"))
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
         }
@@ -25,7 +23,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.selenus.artemis.interop.solanakmp"
+    namespace = "com.selenus.artemis.interop.rpccore"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()

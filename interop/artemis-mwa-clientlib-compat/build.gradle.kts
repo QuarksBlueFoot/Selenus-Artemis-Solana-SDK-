@@ -4,11 +4,9 @@ plugins {
 }
 
 android {
-    namespace = "com.selenus.artemis.interop.mwa"
+    namespace = "com.selenus.artemis.interop.mwaclientlib"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
-    defaultConfig {
-        minSdk = 26
-    }
+    defaultConfig { minSdk = 26 }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -23,14 +21,9 @@ android {
 }
 
 dependencies {
-    api(project(":artemis-wallet-mwa-android"))
-    api(project(":artemis-wallet"))
     api(project(":artemis-core"))
-    // Re-export the common shim so `com.solana.mobilewalletadapter.common.*`
-    // types (ProtocolContract, AssociationContract, SignInWithSolana,
-    // NotifyOnCompleteFuture) resolve transitively for consumers of this
-    // module, mirroring the upstream ktx -> clientlib -> common chain.
+    api(project(":artemis-wallet"))
+    api(project(":artemis-wallet-mwa-android"))
     api(project(":artemis-mwa-common-compat"))
-    implementation(libs.androidx.activity.ktx)
     implementation(libs.kotlinx.coroutines.android)
 }
