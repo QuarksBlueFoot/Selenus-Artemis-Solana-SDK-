@@ -331,23 +331,99 @@ class VersionedMessage internal constructor(
 
     companion object {
         internal fun parse(bytes: ByteArray): VersionedMessage {
-            // v0 parsing is done lazily: we keep the raw bytes and expose the
-            // legacy portion via shared decoder. Full v0 reparse matches the
-            // Artemis VersionedMessage surface.
             val versionPrefix = bytes[0].toInt() and 0x7F
-            val legacyPortion = bytes.copyOfRange(1, bytes.size)
-            val legacy = LegacyMessage.parse(legacyPortion)
+            var offset = 1
+            val numRequired = bytes[offset++].toInt() and 0xFF
+            val numReadonlySigned = bytes[offset++].toInt() and 0xFF
+            val numReadonlyUnsigned = bytes[offset++].toInt() and 0xFF
+
+            val (numKeys, keyLenBytes) = shortVec(bytes, offset); offset += keyLenBytes
+            val keys = ArrayList<SolanaPublicKey>(numKeys)
+            repeat(numKeys) {
+                keys.add(SolanaPublicKey(bytes.copyOfRange(offset, offset + 32)))
+                offset += 32
+            }
+            val blockhashPk = SolanaPublicKey(bytes.copyOfRange(offset, offset + 32))
+            offset += 32
+
+            val (numIx, ixLenBytes) = shortVec(bytes, offset); offset += ixLenBytes
+            val ixs = ArrayList<Instruction>(numIx)
+            repeat(numIx) {
+                val programIdx = bytes[offset++].toInt() and 0xFF
+                val (accCount, accLenBytes) = shortVec(bytes, offset); offset += accLenBytes
+                require(offset + accCount <= bytes.size) { "v0 ix accounts truncated" }
+                val accBytes = bytes.copyOfRange(offset, offset + accCount)
+                offset += accCount
+                val (dataLen, dataLenBytes) = shortVec(bytes, offset); offset += dataLenBytes
+                require(offset + dataLen <= bytes.size) { "v0 ix data truncated" }
+                val dataBytes = bytes.copyOfRange(offset, offset + dataLen)
+                offset += dataLen
+                ixs.add(
+                    Instruction(
+                        programIdIndex = programIdx.toUByte(),
+                        accountIndices = accBytes,
+                        data = dataBytes
+                    )
+                )
+            }
+
+            // v0 tail: compact-u16 count of AddressTableLookup entries,
+            // each: [pubkey 32B] [compact-u16 writable-indexes vec] [compact-u16 readonly-indexes vec]
+            val lookups = if (offset < bytes.size) {
+                val (numLookups, altLenBytes) = shortVec(bytes, offset); offset += altLenBytes
+                val out = ArrayList<AddressTableLookup>(numLookups)
+                repeat(numLookups) {
+                    require(offset + 32 <= bytes.size) { "ALT pubkey truncated" }
+                    val accountKey = SolanaPublicKey(bytes.copyOfRange(offset, offset + 32))
+                    offset += 32
+                    val (writableCount, wcLen) = shortVec(bytes, offset); offset += wcLen
+                    require(offset + writableCount <= bytes.size) { "ALT writable-indexes truncated" }
+                    val writableIdx = (0 until writableCount).map {
+                        (bytes[offset + it].toInt() and 0xFF).toUByte()
+                    }
+                    offset += writableCount
+                    val (readOnlyCount, rcLen) = shortVec(bytes, offset); offset += rcLen
+                    require(offset + readOnlyCount <= bytes.size) { "ALT readonly-indexes truncated" }
+                    val readOnlyIdx = (0 until readOnlyCount).map {
+                        (bytes[offset + it].toInt() and 0xFF).toUByte()
+                    }
+                    offset += readOnlyCount
+                    out.add(AddressTableLookup(accountKey, writableIdx, readOnlyIdx))
+                }
+                out
+            } else {
+                emptyList()
+            }
+
             return VersionedMessage(
                 version = versionPrefix.toUByte(),
-                signatureCount = legacy.signatureCount,
-                readOnlyAccounts = legacy.readOnlyAccounts,
-                readOnlyNonSigners = legacy.readOnlyNonSigners,
-                accounts = legacy.accounts,
-                blockhash = legacy.blockhash,
-                instructions = legacy.instructions,
-                addressTableLookups = emptyList(),
+                signatureCount = numRequired.toByte(),
+                readOnlyAccounts = numReadonlySigned.toByte(),
+                readOnlyNonSigners = numReadonlyUnsigned.toByte(),
+                accounts = keys,
+                blockhash = blockhashPk,
+                instructions = ixs,
+                addressTableLookups = lookups,
                 rawBytes = bytes
             )
+        }
+
+        private fun shortVec(bytes: ByteArray, offset: Int): Pair<Int, Int> {
+            var value = 0
+            var shift = 0
+            var read = 0
+            while (true) {
+                require(offset + read < bytes.size) {
+                    "short-vec length truncated at offset ${offset + read}"
+                }
+                val b = bytes[offset + read].toInt() and 0xFF
+                read++
+                value = value or ((b and 0x7F) shl shift)
+                if ((b and 0x80) == 0) break
+                shift += 7
+                require(shift <= 21) { "short-vec length overflow" }
+            }
+            return value to read
         }
     }
 }

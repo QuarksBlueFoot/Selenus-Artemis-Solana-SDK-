@@ -37,17 +37,27 @@ interface AdapterOperations {
 
     suspend fun deauthorize(authToken: String)
 
-    suspend fun signTransactions(transactions: Array<ByteArray>): Array<ByteArray>
+    /**
+     * Upstream returns `MobileWalletAdapterClient.SignPayloadsResult` with a
+     * `signedPayloads: Array<ByteArray>` field. Matching the nested type lets
+     * `when (val r = ops.signTransactions(txs))` and `r.signedPayloads`
+     * pattern that every upstream guide uses resolve without rewriting call
+     * sites. The nested type exposes the raw array too, so the shortcut
+     * [signedPayloadsOf] extension preserves the `Array<ByteArray>` read path.
+     */
+    suspend fun signTransactions(
+        transactions: Array<ByteArray>
+    ): com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient.SignPayloadsResult
 
     suspend fun signAndSendTransactions(
         transactions: Array<ByteArray>,
         params: TransactionParams? = null
-    ): Array<SignatureResult>
+    ): com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient.SignAndSendTransactionsResult
 
     suspend fun signMessages(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
-    ): Array<SignedMessageResult>
+    ): com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient.SignMessagesResult
 
     /**
      * Sign messages and return the signatures detached from the original
@@ -58,7 +68,8 @@ interface AdapterOperations {
     suspend fun signMessagesDetached(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
-    ): Array<SignedMessageResult> = signMessages(messages, addresses)
+    ): com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient.SignMessagesResult =
+        signMessages(messages, addresses)
 
     /**
      * Return the capability descriptor advertised by the connected wallet.

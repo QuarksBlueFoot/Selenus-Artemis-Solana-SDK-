@@ -46,10 +46,26 @@ abstract class SolanaSigner : Ed25519Signer {
     open suspend fun signTransaction(transaction: Transaction): Result<Transaction> {
         val msgBytes = transaction.message.serialize()
         val signature = runCatching { sign(msgBytes) }.getOrElse { return Result.failure(it) }
-        val newSigs = buildList {
-            addAll(transaction.signatures)
-            // If the signatures list is empty or shorter than required, append the new one.
-            if (isEmpty()) add(signature) else set(0, signature)
+        // Find the correct signature slot by matching the signer's pubkey
+        // against the message's account keys. Signature[i] corresponds to
+        // accounts[i] for i < numRequiredSignatures. Writing to slot 0
+        // unconditionally (previous behaviour) overwrites the fee-payer
+        // signature when the signer is actually a co-signer.
+        val numRequired = transaction.message.signatureCount.toInt()
+        val signerIndex = transaction.message.accounts.asSequence()
+            .take(numRequired)
+            .indexOfFirst { it.bytes.contentEquals(publicKey.bytes) }
+        if (signerIndex < 0) {
+            return Result.failure(
+                IllegalArgumentException(
+                    "Signer pubkey ${publicKey.base58()} is not among the " +
+                        "$numRequired required signers of the message"
+                )
+            )
+        }
+        val newSigs = transaction.signatures.toMutableList().also { sigs ->
+            while (sigs.size <= signerIndex) sigs.add(ByteArray(Transaction.SIGNATURE_LENGTH_BYTES))
+            sigs[signerIndex] = signature
         }
         return Result.success(transaction.copy(signatures = newSigs))
     }

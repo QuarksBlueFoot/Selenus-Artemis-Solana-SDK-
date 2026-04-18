@@ -230,19 +230,45 @@ open class MobileWalletAdapterClient(
 
     class SignAndSendTransactionsResult(@JvmField val signatures: Array<ByteArray>)
 
+    /**
+     * Upstream ctor: `(message, data, expectedNumSignedPayloads)`. The code
+     * is fixed at `ProtocolContract.ERROR_INVALID_PAYLOADS = -2`, not passed
+     * positionally, so callers that `catch (InvalidPayloadsException)` can
+     * read `e.expectedNumSignedPayloads` as a plain Int (not a BooleanArray).
+     */
     class InvalidPayloadsException(
-        code: Int,
         message: String,
         data: String?,
-        @JvmField val validPayloads: BooleanArray
-    ) : com.solana.mobilewalletadapter.common.protocol.JsonRpc20Client.JsonRpc20RemoteException(code, message, data)
+        @JvmField val expectedNumSignedPayloads: Int
+    ) : com.solana.mobilewalletadapter.common.protocol.JsonRpc20Client.JsonRpc20RemoteException(
+        code = com.solana.mobilewalletadapter.common.ProtocolContract.ERROR_INVALID_PAYLOADS,
+        message = message,
+        data = data
+    )
 
+    /**
+     * Upstream ctor: `(message, data, expectedNumSignatures)`. Fixed code
+     * `ProtocolContract.ERROR_NOT_SUBMITTED = -4`.
+     */
     class NotSubmittedException(
-        code: Int,
         message: String,
         data: String?,
-        @JvmField val signatures: Array<ByteArray?>
-    ) : com.solana.mobilewalletadapter.common.protocol.JsonRpc20Client.JsonRpc20RemoteException(code, message, data)
+        @JvmField val expectedNumSignatures: Int
+    ) : com.solana.mobilewalletadapter.common.protocol.JsonRpc20Client.JsonRpc20RemoteException(
+        code = com.solana.mobilewalletadapter.common.ProtocolContract.ERROR_NOT_SUBMITTED,
+        message = message,
+        data = data
+    )
+
+    /** Fixed code `ProtocolContract.ERROR_NOT_CLONED = -5`. */
+    class NotClonedException(
+        message: String,
+        data: String? = null
+    ) : com.solana.mobilewalletadapter.common.protocol.JsonRpc20Client.JsonRpc20RemoteException(
+        code = com.solana.mobilewalletadapter.common.ProtocolContract.ERROR_NOT_CLONED,
+        message = message,
+        data = data
+    )
 }
 
 /**

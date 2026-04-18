@@ -112,8 +112,14 @@ class TransferInstruction(
         lamports = lamports
     )
 
-    override val programId: PublicKey get() = PublicKey(compiled.programId.bytes)
-    override val keys: List<AccountMeta> get() = compiled.accounts.map { AccountMeta.fromArtemis(it) }
+    // Cache the converted public-key, account-meta list, and data array so
+    // repeat reads during signing (compileMessage walks keys/accounts N
+    // times) don't reallocate. Each wrapper instance is immutable, so a
+    // single conversion per field is safe and lock-free.
+    override val programId: PublicKey by lazy { PublicKey(compiled.programId.bytes) }
+    override val keys: List<AccountMeta> by lazy {
+        compiled.accounts.map { AccountMeta.fromArtemis(it) }
+    }
     override val data: ByteArray get() = compiled.data
     override fun toArtemis(): ArtemisInstruction = compiled
 }
@@ -170,8 +176,14 @@ class SplTransferInstruction @JvmOverloads constructor(
         }
     }
 
-    override val programId: PublicKey get() = PublicKey(compiled.programId.bytes)
-    override val keys: List<AccountMeta> get() = compiled.accounts.map { AccountMeta.fromArtemis(it) }
+    // Cache the converted public-key, account-meta list, and data array so
+    // repeat reads during signing (compileMessage walks keys/accounts N
+    // times) don't reallocate. Each wrapper instance is immutable, so a
+    // single conversion per field is safe and lock-free.
+    override val programId: PublicKey by lazy { PublicKey(compiled.programId.bytes) }
+    override val keys: List<AccountMeta> by lazy {
+        compiled.accounts.map { AccountMeta.fromArtemis(it) }
+    }
     override val data: ByteArray get() = compiled.data
     override fun toArtemis(): ArtemisInstruction = compiled
 }
@@ -195,8 +207,14 @@ class CreateAssociatedTokenAccountInstruction(
         ata = associatedToken.toArtemis()
     )
 
-    override val programId: PublicKey get() = PublicKey(compiled.programId.bytes)
-    override val keys: List<AccountMeta> get() = compiled.accounts.map { AccountMeta.fromArtemis(it) }
+    // Cache the converted public-key, account-meta list, and data array so
+    // repeat reads during signing (compileMessage walks keys/accounts N
+    // times) don't reallocate. Each wrapper instance is immutable, so a
+    // single conversion per field is safe and lock-free.
+    override val programId: PublicKey by lazy { PublicKey(compiled.programId.bytes) }
+    override val keys: List<AccountMeta> by lazy {
+        compiled.accounts.map { AccountMeta.fromArtemis(it) }
+    }
     override val data: ByteArray get() = compiled.data
     override fun toArtemis(): ArtemisInstruction = compiled
 }

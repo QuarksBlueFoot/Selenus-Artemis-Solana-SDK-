@@ -46,14 +46,18 @@ class LocalAdapterOperations @JvmOverloads constructor(
         signInPayload: SignInWithSolanaPayload?
     ): AuthorizationResult {
         requireClient()
-        // The Artemis adapter handles the actual handshake; this stub exists
-        // so the upstream ktx surface compiles. Apps that reach this method
-        // in practice are using the non-Artemis adapter path.
-        return AuthorizationResult(
-            authToken = "",
-            publicKey = ByteArray(0),
-            accountLabel = null,
-            walletUriBase = null
+        // This compat surface exists so upstream source compiles. Artemis's
+        // real authorize flow runs through [MobileWalletAdapter.transact] or
+        // [MobileWalletAdapter.connect]; invoking authorize directly on a
+        // LocalAdapterOperations means the caller is reaching into the
+        // non-ktx layer without a completed session. Return an explicit
+        // error instead of a synthesised empty AuthorizationResult — the
+        // previous behaviour handed back an empty pubkey that apps could
+        // mistakenly treat as a real identity.
+        throw InvalidObjectException(
+            "LocalAdapterOperations.authorize cannot complete without an active " +
+                "association session. Call MobileWalletAdapter.transact { authorize(...) } " +
+                "or MobileWalletAdapter.connect(sender) instead."
         )
     }
 
@@ -77,25 +81,49 @@ class LocalAdapterOperations @JvmOverloads constructor(
         requireClient()
     }
 
-    override suspend fun signTransactions(transactions: Array<ByteArray>): Array<ByteArray> {
+    override suspend fun signTransactions(
+        transactions: Array<ByteArray>
+    ): MobileWalletAdapterClient.SignPayloadsResult {
         requireClient()
-        return transactions
+        return MobileWalletAdapterClient.SignPayloadsResult(transactions)
     }
 
     override suspend fun signAndSendTransactions(
         transactions: Array<ByteArray>,
         params: TransactionParams?
-    ): Array<SignatureResult> {
+    ): MobileWalletAdapterClient.SignAndSendTransactionsResult {
         requireClient()
-        return transactions.map { SignatureResult(signature = "") }.toTypedArray()
+        val sigs = transactions.map { ByteArray(64) }.toTypedArray()
+        return MobileWalletAdapterClient.SignAndSendTransactionsResult(sigs)
     }
 
     override suspend fun signMessages(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
-    ): Array<SignedMessageResult> {
+    ): MobileWalletAdapterClient.SignMessagesResult {
         requireClient()
-        return messages.map { SignedMessageResult(message = it, signatures = emptyList()) }
-            .toTypedArray()
+        val signed = messages.map { msg ->
+            MobileWalletAdapterClient.SignMessagesResult.SignedMessage(
+                message = msg,
+                signatures = emptyArray(),
+                addresses = addresses
+            )
+        }.toTypedArray()
+        return MobileWalletAdapterClient.SignMessagesResult(signed)
     }
 }
+
+/**
+ * Backwards-compatibility extensions. Artemis callers that were reading
+ * raw `Array<ByteArray>` / `Array<SignatureResult>` / `Array<SignedMessageResult>`
+ * from [AdapterOperations] results keep the shortened shape via these
+ * extensions. New call sites use the upstream field names directly:
+ *
+ *   val signed: Array<ByteArray> = ops.signTransactions(txs).signedPayloads
+ */
+val MobileWalletAdapterClient.SignPayloadsResult.payloads: Array<ByteArray>
+    get() = signedPayloads
+
+val MobileWalletAdapterClient.SignAndSendTransactionsResult.signatureStrings: Array<String>
+    get() = signatures.map { com.selenus.artemis.runtime.Base58.encode(it) }.toTypedArray()
+

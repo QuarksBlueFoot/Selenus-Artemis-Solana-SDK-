@@ -23,32 +23,42 @@ import kotlinx.coroutines.Dispatchers
  * The [transact] method matches the official high-level API, executing an
  * [AdapterOperations] block inside an auto-managed wallet session.
  */
-class MobileWalletAdapter(
+class MobileWalletAdapter @JvmOverloads constructor(
     private val connectionIdentity: ConnectionIdentity,
-    private val blockchain: Blockchain = Solana.Mainnet,
+    @Suppress("UNUSED_PARAMETER") timeout: Int = DEFAULT_CLIENT_TIMEOUT_MS,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val authStore: AuthTokenStore = InMemoryAuthTokenStore()
+    @Suppress("UNUSED_PARAMETER") scenarioProvider: AssociationScenarioProvider =
+        AssociationScenarioProvider()
 ) {
+    // Artemis-specific state (blockchain + auth store) captured as private
+    // fields. These used to be primary-ctor parameters; moving them to a
+    // secondary ctor so the primary signature matches upstream exactly.
+    private var blockchain: Blockchain = Solana.Mainnet
+    private var authStore: AuthTokenStore = InMemoryAuthTokenStore()
+
     /**
-     * Upstream-shaped secondary constructor: `(connectionIdentity, timeout,
-     * ioDispatcher, scenarioProvider)`. Artemis ignores the [timeout] and
-     * [scenarioProvider] arguments because its session management is already
-     * baked into the native MWA client, but preserving the positional form
-     * means apps migrating from upstream can swap dependencies without
-     * touching construction sites.
+     * Artemis-extended constructor: picks the chain and auth store. Keeps
+     * binary compatibility with existing Artemis apps that used the previous
+     * primary form `(ci, blockchain, ioDispatcher, authStore)`.
      */
     constructor(
         connectionIdentity: ConnectionIdentity,
-        timeout: Int,
+        blockchain: Blockchain,
         ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-        @Suppress("UNUSED_PARAMETER") scenarioProvider: AssociationScenarioProvider =
-            AssociationScenarioProvider()
+        authStore: AuthTokenStore = InMemoryAuthTokenStore()
     ) : this(
         connectionIdentity = connectionIdentity,
-        blockchain = Solana.Mainnet,
-        ioDispatcher = ioDispatcher,
-        authStore = InMemoryAuthTokenStore()
-    )
+        timeout = DEFAULT_CLIENT_TIMEOUT_MS,
+        ioDispatcher = ioDispatcher
+    ) {
+        this.blockchain = blockchain
+        this.authStore = authStore
+    }
+
+    companion object {
+        /** Matches upstream `Scenario.DEFAULT_CLIENT_TIMEOUT_MS`. */
+        const val DEFAULT_CLIENT_TIMEOUT_MS: Int = 90_000
+    }
 
     @Volatile
     var authToken: String? = null
@@ -211,47 +221,60 @@ internal class MwaAdapterOperations(
         adapter.disconnect()
     }
 
-    override suspend fun signTransactions(transactions: Array<ByteArray>): Array<ByteArray> {
+    override suspend fun signTransactions(
+        transactions: Array<ByteArray>
+    ): com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient.SignPayloadsResult {
         val results = adapter.signMessages(
             transactions.toList(),
             com.selenus.artemis.wallet.SignTxRequest(purpose = "signTransactions")
         )
-        return results.toTypedArray()
+        return com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient
+            .SignPayloadsResult(results.toTypedArray())
     }
 
     override suspend fun signAndSendTransactions(
         transactions: Array<ByteArray>,
         params: TransactionParams?
-    ): Array<SignatureResult> {
+    ): com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient.SignAndSendTransactionsResult {
         val options = com.selenus.artemis.wallet.SendTransactionOptions(
             skipPreflight = params?.skipPreflight ?: false,
             maxRetries = params?.maxRetries,
             minContextSlot = params?.minContextSlot?.toLong()
         )
         val batchResult = adapter.signAndSendTransactions(transactions.toList(), options)
-        return batchResult.results.map { result ->
-            SignatureResult(signature = result.signature, commitment = params?.commitment)
+        val sigBytes = batchResult.results.map {
+            com.selenus.artemis.runtime.Base58.decode(it.signature)
         }.toTypedArray()
+        return com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient
+            .SignAndSendTransactionsResult(sigBytes)
     }
 
     override suspend fun signMessages(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
-    ): Array<SignedMessageResult> = signMessagesDetached(messages, addresses)
+    ): com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient.SignMessagesResult =
+        signMessagesDetached(messages, addresses)
 
     override suspend fun signMessagesDetached(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
-    ): Array<SignedMessageResult> {
+    ): com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient.SignMessagesResult {
         // Route through the Artemis MWA client which speaks the MWA 2.0
         // sign_messages RPC end-to-end and returns detached signatures.
-        return messages.map { msg ->
+        val signed = messages.map { msg ->
             val sig = adapter.signArbitraryMessage(
                 msg,
                 com.selenus.artemis.wallet.SignTxRequest(purpose = "signMessage")
             )
-            SignedMessageResult(message = msg, signatures = listOf(sig))
+            com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient
+                .SignMessagesResult.SignedMessage(
+                    message = msg,
+                    signatures = arrayOf(sig),
+                    addresses = addresses
+                )
         }.toTypedArray()
+        return com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient
+            .SignMessagesResult(signed)
     }
 
     override suspend fun getCapabilities(): GetCapabilitiesResult {
