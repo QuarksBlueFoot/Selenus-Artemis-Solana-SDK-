@@ -22,7 +22,7 @@ import com.selenus.artemis.runtime.Signer as ArtemisSigner
  * [Transaction] / [VersionedTransaction]. This shim mirrors the exact
  * constructor shape with Artemis internals.
  */
-class TransactionMessage private constructor(
+class TransactionMessage internal constructor(
     val feePayer: PublicKey,
     val recentBlockhash: String,
     val instructions: List<Instruction>,
@@ -39,6 +39,17 @@ class TransactionMessage private constructor(
         instructions = instructions,
         addressLookupTableAccounts = addressLookupTableAccounts
     )
+
+    /**
+     * Return a mutable [Builder] primed with this message's fields. Closes the
+     * upstream sol4k gap (sol4k#131) where a round-tripped, deserialized
+     * message could not be safely edited because every field was private.
+     */
+    fun toBuilder(): Builder = Builder()
+        .setFeePayer(feePayer)
+        .setRecentBlockhash(recentBlockhash)
+        .apply { instructions.forEach { addInstruction(it) } }
+        .apply { addressLookupTableAccounts.forEach { addAddressLookupTableAccount(it) } }
 
     /**
      * Serialize the message into the compiled wire format. The caller can feed
@@ -58,6 +69,28 @@ class TransactionMessage private constructor(
         )
         instructions.forEach { tx.addInstruction(it.toArtemis()) }
         return tx
+    }
+
+    /** Mutable builder used by [toBuilder] and direct construction. */
+    class Builder {
+        private var feePayer: PublicKey? = null
+        private var recentBlockhash: String? = null
+        private val instructions: MutableList<Instruction> = mutableListOf()
+        private val addressLookupTableAccounts: MutableList<AddressLookupTableAccount> =
+            mutableListOf()
+
+        fun setFeePayer(feePayer: PublicKey): Builder = apply { this.feePayer = feePayer }
+        fun setRecentBlockhash(blockhash: String): Builder = apply { this.recentBlockhash = blockhash }
+        fun addInstruction(instruction: Instruction): Builder = apply { instructions.add(instruction) }
+        fun addAddressLookupTableAccount(account: AddressLookupTableAccount): Builder =
+            apply { addressLookupTableAccounts.add(account) }
+
+        fun build(): TransactionMessage = TransactionMessage(
+            feePayer = requireNotNull(feePayer) { "feePayer not set" },
+            recentBlockhash = requireNotNull(recentBlockhash) { "recentBlockhash not set" },
+            instructions = instructions.toList(),
+            addressLookupTableAccounts = addressLookupTableAccounts.toList()
+        )
     }
 
     companion object {
@@ -105,15 +138,17 @@ class TransactionMessage private constructor(
         @JvmStatic
         fun deserialize(serialized: ByteArray): TransactionMessage {
             var offset = 0
-            val numRequired = serialized[offset++].toInt() and 0xFF
-            val numReadonlySigned = serialized[offset++].toInt() and 0xFF
-            val numReadonlyUnsigned = serialized[offset++].toInt() and 0xFF
+            val numRequired = readByte(serialized, offset).also { offset++ }
+            val numReadonlySigned = readByte(serialized, offset).also { offset++ }
+            val numReadonlyUnsigned = readByte(serialized, offset).also { offset++ }
             val (numAccounts, accountLenBytes) = shortVecDecode(serialized, offset)
             offset += accountLenBytes
+            require(offset + 32L * numAccounts + 32 <= serialized.size) {
+                "message truncated: declared $numAccounts account keys"
+            }
             val accountKeys = ArrayList<PublicKey>(numAccounts)
             repeat(numAccounts) {
-                val pkBytes = serialized.copyOfRange(offset, offset + 32)
-                accountKeys.add(PublicKey(pkBytes))
+                accountKeys.add(PublicKey(serialized.copyOfRange(offset, offset + 32)))
                 offset += 32
             }
             val blockhashBytes = serialized.copyOfRange(offset, offset + 32)
@@ -138,9 +173,11 @@ class TransactionMessage private constructor(
 
             val instructions = ArrayList<Instruction>(numInstructions)
             repeat(numInstructions) {
+                require(offset < serialized.size) { "message truncated in instruction header" }
                 val programIdIndex = serialized[offset++].toInt() and 0xFF
                 val (numKeys, keyLenBytes) = shortVecDecode(serialized, offset)
                 offset += keyLenBytes
+                require(offset + numKeys <= serialized.size) { "message truncated in key list" }
                 val keys = ArrayList<AccountMeta>(numKeys)
                 repeat(numKeys) {
                     val accIdx = serialized[offset++].toInt() and 0xFF
@@ -148,6 +185,7 @@ class TransactionMessage private constructor(
                 }
                 val (dataLen, dataLenBytes) = shortVecDecode(serialized, offset)
                 offset += dataLenBytes
+                require(offset + dataLen <= serialized.size) { "message truncated in instruction data" }
                 val data = serialized.copyOfRange(offset, offset + dataLen)
                 offset += dataLen
                 instructions.add(
@@ -167,17 +205,25 @@ class TransactionMessage private constructor(
             )
         }
 
+        private fun readByte(bytes: ByteArray, offset: Int): Int {
+            require(offset < bytes.size) { "message truncated at byte $offset" }
+            return bytes[offset].toInt() and 0xFF
+        }
+
         private fun shortVecDecode(bytes: ByteArray, offset: Int): Pair<Int, Int> {
             var value = 0
             var shift = 0
             var read = 0
             while (true) {
+                require(offset + read < bytes.size) {
+                    "short-vec length truncated at offset ${offset + read}"
+                }
                 val byte = bytes[offset + read].toInt() and 0xFF
                 read++
                 value = value or ((byte and 0x7F) shl shift)
                 if ((byte and 0x80) == 0) break
                 shift += 7
-                if (shift > 21) error("short-vec length overflow")
+                require(shift <= 21) { "short-vec length overflow" }
             }
             return value to read
         }
@@ -187,28 +233,90 @@ class TransactionMessage private constructor(
 /**
  * sol4k compatible `Transaction` (legacy).
  *
- * A [Transaction] is a [TransactionMessage] plus a set of signatures. Call
- * [addSignature] with a [Keypair] to produce a signed blob ready for
- * `Connection.sendTransaction`.
+ * Upstream sol4k exposes two primary constructors plus `Transaction.from(base64)`.
+ * Mutating the [signatures] list directly matches upstream's internal mechanism;
+ * normal callers use [sign] or [addSignature] instead.
  */
-class Transaction(private val message: TransactionMessage) {
+class Transaction private constructor(
+    val message: TransactionMessage,
+    internal val _signatures: MutableList<String>
+) {
 
-    private val artemis: ArtemisTransaction = message.toArtemisTransaction()
+    constructor(
+        recentBlockhash: String,
+        instructions: List<Instruction>,
+        feePayer: PublicKey
+    ) : this(
+        message = TransactionMessage(
+            feePayer = feePayer,
+            recentBlockhash = recentBlockhash,
+            instructions = instructions,
+            addressLookupTableAccounts = emptyList()
+        ),
+        _signatures = mutableListOf()
+    )
 
-    /** Sign with [keypair] and append the signature. */
-    fun addSignature(keypair: Keypair) {
-        val signer = object : ArtemisSigner {
-            override val publicKey = keypair.publicKey.toArtemis()
-            override fun sign(message: ByteArray): ByteArray = keypair.sign(message)
-        }
-        artemis.partialSign(listOf(signer))
+    constructor(
+        recentBlockhash: String,
+        instruction: Instruction,
+        feePayer: PublicKey
+    ) : this(recentBlockhash, listOf(instruction), feePayer)
+
+    constructor(message: TransactionMessage) : this(message, mutableListOf())
+
+    /** Live view of the signature list, in upstream-compatible base58 form. */
+    val signatures: MutableList<String> get() = _signatures
+
+    /** Sign with [keypair] and append the resulting signature. */
+    fun sign(keypair: Keypair) {
+        val compiled = message.toArtemisTransaction().compileMessage().serialize()
+        val sig = keypair.sign(compiled)
+        _signatures.add(com.selenus.artemis.runtime.Base58.encode(sig))
     }
 
-    /** Alias that matches sol4k convenience. */
-    fun sign(keypair: Keypair) = addSignature(keypair)
+    /** Append a pre-computed base58 signature. Matches upstream sol4k exactly. */
+    fun addSignature(signature: String) {
+        _signatures.add(signature)
+    }
 
     /** Serialize into the full wire format (signatures + message). */
-    fun serialize(): ByteArray = artemis.serialize()
+    fun serialize(): ByteArray {
+        val messageBytes = message.serialize()
+        val sigCountBytes = shortVecEncode(_signatures.size)
+        val sigsBytes = ByteArray(_signatures.size * 64)
+        _signatures.forEachIndexed { i, sig ->
+            val raw = com.selenus.artemis.runtime.Base58.decode(sig)
+            require(raw.size == 64) { "signature $i must be 64 bytes, got ${raw.size}" }
+            raw.copyInto(sigsBytes, i * 64)
+        }
+        return sigCountBytes + sigsBytes + messageBytes
+    }
+
+    companion object {
+        /**
+         * Decode a base64-encoded transaction (signatures + message) back into
+         * a [Transaction]. Matches `org.sol4k.Transaction.from` byte-for-byte.
+         */
+        @JvmStatic
+        fun from(encodedTransaction: String): Transaction {
+            val bytes = com.selenus.artemis.runtime.PlatformBase64.decode(encodedTransaction)
+            var offset = 0
+            val (sigCount, sigLenBytes) = TransactionMessage.decodeShortVec(bytes, offset)
+            offset += sigLenBytes
+            require(offset + sigCount.toLong() * 64 <= bytes.size) {
+                "transaction truncated: declared $sigCount signatures"
+            }
+            val sigs = mutableListOf<String>()
+            repeat(sigCount) {
+                val raw = bytes.copyOfRange(offset, offset + 64)
+                sigs.add(com.selenus.artemis.runtime.Base58.encode(raw))
+                offset += 64
+            }
+            val messageBytes = bytes.copyOfRange(offset, bytes.size)
+            val message = TransactionMessage.deserialize(messageBytes)
+            return Transaction(message = message, _signatures = sigs)
+        }
+    }
 }
 
 /**
@@ -219,21 +327,72 @@ class Transaction(private val message: TransactionMessage) {
  * with the same `Transaction` type when lookup tables are absent. ALT-aware
  * callers should use the native Artemis `VersionedTransactionBuilder`.
  */
-class VersionedTransaction(private val message: TransactionMessage) {
+class VersionedTransaction private constructor(
+    val message: TransactionMessage,
+    internal val _signatures: MutableList<String?>
+) {
 
-    private val artemis: ArtemisTransaction = message.toArtemisTransaction()
+    constructor(message: TransactionMessage) : this(message, MutableList(1) { null })
 
-    fun addSignature(keypair: Keypair) {
-        val signer = object : ArtemisSigner {
-            override val publicKey = keypair.publicKey.toArtemis()
-            override fun sign(message: ByteArray): ByteArray = keypair.sign(message)
+    val signatures: MutableList<String?> get() = _signatures
+
+    fun sign(keypair: Keypair) {
+        val compiled = message.toArtemisTransaction().compileMessage().serialize()
+        val sig = keypair.sign(compiled)
+        if (_signatures.isEmpty() || _signatures[0] == null) {
+            if (_signatures.isEmpty()) _signatures.add(null)
+            _signatures[0] = com.selenus.artemis.runtime.Base58.encode(sig)
+        } else {
+            _signatures.add(com.selenus.artemis.runtime.Base58.encode(sig))
         }
-        artemis.partialSign(listOf(signer))
     }
 
-    fun sign(keypair: Keypair) = addSignature(keypair)
+    fun addSignature(signature: String) {
+        if (_signatures.isNotEmpty() && _signatures[0] == null) {
+            _signatures[0] = signature
+        } else {
+            _signatures.add(signature)
+        }
+    }
 
-    fun serialize(): ByteArray = artemis.serialize()
+    fun serialize(): ByteArray {
+        val messageBytes = message.serialize()
+        val filled = _signatures.map { it ?: "" }
+        val sigCountBytes = shortVecEncode(filled.size)
+        val sigsBytes = ByteArray(filled.size * 64)
+        filled.forEachIndexed { i, sig ->
+            if (sig.isEmpty()) return@forEachIndexed
+            val raw = com.selenus.artemis.runtime.Base58.decode(sig)
+            require(raw.size == 64) { "signature $i must be 64 bytes, got ${raw.size}" }
+            raw.copyInto(sigsBytes, i * 64)
+        }
+        return sigCountBytes + sigsBytes + messageBytes
+    }
+
+    companion object {
+        @JvmStatic
+        fun from(encodedTransaction: String): VersionedTransaction {
+            val bytes = com.selenus.artemis.runtime.PlatformBase64.decode(encodedTransaction)
+            var offset = 0
+            val (sigCount, sigLenBytes) = TransactionMessage.decodeShortVec(bytes, offset)
+            offset += sigLenBytes
+            require(offset + sigCount.toLong() * 64 <= bytes.size) {
+                "transaction truncated: declared $sigCount signatures"
+            }
+            val sigs = mutableListOf<String?>()
+            repeat(sigCount) {
+                val raw = bytes.copyOfRange(offset, offset + 64)
+                val isEmpty = raw.all { it == 0.toByte() }
+                sigs.add(if (isEmpty) null else com.selenus.artemis.runtime.Base58.encode(raw))
+                offset += 64
+            }
+            val messageBytes = bytes.copyOfRange(offset, bytes.size)
+            return VersionedTransaction(
+                message = TransactionMessage.deserialize(messageBytes),
+                _signatures = sigs
+            )
+        }
+    }
 }
 
 /**
@@ -245,3 +404,39 @@ data class AddressLookupTableAccount(
     val address: PublicKey,
     val addresses: List<PublicKey>
 )
+
+private fun shortVecEncode(value: Int): ByteArray {
+    require(value >= 0) { "short-vec value must be non-negative" }
+    val out = mutableListOf<Byte>()
+    var v = value
+    while (true) {
+        var elem = v and 0x7F
+        v = v ushr 7
+        if (v == 0) {
+            out.add(elem.toByte())
+            break
+        }
+        elem = elem or 0x80
+        out.add(elem.toByte())
+    }
+    return out.toByteArray()
+}
+
+/** Exposed to the file-level companion objects above. */
+internal fun TransactionMessage.Companion.decodeShortVec(bytes: ByteArray, offset: Int): Pair<Int, Int> {
+    var value = 0
+    var shift = 0
+    var read = 0
+    while (true) {
+        require(offset + read < bytes.size) {
+            "short-vec length truncated at offset ${offset + read}"
+        }
+        val byte = bytes[offset + read].toInt() and 0xFF
+        read++
+        value = value or ((byte and 0x7F) shl shift)
+        if ((byte and 0x80) == 0) break
+        shift += 7
+        require(shift <= 21) { "short-vec length overflow" }
+    }
+    return value to read
+}

@@ -16,6 +16,7 @@ data class AuthorizationResult(
     val publicKey: ByteArray,
     val accountLabel: String?,
     val walletUriBase: Uri?,
+    val walletIcon: Uri? = null,
     val accounts: List<Account> = emptyList(),
     val signInResult: SignInResult? = null
 ) {

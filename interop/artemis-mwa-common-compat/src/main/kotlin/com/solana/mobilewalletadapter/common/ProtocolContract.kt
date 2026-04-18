@@ -1,9 +1,9 @@
 /*
  * Drop-in source compatibility with com.solana.mobilewalletadapter.common.ProtocolContract.
  *
- * Constants verified against the 2.0.7 sources jar. Every name and string
- * literal matches the upstream Java constant byte-for-byte so existing
- * `if (code == ProtocolContract.ERROR_NOT_COMMITTED)` call sites resolve to
+ * Constants verified against the upstream Java source. Every name and string
+ * literal matches the Java constant byte-for-byte so existing
+ * `if (code == ProtocolContract.ERROR_NOT_CLONED)` call sites resolve to
  * the same numeric value and `result["sign_in_result"]` lookups still work.
  */
 @file:Suppress("unused")
@@ -25,7 +25,6 @@ object ProtocolContract {
     const val PARAMETER_IDENTITY_URI: String = "uri"
     const val PARAMETER_IDENTITY_ICON: String = "icon"
     const val PARAMETER_IDENTITY_NAME: String = "name"
-    @Deprecated("Use PARAMETER_CHAIN. Retained for spec v1.0 wire compatibility.")
     const val PARAMETER_CLUSTER: String = "cluster"
     const val PARAMETER_CHAIN: String = "chain"
     const val PARAMETER_AUTH_TOKEN: String = "auth_token"
@@ -37,6 +36,7 @@ object ProtocolContract {
     const val RESULT_AUTH_TOKEN: String = "auth_token"
     const val RESULT_ACCOUNTS: String = "accounts"
     const val RESULT_WALLET_URI_BASE: String = "wallet_uri_base"
+    const val RESULT_WALLET_ICON: String = "wallet_icon"
     const val RESULT_SIGN_IN: String = "sign_in_result"
     const val RESULT_ACCOUNTS_ADDRESS: String = "address"
     const val RESULT_ACCOUNTS_DISPLAY_ADDRESS: String = "display_address"
@@ -49,6 +49,15 @@ object ProtocolContract {
     const val RESULT_SIGN_IN_SIGNED_MESSAGE: String = "signed_message"
     const val RESULT_SIGN_IN_SIGNATURE: String = "signature"
     const val RESULT_SIGN_IN_SIGNATURE_TYPE: String = "signature_type"
+
+    // ─── get_capabilities result keys ──────────────────────────────────────
+    const val RESULT_MAX_TRANSACTIONS_PER_REQUEST: String = "max_transactions_per_request"
+    const val RESULT_MAX_MESSAGES_PER_REQUEST: String = "max_messages_per_request"
+    const val RESULT_SUPPORTED_TRANSACTION_VERSIONS: String = "supported_transaction_versions"
+    const val RESULT_SUPPORTED_FEATURES: String = "features"
+    const val RESULT_SUPPORTS_CLONE_AUTHORIZATION: String = "supports_clone_authorization"
+    const val RESULT_SUPPORTS_SIGN_AND_SEND_TRANSACTIONS: String =
+        "supports_sign_and_send_transactions"
 
     // ─── sign_payloads / sign_and_send options ─────────────────────────────
     const val PARAMETER_PAYLOADS: String = "payloads"
@@ -89,16 +98,13 @@ object ProtocolContract {
     const val ERROR_INVALID_PAYLOADS: Int = -2
     const val ERROR_NOT_SIGNED: Int = -3
     const val ERROR_NOT_SUBMITTED: Int = -4
-    const val ERROR_NOT_COMMITTED: Int = -5
+    const val ERROR_NOT_CLONED: Int = -5
     const val ERROR_TOO_MANY_PAYLOADS: Int = -6
-    @Deprecated("Kept for spec v1.0 wire compatibility. Use ERROR_CHAIN_NOT_SUPPORTED.")
     const val ERROR_CLUSTER_NOT_SUPPORTED: Int = -7
     const val ERROR_CHAIN_NOT_SUPPORTED: Int = -7
-    const val ERROR_REAUTHORIZE: Int = -9
     const val ERROR_ATTEST_ORIGIN_ANDROID: Int = -100
 
     // ─── Error data keys ───────────────────────────────────────────────────
     const val DATA_INVALID_PAYLOADS_VALID: String = "valid"
-    const val DATA_NOT_COMMITTED_SIGNATURES: String = "signatures"
-    const val DATA_NOT_COMMITTED_COMMITMENT: String = "commitment"
+    const val DATA_NOT_SUBMITTED_SIGNATURES: String = "signatures"
 }

@@ -207,6 +207,13 @@ class Connection @JvmOverloads constructor(
         rpc.sendRawTransaction(rawTransaction, skipPreflight = false)
     }
 
+    /** Send a [Transaction] that has already been signed. Matches upstream sol4k. */
+    fun sendTransaction(transaction: Transaction): String = sendTransaction(transaction.serialize())
+
+    /** Send a [VersionedTransaction] that has already been signed. */
+    fun sendTransaction(transaction: VersionedTransaction): String =
+        sendTransaction(transaction.serialize())
+
     /** Simulate a base64-encoded raw transaction. */
     fun simulateTransaction(rawTransaction: ByteArray): TransactionSimulation = runBlocking {
         val json = rpc.simulateTransaction(
@@ -214,6 +221,26 @@ class Connection @JvmOverloads constructor(
             replaceRecentBlockhash = true
         )
         parseSimulation(json)
+    }
+
+    /** Simulate a built [Transaction] without submitting. */
+    fun simulateTransaction(transaction: Transaction): TransactionSimulation =
+        simulateTransaction(transaction.serialize())
+
+    /** Simulate a built [VersionedTransaction] without submitting. */
+    fun simulateTransaction(transaction: VersionedTransaction): TransactionSimulation =
+        simulateTransaction(transaction.serialize())
+
+    /**
+     * Return the fee in lamports for a serialized message. Accepts either a
+     * [TransactionMessage] or a pre-serialized message blob. Returns 0 when
+     * the RPC cannot price the message.
+     */
+    fun getFeeForMessage(message: TransactionMessage): Long = getFeeForMessage(message.serialize())
+
+    fun getFeeForMessage(serializedMessage: ByteArray): Long = runBlocking {
+        val encoded = PlatformBase64.encode(serializedMessage)
+        rpc.getFeeForMessage(encoded, commitment.value)
     }
 
     /** Return the list of recent prioritization fees. */

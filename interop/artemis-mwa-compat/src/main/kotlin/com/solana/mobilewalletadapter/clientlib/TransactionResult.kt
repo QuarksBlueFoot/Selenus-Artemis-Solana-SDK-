@@ -11,9 +11,14 @@ package com.solana.mobilewalletadapter.clientlib
  */
 sealed class TransactionResult<out T> {
 
+    /**
+     * Matches upstream: `authResult` is nullable so call sites that only want
+     * to wrap a payload (like `connect` / `signIn`) don't have to synthesise
+     * a dummy [AuthorizationResult].
+     */
     data class Success<T>(
         val payload: T,
-        val authResult: AuthorizationResult
+        val authResult: AuthorizationResult? = null
     ) : TransactionResult<T>()
 
     data class Failure(

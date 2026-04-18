@@ -158,25 +158,34 @@ open class MobileWalletAdapterClient(
 
     // ─── Nested result classes (FQNs: MobileWalletAdapterClient.X) ────────
 
+    /**
+     * Upstream positional ordering: (authToken, accounts, walletUriBase, walletIcon, signInResult).
+     *
+     * The deprecated `publicKey` and `accountLabel` properties forward to
+     * `accounts[0]` so existing getter call sites continue to resolve without
+     * source changes. Constructing positionally continues to work Java-style.
+     */
     class AuthorizationResult(
         @JvmField val authToken: String,
-        @Deprecated("Read from accounts[0].publicKey instead.")
-        @JvmField val publicKey: ByteArray,
-        @Deprecated("Read from accounts[0].accountLabel instead.")
-        @JvmField val accountLabel: String?,
+        @JvmField val accounts: Array<AuthorizedAccount>,
         @JvmField val walletUriBase: Uri?,
-        @JvmField val walletIcon: Uri? = null,
-        @JvmField val accounts: Array<AuthorizedAccount> = emptyArray(),
-        @JvmField val signInResult: SignInResult? = null
+        @JvmField val walletIcon: Uri?,
+        @JvmField val signInResult: SignInResult?
     ) {
+        @Deprecated("Read from accounts[0].publicKey instead.")
+        val publicKey: ByteArray
+            get() = accounts.firstOrNull()?.publicKey ?: ByteArray(0)
+
+        @Deprecated("Read from accounts[0].accountLabel instead.")
+        val accountLabel: String?
+            get() = accounts.firstOrNull()?.accountLabel
+
         /** Returns a copy with the given [signInResult] attached. */
         fun with(signInResult: SignInResult?): AuthorizationResult = AuthorizationResult(
             authToken = authToken,
-            publicKey = publicKey,
-            accountLabel = accountLabel,
+            accounts = accounts,
             walletUriBase = walletUriBase,
             walletIcon = walletIcon,
-            accounts = accounts,
             signInResult = signInResult
         )
 

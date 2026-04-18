@@ -293,12 +293,15 @@ class LegacyMessage internal constructor(
             var shift = 0
             var read = 0
             while (true) {
+                require(offset + read < bytes.size) {
+                    "short-vec length truncated at offset ${offset + read}"
+                }
                 val byte = bytes[offset + read].toInt() and 0xFF
                 read++
                 value = value or ((byte and 0x7F) shl shift)
                 if ((byte and 0x80) == 0) break
                 shift += 7
-                if (shift > 21) error("short-vec length overflow")
+                require(shift <= 21) { "short-vec length overflow" }
             }
             return value to read
         }
@@ -401,12 +404,15 @@ data class Transaction(
             var shift = 0
             var read = 0
             while (true) {
+                require(offset + read < bytes.size) {
+                    "short-vec length truncated at offset ${offset + read}"
+                }
                 val byte = bytes[offset + read].toInt() and 0xFF
                 read++
                 value = value or ((byte and 0x7F) shl shift)
                 if ((byte and 0x80) == 0) break
                 shift += 7
-                if (shift > 21) error("short-vec length overflow")
+                require(shift <= 21) { "short-vec length overflow" }
             }
             return value to read
         }

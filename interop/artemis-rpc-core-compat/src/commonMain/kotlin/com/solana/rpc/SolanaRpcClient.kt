@@ -153,7 +153,7 @@ class SolanaRpcClient private constructor(
     suspend fun requestAirdrop(
         address: SolanaPublicKey,
         amountSol: Float,
-        requestId: String = "1"
+        requestId: String? = null
     ): Result<String> = runCatching {
         rpc.requestAirdrop(
             pubkey = address.base58(),
@@ -165,7 +165,7 @@ class SolanaRpcClient private constructor(
     suspend fun getBalance(
         address: SolanaPublicKey,
         commitment: Commitment = Commitment.CONFIRMED,
-        requestId: String = "1"
+        requestId: String? = null
     ): Result<Long> = runCatching {
         rpc.getBalance(address.base58(), commitment.value).lamports
     }
@@ -173,7 +173,7 @@ class SolanaRpcClient private constructor(
     suspend fun getLatestBlockhash(
         commitment: Commitment? = null,
         minContextSlot: Long? = null,
-        requestId: String = "1"
+        requestId: String? = null
     ): Result<BlockhashResponse> = runCatching {
         val c = commitment?.value ?: defaultTransactionOptions.commitment.value
         val result = rpc.getLatestBlockhash(c)
@@ -183,7 +183,7 @@ class SolanaRpcClient private constructor(
     suspend fun getMinBalanceForRentExemption(
         size: Long,
         commitment: Commitment? = null,
-        requestId: String = "1"
+        requestId: String? = null
     ): Result<Long> = runCatching {
         rpc.getMinimumBalanceForRentExemption(
             size,
@@ -195,7 +195,7 @@ class SolanaRpcClient private constructor(
         publicKey: SolanaPublicKey,
         commitment: Commitment? = null,
         minContextSlot: Long? = null,
-        requestId: String = "1"
+        requestId: String? = null
     ): Result<AccountInfo<ByteArray>?> = runCatching {
         val parsed = rpc.getAccountInfoParsed(
             publicKey.base58(),
@@ -214,7 +214,7 @@ class SolanaRpcClient private constructor(
     suspend fun getMultipleAccounts(
         publicKeys: List<SolanaPublicKey>,
         commitment: Commitment? = null,
-        requestId: String = "1"
+        requestId: String? = null
     ): Result<List<AccountInfo<ByteArray>?>> = runCatching {
         val json = rpc.getMultipleAccounts(
             publicKeys.map { it.base58() },
@@ -249,7 +249,7 @@ class SolanaRpcClient private constructor(
     suspend fun sendTransaction(
         transaction: Transaction,
         options: TransactionOptions = defaultTransactionOptions,
-        requestId: String = "1"
+        requestId: String? = null
     ): Result<String> = runCatching {
         val bytes = transaction.serialize()
         rpc.sendRawTransaction(
@@ -263,11 +263,9 @@ class SolanaRpcClient private constructor(
     suspend fun sendAndConfirmTransaction(
         transaction: Transaction,
         options: TransactionOptions = defaultTransactionOptions
-    ): Result<String> = runCatching {
+    ): Result<Boolean> = runCatching {
         val sig = sendTransaction(transaction, options).getOrThrow()
-        val confirmed = rpc.confirmTransaction(sig, requireConfirmationStatus = options.commitment.value)
-        if (!confirmed) error("transaction_not_confirmed")
-        sig
+        rpc.confirmTransaction(sig, requireConfirmationStatus = options.commitment.value)
     }
 
     suspend fun confirmTransaction(
@@ -283,7 +281,7 @@ class SolanaRpcClient private constructor(
     suspend fun getSignatureStatuses(
         signatures: List<String>,
         searchTransactionHistory: Boolean = false,
-        requestId: String = "1"
+        requestId: String? = null
     ): Result<List<SignatureStatus?>> = runCatching {
         val json = rpc.getSignatureStatuses(signatures, searchTransactionHistory)
         val values = json["value"]?.jsonArray ?: return@runCatching List(signatures.size) { null }

@@ -27,10 +27,10 @@ import com.selenus.artemis.tx.Instruction as ArtemisInstruction
  * flags. The wrapper can be produced from or converted to the Artemis
  * [ArtemisAccountMeta] in constant time.
  */
-data class AccountMeta(
+data class AccountMeta @JvmOverloads constructor(
     val publicKey: PublicKey,
-    val signer: Boolean,
-    val writable: Boolean
+    val signer: Boolean = false,
+    val writable: Boolean = false
 ) {
     internal fun toArtemis(): ArtemisAccountMeta = ArtemisAccountMeta(
         pubkey = publicKey.toArtemis(),
@@ -120,22 +120,40 @@ class TransferInstruction(
 
 /**
  * sol4k compatible `SplTransferInstruction` for an SPL Token transfer.
+ *
+ * Matches upstream 7-arg constructor: (from, to, mint, owner, amount, decimals, signers).
+ * When `decimals` is provided (>= 0) the instruction is built with
+ * `transferChecked` (index 12). Callers that only have the legacy
+ * `transfer` (index 3) layout pass `decimals = -1` to opt out.
  */
 class SplTransferInstruction @JvmOverloads constructor(
-    val source: PublicKey,
-    val destination: PublicKey,
-    val mintAuthority: PublicKey,
+    val from: PublicKey,
+    val to: PublicKey,
+    val mint: PublicKey,
+    val owner: PublicKey,
     val amount: Long,
+    val decimals: Int,
     val signers: List<PublicKey> = emptyList()
 ) : Instruction {
 
     private val compiled: ArtemisInstruction = run {
-        val base = ArtemisTokenProgram.transfer(
-            source = source.toArtemis(),
-            destination = destination.toArtemis(),
-            owner = mintAuthority.toArtemis(),
-            amount = amount
-        )
+        val base = if (decimals >= 0) {
+            ArtemisTokenProgram.transferChecked(
+                source = from.toArtemis(),
+                mint = mint.toArtemis(),
+                destination = to.toArtemis(),
+                owner = owner.toArtemis(),
+                amount = amount,
+                decimals = decimals
+            )
+        } else {
+            ArtemisTokenProgram.transfer(
+                source = from.toArtemis(),
+                destination = to.toArtemis(),
+                owner = owner.toArtemis(),
+                amount = amount
+            )
+        }
         if (signers.isEmpty()) {
             base
         } else {
@@ -160,23 +178,22 @@ class SplTransferInstruction @JvmOverloads constructor(
 
 /**
  * sol4k compatible `CreateAssociatedTokenAccountInstruction`.
+ *
+ * Matches upstream 4-arg constructor: (payer, associatedToken, owner, mint).
  */
 class CreateAssociatedTokenAccountInstruction(
     val payer: PublicKey,
+    val associatedToken: PublicKey,
     val owner: PublicKey,
     val mint: PublicKey
 ) : Instruction {
 
-    private val ata: ArtemisPubkey = ArtemisAta.address(owner.toArtemis(), mint.toArtemis())
     private val compiled: ArtemisInstruction = ArtemisAta.createAssociatedTokenAccount(
         payer = payer.toArtemis(),
         owner = owner.toArtemis(),
         mint = mint.toArtemis(),
-        ata = ata
+        ata = associatedToken.toArtemis()
     )
-
-    /** The derived ATA address that this instruction creates. */
-    val associatedTokenAccount: PublicKey = PublicKey(ata.bytes)
 
     override val programId: PublicKey get() = PublicKey(compiled.programId.bytes)
     override val keys: List<AccountMeta> get() = compiled.accounts.map { AccountMeta.fromArtemis(it) }

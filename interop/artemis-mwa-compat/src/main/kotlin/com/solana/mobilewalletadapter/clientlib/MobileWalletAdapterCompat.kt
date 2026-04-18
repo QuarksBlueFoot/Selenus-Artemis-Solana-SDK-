@@ -81,20 +81,50 @@ class MobileWalletAdapter(
     }
 
     /**
-     * Simple connection that returns the public key.
+     * Opens an MWA session and authorizes the dapp. Returns
+     * [TransactionResult.Success] with the empty payload when the wallet
+     * returns, matching upstream's MWA 2.0 shape.
      */
-    suspend fun connect(sender: ActivityResultSender): ByteArray {
-        val result = transact(sender) { it.publicKey }
-        return when (result) {
-            is TransactionResult.Success -> result.payload
-            is TransactionResult.Failure -> throw result.e ?: Exception(result.message)
-            is TransactionResult.NoWalletFound -> throw Exception(result.message)
+    suspend fun connect(sender: ActivityResultSender): TransactionResult<Unit> =
+        transact(sender) { /* authorize already ran */ }
+
+    /**
+     * Authorizes with a Sign-In With Solana payload and returns the resulting
+     * [SignInResult]. Mirrors `com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter.signIn`.
+     */
+    suspend fun signIn(
+        sender: ActivityResultSender,
+        signInPayload: SignInWithSolanaPayload
+    ): TransactionResult<SignInResult> {
+        val authTxResult = transact(sender, signInPayload) { authResult ->
+            authResult.signInResult
+                ?: throw IllegalStateException(
+                    "Wallet did not return a sign_in_result for the Sign-In With Solana payload"
+                )
+        }
+        return when (authTxResult) {
+            is TransactionResult.Success -> TransactionResult.Success(authTxResult.payload)
+            is TransactionResult.Failure -> TransactionResult.Failure(
+                authTxResult.message,
+                authTxResult.e ?: Exception(authTxResult.message)
+            )
+            is TransactionResult.NoWalletFound -> TransactionResult.NoWalletFound(authTxResult.message)
         }
     }
 
     /**
-     * Disconnect (clear stored auth token).
+     * Ends the MWA session and clears the stored auth token. Upstream returns
+     * [TransactionResult]; we keep a best-effort local implementation that
+     * cannot actually round-trip to the wallet because no Activity is in
+     * scope when `disconnect` is called from ordinary app flow.
      */
+    suspend fun disconnect(sender: ActivityResultSender): TransactionResult<Unit> {
+        authToken = null
+        authStore.set(null)
+        return TransactionResult.Success(Unit)
+    }
+
+    /** Pre-2.0 sync disconnect. Kept because existing Artemis apps call it. */
     fun disconnect() {
         authToken = null
         authStore.set(null)
