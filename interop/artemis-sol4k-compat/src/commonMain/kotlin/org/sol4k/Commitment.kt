@@ -10,9 +10,11 @@ package org.sol4k
  * The JSON-RPC parameter values match what Artemis sends on the wire.
  */
 enum class Commitment(val value: String) {
-    PROCESSED("processed"),
+    // Declaration order matches upstream sol4k 0.7.0 so code that reads
+    // `Commitment.values()[0]` picks FINALIZED (the safest default).
+    FINALIZED("finalized"),
     CONFIRMED("confirmed"),
-    FINALIZED("finalized");
+    PROCESSED("processed");
 
     override fun toString(): String = value
 }

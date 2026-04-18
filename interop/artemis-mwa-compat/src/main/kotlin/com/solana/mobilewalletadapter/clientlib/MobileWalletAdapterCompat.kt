@@ -29,6 +29,27 @@ class MobileWalletAdapter(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val authStore: AuthTokenStore = InMemoryAuthTokenStore()
 ) {
+    /**
+     * Upstream-shaped secondary constructor: `(connectionIdentity, timeout,
+     * ioDispatcher, scenarioProvider)`. Artemis ignores the [timeout] and
+     * [scenarioProvider] arguments because its session management is already
+     * baked into the native MWA client, but preserving the positional form
+     * means apps migrating from upstream can swap dependencies without
+     * touching construction sites.
+     */
+    constructor(
+        connectionIdentity: ConnectionIdentity,
+        timeout: Int,
+        ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+        @Suppress("UNUSED_PARAMETER") scenarioProvider: AssociationScenarioProvider =
+            AssociationScenarioProvider()
+    ) : this(
+        connectionIdentity = connectionIdentity,
+        blockchain = Solana.Mainnet,
+        ioDispatcher = ioDispatcher,
+        authStore = InMemoryAuthTokenStore()
+    )
+
     @Volatile
     var authToken: String? = null
         internal set
@@ -238,16 +259,17 @@ internal class MwaAdapterOperations(
         // superset of MWA 2.0 GetCapabilitiesResult plus a few Artemis-specific
         // feature flags. Map the subset that the upstream API surface defines.
         val caps = runCatching { adapter.getCapabilities() }.getOrNull()
-        val versions = buildList {
+        val versions = buildList<Any> {
             if (caps?.supportsLegacyTransactions != false) add("legacy")
-            if (caps?.supportsVersionedTransactions != false) add("0")
+            if (caps?.supportsVersionedTransactions != false) add(0)
         }
         return GetCapabilitiesResult(
             supportsCloneAuthorization = caps?.supportsCloneAuthorization ?: false,
             supportsSignAndSendTransactions = caps?.supportsSignAndSend ?: true,
             maxTransactionsPerSigningRequest = caps?.maxTransactionsPerRequest ?: 0,
             maxMessagesPerSigningRequest = caps?.maxMessagesPerRequest ?: 0,
-            supportedTransactionVersions = versions
+            supportedTransactionVersions = versions.toTypedArray(),
+            supportedOptionalFeatures = emptyArray()
         )
     }
 }

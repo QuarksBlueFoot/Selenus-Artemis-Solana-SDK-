@@ -95,6 +95,64 @@ data class AccountInfoWithPublicKey<P>(
 )
 
 /**
+ * Non-generic account record matching rpc-core's `SolanaAccount`.
+ *
+ * Upstream uses this shape when the caller doesn't care about decoding the
+ * account data and just wants the raw bytes plus metadata.
+ */
+data class SolanaAccount(
+    val lamports: Long,
+    val owner: SolanaPublicKey,
+    val data: ByteArray,
+    val executable: Boolean,
+    val rentEpoch: Long,
+    val space: Long
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is SolanaAccount) return false
+        return lamports == other.lamports &&
+            owner == other.owner &&
+            data.contentEquals(other.data) &&
+            executable == other.executable &&
+            rentEpoch == other.rentEpoch &&
+            space == other.space
+    }
+
+    override fun hashCode(): Int {
+        var result = lamports.hashCode()
+        result = 31 * result + owner.hashCode()
+        result = 31 * result + data.contentHashCode()
+        result = 31 * result + executable.hashCode()
+        result = 31 * result + rentEpoch.hashCode()
+        result = 31 * result + space.hashCode()
+        return result
+    }
+}
+
+/**
+ * Request shapes used by `getAccountInfo` / `getMultipleAccounts`. Matches
+ * the upstream `AccountRequest` nested types so named-arg callers keep
+ * working.
+ */
+object AccountRequest {
+    /**
+     * Byte slice of the account data to return. Upstream ships this nested
+     * on the rpc-core `AccountRequest` type; Artemis exposes it flat inside
+     * the `AccountRequest` container.
+     */
+    data class DataSlice(
+        val offset: Int,
+        val length: Int
+    ) {
+        init {
+            require(offset >= 0) { "offset must be non-negative" }
+            require(length >= 0) { "length must be non-negative" }
+        }
+    }
+}
+
+/**
  * Simulation result. Mirrors upstream field ordering.
  */
 data class SimulationResult(
@@ -211,6 +269,57 @@ class SolanaRpcClient private constructor(
         )
     }
 
+    /**
+     * Typed `getAccountInfo` using a caller-supplied [decode] function to
+     * transform raw account bytes into [D]. Matches upstream rpc-core's
+     * generic overload ergonomically without binding the shim to a specific
+     * deserialization framework (borsh, Anchor, kotlinx.serialization), so
+     * consumers plug in whatever decoder they use today.
+     */
+    suspend fun <D> getAccountInfo(
+        publicKey: SolanaPublicKey,
+        decode: (ByteArray) -> D,
+        commitment: Commitment? = null,
+        minContextSlot: Long? = null,
+        requestId: String? = null
+    ): Result<AccountInfo<D>?> = runCatching {
+        val raw = getAccountInfo(publicKey, commitment, minContextSlot, requestId)
+            .getOrThrow() ?: return@runCatching null
+        AccountInfo(
+            data = decode(raw.data),
+            executable = raw.executable,
+            lamports = raw.lamports,
+            owner = raw.owner,
+            rentEpoch = raw.rentEpoch,
+            space = raw.space
+        )
+    }
+
+    /**
+     * Typed `getMultipleAccounts` using a caller-supplied [decode] function.
+     * Null entries (missing accounts) are preserved in the returned list.
+     */
+    suspend fun <D> getMultipleAccounts(
+        publicKeys: List<SolanaPublicKey>,
+        decode: (ByteArray) -> D,
+        commitment: Commitment? = null,
+        requestId: String? = null
+    ): Result<List<AccountInfo<D>?>> = runCatching {
+        val raw = getMultipleAccounts(publicKeys, commitment, requestId).getOrThrow()
+        raw.map { entry ->
+            entry?.let {
+                AccountInfo(
+                    data = decode(it.data),
+                    executable = it.executable,
+                    lamports = it.lamports,
+                    owner = it.owner,
+                    rentEpoch = it.rentEpoch,
+                    space = it.space
+                )
+            }
+        }
+    }
+
     suspend fun getMultipleAccounts(
         publicKeys: List<SolanaPublicKey>,
         commitment: Commitment? = null,
@@ -304,7 +413,10 @@ class SolanaRpcClient private constructor(
         encoding: Encoding = Encoding.BASE64,
         replaceRecentBlockhash: Boolean = false,
         sigVerify: Boolean = false,
-        minContextSlot: Long? = null
+        minContextSlot: Long? = null,
+        innerInstructions: Boolean? = null,
+        accounts: List<SolanaPublicKey>? = null,
+        attemptJsonParseAccounts: Boolean = false
     ): Result<SimulationResult> = runCatching {
         val b64 = com.selenus.artemis.runtime.PlatformBase64.encode(transaction.serialize())
         val json = rpc.simulateTransaction(

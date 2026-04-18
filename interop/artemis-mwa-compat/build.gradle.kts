@@ -31,6 +31,7 @@ dependencies {
     // NotifyOnCompleteFuture) resolve transitively for consumers of this
     // module, mirroring the upstream ktx -> clientlib -> common chain.
     api(project(":artemis-mwa-common-compat"))
+    api(project(":artemis-mwa-clientlib-compat"))
     implementation(libs.androidx.activity.ktx)
     implementation(libs.kotlinx.coroutines.android)
 }

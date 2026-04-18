@@ -60,8 +60,11 @@ data class Blockhash(
     val lastValidBlockHeight: Long
 )
 
-/** `getHealth` response. */
-data class Health(val status: String)
+/**
+ * `getHealth` response. Matches upstream sol4k's enum shape so `when(health)`
+ * and direct equality against [Health.OK] / [Health.ERROR] both work.
+ */
+enum class Health { OK, ERROR }
 
 /** `getVersion` response. */
 data class Version(val solanaCore: String, val featureSet: Long?)
@@ -91,17 +94,21 @@ data class PrioritizationFee(
 /**
  * Simulation result returned by `Connection.simulateTransaction`.
  *
- * The `err` field matches sol4k: it is `null` on success and a json-encoded
- * string on failure.
+ * Upstream sol4k models this as a sealed hierarchy so callers can write
+ * `when (sim) { is Success -> ... is Error -> ... }` and have the compiler
+ * enforce exhaustiveness. Matching that shape here.
  */
-data class TransactionSimulation(
-    val err: String?,
-    val logs: List<String>,
-    val unitsConsumed: Long?,
-    val returnData: ReturnData?
-) {
+sealed class TransactionSimulation {
     data class ReturnData(val programId: String, val data: String)
 }
+
+data class TransactionSimulationError(val error: String) : TransactionSimulation()
+
+data class TransactionSimulationSuccess(
+    val logs: List<String>,
+    val unitsConsumed: Long? = null,
+    val returnData: TransactionSimulation.ReturnData? = null
+) : TransactionSimulation()
 
 /**
  * Signature info returned by `getSignaturesForAddress`.

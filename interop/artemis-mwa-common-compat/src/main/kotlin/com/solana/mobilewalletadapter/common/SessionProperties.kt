@@ -15,10 +15,18 @@ data class SessionProperties(val protocolVersion: ProtocolVersion) {
         V1("v1");
 
         companion object {
-            /** Parse a wire string back into a [ProtocolVersion]. */
+            /**
+             * Parse a wire string back into a [ProtocolVersion]. Matches
+             * upstream's contract of throwing [IllegalArgumentException] on
+             * unknown values so dapps with `catch (IllegalArgumentException)`
+             * around the handshake stay in control.
+             */
             @JvmStatic
             fun fromWireValue(value: String): ProtocolVersion =
-                values().first { it.wireValue == value }
+                values().firstOrNull { it.wireValue == value }
+                    ?: throw IllegalArgumentException(
+                        "Unknown SessionProperties.ProtocolVersion wire value: $value"
+                    )
         }
     }
 }

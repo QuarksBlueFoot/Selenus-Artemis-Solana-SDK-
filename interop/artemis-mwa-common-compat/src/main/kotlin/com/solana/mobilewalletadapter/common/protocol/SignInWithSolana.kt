@@ -35,6 +35,29 @@ class SignInWithSolana {
         @JvmField val resources: Array<String>?
     ) {
 
+        init {
+            // Defence in depth against signature-confusion attacks: every
+            // field is interpolated into the SIWS wire message separated by
+            // newlines. A field that itself contains a newline could smuggle
+            // fake domain / address lines past `fromMessage`, producing a
+            // signed payload that verifies under a different interpretation.
+            // Reject up front.
+            listOf(domain, address, statement, uri, version, chainId, nonce,
+                issuedAt, expirationTime, notBefore, requestId).forEach { value ->
+                if (value != null) {
+                    require(!value.contains('\n') && !value.contains('\r')) {
+                        "SIWS payload fields cannot contain newline characters"
+                    }
+                }
+            }
+            resources?.forEach { r ->
+                require(!r.contains('\n') && !r.contains('\r')) {
+                    "SIWS resources entries cannot contain newline characters"
+                }
+            }
+        }
+
+
         /** Deprecated convenience form (domain + address only). */
         @Deprecated("Use the full 12-arg constructor.")
         constructor(domain: String?, address: String?) : this(

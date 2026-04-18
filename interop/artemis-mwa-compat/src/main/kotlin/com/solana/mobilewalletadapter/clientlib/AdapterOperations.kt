@@ -74,7 +74,11 @@ interface AdapterOperations {
             supportsSignAndSendTransactions = true,
             maxTransactionsPerSigningRequest = 0,
             maxMessagesPerSigningRequest = 0,
-            supportedTransactionVersions = listOf("legacy", "0")
+            // Upstream mixes types deliberately: legacy is a String, v0 is an
+            // Int. Reproducing the heterogeneous array so wallets that type-
+            // dispatch on the entries read the same bytes Artemis emits.
+            supportedTransactionVersions = arrayOf<Any>("legacy", 0),
+            supportedOptionalFeatures = emptyArray()
         )
 }
 
@@ -89,8 +93,30 @@ data class GetCapabilitiesResult(
     val supportsSignAndSendTransactions: Boolean,
     val maxTransactionsPerSigningRequest: Int,
     val maxMessagesPerSigningRequest: Int,
-    val supportedTransactionVersions: List<String>
-)
+    val supportedTransactionVersions: Array<Any>,
+    val supportedOptionalFeatures: Array<String> = emptyArray()
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is GetCapabilitiesResult) return false
+        return supportsCloneAuthorization == other.supportsCloneAuthorization &&
+            supportsSignAndSendTransactions == other.supportsSignAndSendTransactions &&
+            maxTransactionsPerSigningRequest == other.maxTransactionsPerSigningRequest &&
+            maxMessagesPerSigningRequest == other.maxMessagesPerSigningRequest &&
+            supportedTransactionVersions.contentEquals(other.supportedTransactionVersions) &&
+            supportedOptionalFeatures.contentEquals(other.supportedOptionalFeatures)
+    }
+
+    override fun hashCode(): Int {
+        var result = supportsCloneAuthorization.hashCode()
+        result = 31 * result + supportsSignAndSendTransactions.hashCode()
+        result = 31 * result + maxTransactionsPerSigningRequest
+        result = 31 * result + maxMessagesPerSigningRequest
+        result = 31 * result + supportedTransactionVersions.contentHashCode()
+        result = 31 * result + supportedOptionalFeatures.contentHashCode()
+        return result
+    }
+}
 
 /**
  * Parameters for sign-and-send transaction requests.

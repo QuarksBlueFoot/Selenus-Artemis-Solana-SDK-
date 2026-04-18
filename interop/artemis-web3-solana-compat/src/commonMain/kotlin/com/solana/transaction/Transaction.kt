@@ -390,13 +390,24 @@ data class Transaction(
             var offset = 0
             val (numSigs, sigLenBytes) = shortVecDecode(bytes, offset)
             offset += sigLenBytes
+            require(offset + numSigs.toLong() * SIGNATURE_LENGTH_BYTES <= bytes.size) {
+                "transaction truncated: declared $numSigs signatures but buffer too small"
+            }
             val sigs = ArrayList<ByteArray>(numSigs)
             repeat(numSigs) {
                 sigs.add(bytes.copyOfRange(offset, offset + SIGNATURE_LENGTH_BYTES))
                 offset += SIGNATURE_LENGTH_BYTES
             }
             val messageBytes = bytes.copyOfRange(offset, bytes.size)
-            return Transaction(signatures = sigs, message = Message.from(messageBytes))
+            val message = Message.from(messageBytes)
+            // Reject mismatched signature counts. The first byte of the
+            // compiled message is `numRequiredSignatures`; a smaller count
+            // in the outer vec lets a crafted payload verify fewer sigs
+            // than the message declares.
+            require(numSigs == message.signatureCount.toInt()) {
+                "signature count mismatch: outer=$numSigs, message header=${message.signatureCount}"
+            }
+            return Transaction(signatures = sigs, message = message)
         }
 
         private fun shortVecDecode(bytes: ByteArray, offset: Int): Pair<Int, Int> {

@@ -66,15 +66,15 @@ class Connection @JvmOverloads constructor(
     /** Escape hatch: return the native Artemis RPC client. */
     fun asArtemis(): RpcApi = rpc
 
-    /** Return the balance of [account] in lamports. */
-    fun getBalance(account: PublicKey): BigInteger = runBlocking {
-        BigInteger.valueOf(rpc.getBalance(account.toBase58(), commitment.value).lamports)
+    /** Return the balance of [walletAddress] in lamports. */
+    fun getBalance(walletAddress: PublicKey): BigInteger = runBlocking {
+        BigInteger.valueOf(rpc.getBalance(walletAddress.toBase58(), commitment.value).lamports)
     }
 
-    /** Return the token account balance of [account]. */
+    /** Return the token account balance of [accountAddress]. */
     @JvmOverloads
-    fun getTokenAccountBalance(account: PublicKey, commitment: Commitment = this.commitment): TokenAccountBalance = runBlocking {
-        val json = rpc.getTokenAccountBalance(account.toBase58(), commitment.value)
+    fun getTokenAccountBalance(accountAddress: PublicKey, commitment: Commitment = this.commitment): TokenAccountBalance = runBlocking {
+        val json = rpc.getTokenAccountBalance(accountAddress.toBase58(), commitment.value)
         val context = json["context"]!!.jsonObject
         val value = json["value"]!!.jsonObject
         TokenAccountBalance(
@@ -107,7 +107,7 @@ class Connection @JvmOverloads constructor(
 
     /** Return the cluster health status. */
     fun getHealth(): Health = runBlocking {
-        Health(status = rpc.getHealth())
+        if (rpc.getHealth().equals("ok", ignoreCase = true)) Health.OK else Health.ERROR
     }
 
     /** Return the current epoch info. */
@@ -139,9 +139,9 @@ class Connection @JvmOverloads constructor(
         rpc.getTransactionCount(commitment.value)
     }
 
-    /** Return the [AccountInfo] for [account], or `null` if it does not exist. */
-    fun getAccountInfo(account: PublicKey): AccountInfo? = runBlocking {
-        val parsed = rpc.getAccountInfoParsed(account.toBase58(), commitment.value) ?: return@runBlocking null
+    /** Return the [AccountInfo] for [accountAddress], or `null` if it does not exist. */
+    fun getAccountInfo(accountAddress: PublicKey): AccountInfo? = runBlocking {
+        val parsed = rpc.getAccountInfoParsed(accountAddress.toBase58(), commitment.value) ?: return@runBlocking null
         AccountInfo(
             lamports = parsed.lamports,
             owner = PublicKey(parsed.owner.bytes),
@@ -151,9 +151,9 @@ class Connection @JvmOverloads constructor(
         )
     }
 
-    /** Return [AccountInfo] records for each pubkey in [accounts]. */
-    fun getMultipleAccounts(accounts: List<PublicKey>): List<AccountInfo?> = runBlocking {
-        val json = rpc.getMultipleAccounts(accounts.map { it.toBase58() }, commitment.value)
+    /** Return [AccountInfo] records for each pubkey in [accountAddresses]. */
+    fun getMultipleAccounts(accountAddresses: List<PublicKey>): List<AccountInfo?> = runBlocking {
+        val json = rpc.getMultipleAccounts(accountAddresses.map { it.toBase58() }, commitment.value)
         val values = json["value"]?.jsonArray ?: return@runBlocking emptyList<AccountInfo?>()
         values.map { entry ->
             if (entry is JsonNull) {
@@ -181,14 +181,14 @@ class Connection @JvmOverloads constructor(
         }
     }
 
-    /** Return the minimum lamports required to make a [dataLength]-byte account rent-exempt. */
-    fun getMinimumBalanceForRentExemption(dataLength: Int): Long = runBlocking {
-        rpc.getMinimumBalanceForRentExemption(dataLength.toLong(), commitment.value)
+    /** Return the minimum lamports required to make a [space]-byte account rent-exempt. */
+    fun getMinimumBalanceForRentExemption(space: Int): Long = runBlocking {
+        rpc.getMinimumBalanceForRentExemption(space.toLong(), commitment.value)
     }
 
-    /** Return the token supply for [mint]. */
-    fun getTokenSupply(mint: String): TokenAmount = runBlocking {
-        val typed = rpc.getTokenSupplyTyped(mint, commitment.value)
+    /** Return the token supply for [tokenPubkey]. */
+    fun getTokenSupply(tokenPubkey: String): TokenAmount = runBlocking {
+        val typed = rpc.getTokenSupplyTyped(tokenPubkey, commitment.value)
         TokenAmount(
             amount = typed.amount,
             decimals = typed.decimals,
@@ -232,21 +232,22 @@ class Connection @JvmOverloads constructor(
         simulateTransaction(transaction.serialize())
 
     /**
-     * Return the fee in lamports for a serialized message. Accepts either a
-     * [TransactionMessage] or a pre-serialized message blob. Returns 0 when
-     * the RPC cannot price the message.
+     * Return the fee in lamports for a serialized message, or `null` when the
+     * RPC cannot price it. Matches upstream sol4k's `Long?` return shape.
+     * Accepts either a [TransactionMessage] or a pre-serialized message blob.
      */
-    fun getFeeForMessage(message: TransactionMessage): Long = getFeeForMessage(message.serialize())
+    fun getFeeForMessage(message: TransactionMessage): Long? = getFeeForMessage(message.serialize())
 
-    fun getFeeForMessage(serializedMessage: ByteArray): Long = runBlocking {
+    fun getFeeForMessage(serializedMessage: ByteArray): Long? = runBlocking {
         val encoded = PlatformBase64.encode(serializedMessage)
-        rpc.getFeeForMessage(encoded, commitment.value)
+        val fee = rpc.getFeeForMessage(encoded, commitment.value)
+        if (fee == 0L) null else fee
     }
 
     /** Return the list of recent prioritization fees. */
     @JvmOverloads
-    fun getRecentPrioritizationFees(accounts: List<PublicKey> = emptyList()): List<PrioritizationFee> = runBlocking {
-        val addresses = if (accounts.isEmpty()) null else accounts.map { it.toBase58() }
+    fun getRecentPrioritizationFees(accountAddresses: List<PublicKey> = emptyList()): List<PrioritizationFee> = runBlocking {
+        val addresses = if (accountAddresses.isEmpty()) null else accountAddresses.map { it.toBase58() }
         val array = rpc.getRecentPrioritizationFees(addresses)
         array.map { element ->
             val obj = element.jsonObject
@@ -258,20 +259,20 @@ class Connection @JvmOverloads constructor(
     }
 
     /**
-     * Return the list of signatures that touched [account], newest first.
+     * Return the list of signatures that touched [address], newest first.
      *
      * [before] and [until] pagination cursors match sol4k.
      */
     @JvmOverloads
     fun getSignaturesForAddress(
-        account: PublicKey,
+        address: PublicKey,
         limit: Int = 1000,
         commitment: Commitment = this.commitment,
         before: String? = null,
         until: String? = null
     ): List<TransactionSignature> = runBlocking {
         val array = rpc.getSignaturesForAddress(
-            address = account.toBase58(),
+            address = address.toBase58(),
             limit = limit,
             before = before,
             until = until,
@@ -300,13 +301,10 @@ class Connection @JvmOverloads constructor(
     )
 
     private fun parseSimulation(json: JsonObject): TransactionSimulation {
-        val value = json["value"]?.jsonObject ?: return TransactionSimulation(
-            err = "empty response",
-            logs = emptyList(),
-            unitsConsumed = null,
-            returnData = null
-        )
+        val value = json["value"]?.jsonObject
+            ?: return TransactionSimulationError("empty response")
         val err = value["err"]?.takeUnless { it is JsonNull }?.toString()
+        if (err != null) return TransactionSimulationError(err)
         val logs = value["logs"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
         val unitsConsumed = value["unitsConsumed"]?.jsonPrimitive?.long
         val returnData = value["returnData"]?.takeUnless { it is JsonNull }?.jsonObject?.let { rd ->
@@ -315,8 +313,7 @@ class Connection @JvmOverloads constructor(
             val dataStr = dataArr?.firstOrNull()?.jsonPrimitive?.content ?: ""
             TransactionSimulation.ReturnData(programId = programId, data = dataStr)
         }
-        return TransactionSimulation(
-            err = err,
+        return TransactionSimulationSuccess(
             logs = logs,
             unitsConsumed = unitsConsumed,
             returnData = returnData

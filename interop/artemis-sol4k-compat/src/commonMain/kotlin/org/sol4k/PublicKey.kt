@@ -66,34 +66,34 @@ class PublicKey private constructor(internal val inner: ArtemisPubkey) {
                 programId = programId.inner
             )
             return ProgramDerivedAddress(
-                address = PublicKey(artemisResult.address),
+                publicKey = PublicKey(artemisResult.address),
                 nonce = artemisResult.bump.toInt()
             )
         }
 
         /**
-         * Derive the associated token address for [walletAddress], [mint], and
-         * [tokenProgramId]. Matches `sol4k.PublicKey.findProgramDerivedAddress`
-         * (ATA derivation).
+         * Derive the associated token address for [holderAddress], [tokenMintAddress],
+         * and [programId]. Parameter names match upstream sol4k's
+         * `PublicKey.findProgramDerivedAddress` signature.
          */
         @JvmStatic
         @JvmOverloads
         fun findProgramDerivedAddress(
-            walletAddress: PublicKey,
-            mint: PublicKey,
-            tokenProgramId: PublicKey = TOKEN_PROGRAM_ID
+            holderAddress: PublicKey,
+            tokenMintAddress: PublicKey,
+            programId: PublicKey = TOKEN_PROGRAM_ID
         ): ProgramDerivedAddress {
             val seeds = listOf(
-                walletAddress.inner.bytes,
-                tokenProgramId.inner.bytes,
-                mint.inner.bytes
+                holderAddress.inner.bytes,
+                programId.inner.bytes,
+                tokenMintAddress.inner.bytes
             )
             val result = com.selenus.artemis.runtime.Pda.findProgramAddress(
                 seeds = seeds,
                 programId = ASSOCIATED_TOKEN_PROGRAM_ID.inner
             )
             return ProgramDerivedAddress(
-                address = PublicKey(result.address),
+                publicKey = PublicKey(result.address),
                 nonce = result.bump.toInt()
             )
         }
@@ -118,13 +118,3 @@ fun ArtemisPubkey.asSol4kPublicKey(): PublicKey = PublicKey(this.bytes)
 /** Convert a sol4k [PublicKey] to an Artemis [ArtemisPubkey] without copying. */
 fun PublicKey.toArtemis(): ArtemisPubkey = inner
 
-/**
- * sol4k compatible `ProgramDerivedAddress` record.
- *
- * sol4k exposes the PDA result as an address + nonce pair. Artemis internally
- * represents it as a typed `Pda.Result`; this wrapper keeps the sol4k shape.
- */
-data class ProgramDerivedAddress(
-    val address: PublicKey,
-    val nonce: Int
-)

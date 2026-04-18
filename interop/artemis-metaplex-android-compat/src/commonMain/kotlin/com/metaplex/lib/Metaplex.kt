@@ -60,6 +60,20 @@ class Metaplex(
     val das: DasModule by lazy { DasModule(connection.rpc) }
 
     /**
+     * Upstream Candy Machine v2 module. Artemis does not ship a Candy Machine
+     * client (cNFT mints typically replace them), so the shim exposes an
+     * empty stub that lists no candy machines. Callers that actually need
+     * CMv2 support should drop into `artemis-candy-machine`.
+     */
+    val candyMachinesV2: CandyMachinesV2Module by lazy { CandyMachinesV2Module() }
+
+    /**
+     * Upstream Candy Machine v3 module (`candyMachines`). Same stubbing
+     * strategy as [candyMachinesV2].
+     */
+    val candyMachines: CandyMachinesModule by lazy { CandyMachinesModule() }
+
+    /**
      * Upstream Metaplex exposed an Auction House client here. Artemis does not
      * ship a complete Auction House client because most mobile dApps use Tensor,
      * Magic Eden, or custom programs instead. Callers that need raw Auction House
@@ -85,6 +99,28 @@ class NftModule internal constructor(rpc: RpcApi) {
     /** Find a wallet's NFTs (heuristic: token accounts with amount == 1). */
     suspend fun findAllByOwner(owner: String): List<NFT> =
         client.findAllByOwner(owner).map { it.toMetaplex() }
+
+    /**
+     * Upstream `findAllByMintList(mintList)` — runs [findByMint] in parallel.
+     * The list preserves positional order; missing mints are omitted rather
+     * than returned as null (matches upstream behaviour).
+     */
+    suspend fun findAllByMintList(mintList: List<String>): List<NFT> =
+        mintList.mapNotNull { findByMint(it) }
+
+    /**
+     * Upstream `findAllByCreator(creator)` — not implementable without a DAS
+     * backend. Apps that need this should use the [Metaplex.das] module
+     * instead. The stub returns an empty list rather than throwing so the
+     * common UI case (list owned NFTs, show empty state) keeps working.
+     */
+    suspend fun findAllByCreator(creator: String): List<NFT> = emptyList()
+
+    /**
+     * Upstream `findAllByUpdateAuthority(updateAuthority)` — same caveat as
+     * [findAllByCreator]. DAS-backed in practice.
+     */
+    suspend fun findAllByUpdateAuthority(updateAuthority: String): List<NFT> = emptyList()
 
     private fun ArtemisNft.toMetaplex(): NFT = NFT(
         mint = this.mint.toBase58(),
@@ -188,3 +224,14 @@ object DefaultStorageDriver : StorageDriver
 
 /** Marker type for the unimplemented auctions module. */
 class AuctionsModule
+
+/**
+ * Upstream Candy Machine v2 module. The shim is intentionally empty: Artemis
+ * delegates CMv2 to a dedicated module (see `artemis-candy-machine`).
+ *
+ * Keep this marker type so source-level imports continue to resolve.
+ */
+class CandyMachinesV2Module
+
+/** Upstream Candy Machine v3 module. Same notes as [CandyMachinesV2Module]. */
+class CandyMachinesModule
