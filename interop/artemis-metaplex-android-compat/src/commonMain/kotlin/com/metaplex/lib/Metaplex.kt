@@ -101,7 +101,7 @@ class NftModule internal constructor(rpc: RpcApi) {
         client.findAllByOwner(owner).map { it.toMetaplex() }
 
     /**
-     * Upstream `findAllByMintList(mintList)` — runs [findByMint] in parallel.
+     * Upstream `findAllByMintList(mintList)` - runs [findByMint] in parallel.
      * The list preserves positional order; missing mints are omitted rather
      * than returned as null (matches upstream behaviour).
      */
@@ -109,7 +109,7 @@ class NftModule internal constructor(rpc: RpcApi) {
         mintList.mapNotNull { findByMint(it) }
 
     /**
-     * Upstream `findAllByCreator(creator)` — not implementable without a DAS
+     * Upstream `findAllByCreator(creator)` - not implementable without a DAS
      * backend. Apps that need this should use the [Metaplex.das] module
      * instead. The stub returns an empty list rather than throwing so the
      * common UI case (list owned NFTs, show empty state) keeps working.
@@ -117,7 +117,7 @@ class NftModule internal constructor(rpc: RpcApi) {
     suspend fun findAllByCreator(creator: String): List<NFT> = emptyList()
 
     /**
-     * Upstream `findAllByUpdateAuthority(updateAuthority)` — same caveat as
+     * Upstream `findAllByUpdateAuthority(updateAuthority)` - same caveat as
      * [findAllByCreator]. DAS-backed in practice.
      */
     suspend fun findAllByUpdateAuthority(updateAuthority: String): List<NFT> = emptyList()

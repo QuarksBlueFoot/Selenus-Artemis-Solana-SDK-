@@ -57,7 +57,7 @@ private val Context.artemisMwaDataStore by preferencesDataStore(name = "artemis_
 /**
  * Plaintext DataStore-backed store. Retained for apps that opt out of the
  * keystore path (testing, non-production builds). The companion now warns
- * via KDoc — prefer [AuthTokenStore.default] in production code.
+ * via KDoc - prefer [AuthTokenStore.default] in production code.
  */
 class DataStoreAuthTokenStore(
     private val context: Context,
@@ -95,7 +95,7 @@ class DataStoreAuthTokenStore(
  * Key lives in the AndroidKeyStore under alias `artemis_mwa_auth`. The token
  * bytes are serialised as `[12-byte IV][ciphertext+tag]` and stored in a
  * dedicated SharedPreferences bucket. On any initialisation failure the
- * constructor throws — callers that require a functional token store should
+ * constructor throws - callers that require a functional token store should
  * react to the exception rather than fall through to plaintext storage.
  */
 class KeystoreEncryptedAuthTokenStore(

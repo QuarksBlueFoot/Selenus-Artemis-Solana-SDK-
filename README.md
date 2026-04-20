@@ -234,7 +234,7 @@ The full ring map and dependency rules are in [docs/ARCHITECTURE_OVERVIEW.md](do
 | `artemis-ws` | `SolanaWsClient` (auto-reconnect, deterministic resubscribe, heartbeat, polling fallback), `RealtimeEngine` (typed account/signature/program subscriptions), `ConnectionState` StateFlow. |
 | `artemis-tx` | Legacy transaction construction, serialization, signing, durable nonce. |
 | `artemis-vtx` | v0 versioned transactions, address lookup tables, `TxEngine` pipeline, retry policy, dynamic priority fee, ALT planner. |
-| `artemis-programs` | System (12 instruction builders), Token (9 builders), Associated Token, Compute Budget, Stake (5 builders). |
+| `artemis-programs` | System (12 instruction builders), Token (10 builders), Associated Token, Compute Budget, Stake (5 builders). |
 | `artemis-errors` | Structured Solana error types, on-chain error decoding. |
 | `artemis-logging` | Lightweight structured logging. |
 | `artemis-compute` | Compute unit estimation, priority fee helpers. |
@@ -356,4 +356,4 @@ A devnet test runner is at [run-devnet-tests.sh](run-devnet-tests.sh) and exerci
 
 Apache License 2.0. See [LICENSE](LICENSE).
 
-Maintained by [Bluefoot Labs](https://bluefootlabs.xyz).
+Maintained by [Bluefoot Labs](https://bluefootlabs.com).

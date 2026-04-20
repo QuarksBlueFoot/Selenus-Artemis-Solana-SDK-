@@ -25,7 +25,7 @@ internal interface MwaTransport {
  * - Binds to the loopback interface only so other apps on the device cannot
  *   inject connections into the association port.
  * - Rejects WebSocket upgrade requests whose `Origin` header is not
- *   `null` / `solana-wallet:` — MWA wallets don't send browser origins, so
+ *   `null` / `solana-wallet:` - MWA wallets don't send browser origins, so
  *   a non-empty origin almost always signals a wrong-protocol peer.
  * - Sends periodic ping frames and enforces a pong timeout so idle stale
  *   sockets tear down instead of hanging the dapp indefinitely.

@@ -8,7 +8,7 @@
  * the same tx read top-to-bottom, matches how most modern Kotlin libs feel
  * (compose, ktor, exposed), and still produces the exact same wire bytes.
  *
- * This file is purely additive over upstream — no existing sol4k call site
+ * This file is purely additive over upstream - no existing sol4k call site
  * has to change to use it.
  */
 package org.sol4k

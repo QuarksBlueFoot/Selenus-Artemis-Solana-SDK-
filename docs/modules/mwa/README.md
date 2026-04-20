@@ -1,40 +1,76 @@
 # Artemis Mobile Wallet Adapter (MWA)
 
-The `artemis-wallet-mwa-android` module implements the [Mobile Wallet Adapter](https://github.com/solana-mobile/mobile-wallet-adapter) specification natively. It allows Android wallets to expose their signing capabilities to dApps via local IPC.
+`artemis-wallet-mwa-android` is a from-scratch dapp-side implementation of the [Solana Mobile Wallet Adapter 2.0 protocol](https://github.com/solana-mobile/mobile-wallet-adapter) in pure Kotlin. No OkHttp, no upstream clientlib transitive deps. It speaks the spec end-to-end: association URI, P-256 ECDH handshake, HKDF-SHA256 key derivation, AES-128-GCM session cipher, JSON-RPC over a local WebSocket, full MWA 2.0 method set.
 
-## Features
+## What you actually get
 
-- **Pure Kotlin:** A rewrite from first principles ensuring clean architecture.
-- **Standards Compliant:** Fully implements the 2.0 specs.
-- **Optimized for Artemis:** Integrates directly with `artemis-core` data structures.
+- `MwaWalletAdapter` connects, authorizes, signs, and sends through a real wallet on the same device.
+- `ArtemisMobile.create(...)` is the one-call entry point that bundles this with RPC, transaction engine, realtime subscriptions, DAS, and session management.
+- `AuthTokenStore.default(context)` returns a Keystore-encrypted store (AES-256-GCM, non-exportable key). Plaintext DataStore is still available via `DataStoreAuthTokenStore` for non-production builds.
+- Wire-format components verified against RFC vectors in unit tests: HKDF-SHA256 ([HkdfVectorsTest](../../../mobile/artemis-wallet-mwa-android/src/test/kotlin/com/selenus/artemis/wallet/mwa/protocol/HkdfVectorsTest.kt)), AES-128-GCM round-trip + layout + tamper rejection ([Aes128GcmTest](../../../mobile/artemis-wallet-mwa-android/src/test/kotlin/com/selenus/artemis/wallet/mwa/protocol/Aes128GcmTest.kt)), EcP256 ECDH + ECDSA P1363 ([EcP256Test](../../../mobile/artemis-wallet-mwa-android/src/test/kotlin/com/selenus/artemis/wallet/mwa/protocol/EcP256Test.kt)).
 
-## Installation
+## Install
 
 ```kotlin
 dependencies {
-    implementation("com.selenus.artemis:artemis-wallet-mwa-android:1.0.6")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.2.0")
+    implementation("xyz.selenus:artemis-wallet:2.2.0")
+    implementation("xyz.selenus:artemis-vtx:2.2.0")
+    implementation("xyz.selenus:artemis-rpc:2.2.0")
 }
 ```
 
-## Wallet Implementation
+The published version is `2.2.0`. The source of truth is `version` in [gradle.properties](../../../gradle.properties).
 
-To make your wallet discoverable by dApps:
-
-### 1. Define Capability
-
-Ensure your wallet Activity can handle the `solana-wallet://` scheme.
-
-### 2. Handle Connection
-
-When a dApp connects, the `MobileWalletAdapter` service (from this library) handles the handshake and session encryption.
+## One-call setup with ArtemisMobile
 
 ```kotlin
-// Example usage in a Service or ViewModel
-class MyWalletService : Service() {
-    private val mwa = MobileWalletAdapter()
+val artemis = ArtemisMobile.create(
+    activity     = this,
+    identityUri  = Uri.parse("https://myapp.example.com"),
+    iconPath     = "https://myapp.example.com/favicon.ico",
+    identityName = "My App",
+    rpcUrl       = "https://mainnet.helius-rpc.com/?api-key=YOUR_KEY",
+    wsUrl        = "wss://atlas-mainnet.helius-rpc.com/?api-key=YOUR_KEY",
+    dasUrl       = "https://mainnet.helius-rpc.com/?api-key=YOUR_KEY"
+)
 
-    override fun onBind(intent: Intent): IBinder {
-        return mwa.binder
-    }
+// Lazy connect + session reuse. Handles reauthorize and session expiry.
+val sig = artemis.sessionManager.withWallet { session ->
+    session.sendSol(recipient, 1_000_000_000L)
 }
 ```
+
+`ArtemisMobile.create(...)` lives at [ArtemisMobile.kt:85](../../../mobile/artemis-wallet-mwa-android/src/main/kotlin/com/selenus/artemis/wallet/mwa/ArtemisMobile.kt#L85).
+
+## Direct adapter use
+
+If you want to wire everything yourself:
+
+```kotlin
+val adapter = MwaWalletAdapter(
+    activity     = this,
+    identityUri  = Uri.parse("https://myapp.example.com"),
+    iconPath     = "https://myapp.example.com/favicon.ico",
+    identityName = "My App",
+    chain        = "solana:mainnet",
+    authStore    = AuthTokenStore.default(applicationContext)
+)
+
+val publicKey = adapter.connect()
+val signed: List<ByteArray> = adapter.signMessages(
+    listOf(txBytes),
+    SignTxRequest(purpose = "signTransactions")
+)
+adapter.disconnect()
+```
+
+The class lives at [MwaWalletAdapter.kt](../../../mobile/artemis-wallet-mwa-android/src/main/kotlin/com/selenus/artemis/wallet/mwa/MwaWalletAdapter.kt).
+
+## Drop-in replacement for upstream clientlib-ktx
+
+If your dapp already imports `com.solana.mobilewalletadapter.clientlib.*`, the [artemis-mwa-compat](../../../interop/artemis-mwa-compat/) + [artemis-mwa-clientlib-compat](../../../interop/artemis-mwa-clientlib-compat/) + [artemis-mwa-common-compat](../../../interop/artemis-mwa-common-compat/) shims re-expose the upstream types at the same fully qualified names, backed by Artemis internals. `MobileWalletAdapter(connectionIdentity)`, `transact { ... }`, `AdapterOperations`, `LocalAssociationScenario`, `AuthorizationResult`, `SignInResult`, `SignPayloadsResult`, `SignMessagesResult`, and `SignAndSendTransactionsResult` all route through the live Artemis session via `MwaSessionBridge`. See the compat module sources for the mapping details.
+
+## License
+
+Apache License 2.0.
