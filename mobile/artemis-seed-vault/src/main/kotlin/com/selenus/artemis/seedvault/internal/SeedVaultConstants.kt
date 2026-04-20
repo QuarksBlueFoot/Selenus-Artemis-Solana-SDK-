@@ -154,8 +154,17 @@ object SeedVaultConstants {
     
     /** Authority of the Seed Vault Wallet content provider. */
     const val AUTHORITY_WALLET_PROVIDER = "$AUTHORITY_WALLET.walletprovider"
-    /** Base content URI for the wallet provider. */
-    val WALLET_PROVIDER_CONTENT_URI_BASE: Uri = Uri.parse("content://$AUTHORITY_WALLET_PROVIDER")
+    /**
+     * Base content URI for the wallet provider.
+     *
+     * Lazy-initialised so class loading works under plain JVM unit tests
+     * (where [Uri.parse] returns null and upstream `withAppendedPath` NPEs
+     * during the static initialiser). At runtime on Android this is a no-op
+     * cost; the first access materialises the real [Uri].
+     */
+    val WALLET_PROVIDER_CONTENT_URI_BASE: Uri by lazy {
+        Uri.parse("content://$AUTHORITY_WALLET_PROVIDER")
+    }
     
     /** Method to resolve BIP32 derivation paths via ContentResolver.call(). */
     const val RESOLVE_BIP32_DERIVATION_PATH_METHOD = "ResolveBipDerivationPath"
@@ -168,7 +177,7 @@ object SeedVaultConstants {
     // ═══════════════════════════════════════════════════════════════════════════
     
     const val AUTHORIZED_SEEDS_TABLE = "authorizedseeds"
-    val AUTHORIZED_SEEDS_CONTENT_URI: Uri = Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, AUTHORIZED_SEEDS_TABLE)
+    val AUTHORIZED_SEEDS_CONTENT_URI: Uri by lazy { Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, AUTHORIZED_SEEDS_TABLE) }
     const val AUTHORIZED_SEEDS_AUTH_TOKEN = "_id"  // BaseColumns._ID
     const val AUTHORIZED_SEEDS_AUTH_PURPOSE = "AuthorizedSeeds_AuthPurpose"
     const val AUTHORIZED_SEEDS_SEED_NAME = "AuthorizedSeeds_SeedName"
@@ -186,7 +195,7 @@ object SeedVaultConstants {
     // ═══════════════════════════════════════════════════════════════════════════
     
     const val UNAUTHORIZED_SEEDS_TABLE = "unauthorizedseeds"
-    val UNAUTHORIZED_SEEDS_CONTENT_URI: Uri = Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, UNAUTHORIZED_SEEDS_TABLE)
+    val UNAUTHORIZED_SEEDS_CONTENT_URI: Uri by lazy { Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, UNAUTHORIZED_SEEDS_TABLE) }
     const val UNAUTHORIZED_SEEDS_AUTH_PURPOSE = "_id"
     const val UNAUTHORIZED_SEEDS_HAS_UNAUTHORIZED_SEEDS = "UnauthorizedSeeds_HasUnauthorizedSeeds"
     val UNAUTHORIZED_SEEDS_ALL_COLUMNS = arrayOf(
@@ -200,7 +209,7 @@ object SeedVaultConstants {
     // ═══════════════════════════════════════════════════════════════════════════
     
     const val ACCOUNTS_TABLE = "accounts"
-    val ACCOUNTS_CONTENT_URI: Uri = Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, ACCOUNTS_TABLE)
+    val ACCOUNTS_CONTENT_URI: Uri by lazy { Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, ACCOUNTS_TABLE) }
     const val ACCOUNTS_ACCOUNT_ID = "_id"  // BaseColumns._ID
     const val ACCOUNTS_BIP32_DERIVATION_PATH = "Accounts_Bip32DerivationPath"
     const val ACCOUNTS_PUBLIC_KEY_RAW = "Accounts_PublicKeyRaw"
@@ -223,7 +232,7 @@ object SeedVaultConstants {
     // ═══════════════════════════════════════════════════════════════════════════
     
     const val IMPLEMENTATION_LIMITS_TABLE = "implementationlimits"
-    val IMPLEMENTATION_LIMITS_CONTENT_URI: Uri = Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, IMPLEMENTATION_LIMITS_TABLE)
+    val IMPLEMENTATION_LIMITS_CONTENT_URI: Uri by lazy { Uri.withAppendedPath(WALLET_PROVIDER_CONTENT_URI_BASE, IMPLEMENTATION_LIMITS_TABLE) }
     const val IMPLEMENTATION_LIMITS_AUTH_PURPOSE = "_id"
     const val IMPLEMENTATION_LIMITS_MAX_SIGNING_REQUESTS = "MaxSigningRequests"
     const val IMPLEMENTATION_LIMITS_MAX_REQUESTED_SIGNATURES = "MaxRequestedSignatures"

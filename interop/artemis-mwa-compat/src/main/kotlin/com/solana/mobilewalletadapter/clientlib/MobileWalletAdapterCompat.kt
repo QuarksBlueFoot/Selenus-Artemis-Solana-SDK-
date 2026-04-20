@@ -65,6 +65,16 @@ class MobileWalletAdapter @JvmOverloads constructor(
         internal set
 
     /**
+     * Live session handles set while a [transact] block is executing. Exposed
+     * so [disconnect] can genuinely deauthorize through the same wallet
+     * session instead of silently dropping the local token.
+     */
+    @Volatile
+    private var liveAdapter: com.selenus.artemis.wallet.mwa.MwaWalletAdapter? = null
+    @Volatile
+    private var liveBridge: MwaSessionBridge? = null
+
+    /**
      * Execute a block of wallet operations inside an auto-managed MWA session.
      *
      * This is the primary entry point matching the upstream `transact()` API.
@@ -79,19 +89,53 @@ class MobileWalletAdapter @JvmOverloads constructor(
         signInPayload: SignInWithSolanaPayload? = null,
         block: suspend AdapterOperations.(authResult: AuthorizationResult) -> T
     ): TransactionResult<T> {
+        val adapter = createAdapter(sender)
+        liveAdapter = adapter
+        // Install a bridge onto the low-level clientlib so any code that
+        // reaches into it (e.g. scenario.getMobileWalletAdapterClient())
+        // sees live wallet behaviour instead of placeholder futures.
+        val bridge = MwaSessionBridge(adapter)
+        liveBridge = bridge
         return try {
-            // Create a temporary Activity-backed adapter using the sender's context.
-            // The sender wraps a ComponentActivity, but we need an Activity for MwaWalletAdapter.
-            // We extract the Activity from the registered launcher's lifecycle owner.
-            val adapter = createAdapter(sender)
+            val pubkey = if (signInPayload != null) {
+                adapter.connectWithSignIn(signInPayload.toMwa())
+                adapter.publicKey
+            } else {
+                adapter.connect()
+            }
 
-            val pubkey = adapter.connect()
-
+            val raw = adapter.lastAuthorization
+            val walletUriBaseStr = raw?.walletUriBase
+            val walletIconStr = raw?.walletIcon
+            val accounts = raw?.accounts.orEmpty().map { acc ->
+                AuthorizationResult.Account(
+                    publicKey = android.util.Base64.decode(
+                        acc.address,
+                        android.util.Base64.NO_WRAP
+                    ),
+                    displayAddress = acc.displayAddress,
+                    displayAddressFormat = acc.displayAddressFormat,
+                    label = acc.label,
+                    chains = acc.chains,
+                    features = acc.features
+                )
+            }
+            val signInResultNative = raw?.signInResult?.let { sir ->
+                SignInResult(
+                    publicKey = android.util.Base64.decode(sir.address, android.util.Base64.NO_WRAP),
+                    signedMessage = android.util.Base64.decode(sir.signedMessage, android.util.Base64.NO_WRAP),
+                    signature = android.util.Base64.decode(sir.signature, android.util.Base64.NO_WRAP),
+                    signatureType = sir.signatureType
+                )
+            }
             val authResult = AuthorizationResult(
-                authToken = authStore.get() ?: "",
+                authToken = raw?.authToken ?: authStore.get() ?: "",
                 publicKey = pubkey.bytes,
-                accountLabel = null,
-                walletUriBase = null
+                accountLabel = accounts.firstOrNull()?.label,
+                walletUriBase = walletUriBaseStr?.let { android.net.Uri.parse(it) },
+                walletIcon = walletIconStr?.let { android.net.Uri.parse(it) },
+                accounts = accounts,
+                signInResult = signInResultNative
             )
 
             authToken = authResult.authToken
@@ -108,6 +152,11 @@ class MobileWalletAdapter @JvmOverloads constructor(
             TransactionResult.Success(payload, authResult)
         } catch (e: Exception) {
             TransactionResult.Failure(e.message ?: "MWA transaction failed", e)
+        } finally {
+            // Keep the bridge attached until the caller tears down. The live
+            // handles are used by [disconnect] to issue a real deauthorize
+            // and then released; if the caller never calls disconnect, the
+            // next `transact` replaces the handles cleanly.
         }
     }
 
@@ -144,19 +193,51 @@ class MobileWalletAdapter @JvmOverloads constructor(
     }
 
     /**
-     * Ends the MWA session and clears the stored auth token. Upstream returns
-     * [TransactionResult]; we keep a best-effort local implementation that
-     * cannot actually round-trip to the wallet because no Activity is in
-     * scope when `disconnect` is called from ordinary app flow.
+     * Ends the MWA session. If a [transact] block is still holding a live
+     * adapter, this method dispatches `deauthorize` through the wallet so
+     * the wallet actually invalidates the auth token, then tears down the
+     * local session bridge and clears persisted state. Matches upstream's
+     * behaviour where disconnect is a full wallet-side notification.
+     *
+     * When no live adapter is available (caller never ran [transact]) the
+     * method falls back to opening a fresh session with [sender] and
+     * deauthorizing explicitly, so the stored token does not leak.
      */
     suspend fun disconnect(sender: ActivityResultSender): TransactionResult<Unit> {
-        authToken = null
-        authStore.set(null)
-        return TransactionResult.Success(Unit)
+        val token = authStore.get()
+        return try {
+            val adapter = liveAdapter ?: createAdapter(sender).also { fresh ->
+                if (!token.isNullOrEmpty()) {
+                    runCatching { fresh.reauthorize() }
+                }
+                liveAdapter = fresh
+            }
+            runCatching { adapter.deauthorize() }
+            runCatching { adapter.disconnect() }
+            liveBridge?.close()
+            liveBridge = null
+            liveAdapter = null
+            authToken = null
+            authStore.set(null)
+            TransactionResult.Success(Unit)
+        } catch (e: Exception) {
+            // Even on failure, wipe local state: a stale token that the
+            // wallet still trusts is strictly worse than a stale token that
+            // the wallet doesn't.
+            liveBridge?.close()
+            liveBridge = null
+            liveAdapter = null
+            authToken = null
+            authStore.set(null)
+            TransactionResult.Failure(e.message ?: "MWA disconnect failed", e)
+        }
     }
 
-    /** Pre-2.0 sync disconnect. Kept because existing Artemis apps call it. */
+    /** Pre-2.0 sync disconnect. Kept for existing Artemis callers. */
     fun disconnect() {
+        liveBridge?.close()
+        liveBridge = null
+        liveAdapter = null
         authToken = null
         authStore.set(null)
     }

@@ -90,14 +90,55 @@ object SeedVaultCheck {
         }
 
         val resolved = context.packageManager.queryIntentActivities(intent, 0)
-        
+
         for (ri in resolved) {
-            if (heldPermission == ri.activityInfo.permission) {
+            if (heldPermission == ri.activityInfo.permission &&
+                isTrustedProvider(context, ri.activityInfo.packageName)
+            ) {
                 intent.setClassName(ri.activityInfo.packageName, ri.activityInfo.name)
                 return
             }
         }
 
-        throw IllegalStateException("No target activity found for ${intent.action}")
+        throw IllegalStateException("No trusted target activity found for ${intent.action}")
     }
+
+    /**
+     * Confirm that [packageName] is a trusted Seed Vault provider. A provider
+     * qualifies if it is signed by the platform's `android` package or appears
+     * in the explicit [TRUSTED_PROVIDERS] allowlist (simulator + known OEM
+     * builds). Any intent resolving to an arbitrary third-party package is
+     * rejected even if it happens to declare the right permission.
+     */
+    @JvmStatic
+    @SuppressLint("PackageManagerGetSignatures")
+    fun isTrustedProvider(context: Context, packageName: String): Boolean {
+        val pm = context.packageManager
+        if (packageName in TRUSTED_PROVIDERS) return true
+        val providerPi = try {
+            pm.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+        } catch (_: PackageManager.NameNotFoundException) {
+            return false
+        }
+        val androidPi = try {
+            pm.getPackageInfo("android", PackageManager.GET_SIGNATURES)
+        } catch (_: PackageManager.NameNotFoundException) {
+            return false
+        }
+        val providerSig = providerPi.signatures?.firstOrNull() ?: return false
+        val platformSig = androidPi.signatures?.firstOrNull() ?: return false
+        return providerSig == platformSig
+    }
+
+    /**
+     * Allowlist of provider packages Artemis trusts without a platform
+     * signature match. The official Seed Vault simulator ships as
+     * `com.solanamobile.seedvault.simulator` and is not signed with the
+     * platform certificate; tests and dev builds need it explicitly.
+     */
+    @JvmField
+    val TRUSTED_PROVIDERS: Set<String> = setOf(
+        SeedVaultConstants.PACKAGE_SEED_VAULT,
+        "com.solanamobile.seedvault.simulator"
+    )
 }

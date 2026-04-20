@@ -52,12 +52,51 @@ internal class ArtemisNotifyingFuture<T>(
 abstract class Scenario protected constructor(
     clientTimeoutMs: Int,
     @JvmField protected val mCallbacks: Callbacks? = null,
-    @JvmField val associationPublicKey: ByteArray = ByteArray(0)
+    associationKeyPair: java.security.KeyPair = generateAssociationKeyPair()
 ) {
+
+    /**
+     * Ephemeral P-256 keypair used for the association handshake. The public
+     * portion (SEC1 uncompressed encoding, 65 bytes) is what the dapp puts
+     * in the `association` URI parameter; the wallet uses it to derive the
+     * shared AES-128-GCM session key per the MWA spec. Previous versions
+     * defaulted to an empty byte array, which caused wallets following the
+     * spec to reject the connection up front.
+     */
+    val associationKeyPair: java.security.KeyPair = associationKeyPair
+
+    /** SEC1 uncompressed encoding of the P-256 public point (65 bytes). */
+    @JvmField
+    val associationPublicKey: ByteArray = run {
+        val pk = associationKeyPair.public as java.security.interfaces.ECPublicKey
+        val w = pk.w
+        val x = w.affineX.toByteArray().let { arr ->
+            if (arr.size == 32) arr
+            else if (arr.size == 33 && arr[0] == 0.toByte()) arr.copyOfRange(1, 33)
+            else ByteArray(32).also { out -> arr.copyInto(out, 32 - arr.size) }
+        }
+        val y = w.affineY.toByteArray().let { arr ->
+            if (arr.size == 32) arr
+            else if (arr.size == 33 && arr[0] == 0.toByte()) arr.copyOfRange(1, 33)
+            else ByteArray(32).also { out -> arr.copyInto(out, 32 - arr.size) }
+        }
+        ByteArray(65).also { buf ->
+            buf[0] = 0x04
+            x.copyInto(buf, 1)
+            y.copyInto(buf, 33)
+        }
+    }
 
     @JvmField
     protected val mMobileWalletAdapterClient: MobileWalletAdapterClient =
         MobileWalletAdapterClient(clientTimeoutMs)
+
+    /**
+     * Public accessor for the underlying [MobileWalletAdapterClient]. Needed
+     * by higher layers (the Artemis ktx bridge, fakewallet-style tests) that
+     * want to install a real `SessionBridge` without subclassing the scenario.
+     */
+    fun getMobileWalletAdapterClient(): MobileWalletAdapterClient = mMobileWalletAdapterClient
 
     abstract fun start()
     abstract fun close()
@@ -79,6 +118,12 @@ abstract class Scenario protected constructor(
     companion object {
         /** Default per-JSON-RPC-request timeout in milliseconds. */
         const val DEFAULT_CLIENT_TIMEOUT_MS: Int = 90_000
+
+        internal fun generateAssociationKeyPair(): java.security.KeyPair {
+            val kpg = java.security.KeyPairGenerator.getInstance("EC")
+            kpg.initialize(java.security.spec.ECGenParameterSpec("secp256r1"))
+            return kpg.generateKeyPair()
+        }
     }
 }
 
@@ -87,19 +132,36 @@ open class LocalAssociationScenario @JvmOverloads constructor(
     private val clientTimeoutMs: Int = Scenario.DEFAULT_CLIENT_TIMEOUT_MS
 ) : Scenario(clientTimeoutMs = clientTimeoutMs) {
 
-    private var _port: Int = 0
+    @Volatile private var _port: Int = 0
+    @Volatile private var reservedSocket: java.net.ServerSocket? = null
 
     /** Ephemeral TCP port chosen at association time. Range 0..65535. */
     fun getPort(): Int = _port
 
+    /**
+     * Allocate an ephemeral TCP port + mark the scenario ready. The real
+     * wallet connection is established by the ktx [MobileWalletAdapter]
+     * after the wallet honours the association URI; this scenario reserves
+     * the port so the URI emitted by [createAssociationUri] points at a
+     * socket nothing else on the device can steal.
+     */
     override fun start() {
-        // Hook point: the real protocol handshake lives in the Artemis MWA
-        // adapter. The shim fulfils the API surface so source-level imports
-        // compile.
+        if (reservedSocket != null) return
+        val ss = java.net.ServerSocket(0).apply {
+            reuseAddress = true
+        }
+        reservedSocket = ss
+        _port = ss.localPort
+        mCallbacks?.onScenarioReady()
     }
 
+    /** Releases the reserved port and clears the session bridge. */
     override fun close() {
-        // See start().
+        mMobileWalletAdapterClient.installBridge(null)
+        try { reservedSocket?.close() } catch (_: Exception) {}
+        reservedSocket = null
+        _port = 0
+        mCallbacks?.onScenarioTeardownComplete()
     }
 
     /**
@@ -107,14 +169,21 @@ open class LocalAssociationScenario @JvmOverloads constructor(
      * the clientlib-ktx wrapper.
      */
     fun startAsync(): NotifyOnCompleteFuture<MobileWalletAdapterClient> {
-        val future = CompletableFuture.completedFuture(mMobileWalletAdapterClient)
-        return ArtemisNotifyingFuture(future)
+        return ArtemisNotifyingFuture(
+            java.util.concurrent.CompletableFuture.supplyAsync {
+                start()
+                mMobileWalletAdapterClient
+            }
+        )
     }
 
     /** Async variant of [close]. */
     fun closeAsync(): NotifyOnCompleteFuture<Void?> {
-        val future = CompletableFuture.completedFuture<Void?>(null)
-        return ArtemisNotifyingFuture(future)
+        return ArtemisNotifyingFuture(
+            java.util.concurrent.CompletableFuture.supplyAsync<Void?> {
+                close(); null
+            }
+        )
     }
 
     /**
@@ -124,13 +193,18 @@ open class LocalAssociationScenario @JvmOverloads constructor(
      */
     fun createAssociationUri(endpointPrefix: Uri?): Uri {
         val base = endpointPrefix ?: Uri.parse("${AssociationContract.SCHEME_MOBILE_WALLET_ADAPTER}://")
+        // Public MWA spec defines the association-token parameter as the
+        // base64url-without-padding encoding of the ephemeral P-256 public
+        // key point. Previous code used Base58, which wallets that strictly
+        // follow the spec (including the SMS fakewallet) reject as malformed.
+        val associationToken = android.util.Base64.encodeToString(
+            associationPublicKey,
+            android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP
+        )
         return base.buildUpon()
             .appendEncodedPath(AssociationContract.LOCAL_PATH_SUFFIX)
             .appendQueryParameter(AssociationContract.LOCAL_PARAMETER_PORT, _port.toString())
-            .appendQueryParameter(
-                AssociationContract.PARAMETER_ASSOCIATION_TOKEN,
-                com.selenus.artemis.runtime.Base58.encode(associationPublicKey)
-            )
+            .appendQueryParameter(AssociationContract.PARAMETER_ASSOCIATION_TOKEN, associationToken)
             .build()
     }
 

@@ -18,6 +18,7 @@ import com.selenus.artemis.wallet.mwa.protocol.MwaSession
 import com.selenus.artemis.wallet.mwa.protocol.MwaSignInPayload
 import com.selenus.artemis.wallet.mwa.protocol.MwaSignInResult
 import com.selenus.artemis.wallet.mwa.protocol.MwaAccount
+import com.selenus.artemis.wallet.mwa.protocol.MwaAuthorizeResult
 
 
 /**
@@ -47,6 +48,8 @@ class MwaWalletAdapter(
   @Volatile private var caps: MwaCapabilities? = null
   @Volatile private var connectedAccounts: List<MwaAccount> = emptyList()
   @Volatile private var walletUriBase: String? = null
+  @Volatile private var walletIconRef: String? = null
+  @Volatile private var lastAuthorizeResult: MwaAuthorizeResult? = null
 
   override val publicKey: Pubkey
     get() = pk ?: throw IllegalStateException("Wallet not connected. Call connect() first.")
@@ -58,6 +61,19 @@ class MwaWalletAdapter(
   /** Get the wallet's base URI (for deeplinks) */
   val walletUri: String?
     get() = walletUriBase
+
+  /** Wallet-provided icon from the last authorize response. */
+  val walletIcon: String?
+    get() = walletIconRef
+
+  /**
+   * The raw [MwaAuthorizeResult] returned by the last authorize call.
+   * Exposed so the compat layer and UI code can read spec-visible fields
+   * (walletUriBase, walletIcon, per-account chains/features, SIWS result)
+   * without re-invoking the wallet.
+   */
+  val lastAuthorization: MwaAuthorizeResult?
+    get() = lastAuthorizeResult
 
   override suspend fun getCapabilities(): WalletCapabilities {
     val c = ensureMwaCapabilities()
@@ -99,9 +115,12 @@ class MwaWalletAdapter(
       authToken = authStore.get()
     )
     authStore.set(res.authToken)
-    
-    // Store all accounts for multi-account support
+
+    // Store all accounts + wallet metadata for multi-account + deeplink support.
     connectedAccounts = res.accounts
+    walletUriBase = res.walletUriBase
+    walletIconRef = res.walletIcon
+    lastAuthorizeResult = res
 
     val first = res.accounts.firstOrNull() ?: throw IllegalStateException("No accounts returned by wallet")
     val addr = java.util.Base64.getDecoder().decode(first.address)
@@ -141,10 +160,14 @@ class MwaWalletAdapter(
       identity = identity,
       chain = chain,
       authToken = authStore.get(),
-      features = requestedFeatures
+      features = requestedFeatures,
+      addresses = b64Addresses
     )
     authStore.set(res.authToken)
     connectedAccounts = res.accounts
+    walletUriBase = res.walletUriBase
+    walletIconRef = res.walletIcon
+    lastAuthorizeResult = res
 
     val first = res.accounts.firstOrNull() ?: throw IllegalStateException("No accounts returned by wallet")
     val addr = java.util.Base64.getDecoder().decode(first.address)
@@ -174,7 +197,10 @@ class MwaWalletAdapter(
     )
     authStore.set(res.authToken)
     connectedAccounts = res.accounts
-    
+    walletUriBase = res.walletUriBase
+    walletIconRef = res.walletIcon
+    lastAuthorizeResult = res
+
     val first = res.accounts.firstOrNull() ?: throw IllegalStateException("No accounts returned by wallet")
     val addr = java.util.Base64.getDecoder().decode(first.address)
     pk = Pubkey(addr)
@@ -483,6 +509,9 @@ private fun <T> chunk(list: List<T>, maxSize: Int): List<List<T>> {
     val res = client.reauthorize(s, identity, token)
     authStore.set(res.authToken)
     connectedAccounts = res.accounts
+    walletUriBase = res.walletUriBase
+    walletIconRef = res.walletIcon
+    lastAuthorizeResult = res
   }
 
   /**
@@ -531,6 +560,8 @@ private fun <T> chunk(list: List<T>, maxSize: Int): List<List<T>> {
     caps = null
     connectedAccounts = emptyList()
     walletUriBase = null
+    walletIconRef = null
+    lastAuthorizeResult = null
   }
 
   /**

@@ -38,4 +38,6 @@ dependencies {
   // Artemis native Mobile Wallet Adapter client. No dependency on Solana Mobile clientlib.
   // No OkHttp dependency needed (native socket implementation).
   implementation(libs.kotlinx.serialization.json)
+
+  testImplementation("junit:junit:4.13.2")
 }

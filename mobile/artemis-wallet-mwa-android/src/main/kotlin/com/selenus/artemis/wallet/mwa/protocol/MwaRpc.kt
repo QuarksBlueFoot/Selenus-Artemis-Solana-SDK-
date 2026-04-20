@@ -24,15 +24,37 @@ internal data class MwaAuthorizeRequest(
 
 @Serializable
 data class MwaAccount(
-  // base64 encoded public key bytes
+  /** base64 encoded public key bytes */
   val address: String,
-  val label: String? = null
+  /** Optional human-readable label. */
+  val label: String? = null,
+  /**
+   * MWA 2.0: display-formatted version of [address] (e.g. bech32 for a
+   * non-Solana chain the account also supports). Wallets populate this
+   * when [displayAddressFormat] is set.
+   */
+  @SerialName("display_address") val displayAddress: String? = null,
+  /**
+   * MWA 2.0: format identifier for [displayAddress] (e.g. `base58`).
+   * Null when the wallet only uses the canonical [address] encoding.
+   */
+  @SerialName("display_address_format") val displayAddressFormat: String? = null,
+  /** MWA 2.0: wallet-supplied icon for this specific account. */
+  @SerialName("icon") val icon: String? = null,
+  /** MWA 2.0: chains this account is authorised on (CAIP identifiers). */
+  @SerialName("chains") val chains: List<String>? = null,
+  /** MWA 2.0: per-account feature identifiers (solana:signMessages, etc.). */
+  @SerialName("features") val features: List<String>? = null
 )
 
 @Serializable
 data class MwaAuthorizeResult(
   @SerialName("auth_token") val authToken: String,
   val accounts: List<MwaAccount> = emptyList(),
+  /** MWA 2.0: base URI the wallet wants associated with this authorization. */
+  @SerialName("wallet_uri_base") val walletUriBase: String? = null,
+  /** MWA 2.0: wallet-provided icon shown next to accounts from this wallet. */
+  @SerialName("wallet_icon") val walletIcon: String? = null,
   @SerialName("sign_in_result") val signInResult: MwaSignInResult? = null
 )
 
@@ -71,9 +93,18 @@ data class MwaCapabilities(
     supportsSignAndSendTransactions == true || 
     features?.contains(FEATURE_SIGN_AND_SEND_TRANSACTIONS) == true
   
-  /** Check if wallet supports sign-only transactions (optional MWA 2.0 feature) */
-  fun supportsSignTransactions(): Boolean = 
-    supportsSignTransactions != false || 
+  /**
+   * Check if the wallet supports sign-only transactions.
+   *
+   * MWA 2.0 makes `sign_transactions` OPTIONAL (and in the migration guide,
+   * deprecated in favour of `sign_and_send_transactions`). The previous
+   * implementation defaulted to `true` when the wallet reported nothing,
+   * causing Artemis to dispatch unsupported wallet methods. Spec-correct
+   * behaviour: treat as `false` unless the wallet explicitly opts in via
+   * either the legacy boolean or the MWA 2.0 features array.
+   */
+  fun supportsSignTransactions(): Boolean =
+    supportsSignTransactions == true ||
     features?.contains(FEATURE_SIGN_TRANSACTIONS) == true
   
   /** Check if wallet supports clone_authorization (optional MWA 2.0 feature) */

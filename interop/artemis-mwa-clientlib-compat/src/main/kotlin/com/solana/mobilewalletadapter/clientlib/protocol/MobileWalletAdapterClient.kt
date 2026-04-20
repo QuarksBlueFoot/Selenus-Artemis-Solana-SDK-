@@ -35,6 +35,50 @@ import java.util.concurrent.Future
 open class MobileWalletAdapterClient(
     @Suppress("UNUSED_PARAMETER") clientTimeoutMs: Int
 ) {
+    /**
+     * Live-session bridge. When Scenario.start() completes the association
+     * handshake it installs a bridge that routes each method call through
+     * to the real wallet. While null, the client returns a failed future
+     * with an explicit error rather than silently succeeding with synthetic
+     * data.
+     */
+    interface SessionBridge {
+        fun authorize(
+            identityUri: Uri?,
+            iconUri: Uri?,
+            identityName: String?,
+            chain: String?,
+            authToken: String?,
+            features: Array<String>?,
+            addresses: Array<ByteArray>?,
+            signInPayload: SignInWithSolana.Payload?
+        ): CompletableFuture<AuthorizationResult>
+
+        fun deauthorize(authToken: String): CompletableFuture<Void?>
+        fun getCapabilities(): CompletableFuture<GetCapabilitiesResult>
+        fun signTransactions(transactions: Array<ByteArray>): CompletableFuture<SignPayloadsResult>
+        fun signMessagesDetached(
+            messages: Array<ByteArray>,
+            addresses: Array<ByteArray>
+        ): CompletableFuture<SignMessagesResult>
+        fun signAndSendTransactions(
+            transactions: Array<ByteArray>,
+            minContextSlot: Int?,
+            commitment: String?,
+            skipPreflight: Boolean?,
+            maxRetries: Int?,
+            waitForCommitmentToSendNextTransaction: Boolean?
+        ): CompletableFuture<SignAndSendTransactionsResult>
+    }
+
+    @Volatile
+    private var bridge: SessionBridge? = null
+
+    /** Installed by [scenario.Scenario.start] after the association succeeds. */
+    fun installBridge(bridge: SessionBridge?) {
+        this.bridge = bridge
+    }
+
     internal class NotifyingFuture<T>(private val backing: CompletableFuture<T>) :
         NotifyOnCompleteFuture<T>, Future<T> by backing {
         override fun notifyOnComplete(cb: OnCompleteCallback<in NotifyOnCompleteFuture<T>>) {
@@ -79,43 +123,81 @@ open class MobileWalletAdapterClient(
         features: Array<String>? = null,
         addresses: Array<ByteArray>? = null,
         signInPayload: SignInWithSolana.Payload? = null
-    ): AuthorizationFuture = AuthorizationFuture(notYetAuthorized("chain=$chain"))
+    ): AuthorizationFuture {
+        val b = bridge ?: return AuthorizationFuture(notYetAuthorized("chain=$chain"))
+        return AuthorizationFuture(
+            b.authorize(identityUri, iconUri, identityName, chain, authToken, features, addresses, signInPayload)
+        )
+    }
 
+    /**
+     * Unified reauthorize. MWA 2.0 merges reauthorize into authorize with the
+     * auth_token parameter set; matching upstream behaviour here keeps the
+     * non-ktx callers aligned with what the walletlib actually accepts.
+     */
     open fun reauthorize(
         identityUri: Uri?,
         iconUri: Uri?,
         identityName: String?,
         authToken: String
-    ): AuthorizationFuture = AuthorizationFuture(notYetAuthorized("reauthorize"))
+    ): AuthorizationFuture = authorize(
+        identityUri = identityUri,
+        iconUri = iconUri,
+        identityName = identityName,
+        chain = null,
+        authToken = authToken
+    )
 
     open fun deauthorize(authToken: String): DeauthorizeFuture {
-        val f = CompletableFuture<Void?>()
-        f.complete(null)
-        return DeauthorizeFuture(f)
+        val b = bridge
+            ?: return DeauthorizeFuture(CompletableFuture.completedFuture(null))
+        return DeauthorizeFuture(b.deauthorize(authToken))
     }
 
-    open fun getCapabilities(): GetCapabilitiesFuture =
-        GetCapabilitiesFuture(CompletableFuture.completedFuture(defaultCapabilities()))
+    open fun getCapabilities(): GetCapabilitiesFuture {
+        val b = bridge
+            ?: return GetCapabilitiesFuture(CompletableFuture.completedFuture(defaultCapabilities()))
+        return GetCapabilitiesFuture(b.getCapabilities())
+    }
 
     @Deprecated("Use signAndSendTransactions.", level = DeprecationLevel.WARNING)
-    open fun signTransactions(transactions: Array<ByteArray>): SignPayloadsFuture =
-        SignPayloadsFuture(unsupported("signTransactions"))
+    open fun signTransactions(transactions: Array<ByteArray>): SignPayloadsFuture {
+        val b = bridge ?: return SignPayloadsFuture(unsupported("signTransactions"))
+        return SignPayloadsFuture(b.signTransactions(transactions))
+    }
 
     @Deprecated("Use signMessagesDetached.", level = DeprecationLevel.WARNING)
     open fun signMessages(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
-    ): SignPayloadsFuture = SignPayloadsFuture(unsupported("signMessages"))
+    ): SignPayloadsFuture {
+        val b = bridge ?: return SignPayloadsFuture(unsupported("signMessages"))
+        // Pre-2.0 legacy path: wallet returned concatenated (message || signature)
+        // blobs. Bridge sits on the detached API and re-packs so callers that
+        // still consume signedPayloads get parity with upstream legacy output.
+        return SignPayloadsFuture(b.signMessagesDetached(messages, addresses).thenApply { det ->
+            val packed = det.messages.mapIndexed { i, sm ->
+                val sig = sm.signatures.firstOrNull() ?: ByteArray(0)
+                sm.message + sig
+            }.toTypedArray()
+            SignPayloadsResult(packed)
+        })
+    }
 
     open fun signMessagesDetached(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
-    ): SignMessagesFuture = SignMessagesFuture(unsupported("signMessagesDetached"))
+    ): SignMessagesFuture {
+        val b = bridge ?: return SignMessagesFuture(unsupported("signMessagesDetached"))
+        return SignMessagesFuture(b.signMessagesDetached(messages, addresses))
+    }
 
     open fun signAndSendTransactions(
         transactions: Array<ByteArray>,
         minContextSlot: Int? = null
-    ): SignAndSendTransactionsFuture = SignAndSendTransactionsFuture(unsupported("signAndSendTransactions"))
+    ): SignAndSendTransactionsFuture = signAndSendTransactions(
+        transactions, minContextSlot, null, null, null, null
+    )
 
     open fun signAndSendTransactions(
         transactions: Array<ByteArray>,
@@ -124,7 +206,16 @@ open class MobileWalletAdapterClient(
         skipPreflight: Boolean?,
         maxRetries: Int?,
         waitForCommitmentToSendNextTransaction: Boolean?
-    ): SignAndSendTransactionsFuture = SignAndSendTransactionsFuture(unsupported("signAndSendTransactions"))
+    ): SignAndSendTransactionsFuture {
+        val b = bridge
+            ?: return SignAndSendTransactionsFuture(unsupported("signAndSendTransactions"))
+        return SignAndSendTransactionsFuture(
+            b.signAndSendTransactions(
+                transactions, minContextSlot, commitment, skipPreflight,
+                maxRetries, waitForCommitmentToSendNextTransaction
+            )
+        )
+    }
 
     // ─── Helpers ──────────────────────────────────────────────────────────
 

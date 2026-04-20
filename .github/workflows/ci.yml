@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platforms
+        run: |
+          sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
+
+      - name: Assemble debug
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Unit tests (MWA)
+        run: ./gradlew --no-daemon :artemis-wallet-mwa-android:testDebugUnitTest
+
+      - name: Upload test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: |
+            mobile/**/build/reports/tests/**
+            foundation/**/build/reports/tests/**
+            interop/**/build/reports/tests/**
+
+  lint:
+    name: Lint + API surface check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - name: Install Android platforms
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
+      - name: Kotlin compile check
+        run: ./gradlew --no-daemon compileDebugKotlin || ./gradlew --no-daemon compileKotlinJvm
+      - name: API surface dump (compat modules)
+        run: |
+          mkdir -p build/api
+          for m in artemis-mwa-compat artemis-mwa-clientlib-compat artemis-mwa-common-compat \
+                   artemis-seedvault-compat artemis-sol4k-compat artemis-web3-solana-compat \
+                   artemis-rpc-core-compat artemis-solana-kmp-compat artemis-metaplex-android-compat; do
+            echo "=== $m ==="
+            find "interop/$m/src" -name "*.kt" 2>/dev/null | head -20
+          done

@@ -54,16 +54,18 @@ class MwaClient(
     chain: String? = null,
     authToken: String? = null,
     features: List<String>? = null,
+    addresses: List<String>? = null,
     signInPayload: MwaSignInPayload? = null,
     timeoutMs: Long = 30_000
   ): MwaAuthorizeResult {
     val params = json.encodeToJsonElement(
       MwaAuthorizeRequest.serializer(),
       MwaAuthorizeRequest(
-        identity = identity, 
-        chain = chain, 
-        authToken = authToken, 
+        identity = identity,
+        chain = chain,
+        authToken = authToken,
         features = features,
+        addresses = addresses,
         signInPayload = signInPayload
       )
     )
@@ -97,17 +99,40 @@ class MwaClient(
     return result.signatures
   }
 
+  /**
+   * Reauthorize an existing session.
+   *
+   * The public MWA 2.0 spec unifies authorize and reauthorize under a single
+   * `authorize` RPC with the `auth_token` parameter populated. Explicit
+   * `reauthorize` is retained only as a fallback for wallets still on the
+   * MWA 1.0 draft. This implementation therefore tries
+   * `authorize(auth_token=...)` first and falls back to the legacy method
+   * if the wallet returns `method not found`.
+   */
   suspend fun reauthorize(
     session: MwaSession,
     identity: MwaIdentity,
     authToken: String,
     timeoutMs: Long = 10_000
   ): MwaAuthorizeResult {
-    val params = json.encodeToJsonElement(
+    val authorizeParams = json.encodeToJsonElement(
+      MwaAuthorizeRequest.serializer(),
+      MwaAuthorizeRequest(identity = identity, authToken = authToken)
+    )
+    try {
+      val rsp = withTimeout(timeoutMs) {
+        session.sendJsonRpc("authorize", authorizeParams).await()
+      }
+      return parseResult(rsp)
+    } catch (e: MwaProtocolException) {
+      // Retry via legacy method only for "method not found" style rejections.
+      if (e.code != -32601) throw e
+    }
+    val legacyParams = json.encodeToJsonElement(
       MwaReauthorizeRequest.serializer(),
       MwaReauthorizeRequest(identity = identity, authToken = authToken)
     )
-    val rsp = withTimeout(timeoutMs) { session.sendJsonRpc("reauthorize", params).await() }
+    val rsp = withTimeout(timeoutMs) { session.sendJsonRpc("reauthorize", legacyParams).await() }
     return parseResult(rsp)
   }
 
@@ -155,14 +180,16 @@ class MwaClient(
    */
   suspend fun cloneAuthorization(
     session: MwaSession,
-    authToken: String,
+    @Suppress("UNUSED_PARAMETER") authToken: String,
     timeoutMs: Long = 10_000
   ): String {
-    val params = json.encodeToJsonElement(
-      MwaCloneAuthorizationRequest.serializer(),
-      MwaCloneAuthorizationRequest(authToken = authToken)
-    )
-    val rsp = withTimeout(timeoutMs) { session.sendJsonRpc("clone_authorization", params).await() }
+    // Public MWA 2.0 spec: `clone_authorization` is invoked on an already
+    // authorized session and takes NO parameters. The wallet clones the
+    // currently-bound authorization state and returns a new token. Prior
+    // code sent an `auth_token` field which some wallets reject as an
+    // unknown param. The [authToken] argument is retained for source
+    // compatibility with older callers but intentionally not forwarded.
+    val rsp = withTimeout(timeoutMs) { session.sendJsonRpc("clone_authorization", null).await() }
     val result: MwaCloneAuthorizationResult = parseResult(rsp)
     return result.authToken
   }

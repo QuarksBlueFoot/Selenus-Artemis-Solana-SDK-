@@ -28,22 +28,44 @@ import com.selenus.artemis.seedvault.internal.ipc.ISeedVaultCallback
  */
 class SeedVaultManager(private val context: Context) {
     
-    private var serviceBinder: IBinder? = null
-    private var service: ISeedVaultService? = null
-    private var isBound = false
+    @Volatile private var serviceBinder: IBinder? = null
+    @Volatile private var service: ISeedVaultService? = null
+    @Volatile private var isBound = false
+
+    /**
+     * Continuations waiting for [onServiceConnected]. The previous
+     * implementation called [Context.bindService] asynchronously and
+     * returned immediately, so callers that hit an RPC method between
+     * `connect()` and the binder landing would race with a null service
+     * reference. The list + lock here makes `connectSuspending()` deterministic.
+     */
+    private val pendingBindWaiters =
+        mutableListOf<kotlin.coroutines.Continuation<ISeedVaultService>>()
+    private val bindLock = Any()
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-            serviceBinder = binder
-            if (binder != null) {
-                service = ISeedVaultService.Stub.asInterface(binder)
+            val svc = binder?.let { ISeedVaultService.Stub.asInterface(it) }
+            synchronized(bindLock) {
+                serviceBinder = binder
+                service = svc
+                val waiters = pendingBindWaiters.toList()
+                pendingBindWaiters.clear()
+                waiters
+            }.forEach { cont ->
+                if (svc != null) cont.resume(svc)
+                else cont.resumeWithException(
+                    IllegalStateException("Seed Vault returned a null binder")
+                )
             }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
-            serviceBinder = null
-            service = null
-            isBound = false
+            synchronized(bindLock) {
+                serviceBinder = null
+                service = null
+                isBound = false
+            }
         }
     }
 
@@ -60,8 +82,10 @@ class SeedVaultManager(private val context: Context) {
     }
 
     /**
-     * Connects to the Seed Vault system service.
-     * This must be called before performing any privileged actions.
+     * Fire-and-forget bind. Retained for callers that already guard their
+     * RPC calls with a readiness check. Prefer [connectSuspending] for new
+     * code: it awaits the binder landing so the next call is guaranteed to
+     * see a non-null [service].
      */
     fun connect() {
         if (isBound) return
@@ -70,6 +94,42 @@ class SeedVaultManager(private val context: Context) {
         }
         resolveComponent(context, intent)
         isBound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+    }
+
+    /**
+     * Suspends until the Seed Vault binder is connected. Safe to call
+     * multiple times; subsequent calls return the already-bound service
+     * immediately.
+     *
+     * @throws IllegalStateException if the bind intent is rejected or the
+     *   service returns a null binder.
+     */
+    suspend fun connectSuspending(): ISeedVaultService = suspendCancellableCoroutine { cont ->
+        synchronized(bindLock) {
+            service?.let { existing ->
+                cont.resume(existing)
+                return@suspendCancellableCoroutine
+            }
+            pendingBindWaiters.add(cont)
+            if (!isBound) {
+                val intent = Intent(ACTION_BIND_SEED_VAULT).apply {
+                    setPackage(SeedVaultConstants.PACKAGE_SEED_VAULT)
+                }
+                resolveComponent(context, intent)
+                val bound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+                if (!bound) {
+                    pendingBindWaiters.remove(cont)
+                    cont.resumeWithException(
+                        IllegalStateException("Seed Vault bindService returned false")
+                    )
+                    return@suspendCancellableCoroutine
+                }
+                isBound = true
+            }
+        }
+        cont.invokeOnCancellation {
+            synchronized(bindLock) { pendingBindWaiters.remove(cont) }
+        }
     }
 
     /**

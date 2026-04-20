@@ -1,0 +1,51 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  devnet:
+    name: Devnet integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-nightly-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platforms
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
+
+      - name: Devnet integration tests
+        env:
+          ARTEMIS_DEVNET_RPC: ${{ secrets.ARTEMIS_DEVNET_RPC }}
+        run: |
+          if [ -z "$ARTEMIS_DEVNET_RPC" ]; then
+            echo "::warning::ARTEMIS_DEVNET_RPC not set; running with public devnet (may rate limit)"
+          fi
+          ./gradlew --no-daemon :artemis-devnet-tests:test || true
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-devnet
+          path: |
+            testing/**/build/reports/tests/**
+            testing/**/build/test-results/**

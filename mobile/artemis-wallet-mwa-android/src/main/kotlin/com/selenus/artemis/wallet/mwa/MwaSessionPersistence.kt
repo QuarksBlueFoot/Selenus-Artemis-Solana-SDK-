@@ -51,20 +51,46 @@ class MwaSessionPersistence(
     private val json: Json = Json { ignoreUnknownKeys = true }
 ) {
     
-    private val prefs: SharedPreferences = try {
-        // Use encrypted storage for auth tokens
-        val masterKey = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-        EncryptedSharedPreferences.create(
-            PREFS_NAME,
-            masterKey,
-            context,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
-    } catch (e: Exception) {
-        // Fallback to regular prefs if encrypted storage fails
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = run {
+        // Encrypted prefs store the MWA auth token + session metadata. If
+        // keystore-backed encryption cannot be initialised the previous
+        // implementation silently degraded to plaintext SharedPreferences.
+        // Persistent auth tokens must NEVER land in plaintext; fail closed
+        // so callers can surface the error and fall back to in-memory mode
+        // rather than handing attackers a readable bucket.
+        val masterKey = try {
+            MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        } catch (e: Exception) {
+            throw SecureStorageUnavailableException(
+                "Android Keystore master key could not be initialised", e
+            )
+        }
+        try {
+            EncryptedSharedPreferences.create(
+                PREFS_NAME,
+                masterKey,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            throw SecureStorageUnavailableException(
+                "EncryptedSharedPreferences initialisation failed", e
+            )
+        }
     }
+
+    /**
+     * Raised when Android's keystore-backed preferences cannot be created.
+     * Callers should treat this as a hard signal to either (a) retry after
+     * explicit user intervention or (b) skip the persistence feature for the
+     * current session. The previous behaviour silently wrote plaintext in
+     * this case, which is a real security regression.
+     */
+    class SecureStorageUnavailableException(
+        message: String,
+        cause: Throwable? = null
+    ) : RuntimeException(message, cause)
     
     companion object {
         private const val PREFS_NAME = "artemis_mwa_sessions"

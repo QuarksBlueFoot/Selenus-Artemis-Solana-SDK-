@@ -211,13 +211,17 @@ object SolanaDerivation {
     fun detectScheme(path: String): DerivationScheme {
         return try {
             val parsed = parse(path)
+            val purposeOk = parsed.components.firstOrNull()?.value == 44
+            val coin = parsed.components.getOrNull(1)?.value
             when {
-                parsed.components.size == 3 && 
-                    parsed.components[1].value == SOLANA_COIN_TYPE -> DerivationScheme.LEDGER_LIVE
-                parsed.components.size >= 4 && 
-                    parsed.components[1].value == ED25519_COIN_TYPE -> DerivationScheme.ED25519_BIP32
-                parsed.components.size >= 4 && 
-                    parsed.components[1].value == SOLANA_COIN_TYPE -> DerivationScheme.STANDARD
+                !purposeOk -> DerivationScheme.UNKNOWN
+                parsed.components.size == 3 && coin == SOLANA_COIN_TYPE -> DerivationScheme.LEDGER_LIVE
+                coin == ED25519_COIN_TYPE && parsed.components.size >= 4 -> DerivationScheme.ED25519_BIP32
+                // Extended ED25519-BIP32 variant encodes as a 5-level path
+                // on coin type 501. Treat it as ED25519_BIP32 so apps can
+                // branch on the derivation engine rather than the label.
+                parsed.components.size == 5 && coin == SOLANA_COIN_TYPE -> DerivationScheme.ED25519_BIP32
+                parsed.components.size == 4 && coin == SOLANA_COIN_TYPE -> DerivationScheme.STANDARD
                 else -> DerivationScheme.UNKNOWN
             }
         } catch (e: Exception) {
@@ -301,9 +305,14 @@ object SolanaDerivation {
     }
     
     /**
-     * Get the next account path (alias for [nextAccount] with fallback).
+     * Get the next account path. Unlike [nextAccount], which falls back to
+     * an account index of `0` for malformed input, this variant returns the
+     * original string unchanged when the input is not a recognisable Solana
+     * derivation path. Matches the "invalid path returns same path"
+     * contract surfaced by downstream apps that bulk-iterate accounts.
      */
     fun nextAccountPath(currentPath: String): String {
+        if (!isSolanaPath(currentPath)) return currentPath
         return try {
             nextAccount(currentPath)
         } catch (e: Exception) {

@@ -14,6 +14,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 class MwaSession internal constructor(
   private val transport: MwaTransport,
@@ -24,17 +25,32 @@ class MwaSession internal constructor(
   @Suppress("unused")
   private val scope = CoroutineScope(Dispatchers.IO + Job())
 
-  private var sendSeq = 1
-  private var recvSeq = 1
+  // AES-GCM with deterministic counter-based nonces REQUIRES that no counter
+  // value is ever reused. The previous implementation incremented plain Ints
+  // which could race under coroutine dispatch: two concurrent sendJsonRpc
+  // calls could capture the same seq, producing two ciphertexts under the
+  // same nonce (catastrophic confidentiality failure). AtomicInteger forces
+  // every increment to be a single CAS, so each encrypted frame gets a
+  // unique sequence number.
+  private val sendSeq = AtomicInteger(1)
+  private val recvSeq = AtomicInteger(1)
 
-  private var nextId = 1
+  private val nextId = AtomicInteger(1)
   private val pending = ConcurrentHashMap<Int, CompletableDeferred<JsonObject>>()
 
+  /**
+   * Session properties advertised by the wallet (protocol version, etc).
+   * Populated by [connectLocal] after HELLO_RSP is decrypted.
+   */
+  @Volatile
+  var sessionProperties: MwaSessionProperties? = null
+    private set
+
   fun sendJsonRpc(method: String, params: JsonElement? = null): CompletableDeferred<JsonObject> {
-    val id = nextId++
+    val id = nextId.getAndIncrement()
     val req = buildJsonRpcRequest(id, method, params)
     val bytes = json.encodeToString(JsonObject.serializer(), req).encodeToByteArray()
-    val packet = cipher.encrypt(sendSeq++, bytes)
+    val packet = cipher.encrypt(sendSeq.getAndIncrement(), bytes)
     val def = CompletableDeferred<JsonObject>()
     pending[id] = def
     transport.send(packet)
@@ -42,7 +58,7 @@ class MwaSession internal constructor(
   }
 
   fun handleIncoming(packet: ByteArray) {
-    val plain = cipher.decrypt(recvSeq++, packet)
+    val plain = cipher.decrypt(recvSeq.getAndIncrement(), packet)
     val obj = json.parseToJsonElement(plain.decodeToString()) as? JsonObject ?: return
     val id = (obj["id"] as? JsonPrimitive)?.intOrNull
     if (id != null) {
@@ -92,13 +108,24 @@ class MwaSession internal constructor(
 
       val session = MwaSession(transport = transport, cipher = cipher)
 
-      // Any additional bytes after Qw are encrypted session props (v param present).
+      // Any additional bytes after Qw are encrypted session props (v param
+      // present). When present, parse the protocol version so subsequent
+      // RPC calls can branch on MWA 1.x vs 2.x wallets instead of assuming.
       if (helloRsp.size > 65) {
-        // We don't need to parse session_props for basic functionality; if wallets send it,
-        // it is a good sanity check that decryption works at seq=1.
         val propsPacket = helloRsp.copyOfRange(65, helloRsp.size)
-        runCatching { cipher.decrypt(expectedSeq = 1, packet = propsPacket) }
-        session.recvSeq = 2 // we've consumed one encrypted message
+        runCatching {
+          val plain = cipher.decrypt(expectedSeq = 1, packet = propsPacket)
+          val propsJson = session.json.parseToJsonElement(plain.decodeToString()) as? JsonObject
+          val versionWire = (propsJson?.get("v") as? JsonPrimitive)?.content
+          if (versionWire != null) {
+            val parsedVersion = MwaSessionProperties.ProtocolVersion.fromWireValueOrDefault(
+              versionWire,
+              MwaSessionProperties.ProtocolVersion.V1
+            )
+            session.sessionProperties = MwaSessionProperties(protocolVersion = parsedVersion)
+          }
+        }
+        session.recvSeq.set(2) // we've consumed one encrypted message
       }
 
       // Wire receive loop

@@ -3,17 +3,23 @@ package com.selenus.artemis.seedvault
 import com.selenus.artemis.runtime.Pubkey
 
 /**
- * ArtemisKeyStore - secure key custody abstraction.
+ * ArtemisKeyStore - key custody abstraction.
  *
- * This is the low-level interface for hardware-backed key storage.
- * Keys never leave the secure element - all signing happens on-device.
+ * Contract: this interface represents a key store that signs on the
+ * caller's behalf. The guarantee each implementation provides is only as
+ * strong as that implementation. In particular:
  *
- * Implementations:
- * - [SeedVaultKeyStore]: Solana Seed Vault (Saga, dApp Store devices)
- * - Apps can provide their own implementations for custom HSMs or enclaves.
+ * - [SeedVaultKeyStore] delegates to the Solana Seed Vault system service.
+ *   On supported devices (Saga, dApp Store) the underlying seed material is
+ *   hardware-backed and non-exportable; on other devices the implementation
+ *   will refuse to initialise.
+ * - Callers that provide their own implementations are responsible for
+ *   their own threat model. Artemis makes NO claim that a particular
+ *   implementation is hardware-backed or attested beyond what the
+ *   implementation documents.
  *
- * For wallet-level operations (connect, send, session management),
- * use [WalletAdapter] and [WalletSession] instead.
+ * For wallet-level operations (connect, send, session management), use
+ * [WalletAdapter] and [WalletSession].
  */
 interface ArtemisKeyStore {
 

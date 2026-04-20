@@ -185,6 +185,23 @@ class SignInWithSolana {
                     .substringBefore("\nVersion:")
                     .trim()
                     .takeIf { it.isNotEmpty() && !it.startsWith("URI:") && !it.startsWith("Version:") }
+                // Parse the Resources block when present. Upstream emits it
+                // as:
+                //     Resources:
+                //     - https://example.com/a
+                //     - ipfs://.../b
+                // A missing block leaves `resources` null so round-trip
+                // equality for no-resources payloads stays stable.
+                val resourcesBlock = Regex(
+                    pattern = "(?m)^Resources:\\s*\\n((?:-\\s*.+\\n?)+)",
+                    option = RegexOption.MULTILINE
+                ).find(remaining)?.groupValues?.get(1)
+                val resources = resourcesBlock?.split('\n')
+                    ?.mapNotNull { line ->
+                        line.trim().removePrefix("-").trim().takeIf { it.isNotEmpty() }
+                    }
+                    ?.toTypedArray()
+                    ?.takeIf { it.isNotEmpty() }
                 return Payload(
                     domain = domain,
                     address = address,
@@ -197,7 +214,7 @@ class SignInWithSolana {
                     expirationTime = field("Expiration Time:"),
                     notBefore = field("Not Before:"),
                     requestId = field("Request ID:"),
-                    resources = null
+                    resources = resources
                 )
             }
 
