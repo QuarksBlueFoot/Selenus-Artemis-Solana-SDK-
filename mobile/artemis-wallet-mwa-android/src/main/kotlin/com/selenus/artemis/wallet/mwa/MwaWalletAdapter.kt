@@ -40,7 +40,17 @@ class MwaWalletAdapter(
   private val identityName: String,
   private val chain: String = "solana:mainnet",
   private val authStore: AuthTokenStore = InMemoryAuthTokenStore(),
-  private val client: MwaClient = MwaClient()
+  private val client: MwaClient = MwaClient(),
+  /**
+   * Optional broadcaster invoked when the connected wallet does NOT
+   * implement `sign_and_send_transactions`. When supplied, the adapter
+   * signs via the wallet then submits through [broadcaster] and returns a
+   * real signature. When null, the adapter instead returns the signed raw
+   * bytes in [SendTransactionResult.signedRaw] so the caller can route
+   * through its own RPC path. Either way the signed artifact is never
+   * silently discarded.
+   */
+  private val broadcaster: com.selenus.artemis.wallet.RpcBroadcaster? = null
 ) : WalletAdapter, WalletAdapterSignAndSend {
 
   @Volatile private var pk: Pubkey? = null
@@ -291,14 +301,38 @@ class MwaWalletAdapter(
           error = null
         )
       } else {
-        // Fallback: sign only, no broadcast - caller needs to handle sending
-        client.signTransactions(s, listOf(transaction))
-        SendTransactionResult(
-          signature = "",
-          confirmed = false,
-          slot = null,
-          error = "Wallet does not support sign-and-send. Transaction signed but not broadcast."
-        )
+        // Wallet only supports `sign_transactions`. Two supported fallbacks,
+        // in priority order:
+        //   1. If the caller injected an [RpcBroadcaster], sign via wallet
+        //      then broadcast through that path and return a real signature.
+        //   2. Otherwise return the signed raw bytes in `signedRaw` so the
+        //      caller can broadcast from their own RPC. Never discard the
+        //      signed artifact.
+        val signed = client.signTransactions(s, listOf(transaction)).firstOrNull()
+          ?: return SendTransactionResult(
+            signature = "",
+            confirmed = false,
+            slot = null,
+            error = "Wallet returned no signed payload"
+          )
+        val localBroadcaster = broadcaster
+        if (localBroadcaster != null) {
+          val signature = localBroadcaster.broadcast(signed, options)
+          SendTransactionResult(
+            signature = signature,
+            confirmed = options.waitForConfirmation,
+            slot = null,
+            error = null
+          )
+        } else {
+          SendTransactionResult(
+            signature = "",
+            confirmed = false,
+            slot = null,
+            error = null,
+            signedRaw = signed
+          )
+        }
       }
     } catch (e: Exception) {
       SendTransactionResult(
@@ -360,17 +394,56 @@ class MwaWalletAdapter(
         }
       }
     } else {
-      // Fallback: sign only
+      // Wallet-only signing path. For each batch, sign via the wallet and
+      // either route through the injected broadcaster or return the signed
+      // raw bytes. Never discard a signed artifact.
+      val localBroadcaster = broadcaster
       for (part in parts) {
         try {
-          client.signTransactions(s, part)
-          for (i in part.indices) {
-            results.add(SendTransactionResult(
-              signature = "",
-              confirmed = false,
-              slot = null,
-              error = "Wallet does not support sign-and-send. Signed but not broadcast."
-            ))
+          val signedBatch = client.signTransactions(s, part)
+          for ((index, signed) in signedBatch.withIndex()) {
+            if (localBroadcaster != null) {
+              try {
+                val signature = localBroadcaster.broadcast(signed, options)
+                results.add(SendTransactionResult(
+                  signature = signature,
+                  confirmed = options.waitForConfirmation,
+                  slot = null,
+                  error = null
+                ))
+              } catch (e: Exception) {
+                // Broadcast failed; hand the signed bytes back so the caller
+                // can retry at their own RPC boundary.
+                results.add(SendTransactionResult(
+                  signature = "",
+                  confirmed = false,
+                  slot = null,
+                  error = "Broadcast failed: ${e.message ?: "unknown"}",
+                  signedRaw = signed
+                ))
+              }
+            } else {
+              results.add(SendTransactionResult(
+                signature = "",
+                confirmed = false,
+                slot = null,
+                error = null,
+                signedRaw = signed
+              ))
+            }
+          }
+          // Guard against wallets that return fewer signed payloads than
+          // requested. Mark the missing slots explicitly rather than
+          // silently returning a shorter list.
+          if (signedBatch.size < part.size) {
+            for (i in signedBatch.size until part.size) {
+              results.add(SendTransactionResult(
+                signature = "",
+                confirmed = false,
+                slot = null,
+                error = "Wallet returned fewer signed payloads than requested"
+              ))
+            }
           }
         } catch (e: Exception) {
           for (i in part.indices) {

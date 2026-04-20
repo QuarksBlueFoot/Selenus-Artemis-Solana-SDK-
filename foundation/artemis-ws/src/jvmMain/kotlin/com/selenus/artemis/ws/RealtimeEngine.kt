@@ -4,6 +4,7 @@ import com.selenus.artemis.core.ArtemisEvent
 import com.selenus.artemis.core.ArtemisEventBus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,6 +53,12 @@ class RealtimeEngine(
 ) : Closeable {
 
     private var client: SolanaWsClient? = null
+
+    // Handle to the most-recent transport-events collector. Held so reconnect
+    // can cancel the previous collector before attaching the new one;
+    // otherwise every reconnect leaks a collector that keeps dispatching
+    // events from the (now dead) old client.
+    @Volatile private var transportEventsJob: Job? = null
 
     // Endpoint rotation index - incremented by reconnect() for failover.
     private var endpointIndex = 0
@@ -246,6 +253,8 @@ class RealtimeEngine(
         ?: throw IllegalStateException("RealtimeEngine not connected. Call connect() first.")
 
     override fun close() {
+        transportEventsJob?.cancel()
+        transportEventsJob = null
         client?.close()
         client = null
         accountCallbacks.clear()
@@ -271,7 +280,13 @@ class RealtimeEngine(
     }
 
     private fun attachEventDispatcher(wsClient: SolanaWsClient) {
-        wsClient.events
+        // Cancel the previous transport's collector before attaching a new
+        // one. The audit called this out as a collector-leak + duplicate-
+        // dispatch bug: every reconnect() used to launch a fresh onEach
+        // into `scope` and forget it, so after N reconnects every event
+        // fired N times and the old coroutines leaked.
+        transportEventsJob?.cancel()
+        transportEventsJob = wsClient.events
             .onEach { event ->
                 updateStateFromTransport(event)
                 dispatchEvent(event)

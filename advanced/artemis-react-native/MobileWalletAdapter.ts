@@ -12,7 +12,7 @@ import {
     SendTransactionOptions,
 } from '@solana/wallet-adapter-base';
 import { PublicKey, Transaction, VersionedTransaction, Connection, TransactionSignature } from '@solana/web3.js';
-import { NativeModules } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import { Buffer } from 'buffer';
 
 const { ArtemisModule } = NativeModules;
@@ -145,7 +145,20 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
         return this._connecting;
     }
 
+    /**
+     * Wallet availability for the current platform.
+     *
+     * MWA is an Android-only path; iOS returns `Unsupported` so the
+     * wallet-adapter UI can hide the entry point instead of offering a
+     * button that will always fail. On Android, `Installed` requires the
+     * native `ArtemisModule` bridge to be linked; without it we report
+     * `NotDetected` rather than claiming the wallet is present. This
+     * replaces the unconditional `Installed` that misled UIs on iOS and
+     * web builds that accidentally pull this file in.
+     */
     get readyState() {
+        if (Platform.OS !== 'android') return WalletReadyState.Unsupported;
+        if (!ArtemisModule) return WalletReadyState.NotDetected;
         return WalletReadyState.Installed;
     }
 
@@ -183,8 +196,20 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
      * Connect with Sign In With Solana (SIWS)
      */
     async connectWithSignIn(payload: SignInPayload): Promise<SignInResult> {
+        // Explicit contract: `connectWithSignIn` MUST either return a
+        // signed-in result or throw. Previous implementation returned an
+        // empty object cast to `SignInResult` when already connected,
+        // which callers couldn't distinguish from a real SIWS result and
+        // ended up treating an empty `signature` as valid.
+        if (this.connecting) {
+            throw new WalletConnectionError('Wallet is already connecting');
+        }
+        if (this.connected) {
+            throw new WalletConnectionError(
+                'Wallet already connected. Call disconnect() before connectWithSignIn().',
+            );
+        }
         try {
-            if (this.connected || this.connecting) return {} as SignInResult;
             this._connecting = true;
 
             const result = await ArtemisModule.connectWithSignIn(JSON.stringify(payload));

@@ -1,5 +1,6 @@
 package com.selenus.artemis.ws
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -50,13 +51,27 @@ import kotlin.random.Random
  */
 class SolanaWsClient(
   private val url: String,
-  private val okHttp: OkHttpClient = OkHttpClient(),
+  okHttp: OkHttpClient = OkHttpClient(),
   private val json: Json = Json { ignoreUnknownKeys = true },
   private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
   private val config: WsConfig = WsConfig(),
   private val fallback: WsFallback? = null,
   notificationPolicy: NotificationPolicy = NotificationPolicy()
 ) : Closeable {
+
+  // Re-derive the OkHttp client with protocol-level ping frames enabled so
+  // the transport surfaces dead peers via real WebSocket PINGs instead of
+  // a local heartbeat event that nothing outside Artemis can observe. Only
+  // inject a pingInterval if the caller didn't already configure one.
+  private val okHttp: OkHttpClient = if (okHttp.pingIntervalMillis > 0) {
+    okHttp
+  } else {
+    okHttp.newBuilder()
+      .pingInterval(
+        java.time.Duration.ofMillis(config.pingIntervalMs)
+      )
+      .build()
+  }
 
   data class WsConfig(
     val pingIntervalMs: Long = 15_000,
@@ -76,6 +91,11 @@ class SolanaWsClient(
   private val subMutex = Mutex()
 
   private var ws: WebSocket? = null
+
+  // Signalled by [openSocket] via the WebSocketListener callbacks so the
+  // reconnect loop only marks an attempt successful after `onOpen`, not
+  // after `newWebSocket(...)` returns (which is immediate + async).
+  @Volatile private var openSignal: CompletableDeferred<Unit>? = null
   private var closed = false
   private var reconnectJob: Job? = null
   private var heartbeatJob: Job? = null
@@ -208,8 +228,11 @@ class SolanaWsClient(
 
   private fun openSocket() {
     val req = Request.Builder().url(url).build()
+    val signal = CompletableDeferred<Unit>()
+    openSignal = signal
     ws = okHttp.newWebSocket(req, object : WebSocketListener() {
       override fun onOpen(webSocket: WebSocket, response: Response) {
+        signal.complete(Unit)
         scope.launch { _events.emit(WsEvent.Connected) }
         scope.launch { stopFallback() }
         scope.launch { resubscribeAllDeterministic() }
@@ -220,20 +243,32 @@ class SolanaWsClient(
       }
 
       override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+        if (!signal.isCompleted) signal.completeExceptionally(t)
         scope.launch { _events.emit(WsEvent.Disconnected(t.message ?: "failure")) }
         scheduleReconnect()
       }
 
       override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+        if (!signal.isCompleted) {
+          signal.completeExceptionally(IllegalStateException("closed before open: $reason"))
+        }
         scope.launch { _events.emit(WsEvent.Disconnected(reason)) }
         scheduleReconnect()
       }
     })
   }
 
+  /** Timeout for an individual reconnect attempt to reach `onOpen`. */
+  private val connectOpenTimeoutMs: Long get() = config.maxBackoffMs + 5_000
+
   private fun startHeartbeat() {
     if (heartbeatJob?.isActive == true) return
     heartbeatJob = scope.launch {
+      // Protocol-level PING frames are emitted by the OkHttp transport
+      // itself (pingInterval configured on the shared client). This loop
+      // keeps publishing a `Heartbeat` event for observers that want a
+      // wall-clock tick but does NOT substitute for the real ping: the
+      // transport sends and validates PONGs on its own.
       while (!closed) {
         delay(config.pingIntervalMs)
         _events.tryEmit(WsEvent.Heartbeat(System.currentTimeMillis()))
@@ -280,7 +315,18 @@ class SolanaWsClient(
         delay(backoff)
         try {
           openSocket()
-          return@launch
+          // Only count the attempt as successful once `onOpen` fires. The
+          // previous implementation returned immediately after
+          // `newWebSocket(...)` which always returns synchronously, so the
+          // reconnect budget was effectively ignored. Wait on the signal
+          // and re-enter the loop if it fails or times out.
+          val signal = openSignal
+          val ok = if (signal != null) {
+            withTimeoutOrNull(connectOpenTimeoutMs) {
+              runCatching { signal.await() }.isSuccess
+            } ?: false
+          } else false
+          if (ok) return@launch
         } catch (_: Throwable) {
           // continue loop
         }

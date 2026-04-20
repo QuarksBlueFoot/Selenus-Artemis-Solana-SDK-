@@ -7,7 +7,9 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import com.selenus.artemis.runtime.Pubkey
@@ -73,12 +75,32 @@ class SeedVaultManager(private val context: Context) {
         private const val ACTION_BIND_SEED_VAULT = SeedVaultConstants.ACTION_BIND_SEED_VAULT
 
         /**
+         * Default per-IPC timeout in milliseconds. The Seed Vault system
+         * service can stall (binder death, provider misbehaviour,
+         * Doze-induced throttling); without a timeout callers hang forever.
+         */
+        const val DEFAULT_IPC_TIMEOUT_MS: Long = 30_000
+
+        /**
          * Resolves the component for the Intent using Artemis internal check logic.
          * Ensures we target the valid System Seed Vault.
          */
         fun resolveComponent(context: Context, intent: Intent) {
              com.selenus.artemis.seedvault.internal.SeedVaultCheck.resolveComponentForIntent(context, intent)
         }
+
+        /**
+         * Parse [authToken] into the underlying long identifier. Throws
+         * immediately on malformed input rather than coercing silently to
+         * the sentinel `-1L`, which used to produce "auth token not found"
+         * errors one IPC later.
+         */
+        @JvmStatic
+        fun parseAuthTokenStrict(authToken: String): Long =
+            authToken.toLongOrNull()
+                ?: throw SeedVaultException.Unknown(
+                    "Seed Vault authToken must be a decimal long, got '$authToken'"
+                )
     }
 
     /**
@@ -293,7 +315,7 @@ class SeedVaultManager(private val context: Context) {
 
     suspend fun getAccounts(authToken: String): List<SeedVaultAccount> {
         val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
         }
         val response = performAction("getAccounts", params)
         
@@ -305,7 +327,7 @@ class SeedVaultManager(private val context: Context) {
     
     suspend fun signTransactions(authToken: String, transactions: List<ByteArray>): List<ByteArray> {
         val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
             putSerializable(SeedVaultConstants.KEY_PAYLOADS, ArrayList(transactions))
         }
         
@@ -319,7 +341,7 @@ class SeedVaultManager(private val context: Context) {
 
     suspend fun signMessages(authToken: String, messages: List<ByteArray>): List<ByteArray> {
         val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
             putSerializable(SeedVaultConstants.KEY_PAYLOADS, ArrayList(messages))
         }
         val response = performAction("signMessages", params)
@@ -332,7 +354,7 @@ class SeedVaultManager(private val context: Context) {
 
     suspend fun deauthorize(authToken: String) {
         val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
         }
         performAction("deauthorize", params)
     }
@@ -347,7 +369,7 @@ class SeedVaultManager(private val context: Context) {
      */
     suspend fun requestPublicKeys(authToken: String, derivationPaths: List<android.net.Uri>): List<Pubkey> {
         val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
             putParcelableArrayList(SeedVaultConstants.EXTRA_DERIVATION_PATH, ArrayList(derivationPaths))
         }
         val response = performAction("requestPublicKeys", params)
@@ -378,7 +400,7 @@ class SeedVaultManager(private val context: Context) {
         payloads: List<ByteArray>
     ): List<ByteArray> {
         val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
             putParcelable(SeedVaultConstants.EXTRA_DERIVATION_PATH, derivationPath)
             putSerializable(SeedVaultConstants.KEY_PAYLOADS, ArrayList(payloads))
         }
@@ -401,7 +423,7 @@ class SeedVaultManager(private val context: Context) {
      */
     suspend fun resolveDerivationPath(authToken: String, derivationPath: android.net.Uri): Pubkey {
         val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken.toLongOrNull() ?: -1L)
+            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
             putParcelable(SeedVaultConstants.EXTRA_DERIVATION_PATH, derivationPath)
         }
         
@@ -413,7 +435,26 @@ class SeedVaultManager(private val context: Context) {
         return Pubkey(keyBytes)
     }
 
-    private suspend fun performAction(method: String, params: Bundle): Bundle = suspendCancellableCoroutine { cont ->
+    private suspend fun performAction(
+        method: String,
+        params: Bundle,
+        timeoutMs: Long = DEFAULT_IPC_TIMEOUT_MS
+    ): Bundle {
+        // IPC calls to the Seed Vault service can stall indefinitely when
+        // the provider is wedged, under Doze throttling, or after binder
+        // death. Bound every call. Translate the coroutine timeout into a
+        // typed Seed Vault exception so the caller can distinguish "no
+        // response" from "bad response".
+        return try {
+            withTimeout(timeoutMs) { performActionInner(method, params) }
+        } catch (e: TimeoutCancellationException) {
+            throw SeedVaultException.Unknown(
+                "Seed Vault $method timed out after ${timeoutMs}ms"
+            )
+        }
+    }
+
+    private suspend fun performActionInner(method: String, params: Bundle): Bundle = suspendCancellableCoroutine { cont ->
         try {
             checkConnected()
             

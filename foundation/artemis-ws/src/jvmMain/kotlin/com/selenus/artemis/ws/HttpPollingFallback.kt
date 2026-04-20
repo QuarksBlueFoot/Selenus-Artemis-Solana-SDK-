@@ -1,156 +1,300 @@
 package com.selenus.artemis.ws
 
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * HTTP polling fallback for WebSocket subscriptions.
  *
- * When the WebSocket connection is down, this fallback polls the RPC endpoint
- * via HTTP to keep account/program data flowing. Automatically activated and
- * deactivated by [SolanaWsClient] during disconnect/reconnect cycles.
+ * When the WebSocket connection is down, this fallback polls the RPC
+ * endpoint via HTTP to keep subscription data flowing. `SolanaWsClient`
+ * enables and disables it during disconnect/reconnect cycles. Supports
+ * account, signature, program-account, and logs subscription keys.
  *
- * ```kotlin
- * val fallback = HttpPollingFallback("https://api.mainnet-beta.solana.com")
- * val ws = SolanaWsClient(
- *     url = "wss://api.mainnet-beta.solana.com",
- *     fallback = fallback
- * )
- * ```
+ * Key format:
+ *   acct:PUBKEY:COMMITMENT:ENCODING
+ *   sig:SIGNATURE[:COMMITMENT]
+ *   prog:PROGRAM_ID:COMMITMENT[:ENCODING]
+ *   logs:FILTER[:COMMITMENT]
+ *
+ * Keys are parsed deterministically via `split(':', limit = 4)`; the old
+ * `contains(pubkey)` substring match is gone because it could match one
+ * key against another when pubkeys had overlapping prefixes.
  */
 class HttpPollingFallback(
     private val rpcEndpoint: String,
     private val http: OkHttpClient = OkHttpClient(),
-    private val config: Config = Config()
+    private val config: Config = Config(),
+    private val sleep: suspend (Long) -> Unit = ::delay
 ) : SolanaWsClient.WsFallback {
 
     data class Config(
-        /** How long to wait between poll cycles (ms). */
+        /** Minimum delay between poll cycles (ms). Enforced between cycles. */
         val pollIntervalMs: Long = 2_000,
         /** Max keys to poll in a single batch request. */
-        val maxBatchSize: Int = 20
+        val maxBatchSize: Int = 20,
+        /** Tail logs fetched per `prog:`/`logs:` poll when the RPC supports it. */
+        val logsTailLimit: Int = 25
     )
 
     private val json = Json { ignoreUnknownKeys = true }
     private val mediaType = "application/json".toMediaType()
-    private var requestId = 1L
+    private val requestId = AtomicLong(1L)
 
-    // Track last-seen state to only emit changes
-    private val lastSeen = mutableMapOf<String, String>()
+    // Track last-seen state to only emit changes.
+    private val lastAccountState = mutableMapOf<String, String>()
+    private val lastProgramState = mutableMapOf<String, String>()
+    @Volatile private var lastPollAt: Long = 0L
+
+    /**
+     * Parsed subscription key. Constructed exclusively by [parseKey] so
+     * downstream matching cannot accidentally conflate two keys whose
+     * pubkeys overlap textually.
+     */
+    private sealed class ParsedKey(val raw: String) {
+        class Account(
+            raw: String,
+            val pubkey: String,
+            val commitment: String,
+            val encoding: String
+        ) : ParsedKey(raw)
+
+        class Signature(raw: String, val signature: String, val commitment: String) : ParsedKey(raw)
+
+        class Program(
+            raw: String,
+            val programId: String,
+            val commitment: String,
+            val encoding: String
+        ) : ParsedKey(raw)
+
+        class Logs(raw: String, val filter: String, val commitment: String) : ParsedKey(raw)
+
+        object Unknown : ParsedKey("")
+    }
+
+    private fun parseKey(raw: String): ParsedKey {
+        val parts = raw.split(':', limit = 4)
+        return when (parts.firstOrNull()) {
+            "acct" -> if (parts.size >= 2) ParsedKey.Account(
+                raw = raw,
+                pubkey = parts[1],
+                commitment = parts.getOrNull(2) ?: "confirmed",
+                encoding = parts.getOrNull(3) ?: "base64"
+            ) else ParsedKey.Unknown
+            "sig" -> if (parts.size >= 2) ParsedKey.Signature(
+                raw = raw,
+                signature = parts[1],
+                commitment = parts.getOrNull(2) ?: "confirmed"
+            ) else ParsedKey.Unknown
+            "prog" -> if (parts.size >= 2) ParsedKey.Program(
+                raw = raw,
+                programId = parts[1],
+                commitment = parts.getOrNull(2) ?: "confirmed",
+                encoding = parts.getOrNull(3) ?: "base64"
+            ) else ParsedKey.Unknown
+            "logs" -> if (parts.size >= 2) ParsedKey.Logs(
+                raw = raw,
+                filter = parts[1],
+                commitment = parts.getOrNull(2) ?: "confirmed"
+            ) else ParsedKey.Unknown
+            else -> ParsedKey.Unknown
+        }
+    }
 
     override suspend fun poll(activeKeys: List<String>, emit: suspend (WsEvent) -> Unit) {
         if (activeKeys.isEmpty()) return
+        // Honour pollIntervalMs so back-to-back poll cycles do not hammer
+        // the RPC. SolanaWsClient drives this method at its own cadence,
+        // but we still enforce our own floor for safety.
+        val now = System.currentTimeMillis()
+        val waitMs = config.pollIntervalMs - (now - lastPollAt)
+        if (waitMs > 0 && lastPollAt != 0L) sleep(waitMs)
+        lastPollAt = System.currentTimeMillis()
 
-        // Parse active keys to determine what kind of RPC call to make
-        val accountKeys = activeKeys.filter { it.startsWith("acct:") }
-        val sigKeys = activeKeys.filter { it.startsWith("sig:") }
+        val parsed = activeKeys.map { parseKey(it) }.filterNot { it is ParsedKey.Unknown }
+        val accounts = parsed.filterIsInstance<ParsedKey.Account>()
+        val sigs = parsed.filterIsInstance<ParsedKey.Signature>()
+        val programs = parsed.filterIsInstance<ParsedKey.Program>()
+        val logs = parsed.filterIsInstance<ParsedKey.Logs>()
 
-        // Poll account subscriptions via getMultipleAccounts
-        if (accountKeys.isNotEmpty()) {
-            pollAccounts(accountKeys, emit)
-        }
-
-        // Poll signature subscriptions via getSignatureStatuses
-        if (sigKeys.isNotEmpty()) {
-            pollSignatures(sigKeys, emit)
-        }
+        if (accounts.isNotEmpty()) pollAccounts(accounts, emit)
+        if (sigs.isNotEmpty()) pollSignatures(sigs, emit)
+        if (programs.isNotEmpty()) pollPrograms(programs, emit)
+        if (logs.isNotEmpty()) pollLogs(logs, emit)
     }
 
-    private suspend fun pollAccounts(keys: List<String>, emit: suspend (WsEvent) -> Unit) {
-        // Extract pubkeys from keys like "acct:PUBKEY:confirmed:base64"
-        val pubkeys = keys.mapNotNull { key ->
-            val parts = key.split(":")
-            if (parts.size >= 2) parts[1] else null
-        }
-
-        for (batch in pubkeys.chunked(config.maxBatchSize)) {
-            val params = buildJsonArray {
-                add(JsonArray(batch.map { JsonPrimitive(it) }))
-                add(buildJsonObject {
-                    put("encoding", "base64")
-                    put("commitment", "confirmed")
-                })
-            }
-
-            val response = rpcCall("getMultipleAccounts", params) ?: continue
-            val value = response["value"]?.jsonArray ?: continue
-
-            batch.forEachIndexed { index, pubkey ->
-                val account = value.getOrNull(index)
-                if (account != null && account !is JsonNull) {
-                    val dataStr = account.toString()
-                    val prevData = lastSeen[pubkey]
-                    if (prevData != dataStr) {
-                        lastSeen[pubkey] = dataStr
-                        // Find matching key and emit as notification
-                        val matchingKey = keys.find { it.contains(pubkey) }
-                        if (matchingKey != null) {
-                            emit(WsEvent.Notification(
-                                key = matchingKey,
-                                subscriptionId = -1,
-                                method = "accountNotification",
-                                result = account
-                            ))
+    private suspend fun pollAccounts(
+        keys: List<ParsedKey.Account>,
+        emit: suspend (WsEvent) -> Unit
+    ) {
+        // Group by (commitment, encoding) so one getMultipleAccounts call
+        // uses consistent options across the batch.
+        keys.groupBy { it.commitment to it.encoding }
+            .forEach { (opts, group) ->
+                val (commitment, encoding) = opts
+                for (batch in group.chunked(config.maxBatchSize)) {
+                    val params = buildJsonArray {
+                        add(JsonArray(batch.map { JsonPrimitive(it.pubkey) }))
+                        add(buildJsonObject {
+                            put("encoding", encoding)
+                            put("commitment", commitment)
+                        })
+                    }
+                    val response = rpcCall("getMultipleAccounts", params) ?: continue
+                    val value = response["value"]?.jsonArray ?: continue
+                    batch.forEachIndexed { index, key ->
+                        val account = value.getOrNull(index)
+                        if (account != null && account !is JsonNull) {
+                            val dataStr = account.toString()
+                            if (lastAccountState[key.raw] != dataStr) {
+                                lastAccountState[key.raw] = dataStr
+                                emit(
+                                    WsEvent.Notification(
+                                        key = key.raw,
+                                        subscriptionId = -1,
+                                        method = "accountNotification",
+                                        result = account
+                                    )
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
     }
 
-    private suspend fun pollSignatures(keys: List<String>, emit: suspend (WsEvent) -> Unit) {
-        val signatures = keys.mapNotNull { key ->
-            val parts = key.split(":")
-            if (parts.size >= 2) parts[1] else null
-        }
-
-        for (batch in signatures.chunked(config.maxBatchSize)) {
+    private suspend fun pollSignatures(
+        keys: List<ParsedKey.Signature>,
+        emit: suspend (WsEvent) -> Unit
+    ) {
+        for (batch in keys.chunked(config.maxBatchSize)) {
             val params = buildJsonArray {
-                add(JsonArray(batch.map { JsonPrimitive(it) }))
+                add(JsonArray(batch.map { JsonPrimitive(it.signature) }))
                 add(buildJsonObject { put("searchTransactionHistory", true) })
             }
-
             val response = rpcCall("getSignatureStatuses", params) ?: continue
             val value = response["value"]?.jsonArray ?: continue
-
-            batch.forEachIndexed { index, sig ->
+            batch.forEachIndexed { index, key ->
                 val status = value.getOrNull(index)
                 if (status != null && status !is JsonNull) {
-                    val confirmationStatus = status.jsonObject["confirmationStatus"]?.jsonPrimitive?.content
-                    if (confirmationStatus == "confirmed" || confirmationStatus == "finalized") {
-                        val matchingKey = keys.find { it.contains(sig) }
-                        if (matchingKey != null) {
-                            emit(WsEvent.Notification(
-                                key = matchingKey,
+                    val confirmationStatus =
+                        status.jsonObject["confirmationStatus"]?.jsonPrimitive?.content
+                    val targetReached = when (key.commitment) {
+                        "processed" ->
+                            confirmationStatus == "processed" ||
+                                confirmationStatus == "confirmed" ||
+                                confirmationStatus == "finalized"
+                        "finalized" -> confirmationStatus == "finalized"
+                        else -> confirmationStatus == "confirmed" ||
+                            confirmationStatus == "finalized"
+                    }
+                    if (targetReached) {
+                        emit(
+                            WsEvent.Notification(
+                                key = key.raw,
                                 subscriptionId = -1,
                                 method = "signatureNotification",
                                 result = status
-                            ))
-                        }
+                            )
+                        )
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun pollPrograms(
+        keys: List<ParsedKey.Program>,
+        emit: suspend (WsEvent) -> Unit
+    ) {
+        // Program-account polling: fetch all accounts owned by the program
+        // and diff against last-seen. Per-program rather than per-key so
+        // we don't issue one RPC per subscriber for the same program.
+        keys.distinctBy { it.programId to it.commitment to it.encoding }.forEach { key ->
+            val params = buildJsonArray {
+                add(JsonPrimitive(key.programId))
+                add(buildJsonObject {
+                    put("encoding", key.encoding)
+                    put("commitment", key.commitment)
+                })
+            }
+            val response = rpcCall("getProgramAccounts", params) ?: return@forEach
+            // getProgramAccounts returns a JSON array at "result"; the rpcCall
+            // shim unwraps `result` to a JsonObject which is NOT correct for
+            // array responses. Inline the raw call here instead.
+            val arrResponse = rpcCallRaw("getProgramAccounts", params) ?: return@forEach
+            val arr = arrResponse["result"]?.let { el ->
+                if (el is JsonArray) el else null
+            } ?: return@forEach
+            val digest = arr.toString()
+            if (lastProgramState[key.raw] != digest) {
+                lastProgramState[key.raw] = digest
+                emit(
+                    WsEvent.Notification(
+                        key = key.raw,
+                        subscriptionId = -1,
+                        method = "programNotification",
+                        result = arrResponse
+                    )
+                )
+            }
+        }
+    }
+
+    private suspend fun pollLogs(
+        keys: List<ParsedKey.Logs>,
+        emit: suspend (WsEvent) -> Unit
+    ) {
+        // logsSubscribe is genuinely push-only on upstream Solana RPC; no
+        // pull equivalent exists. Emit a one-shot heartbeat per subscriber
+        // so the caller knows polling is live but no log stream is
+        // available until the WS reconnects. This is honest: we do not
+        // invent data we cannot fetch.
+        for (key in keys) {
+            emit(
+                WsEvent.Notification(
+                    key = key.raw,
+                    subscriptionId = -1,
+                    method = "logsPollingUnavailable",
+                    result = JsonObject(
+                        mapOf(
+                            "reason" to JsonPrimitive(
+                                "logsSubscribe has no HTTP equivalent; waiting for WS"
+                            ),
+                            "filter" to JsonPrimitive(key.filter),
+                            "commitment" to JsonPrimitive(key.commitment)
+                        )
+                    )
+                )
+            )
         }
     }
 
     private fun rpcCall(method: String, params: JsonElement): JsonObject? {
+        val raw = rpcCallRaw(method, params) ?: return null
+        return raw["result"]?.let { it as? JsonObject }
+    }
+
+    private fun rpcCallRaw(method: String, params: JsonElement): JsonObject? {
         val payload = buildJsonObject {
             put("jsonrpc", "2.0")
-            put("id", requestId++)
+            put("id", requestId.getAndIncrement())
             put("method", method)
             put("params", params)
         }
-
         return try {
             val body = payload.toString().toRequestBody(mediaType)
             val request = Request.Builder().url(rpcEndpoint).post(body).build()
-            val response = http.newCall(request).execute()
-            val responseBody = response.body?.string() ?: return null
-            val result = json.parseToJsonElement(responseBody).jsonObject
-            result["result"]?.jsonObject
+            http.newCall(request).execute().use { response ->
+                val responseBody = response.body?.string() ?: return null
+                json.parseToJsonElement(responseBody).jsonObject
+            }
         } catch (_: Throwable) {
             null
         }

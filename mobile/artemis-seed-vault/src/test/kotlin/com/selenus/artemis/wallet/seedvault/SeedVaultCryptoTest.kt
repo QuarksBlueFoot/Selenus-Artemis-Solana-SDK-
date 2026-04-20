@@ -239,24 +239,51 @@ class SeedVaultCryptoTest {
     // ═══════════════════════════════════════════════════════════════════════════
     
     @Test
-    fun `deriveSharedSecret produces 32-byte output`() {
+    fun `deriveDeterministicAppKey produces 32-byte output`() {
         val mySignature = ByteArray(64) { it.toByte() }
         val theirPublicKey = ByteArray(32) { (it * 3).toByte() }
-        
-        val shared = SeedVaultCrypto.deriveSharedSecret(mySignature, theirPublicKey)
-        
+
+        val shared = SeedVaultCrypto.deriveDeterministicAppKey(
+            mySignature, com.selenus.artemis.runtime.Pubkey(theirPublicKey)
+        )
+
         assertEquals(32, shared.size)
     }
-    
+
     @Test
-    fun `deriveSharedSecret is deterministic`() {
+    fun `deriveDeterministicAppKey is deterministic`() {
         val mySignature = ByteArray(64) { it.toByte() }
-        val theirPublicKey = ByteArray(32) { (it * 5).toByte() }
-        
-        val shared1 = SeedVaultCrypto.deriveSharedSecret(mySignature, theirPublicKey)
-        val shared2 = SeedVaultCrypto.deriveSharedSecret(mySignature, theirPublicKey)
-        
+        val theirPublicKey = com.selenus.artemis.runtime.Pubkey(ByteArray(32) { (it * 5).toByte() })
+
+        val shared1 = SeedVaultCrypto.deriveDeterministicAppKey(mySignature, theirPublicKey)
+        val shared2 = SeedVaultCrypto.deriveDeterministicAppKey(mySignature, theirPublicKey)
+
         assertArrayEquals(shared1, shared2)
+    }
+
+    @Test
+    fun `X25519 ECDH is symmetric`() {
+        // Real Diffie-Hellman: alice computes dh(aPriv, bPub), bob computes
+        // dh(bPriv, aPub); both must land on the same session key.
+        val (aPriv, aPub) = SeedVaultCrypto.generateX25519Keypair()
+        val (bPriv, bPub) = SeedVaultCrypto.generateX25519Keypair()
+
+        val aliceKey = SeedVaultCrypto.deriveX25519SharedSecret(aPriv, bPub, context = "test")
+        val bobKey = SeedVaultCrypto.deriveX25519SharedSecret(bPriv, aPub, context = "test")
+
+        assertArrayEquals(aliceKey, bobKey)
+        assertEquals(32, aliceKey.size)
+    }
+
+    @Test
+    fun `X25519 ECDH context separation`() {
+        val (aPriv, aPub) = SeedVaultCrypto.generateX25519Keypair()
+        val (bPriv, bPub) = SeedVaultCrypto.generateX25519Keypair()
+
+        val keyA = SeedVaultCrypto.deriveX25519SharedSecret(aPriv, bPub, context = "ctx-a")
+        val keyB = SeedVaultCrypto.deriveX25519SharedSecret(aPriv, bPub, context = "ctx-b")
+
+        assertFalse(keyA.contentEquals(keyB))
     }
     
     // ═══════════════════════════════════════════════════════════════════════════

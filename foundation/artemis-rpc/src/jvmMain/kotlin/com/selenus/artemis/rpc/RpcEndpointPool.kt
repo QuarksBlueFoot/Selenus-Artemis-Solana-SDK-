@@ -59,18 +59,36 @@ class RpcEndpointPool(
      * Select the best available endpoint.
      *
      * Skips circuit-open endpoints. Among healthy endpoints, picks the one
-     * with lowest latency. If all are open, picks the one whose cooldown
+     * with the lowest scored cost, where cost = avgLatencyMs^[latencyWeightFactor].
+     *
+     * latencyWeightFactor meanings:
+     *   `0.0` => ignore latency, pick the first healthy endpoint deterministically
+     *           (useful for debugging or when all endpoints are equally loaded).
+     *   `1.0` => linear preference for lower latency (default).
+     *   `>1.0` => aggressively prefer the fastest endpoint; small latency gaps
+     *           become large selection biases. Use when a primary endpoint is
+     *           dramatically faster than fallbacks.
+     *   `<1.0` => flatter distribution; spreads traffic more evenly across
+     *           comparable endpoints.
+     *
+     * If all endpoints are circuit-open, picks the one whose cooldown
      * expired first (half-open probe).
      */
     suspend fun selectEndpoint(): String {
         mutex.withLock {
-            // Try healthy endpoints first, sorted by latency
             val healthy = states.filter { !it.isOpen(config.failureThreshold, config.cooldownMs) }
             if (healthy.isNotEmpty()) {
-                return healthy.minByOrNull { it.avgLatencyMs.get() }!!.url
+                val factor = config.latencyWeightFactor
+                return when {
+                    factor <= 0.0 -> healthy.first().url
+                    factor == 1.0 -> healthy.minByOrNull { it.avgLatencyMs.get() }!!.url
+                    else -> healthy.minByOrNull { st ->
+                        val l = st.avgLatencyMs.get().toDouble().coerceAtLeast(1.0)
+                        Math.pow(l, factor)
+                    }!!.url
+                }
             }
-
-            // All circuits open - pick the one with oldest failure (half-open candidate)
+            // All circuits open - pick the one with oldest failure (half-open candidate).
             return states.minByOrNull { it.lastFailureTime.get() }!!.url
         }
     }

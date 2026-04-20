@@ -42,11 +42,18 @@ import com.selenus.artemis.solanapay.SolanaPayUri
 import com.selenus.artemis.gaming.MerkleDistributor
 import java.io.File
 
-suspend fun main() {
+suspend fun main() = kotlinx.coroutines.coroutineScope {
+  // Structured preview scope. Everything that used to launch on
+  // `GlobalScope` now runs here so the preview exits cleanly and does not
+  // leak coroutines past the demo's lifetime. `printStackTrace()` calls
+  // have been replaced with explicit `System.err` logging so shipping a
+  // preview-style demo no longer relies on VM-default trace behaviour.
+  val previewScope = this
+
   // RPC URLs - use environment variables or fallback to public devnet
   val rpcUrl = System.getenv("DEVNET_RPC_URL") ?: "https://api.devnet.solana.com"
   val wsUrl = System.getenv("DEVNET_WS_URL") ?: "wss://api.devnet.solana.com"
-  
+
   println("Connecting to RPC: $rpcUrl")
   val rpc = RpcApi(JsonRpcClient(rpcUrl))
 
@@ -247,7 +254,7 @@ suspend fun main() {
 
       } catch (e: Exception) {
           println("Transaction failed: ${e.message}")
-          e.printStackTrace()
+          System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
       }
   } else {
       println("Skipping transaction test due to insufficient funds.")
@@ -258,7 +265,7 @@ suspend fun main() {
   val wsClient = SolanaWsClient(wsUrl)
   
   // Launch a coroutine to listen for events
-  val job = kotlinx.coroutines.GlobalScope.launch {
+  val job = previewScope.launch {
       wsClient.events.collect { event ->
           when (event) {
               is WsEvent.Connected -> println("WS Connected")
@@ -377,7 +384,7 @@ suspend fun main() {
 
   } catch (e: Exception) {
       println("Token 2022 Test Failed: ${e.message}")
-      e.printStackTrace()
+      System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
   }
 
   // 11. Test Metaplex Core
@@ -421,7 +428,7 @@ suspend fun main() {
 
   } catch (e: Exception) {
       println("Metaplex Core Test Failed: ${e.message}")
-      e.printStackTrace()
+      System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
   }
   */
 
@@ -433,7 +440,7 @@ suspend fun main() {
       println("Session Created At: ${session.createdAt}")
   } catch (e: Exception) {
       println("Gaming Module Test Failed: ${e.message}")
-      e.printStackTrace()
+      System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
   }
 
   // 13. Test Replay Module
@@ -459,7 +466,7 @@ suspend fun main() {
       tempFile.delete()
   } catch (e: Exception) {
       println("Replay Module Test Failed: ${e.message}")
-      e.printStackTrace()
+      System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
   }
 
   // 14. Test NFT Compat (using the mint from step 7)
@@ -491,7 +498,7 @@ suspend fun main() {
       
   } catch (e: Exception) {
       println("NFT Compat Test Failed: ${e.message}")
-      e.printStackTrace()
+      System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
   }
 
   // 15. Test Tx Composer Presets
@@ -517,7 +524,7 @@ suspend fun main() {
       
   } catch (e: Exception) {
       println("Tx Composer Presets Test Failed: ${e.message}")
-      e.printStackTrace()
+      System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
   }
 
   // 16. Test DePIN Module
@@ -529,14 +536,14 @@ suspend fun main() {
       val proof = device.createLocationProof(37.7749, -122.4194, System.currentTimeMillis() / 1000)
       println("Location Proof Signature: ${proof.signature}")
       
-      val batcher = TelemetryBatcher(kotlinx.coroutines.GlobalScope)
+      val batcher = TelemetryBatcher(previewScope)
       batcher.start()
       batcher.submit(mapOf("temp" to 25.5, "humidity" to 60))
       println("Telemetry submitted to batcher.")
       
   } catch (e: Exception) {
       println("DePIN Module Test Failed: ${e.message}")
-      e.printStackTrace()
+      System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
   }
 
   // 17. Test Solana Pay Module
@@ -561,7 +568,7 @@ suspend fun main() {
       
   } catch (e: Exception) {
       println("Solana Pay Module Test Failed: ${e.message}")
-      e.printStackTrace()
+      System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
   }
 
   // 18. Test Gaming Merkle Distributor
@@ -581,7 +588,7 @@ suspend fun main() {
       
   } catch (e: Exception) {
       println("Gaming Merkle Test Failed: ${e.message}")
-      e.printStackTrace()
+      System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
   }
 
   // 19. Test Versioned Transactions
@@ -620,7 +627,7 @@ suspend fun main() {
       
   } catch (e: Exception) {
       println("Versioned Transaction Test Failed: ${e.message}")
-      e.printStackTrace()
+      System.err.println("  (preview) ${e::class.simpleName}: ${e.message}")
   }
 
   delay(5000) // Wait for events

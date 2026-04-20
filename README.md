@@ -286,15 +286,25 @@ If a module is marked "Helpers", that module exists for app teams that want a st
 
 ## What this replaces
 
-For everything covered above, you do not need a separate dependency:
+Two adoption modes, pick one up front:
+
+### Artemis-native ready
+
+The native surface (`ArtemisMobile.create`, `WalletSession`, `TxEngine`, `RpcApi`, `RealtimeEngine`, `ArtemisDas`, `MarketplaceEngine`) is ready to use today. Every capability marked **Verified** in [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md) is backed by a test that fails if the feature regresses.
+
+### SMS-drop-in ready
+
+Keep your existing imports and swap the Maven coordinates to the Artemis compat artifacts under `interop/artemis-*-compat`. This track is **Verified** for the MWA client (ktx + non-ktx), Seed Vault static surface, and typed result classes; other compat modules are **Partial** or **In Progress**. The matrix in [PARITY_MATRIX.md](docs/PARITY_MATRIX.md) is the source of truth per capability.
+
+Replaces:
 
 * `solana-kmp` (Funkatronics / Metaplex): RPC, public keys, transactions
 * `sol4k`: JVM Solana primitives
 * `mobile-wallet-adapter-clientlib-ktx`: MWA 2.0 protocol
 * `seedvault-wallet-sdk`: Seed Vault integration
-* `Metaplex KMM`: token metadata and NFT operations (where covered)
+* `Metaplex KMM`: token metadata and NFT operations (where Verified)
 
-A side-by-side feature matrix lives at [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md). The migration walkthrough is at [docs/REPLACE_SOLANA_MOBILE_STACK.md](docs/REPLACE_SOLANA_MOBILE_STACK.md).
+Status vocabulary (`Verified` / `In Progress` / `Partial` / `Experimental` / `Planned`) is defined at the top of [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md). Migration walkthrough with both tracks: [docs/REPLACE_SOLANA_MOBILE_STACK.md](docs/REPLACE_SOLANA_MOBILE_STACK.md).
 
 ## Reliability features
 

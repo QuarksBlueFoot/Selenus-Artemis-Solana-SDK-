@@ -299,22 +299,42 @@ class WalletSessionManager(
     }
 
     /**
-     * Decide whether an error is worth retrying with a silent reauthorize.
+     * Decide whether [error] represents an expired-session condition that a
+     * silent reauthorize can recover from. Previous heuristic treated every
+     * [IllegalStateException] as recoverable, which caused `withWallet {}`
+     * to retry wallet actions after unrelated programmer bugs (off-by-one
+     * preconditions, mutex-failed checks, etc.) and re-run non-idempotent
+     * side effects.
      *
-     * The heuristic looks for the common expired-session signatures surfaced
-     * by the Artemis MWA adapter: [IllegalStateException] (the adapter's
-     * generic "no active session" marker), plus any exception whose message
-     * mentions an auth-token or session-level failure. Network errors and
-     * wallet-level failures bubble up to the caller unchanged.
+     * Contract now:
+     * 1. [SessionExpiredException] always recovers.
+     * 2. A string match against well-known auth-token / session-level error
+     *    fragments recovers. These are the only fragments the Artemis MWA
+     *    adapter produces for session expiry.
+     * 3. Everything else bubbles up.
      */
     private fun isRecoverable(error: Throwable): Boolean {
-        if (error is IllegalStateException) return true
+        if (error is SessionExpiredException) return true
         val message = error.message?.lowercase() ?: return false
-        return "auth_token" in message ||
+        val matches = "auth_token" in message ||
             "authtoken" in message ||
             "session expired" in message ||
             "invalid_authorization" in message ||
             "reauthorize" in message ||
             "not authorized" in message
+        // Only promote a generic IllegalStateException when the message
+        // contains one of the session-fragments above. A bare "IllegalState"
+        // with an unrelated message (mutex violation, state-machine bug)
+        // is NOT recoverable and must surface to the caller.
+        return matches
     }
 }
+
+/**
+ * Sentinel exception the MWA adapter (and future wallet adapters) can
+ * throw to explicitly signal an expired session. Catching this in
+ * [WalletSessionManager.withWallet] triggers a silent reauthorize;
+ * callers that throw bare [IllegalStateException] for unrelated reasons
+ * no longer trigger spurious wallet replays.
+ */
+class SessionExpiredException(message: String = "wallet session expired") : RuntimeException(message)

@@ -216,28 +216,93 @@ enum class PriorityFeeStrategy {
 
 /**
  * Result of a send-and-confirm operation.
+ *
+ * Three meaningful outcomes:
+ * - Success: [signature] is the base58-encoded tx signature, [confirmed]
+ *   reflects whether confirmation was awaited.
+ * - SignedButNotBroadcast: the wallet signed the tx but does not itself
+ *   implement sign-and-send. [signedRaw] is the fully signed transaction
+ *   the caller can broadcast through any RPC path it owns.
+ *   `isSignedButNotBroadcast` is true; [signature] is empty; [error] is null.
+ * - Failure: [error] is set.
  */
 data class SendTransactionResult(
-    /** The transaction signature (base58). */
+    /** The transaction signature (base58). Empty when the tx was signed but not broadcast. */
     val signature: String,
-    
+
     /** Whether confirmation was successful (when waitForConfirmation was true). */
     val confirmed: Boolean,
-    
+
     /** The slot at which the transaction was processed, if known. */
     val slot: Long? = null,
-    
+
     /** The commitment level achieved. */
     val commitment: Commitment? = null,
-    
+
     /** Any error message if the transaction failed. */
     val error: String? = null,
-    
+
     /** Reference passed in options, for correlation. */
-    val reference: String? = null
+    val reference: String? = null,
+
+    /**
+     * Raw fully-signed transaction bytes returned when the wallet does NOT
+     * implement sign-and-send and no [RpcBroadcaster] was injected. The
+     * caller can submit these via their own RPC path without re-signing.
+     * Null when the wallet broadcast the tx itself or when signing failed.
+     */
+    val signedRaw: ByteArray? = null
 ) {
-    val isSuccess: Boolean get() = error == null
+    val isSuccess: Boolean get() = error == null && signature.isNotEmpty()
     val isFailure: Boolean get() = error != null
+    /**
+     * True when the wallet produced a valid signed blob but did not broadcast.
+     * Caller should route [signedRaw] through its own RPC submit path.
+     */
+    val isSignedButNotBroadcast: Boolean
+        get() = error == null && signature.isEmpty() && signedRaw != null
+
+    // Custom equals/hashCode because the data class default `contentEquals`
+    // for ByteArray compares references. Avoid surprising test behaviour.
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is SendTransactionResult) return false
+        return signature == other.signature &&
+            confirmed == other.confirmed &&
+            slot == other.slot &&
+            commitment == other.commitment &&
+            error == other.error &&
+            reference == other.reference &&
+            (signedRaw?.contentEquals(other.signedRaw) ?: (other.signedRaw == null))
+    }
+
+    override fun hashCode(): Int {
+        var result = signature.hashCode()
+        result = 31 * result + confirmed.hashCode()
+        result = 31 * result + (slot?.hashCode() ?: 0)
+        result = 31 * result + (commitment?.hashCode() ?: 0)
+        result = 31 * result + (error?.hashCode() ?: 0)
+        result = 31 * result + (reference?.hashCode() ?: 0)
+        result = 31 * result + (signedRaw?.contentHashCode() ?: 0)
+        return result
+    }
+}
+
+/**
+ * Injection point for sending a signed transaction when the wallet does not
+ * support sign-and-send. Attached to [com.selenus.artemis.wallet.mwa.MwaWalletAdapter]
+ * via its constructor; when null, the adapter falls back to returning the
+ * raw signed bytes in [SendTransactionResult.signedRaw] so the caller can
+ * broadcast manually.
+ */
+fun interface RpcBroadcaster {
+    /**
+     * Submit [signedTransaction] to the cluster and return the base58 signature.
+     * [options] are passed through untouched so a single broadcaster can
+     * honour commitment / skipPreflight / maxRetries exactly once at the
+     * RPC boundary.
+     */
+    suspend fun broadcast(signedTransaction: ByteArray, options: SendTransactionOptions): String
 }
 
 /**

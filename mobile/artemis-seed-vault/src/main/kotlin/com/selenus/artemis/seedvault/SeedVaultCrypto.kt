@@ -18,6 +18,11 @@
 package com.selenus.artemis.seedvault
 
 import com.selenus.artemis.runtime.Pubkey
+import org.bouncycastle.crypto.agreement.X25519Agreement
+import org.bouncycastle.crypto.generators.X25519KeyPairGenerator
+import org.bouncycastle.crypto.params.X25519KeyGenerationParameters
+import org.bouncycastle.crypto.params.X25519PrivateKeyParameters
+import org.bouncycastle.crypto.params.X25519PublicKeyParameters
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
@@ -185,34 +190,139 @@ object SeedVaultCrypto {
         deriveEncryptionKey(signature, context)
     
     /**
-     * Derive a shared secret using ECDH-style derivation.
-     * 
-     * For X25519 key exchange:
-     * 1. Each party has a keypair
-     * 2. Combine private key with other's public key
-     * 3. Result is the shared secret
-     * 
-     * This method takes a signature (from signing the peer's pubkey)
-     * and derives a shared secret deterministically.
-     * 
-     * @param mySignature Signature produced by signing peer's pubkey
-     * @param peerPubkey The peer's public key
-     * @return 32-byte shared secret
+     * Real X25519 ECDH shared secret.
+     *
+     * Takes the caller's X25519 private scalar and the peer's 32-byte X25519
+     * public-key point and produces the 32-byte Diffie-Hellman shared
+     * secret. The output is then run through HKDF-SHA256 with the Artemis
+     * domain separator so two peers exchanging the same raw DH secret for
+     * different application contexts end up with different session keys.
+     *
+     * ```
+     * val shared = SeedVaultCrypto.deriveX25519SharedSecret(
+     *     myPrivate = alicePrivate,
+     *     peerPublic = bobPublic,
+     *     context = "mwa:session:v1"
+     * )
+     * ```
+     *
+     * @param myPrivate 32-byte X25519 private scalar.
+     * @param peerPublic 32-byte X25519 public-key point.
+     * @param context Domain-separation context. Distinct context => distinct key.
+     * @return 32-byte session key derived from the ECDH secret + context.
      */
-    fun deriveSharedSecret(mySignature: ByteArray, peerPubkey: Pubkey): ByteArray {
+    fun deriveX25519SharedSecret(
+        myPrivate: ByteArray,
+        peerPublic: ByteArray,
+        context: String = "shared-secret"
+    ): ByteArray {
+        require(myPrivate.size == 32) { "X25519 private key must be 32 bytes, got ${myPrivate.size}" }
+        require(peerPublic.size == 32) { "X25519 public key must be 32 bytes, got ${peerPublic.size}" }
+        val agreement = X25519Agreement()
+        agreement.init(X25519PrivateKeyParameters(myPrivate, 0))
+        val dhSecret = ByteArray(agreement.agreementSize)
+        agreement.calculateAgreement(X25519PublicKeyParameters(peerPublic, 0), dhSecret, 0)
+        // HKDF-SHA256 with domain separation. Raw DH output is biased and
+        // should never be handed to an AEAD directly.
+        return hkdfExtractAndExpand(
+            ikm = dhSecret,
+            salt = DOMAIN_SEPARATOR.toByteArray(),
+            info = context.toByteArray(),
+            length = KEY_SIZE
+        )
+    }
+
+    /**
+     * Generate a fresh X25519 keypair. Returns (private 32 bytes, public 32 bytes).
+     */
+    fun generateX25519Keypair(): Pair<ByteArray, ByteArray> {
+        val gen = X25519KeyPairGenerator().apply {
+            init(X25519KeyGenerationParameters(random))
+        }
+        val kp = gen.generateKeyPair()
+        val priv = (kp.private as X25519PrivateKeyParameters).encoded
+        val pub = (kp.public as X25519PublicKeyParameters).encoded
+        return priv to pub
+    }
+
+    private fun hkdfExtractAndExpand(
+        ikm: ByteArray,
+        salt: ByteArray,
+        info: ByteArray,
+        length: Int
+    ): ByteArray {
+        require(length in 1..(255 * 32))
+        val prk = hmacSha256(salt, ikm)
+        var t = ByteArray(0)
+        val okm = ByteArray(length)
+        var offset = 0
+        var counter = 1
+        while (offset < length) {
+            val input = ByteArray(t.size + info.size + 1).also { buf ->
+                t.copyInto(buf, 0)
+                info.copyInto(buf, t.size)
+                buf[t.size + info.size] = counter.toByte()
+            }
+            t = hmacSha256(prk, input)
+            val take = minOf(t.size, length - offset)
+            System.arraycopy(t, 0, okm, offset, take)
+            offset += take
+            counter++
+        }
+        return okm
+    }
+
+    private fun hmacSha256(key: ByteArray, data: ByteArray): ByteArray {
+        val effectiveKey = if (key.isEmpty()) ByteArray(32) else key
+        val mac = Mac.getInstance("HmacSHA256")
+        mac.init(SecretKeySpec(effectiveKey, "HmacSHA256"))
+        return mac.doFinal(data)
+    }
+
+    /**
+     * Deterministic application key derived from a Seed-Vault signature.
+     *
+     * This is the legitimate use case behind the old `deriveSharedSecret`
+     * name: it takes a signature the Seed Vault produced over a known
+     * message and folds it, together with the peer's pubkey and an app
+     * context, into a stable per-pair key that the wallet can recreate
+     * offline without a live handshake. It is NOT a Diffie-Hellman shared
+     * secret; two parties cannot independently compute the same value
+     * unless they share the signature. For real peer-to-peer key exchange
+     * use [deriveX25519SharedSecret].
+     */
+    fun deriveDeterministicAppKey(
+        mySignature: ByteArray,
+        peerPubkey: Pubkey,
+        context: String = "app-key"
+    ): ByteArray {
         val digest = MessageDigest.getInstance("SHA-256")
         digest.update(DOMAIN_SEPARATOR.toByteArray())
-        digest.update("shared-secret".toByteArray())
+        digest.update(context.toByteArray())
         digest.update(mySignature)
         digest.update(peerPubkey.bytes)
         return digest.digest()
     }
-    
-    /**
-     * Overload accepting raw public key bytes.
-     */
+
+    @Deprecated(
+        message = "This function is NOT a Diffie-Hellman shared secret. " +
+            "For real ECDH use deriveX25519SharedSecret(myPrivate, peerPublic). " +
+            "For a deterministic per-pair application key derived from a " +
+            "Seed-Vault signature use deriveDeterministicAppKey().",
+        replaceWith = ReplaceWith("deriveDeterministicAppKey(mySignature, peerPubkey)"),
+        level = DeprecationLevel.ERROR
+    )
+    fun deriveSharedSecret(mySignature: ByteArray, peerPubkey: Pubkey): ByteArray =
+        deriveDeterministicAppKey(mySignature, peerPubkey)
+
+    @Deprecated(
+        message = "This function is NOT a Diffie-Hellman shared secret. " +
+            "See deriveX25519SharedSecret or deriveDeterministicAppKey.",
+        replaceWith = ReplaceWith("deriveDeterministicAppKey(mySignature, Pubkey(peerPubkeyBytes))"),
+        level = DeprecationLevel.ERROR
+    )
     fun deriveSharedSecret(mySignature: ByteArray, peerPubkeyBytes: ByteArray): ByteArray =
-        deriveSharedSecret(mySignature, Pubkey(peerPubkeyBytes))
+        deriveDeterministicAppKey(mySignature, Pubkey(peerPubkeyBytes))
     
     /**
      * Encrypt data using AES-256-GCM.

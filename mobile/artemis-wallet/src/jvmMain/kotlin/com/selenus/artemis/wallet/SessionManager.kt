@@ -27,9 +27,42 @@ object SessionManager {
     
     private val sessions = ConcurrentHashMap<String, AuthSession>()
     private val sessionLock = ReentrantLock()
-    
-    // Session secret for HMAC validation - rotated per app instance
-    private val sessionSecret = ByteArray(32).also { SecureRandom().nextBytes(it) }
+
+    /**
+     * HMAC secret used to sign auth tokens so that reauthorize flows can
+     * detect tampering.
+     *
+     * Two persistence modes:
+     * 1. If [installPersistedSecret] is called with a caller-supplied
+     *    32-byte secret (typically read from Android Keystore or an
+     *    EncryptedSharedPreferences entry), that value is used and auth
+     *    tokens minted before process death remain validatable after
+     *    restart.
+     * 2. Otherwise a fresh random secret is generated per process. Tokens
+     *    are only valid for the life of this process. This matches the
+     *    previous behaviour and is documented as such so callers can
+     *    decide whether they need persistence.
+     */
+    @Volatile
+    private var sessionSecret: ByteArray = ByteArray(32).also { SecureRandom().nextBytes(it) }
+
+    /**
+     * Install a persisted 32-byte HMAC secret. Intended to be called once
+     * at app init after loading the secret from Android Keystore or an
+     * EncryptedSharedPreferences entry. Calling this after tokens have
+     * been issued will invalidate every outstanding token.
+     */
+    @Synchronized
+    fun installPersistedSecret(secret: ByteArray) {
+        require(secret.size == 32) { "sessionSecret must be exactly 32 bytes, got ${secret.size}" }
+        sessionSecret = secret.copyOf()
+    }
+
+    /**
+     * Return the current secret (for callers that want to seed the
+     * persistence layer on first launch). Copies the underlying bytes.
+     */
+    fun exportSecretForPersistence(): ByteArray = sessionSecret.copyOf()
     
     /**
      * Supported blockchain chains.
@@ -306,11 +339,24 @@ object SessionManager {
             val mac = Mac.getInstance("HmacSHA256")
             mac.init(SecretKeySpec(sessionSecret, "HmacSHA256"))
             val expectedHmac = mac.doFinal(payload).take(16).toByteArray()
-            
-            providedHmac.contentEquals(expectedHmac)
+
+            constantTimeEquals(providedHmac, expectedHmac)
         } catch (e: Exception) {
             false
         }
+    }
+
+    /**
+     * Constant-time byte-array equality. Prevents a local attacker with
+     * precise timing from narrowing down the HMAC suffix one byte at a
+     * time (rare but real threat model when a local IPC attacker can
+     * submit tokens and observe response latency).
+     */
+    private fun constantTimeEquals(a: ByteArray, b: ByteArray): Boolean {
+        if (a.size != b.size) return false
+        var diff = 0
+        for (i in a.indices) diff = diff or (a[i].toInt() xor b[i].toInt())
+        return diff == 0
     }
     
     // ========================================================================

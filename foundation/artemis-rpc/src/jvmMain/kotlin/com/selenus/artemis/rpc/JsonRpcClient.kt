@@ -210,8 +210,31 @@ class JsonRpcClient(
       if (t.code >= 500) return config.retryOnHttp5xx
       return false
     }
+    // Classify by exception type first. The previous implementation
+    // matched only on "timeout" substring, so a mobile app on flaky 4G
+    // hitting SocketException("Software caused connection abort") would
+    // never retry despite being the textbook retry case.
+    when (t) {
+      is java.net.SocketTimeoutException,
+      is java.net.ConnectException,
+      is java.net.UnknownHostException -> return config.retryOnTimeout
+      is java.net.SocketException -> return config.retryOnTimeout
+      is javax.net.ssl.SSLHandshakeException -> return false // hard TLS fail
+      is javax.net.ssl.SSLException -> return config.retryOnTimeout
+      is java.io.EOFException,
+      is java.io.InterruptedIOException -> return config.retryOnTimeout
+    }
     val msg = (t.message ?: "").lowercase()
-    if (msg.contains("timeout")) return config.retryOnTimeout
+    // Fall through to message-based heuristics for transport wrappers
+    // that re-wrap the underlying cause without preserving the class.
+    if (msg.contains("timeout") ||
+        msg.contains("connection reset") ||
+        msg.contains("connection abort") ||
+        msg.contains("broken pipe") ||
+        msg.contains("unexpected end of stream")
+    ) {
+      return config.retryOnTimeout
+    }
     return false
   }
 }

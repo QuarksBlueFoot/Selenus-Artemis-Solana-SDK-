@@ -47,6 +47,12 @@ internal class MwaWebSocketServer {
         val s = serverSocket ?: throw IllegalStateException("Not bound")
         s.soTimeout = timeoutMs.toInt()
         val client = s.accept()
+        // Post-accept read timeout: the connected wallet is expected to
+        // keep the channel lively (via PONGs + RPC replies). An accepted
+        // socket with no read timeout could hang the reader thread
+        // indefinitely if the peer silently vanished. 60s strikes a
+        // balance with the 45s PING/PONG window.
+        client.soTimeout = 60_000
         // Read the upgrade request and validate the Origin before completing
         // the 101 Switching Protocols handshake.
         doHandshake(client)
@@ -54,6 +60,18 @@ internal class MwaWebSocketServer {
         transport.startReader()
         transport.startKeepalive()
         transport
+    }
+
+    companion object {
+        /**
+         * Maximum decoded payload bytes per frame (or per reassembled message
+         * when the peer fragments). The MWA wire message is an AES-GCM-wrapped
+         * JSON-RPC envelope: real messages stay well under 64 KiB. 1 MiB is a
+         * generous upper bound that still prevents a malicious peer from
+         * claiming a 64-bit length and exhausting heap before we even read
+         * any bytes.
+         */
+        const val MAX_FRAME_SIZE_BYTES: Int = 1 shl 20
     }
 
     fun close() {
@@ -179,6 +197,12 @@ internal class MwaWebSocketServer {
             incoming.close()
         }
 
+        // Buffer for reassembling a fragmented data message. Continuation
+        // frames (opcode 0x0) accumulate here; terminal frame (FIN=1)
+        // emits the full payload and clears the buffer.
+        private var fragmentOpcode: Int = 0
+        private val fragmentBuffer = java.io.ByteArrayOutputStream()
+
         private fun readFrame() {
             val b0 = inp.read()
             if (b0 == -1) throw java.io.EOFException()
@@ -192,13 +216,24 @@ internal class MwaWebSocketServer {
 
             if (len == 126L) {
                 val l1 = inp.read(); val l2 = inp.read()
+                if (l1 == -1 || l2 == -1) throw java.io.EOFException()
                 len = ((l1 shl 8) or l2).toLong()
             } else if (len == 127L) {
                 var l = 0L
                 for (i in 0 until 8) {
-                    l = (l shl 8) or inp.read().toLong()
+                    val b = inp.read()
+                    if (b == -1) throw java.io.EOFException()
+                    l = (l shl 8) or b.toLong()
                 }
                 len = l
+            }
+
+            // Reject outsized frames before allocating. An attacker could
+            // claim len = 2^63-1 to DoS the reader; cap against a real
+            // upper bound that still accommodates honest MWA messages.
+            if (len < 0L || len > MAX_FRAME_SIZE_BYTES) {
+                close(1009, "frame too large: $len")
+                throw IllegalStateException("frame size $len exceeds cap $MAX_FRAME_SIZE_BYTES")
             }
 
             val maskKey = ByteArray(4)
@@ -221,17 +256,52 @@ internal class MwaWebSocketServer {
             }
 
             when (opcode) {
+                0x0 -> { // Continuation
+                    if (fragmentOpcode == 0) {
+                        close(1002, "continuation without starter")
+                        throw IllegalStateException("continuation frame without leading data frame")
+                    }
+                    if (fragmentBuffer.size() + payload.size > MAX_FRAME_SIZE_BYTES) {
+                        close(1009, "reassembled message too large")
+                        throw IllegalStateException("reassembled message exceeds cap")
+                    }
+                    fragmentBuffer.write(payload)
+                    if (fin) {
+                        incoming.trySend(fragmentBuffer.toByteArray())
+                        fragmentBuffer.reset()
+                        fragmentOpcode = 0
+                    }
+                }
+                0x1, 0x2 -> { // Text or Binary
+                    if (fin) {
+                        incoming.trySend(payload)
+                    } else {
+                        // Start of a fragmented message. Reset any partial
+                        // state from a malformed prior fragment and begin
+                        // accumulating. RFC 6455 forbids interleaving
+                        // data frames from different messages so we do not
+                        // need to track more than one in-flight stream.
+                        if (fragmentOpcode != 0) {
+                            close(1002, "interleaved fragments")
+                            throw IllegalStateException("interleaved fragmented messages")
+                        }
+                        fragmentOpcode = opcode
+                        fragmentBuffer.reset()
+                        fragmentBuffer.write(payload)
+                    }
+                }
                 0x8 -> { // Close
                     close(1000, "Remote close"); return
                 }
-                0x9 -> { // Ping → respond Pong.
+                0x9 -> { // Ping -> respond Pong.
                     sendControl(opcode = 0xA, payload = payload)
                 }
                 0xA -> { // Pong
                     lastPongAt = System.currentTimeMillis()
                 }
-                0x1, 0x2 -> { // Text or Binary
-                    incoming.trySend(payload)
+                else -> {
+                    close(1002, "unknown opcode: $opcode")
+                    throw IllegalStateException("unknown opcode $opcode")
                 }
             }
         }

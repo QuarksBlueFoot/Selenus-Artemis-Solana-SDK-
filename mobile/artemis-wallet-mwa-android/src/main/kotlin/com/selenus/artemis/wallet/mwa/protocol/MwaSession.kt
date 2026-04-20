@@ -1,12 +1,15 @@
 package com.selenus.artemis.wallet.mwa.protocol
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -22,8 +25,11 @@ class MwaSession internal constructor(
   private val json: Json = Json { ignoreUnknownKeys = true }
 ) : Closeable {
 
-  @Suppress("unused")
+  // Scope owns the receive loop + any child coroutines the session spawns.
+  // Retained so [close] can tear it down deterministically instead of leaking
+  // background work past session teardown.
   private val scope = CoroutineScope(Dispatchers.IO + Job())
+  private val closed = AtomicBoolean(false)
 
   // AES-GCM with deterministic counter-based nonces REQUIRES that no counter
   // value is ever reused. The previous implementation incremented plain Ints
@@ -47,17 +53,32 @@ class MwaSession internal constructor(
     private set
 
   fun sendJsonRpc(method: String, params: JsonElement? = null): CompletableDeferred<JsonObject> {
+    val def = CompletableDeferred<JsonObject>()
+    if (closed.get()) {
+      // Reject cleanly instead of dispatching a request whose reply can
+      // never arrive. Callers that awaited() get an immediate exception
+      // rather than hanging until their own timeout fires.
+      def.completeExceptionally(
+        IllegalStateException("MWA session is closed; cannot send $method")
+      )
+      return def
+    }
     val id = nextId.getAndIncrement()
     val req = buildJsonRpcRequest(id, method, params)
     val bytes = json.encodeToString(JsonObject.serializer(), req).encodeToByteArray()
     val packet = cipher.encrypt(sendSeq.getAndIncrement(), bytes)
-    val def = CompletableDeferred<JsonObject>()
     pending[id] = def
-    transport.send(packet)
+    try {
+      transport.send(packet)
+    } catch (e: Throwable) {
+      pending.remove(id)
+      def.completeExceptionally(e)
+    }
     return def
   }
 
   fun handleIncoming(packet: ByteArray) {
+    if (closed.get()) return
     val plain = cipher.decrypt(recvSeq.getAndIncrement(), packet)
     val obj = json.parseToJsonElement(plain.decodeToString()) as? JsonObject ?: return
     val id = (obj["id"] as? JsonPrimitive)?.intOrNull
@@ -67,7 +88,19 @@ class MwaSession internal constructor(
   }
 
   override fun close() {
+    if (!closed.compareAndSet(false, true)) return
+    // Fail every pending JSON-RPC future immediately so awaiting callers
+    // (authorize, signMessages, etc.) unblock with a typed exception
+    // instead of hanging until their own timeout. This was the original
+    // "hung futures / resource leak" bug from the audit.
+    val cancel = CancellationException("MWA session closed")
+    val snapshot = pending.values.toList()
+    pending.clear()
+    for (def in snapshot) {
+      def.completeExceptionally(cancel)
+    }
     try { transport.close(1000, "bye") } catch (_: Throwable) {}
+    scope.cancel(cancel)
   }
 
   private fun buildJsonRpcRequest(id: Int, method: String, params: JsonElement?): JsonObject {
@@ -128,11 +161,12 @@ class MwaSession internal constructor(
         session.recvSeq.set(2) // we've consumed one encrypted message
       }
 
-      // Wire receive loop
-      CoroutineScope(Dispatchers.IO).apply {
-        launch {
-          for (pkt in transport.incoming) session.handleIncoming(pkt)
-        }
+      // Wire the receive loop onto the session's own scope so close()
+      // cancels it deterministically. Previous implementation launched on
+      // a fresh CoroutineScope that nobody held a handle to, leaking the
+      // receive coroutine past teardown.
+      session.scope.launch {
+        for (pkt in transport.incoming) session.handleIncoming(pkt)
       }
 
       return session
