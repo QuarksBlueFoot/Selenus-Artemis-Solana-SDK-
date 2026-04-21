@@ -11,57 +11,61 @@
   L38  suspend fun deauthorize(authToken: String)
   L48  suspend fun signTransactions(
   L52  suspend fun signAndSendTransactions(
-  L57  suspend fun signMessages(
-  L68  suspend fun signMessagesDetached(
-  L82  suspend fun getCapabilities(): GetCapabilitiesResult =
-  L102  data class GetCapabilitiesResult(
-  L103  val supportsCloneAuthorization: Boolean,
-  L104  val supportsSignAndSendTransactions: Boolean,
-  L105  val maxTransactionsPerSigningRequest: Int,
-  L106  val maxMessagesPerSigningRequest: Int,
-  L107  val supportedTransactionVersions: Array<Any>,
-  L108  val supportedOptionalFeatures: Array<String> = emptyArray()
-  L122  var result = supportsCloneAuthorization.hashCode()
-  L135  open class TransactionParams(
-  L136  val minContextSlot: Int? = null,
-  L137  val commitment: String? = null,
-  L138  val skipPreflight: Boolean? = null,
-  L139  val maxRetries: Int? = null,
-  L140  val waitForCommitmentToSendNextTransaction: Boolean? = null
-  L143  object DefaultTransactionParams : TransactionParams()
-  L148  data class SignatureResult(
-  L149  val signature: String,
-  L150  val commitment: String? = null
-  L156  data class SignedMessageResult(
-  L157  val message: ByteArray,
-  L158  val signatures: List<ByteArray>
-  L176  typealias SignInWithSolana = com.solana.mobilewalletadapter.common.protocol.SignInWithSolana
-  L184  data class SignInResult(
-  L185  val publicKey: ByteArray,
-  L186  val signedMessage: ByteArray,
-  L187  val signature: ByteArray,
-  L188  val signatureType: String?
-  L200  var result = publicKey.contentHashCode()
+  L68  suspend fun signAndSendTransactionsBatch(
+  L72  val upstream = signAndSendTransactions(transactions, params)
+  L82  suspend fun signMessages(
+  L93  suspend fun signMessagesDetached(
+  L107  suspend fun getCapabilities(): GetCapabilitiesResult =
+  L127  data class GetCapabilitiesResult(
+  L128  val supportsCloneAuthorization: Boolean,
+  L129  val supportsSignAndSendTransactions: Boolean,
+  L130  val maxTransactionsPerSigningRequest: Int,
+  L131  val maxMessagesPerSigningRequest: Int,
+  L132  val supportedTransactionVersions: Array<Any>,
+  L133  val supportedOptionalFeatures: Array<String> = emptyArray()
+  L147  var result = supportsCloneAuthorization.hashCode()
+  L160  open class TransactionParams(
+  L161  val minContextSlot: Int? = null,
+  L162  val commitment: String? = null,
+  L163  val skipPreflight: Boolean? = null,
+  L164  val maxRetries: Int? = null,
+  L165  val waitForCommitmentToSendNextTransaction: Boolean? = null
+  L168  object DefaultTransactionParams : TransactionParams()
+  L173  data class SignatureResult(
+  L174  val signature: String,
+  L175  val commitment: String? = null
+  L181  data class SignedMessageResult(
+  L182  val message: ByteArray,
+  L183  val signatures: List<ByteArray>
+  L201  typealias SignInWithSolana = com.solana.mobilewalletadapter.common.protocol.SignInWithSolana
+  L209  data class SignInResult(
+  L210  val publicKey: ByteArray,
+  L211  val signedMessage: ByteArray,
+  L212  val signature: ByteArray,
+  L213  val signatureType: String?
+  L225  var result = publicKey.contentHashCode()
 
 ## main/kotlin/com/solana/mobilewalletadapter/clientlib/AssociationScenarioProvider.kt (package com.solana.mobilewalletadapter.clientlib)
   L20  open class AssociationScenarioProvider {
 
 ## main/kotlin/com/solana/mobilewalletadapter/clientlib/AuthorizationResult.kt (package com.solana.mobilewalletadapter.clientlib)
-  L14  data class AuthorizationResult(
-  L15  val authToken: String,
-  L16  val publicKey: ByteArray,
-  L17  val accountLabel: String?,
-  L18  val walletUriBase: Uri?,
-  L19  val walletIcon: Uri? = null,
-  L20  val accounts: List<Account> = emptyList(),
-  L21  val signInResult: SignInResult? = null
-  L23  data class Account(
-  L24  val publicKey: ByteArray,
-  L25  val displayAddress: String?,
-  L26  val displayAddressFormat: String?,
-  L27  val label: String?,
-  L28  val chains: List<String>?,
-  L29  val features: List<String>?
+  L27  data class AuthorizationResult(
+  L28  val authToken: String,
+  L34  val publicKey: ByteArray,
+  L40  val accountLabel: String?,
+  L41  val walletUriBase: Uri?,
+  L42  val walletIcon: Uri? = null,
+  L43  val accounts: List<Account> = emptyList(),
+  L44  val signInResult: SignInResult? = null
+  L46  data class Account(
+  L47  val publicKey: ByteArray,
+  L48  val displayAddress: String?,
+  L49  val displayAddressFormat: String?,
+  L50  val label: String?,
+  L51  val chains: List<String>?,
+  L52  val features: List<String>?
+  L75  var h = publicKey.contentHashCode()
+  L106  var h = authToken.hashCode()
 
 ## main/kotlin/com/solana/mobilewalletadapter/clientlib/Blockchain.kt (package com.solana.mobilewalletadapter.clientlib)
   L12  sealed class Blockchain(
@@ -127,15 +131,15 @@
   L237  fun disconnect() {
   L277  val pubkey = adapter.connect()
   L308  val results = adapter.signMessages(
-  L320  val options = com.selenus.artemis.wallet.SendTransactionOptions(
-  L325  val batchResult = adapter.signAndSendTransactions(transactions.toList(), options)
-  L326  val sigBytes = batchResult.results.map {
-  L345  val signed = messages.map { msg ->
-  L346  val sig = adapter.signArbitraryMessage(
-  L365  val caps = runCatching { adapter.getCapabilities() }.getOrNull()
-  L366  val versions = buildList<Any> {
-  L387  object MobileWalletAdapterCompat {
-  L388  fun create(
+  L326  val batch = signAndSendTransactionsBatch(transactions, params)
+  L327  val sigBytes = batch.toUpstreamSignaturesOrThrow()
+  L336  val options = com.selenus.artemis.wallet.SendTransactionOptions(
+  L361  val signed = messages.map { msg ->
+  L362  val sig = adapter.signArbitraryMessage(
+  L381  val caps = runCatching { adapter.getCapabilities() }.getOrNull()
+  L382  val versions = buildList<Any> {
+  L403  object MobileWalletAdapterCompat {
+  L404  fun create(
 
 ## main/kotlin/com/solana/mobilewalletadapter/clientlib/MwaSessionBridge.kt (package com.solana.mobilewalletadapter.clientlib)
   L29  class MwaSessionBridge internal constructor(
@@ -155,13 +159,85 @@
   L189  val bridge = MwaSessionBridge(adapter)
 
 ## main/kotlin/com/solana/mobilewalletadapter/clientlib/TransactionResult.kt (package com.solana.mobilewalletadapter.clientlib)
-  L12  sealed class TransactionResult<out T> {
-  L19  data class Success<T>(
-  L20  val payload: T,
-  L21  val authResult: AuthorizationResult? = null
-  L24  data class Failure(
-  L25  val message: String,
-  L26  val e: Exception? = null
-  L29  data class NoWalletFound(
-  L30  val message: String
-  L34  val <T> TransactionResult<T>.successPayload: T?
+  L17  sealed class TransactionResult<out T> {
+  L29  data class Success<T>(
+  L30  val payload: T,
+  L31  val authResult: AuthorizationResult? = null,
+  L32  val batch: TransactionBatchResult? = null
+  L35  data class Failure(
+  L36  val message: String,
+  L37  val e: Exception? = null
+  L40  data class NoWalletFound(
+  L41  val message: String
+  L45  val <T> TransactionResult<T>.successPayload: T?
+  L49  val <T> TransactionResult<T>.batchResult: TransactionBatchResult?
+  L67  data class TransactionItemResult(
+  L68  val index: Int,
+  L69  val signature: String? = null,
+  L70  val error: Throwable? = null,
+  L71  val success: Boolean = (signature != null && error == null)
+  L82  val isSuccess: Boolean get() = success
+  L83  val isFailure: Boolean get() = !success
+  L100  data class TransactionBatchResult(
+  L101  val results: List<TransactionItemResult>
+  L111  val allSuccess: Boolean get() = results.all { it.isSuccess }
+  L112  val anyFailure: Boolean get() = results.any { it.isFailure }
+  L113  val successCount: Int get() = results.count { it.isSuccess }
+  L114  val failureCount: Int get() = results.count { it.isFailure }
+  L117  fun signatures(): List<String> = results.mapNotNull { it.signature }
+  L120  fun failures(): List<TransactionItemResult> = results.filter { it.isFailure }
+  L129  fun of(
+  L140  val items = (0 until inputSize).map { i ->
+  L167  fun com.selenus.artemis.wallet.BatchSendResult.toTransactionBatchResult(): TransactionBatchResult {
+  L168  val items = results.mapIndexed { index, slot ->
+  L169  val sig = slot.signature.takeIf { it.isNotEmpty() }
+  L170  val err: Throwable? = when {
+  L203  fun TransactionBatchResult.toUpstreamSignaturesOrThrow(): Array<ByteArray> {
+  L215  val sig = item.signature!!
+
+## test/kotlin/com/solana/mobilewalletadapter/clientlib/MwaCompatResultsTest.kt (package com.solana.mobilewalletadapter.clientlib)
+  L28  class MwaCompatResultsTest {
+  L32  fun `authorization equality covers every field`() {
+  L33  val account = AuthorizationResult.Account(
+  L44  val walletUri: Uri = mockk(relaxed = true)
+  L45  val baseline = AuthorizationResult(
+  L56  val differentChains = baseline.copy(
+  L61  val differentFeatures = baseline.copy(
+  L69  val differentWalletUri = baseline.copy(walletUriBase = null)
+  L72  val differentAccounts = baseline.copy(accounts = emptyList())
+  L77  fun `account equality covers displayAddressFormat label chains features`() {
+  L78  val base = AuthorizationResult.Account(
+  L94  fun `batch result enforces size + index + success XOR error`() {
+  L95  val good = TransactionBatchResult.of(
+  L129  fun `batch preserves per-slot ordering under partial failure`() {
+  L130  val batch = TransactionBatchResult.of(
+  L152  fun `signatures() helper skips failed slots but keeps succeeded order`() {
+  L153  val batch = TransactionBatchResult.of(
+  L173  fun `accounts preserve native order in compat`() {
+  L174  val accounts = listOf(
+  L201  val ar = AuthorizationResult(
+  L222  fun `null chains and empty chains stay distinguishable`() {
+  L223  val withNull = AuthorizationResult.Account(
+  L227  val withEmpty = AuthorizationResult.Account(
+  L251  fun `solana signature is base58 encoded and decodes to 64 bytes`() {
+  L256  val zeros = "1111111111111111111111111111111111111111111111111111111111111111"
+  L257  val decoded = com.selenus.artemis.runtime.Base58.decode(zeros)
+  L280  fun `BatchSendResult to TransactionBatchResult preserves every slot state`() {
+  L281  val native = com.selenus.artemis.wallet.BatchSendResult(
+  L304  val batch = native.toTransactionBatchResult()
+  L332  fun `signature encoding round-trips through the real batch pipeline`() {
+  L333  val signatureBytes = ByteArray(64) { i -> (i + 1).toByte() }
+  L334  val base58 = com.selenus.artemis.runtime.Base58.encode(signatureBytes)
+  L336  val nativeBatch = com.selenus.artemis.wallet.BatchSendResult(
+  L345  val compatBatch = nativeBatch.toTransactionBatchResult()
+  L348  val upstreamArr = compatBatch.toUpstreamSignaturesOrThrow()
+  L364  fun `toUpstreamSignaturesOrThrow throws NotSubmittedException on partial failure`() {
+  L365  val batch = TransactionBatchResult.of(
+  L384  fun `toUpstreamSignaturesOrThrow folds success batch into byte array`() {
+  L386  val zeros = "1111111111111111111111111111111111111111111111111111111111111111"
+  L387  val batch = TransactionBatchResult.of(
+  L392  val arr = batch.toUpstreamSignaturesOrThrow()
+  L400  fun `authorize and reauthorize results are shape-equivalent`() {
+  L401  val account = AuthorizationResult.Account(
+  L410  val fresh = AuthorizationResult(
+  L420  val reauth = AuthorizationResult(

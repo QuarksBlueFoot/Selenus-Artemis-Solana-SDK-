@@ -285,6 +285,25 @@ open class MobileWalletAdapterClient(
             signInResult = signInResult
         )
 
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is AuthorizationResult) return false
+            return authToken == other.authToken &&
+                accounts.contentEquals(other.accounts) &&
+                walletUriBase == other.walletUriBase &&
+                walletIcon == other.walletIcon &&
+                signInResult == other.signInResult
+        }
+
+        override fun hashCode(): Int {
+            var h = authToken.hashCode()
+            h = 31 * h + accounts.contentHashCode()
+            h = 31 * h + (walletUriBase?.hashCode() ?: 0)
+            h = 31 * h + (walletIcon?.hashCode() ?: 0)
+            h = 31 * h + (signInResult?.hashCode() ?: 0)
+            return h
+        }
+
         class AuthorizedAccount(
             @JvmField val publicKey: ByteArray,
             @JvmField val accountLabel: String?,
@@ -293,14 +312,57 @@ open class MobileWalletAdapterClient(
             @JvmField val displayAddress: String?,
             @JvmField val displayAddressFormat: String?,
             @JvmField val icon: Uri?
-        )
+        ) {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other !is AuthorizedAccount) return false
+                return publicKey.contentEquals(other.publicKey) &&
+                    accountLabel == other.accountLabel &&
+                    arraysEqualOrBothNull(chains, other.chains) &&
+                    arraysEqualOrBothNull(features, other.features) &&
+                    displayAddress == other.displayAddress &&
+                    displayAddressFormat == other.displayAddressFormat &&
+                    icon == other.icon
+            }
+
+            override fun hashCode(): Int {
+                var h = publicKey.contentHashCode()
+                h = 31 * h + (accountLabel?.hashCode() ?: 0)
+                h = 31 * h + (chains?.contentHashCode() ?: 0)
+                h = 31 * h + (features?.contentHashCode() ?: 0)
+                h = 31 * h + (displayAddress?.hashCode() ?: 0)
+                h = 31 * h + (displayAddressFormat?.hashCode() ?: 0)
+                h = 31 * h + (icon?.hashCode() ?: 0)
+                return h
+            }
+
+            private fun arraysEqualOrBothNull(a: Array<String>?, b: Array<String>?): Boolean =
+                if (a == null || b == null) a === b else a.contentEquals(b)
+        }
 
         class SignInResult(
             @JvmField val publicKey: ByteArray,
             @JvmField val signedMessage: ByteArray,
             @JvmField val signature: ByteArray,
             @JvmField val signatureType: String?
-        )
+        ) {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other !is SignInResult) return false
+                return publicKey.contentEquals(other.publicKey) &&
+                    signedMessage.contentEquals(other.signedMessage) &&
+                    signature.contentEquals(other.signature) &&
+                    signatureType == other.signatureType
+            }
+
+            override fun hashCode(): Int {
+                var h = publicKey.contentHashCode()
+                h = 31 * h + signedMessage.contentHashCode()
+                h = 31 * h + signature.contentHashCode()
+                h = 31 * h + (signatureType?.hashCode() ?: 0)
+                return h
+            }
+        }
     }
 
     class GetCapabilitiesResult(

@@ -54,7 +54,10 @@ jobs:
       - name: MWA walletlib 2.0 behavior gate
         run: ./gradlew --no-daemon :artemis-wallet-mwa-android:testDebugUnitTest --tests '*BehaviorTest*'
       - name: Compat runtime parity gate
-        run: ./gradlew --no-daemon :artemis-mwa-clientlib-compat:testDebugUnitTest
+        run: |
+          ./gradlew --no-daemon \
+            :artemis-mwa-clientlib-compat:testDebugUnitTest \
+            :artemis-mwa-compat:testDebugUnitTest
       - name: Compat API surface diff gate
         run: |
           ./gradlew --no-daemon dumpApi

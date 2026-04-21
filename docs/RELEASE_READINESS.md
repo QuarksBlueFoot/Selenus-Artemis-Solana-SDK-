@@ -61,6 +61,38 @@ P1 items. Required before claiming "drop-in replacement for Solana Mobile Stack"
   public key instead of an empty placeholder. Enforced by
   `MwaCompatParityTest.core methods throw SessionNotReadyException when no bridge`
   and `.MobileWalletAdapterSession exposes real association public key`.
+- [x] **Scenario owns nothing.** The `Scenario` base class no longer
+  generates its own keypair, owns a `ServerSocket`, or instantiates the
+  protocol client inline. Identity routes through a `SessionEngine`,
+  networking through a `SecureTransport`, and the protocol client
+  arrives via constructor injection. Defaults preserve upstream
+  behavior so dapps that just do `LocalAssociationScenario()` see zero
+  surface change. Enforced by `MwaCompatParityTest.SessionEngine drives
+  identity across scenarios`, `.Scenario reserves port via injected
+  transport`, `.Scenario uses injected MobileWalletAdapterClient`, and
+  `.reconnect keeps association identity stable`.
+- [x] **AuthorizationResult lossless + equality across every MWA 2.0 field.**
+  Flat ktx `AuthorizationResult` and nested non-ktx
+  `MobileWalletAdapterClient.AuthorizationResult` both include
+  `accounts`, `walletUriBase`, `walletIcon`, and `signInResult` in
+  structural equality and hashing. Account equality includes
+  `displayAddressFormat`, `label`, `chains`, and `features`. Legacy flat
+  fields (`publicKey`, `accountLabel`) carry `@Deprecated` with
+  migration text. Null-vs-empty distinction on `chains`/`features` is
+  preserved, not normalized. Enforced by
+  `MwaCompatResultsTest.authorization equality covers every field`,
+  `.account equality covers displayAddressFormat label chains features`,
+  `.accounts preserve native order in compat`,
+  `.null chains and empty chains stay distinguishable`.
+- [x] **TransactionResult batch structure with hard invariants.**
+  `TransactionItemResult(index, signature, error, success)` enforces
+  `success XOR error` and `success ⇒ signature != null` at
+  construction. `TransactionBatchResult` enforces
+  `results.size == input.size` and `results[i].index == i`. Partial
+  failures survive: one failed slot does not collapse the batch.
+  Enforced by three `MwaCompatResultsTest` cases: the size/index/XOR
+  invariant test, the partial-failure ordering test, and the
+  `signatures()` helper test.
 - [x] **Seed Vault contract split finished.**
   `SeedVaultManager` is a facade. Every RPC verb routes through
   `SeedVaultContractClient` and then through

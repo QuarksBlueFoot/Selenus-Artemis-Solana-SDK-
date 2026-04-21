@@ -317,17 +317,33 @@ internal class MwaAdapterOperations(
         transactions: Array<ByteArray>,
         params: TransactionParams?
     ): com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient.SignAndSendTransactionsResult {
+        // Go through the batch path and fold into the upstream shape.
+        // `toUpstreamSignaturesOrThrow` throws NotSubmittedException when
+        // any slot failed, which is exactly how upstream reports batch
+        // failure. Successful batches decode base58 sigs into the
+        // `Array<ByteArray>` upstream expects. Empty-signature slots can
+        // no longer leak a zero-byte blob into the array.
+        val batch = signAndSendTransactionsBatch(transactions, params)
+        val sigBytes = batch.toUpstreamSignaturesOrThrow()
+        return com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient
+            .SignAndSendTransactionsResult(sigBytes)
+    }
+
+    override suspend fun signAndSendTransactionsBatch(
+        transactions: Array<ByteArray>,
+        params: TransactionParams?
+    ): TransactionBatchResult {
         val options = com.selenus.artemis.wallet.SendTransactionOptions(
             skipPreflight = params?.skipPreflight ?: false,
             maxRetries = params?.maxRetries,
             minContextSlot = params?.minContextSlot?.toLong()
         )
-        val batchResult = adapter.signAndSendTransactions(transactions.toList(), options)
-        val sigBytes = batchResult.results.map {
-            com.selenus.artemis.runtime.Base58.decode(it.signature)
-        }.toTypedArray()
-        return com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient
-            .SignAndSendTransactionsResult(sigBytes)
+        // The Artemis adapter's BatchSendResult carries per-slot success,
+        // failure, and signed-but-not-broadcast states with order preserved.
+        // The converter maps those states 1:1 to per-slot
+        // TransactionItemResults with the XOR invariant intact.
+        return adapter.signAndSendTransactions(transactions.toList(), options)
+            .toTransactionBatchResult()
     }
 
     override suspend fun signMessages(

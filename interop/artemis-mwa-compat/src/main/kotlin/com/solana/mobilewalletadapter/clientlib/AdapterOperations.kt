@@ -54,6 +54,31 @@ interface AdapterOperations {
         params: TransactionParams? = null
     ): com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterClient.SignAndSendTransactionsResult
 
+    /**
+     * Sign-and-send that returns a per-transaction [TransactionBatchResult]
+     * instead of the upstream `Array<ByteArray>`. Every input slot gets a
+     * corresponding output slot with its own signature or error; partial
+     * failure in the batch does not collapse the successful slots.
+     *
+     * Default implementation wraps [signAndSendTransactions] and assumes
+     * success-for-all (because the upstream API has no per-slot failure
+     * channel). Real implementations override to surface per-slot status
+     * observed from the wallet.
+     */
+    suspend fun signAndSendTransactionsBatch(
+        transactions: Array<ByteArray>,
+        params: TransactionParams? = null
+    ): TransactionBatchResult {
+        val upstream = signAndSendTransactions(transactions, params)
+        return TransactionBatchResult.of(
+            inputSize = transactions.size,
+            signatures = upstream.signatures.map {
+                com.selenus.artemis.runtime.Base58.encode(it)
+            },
+            errors = List(transactions.size) { null }
+        )
+    }
+
     suspend fun signMessages(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>

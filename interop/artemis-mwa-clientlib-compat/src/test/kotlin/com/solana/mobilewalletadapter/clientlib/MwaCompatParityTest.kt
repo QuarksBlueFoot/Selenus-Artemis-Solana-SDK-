@@ -7,6 +7,8 @@ import com.solana.mobilewalletadapter.clientlib.protocol.MobileWalletAdapterSess
 import com.solana.mobilewalletadapter.clientlib.scenario.LocalAssociationIntentCreator
 import com.solana.mobilewalletadapter.clientlib.scenario.LocalAssociationScenario
 import com.solana.mobilewalletadapter.clientlib.scenario.Scenario
+import com.solana.mobilewalletadapter.clientlib.scenario.SecureTransport
+import com.solana.mobilewalletadapter.clientlib.scenario.SessionEngine
 import com.solana.mobilewalletadapter.common.AssociationContract
 import io.mockk.every
 import io.mockk.mockk
@@ -16,6 +18,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -492,6 +495,90 @@ class MwaCompatParityTest {
         client.deauthorize("token").get(1, java.util.concurrent.TimeUnit.SECONDS)
     }
 
+    // Ownership-inversion tests. The checklist's three architectural
+    // blockers (Scenario owning keypair / transport / client) were only
+    // closeable by making all three injectable. These tests prove the
+    // injection path actually works end to end.
+
+    /**
+     * Scenario reads identity from the injected [SessionEngine], not
+     * from its own crypto. Two scenarios sharing the same engine expose
+     * the same association public key; two scenarios with distinct
+     * engines expose distinct keys.
+     */
+    @Test
+    fun `SessionEngine drives identity across scenarios`() {
+        val engine = RecordingSessionEngine()
+        val a = LocalAssociationScenario(sessionEngine = engine)
+        val b = LocalAssociationScenario(sessionEngine = engine)
+        assertTrue(
+            "shared engine => shared association key",
+            a.associationPublicKey.contentEquals(b.associationPublicKey)
+        )
+
+        val c = LocalAssociationScenario(sessionEngine = RecordingSessionEngine())
+        assertFalse(
+            "distinct engines => distinct association keys",
+            a.associationPublicKey.contentEquals(c.associationPublicKey)
+        )
+    }
+
+    /**
+     * Scenario uses the injected [SecureTransport]; Scenario.start
+     * reserves the port through the transport, not a raw ServerSocket.
+     * A fake transport records calls and exposes a fixed port for the
+     * test to assert on.
+     */
+    @Test
+    fun `Scenario reserves port via injected transport`() {
+        val transport = FakeSecureTransport(fixedPort = 54_321)
+        val scenario = LocalAssociationScenario(transport = transport)
+        assertEquals(0, scenario.getPort())
+        scenario.start()
+        assertEquals(1, transport.reserveCalls)
+        assertEquals(54_321, scenario.getPort())
+        scenario.close()
+        assertEquals(1, transport.closeCalls)
+        assertEquals(0, scenario.getPort())
+    }
+
+    /**
+     * Scenario uses the injected [MobileWalletAdapterClient]; two
+     * scenarios that share a client see the same bridge state.
+     */
+    @Test
+    fun `Scenario uses injected MobileWalletAdapterClient`() {
+        val sharedClient = MobileWalletAdapterClient(clientTimeoutMs = 100)
+        val a = LocalAssociationScenario(mobileWalletAdapterClient = sharedClient)
+        val b = LocalAssociationScenario(mobileWalletAdapterClient = sharedClient)
+        assertSame(sharedClient, a.getMobileWalletAdapterClient())
+        assertSame(sharedClient, b.getMobileWalletAdapterClient())
+    }
+
+    /**
+     * Gotcha 4 in the checklist: reconnect must not regenerate the
+     * association key. Start / close / start on the same scenario keeps
+     * the same engine, and the engine keeps returning the same bytes.
+     */
+    @Test
+    fun `reconnect keeps association identity stable`() {
+        val scenario = LocalAssociationScenario()
+        scenario.start()
+        val first = scenario.associationPublicKey.copyOf()
+        scenario.close()
+        scenario.start()
+        val second = scenario.associationPublicKey
+        assertTrue(
+            "association key stable across start/close/start",
+            first.contentEquals(second)
+        )
+        scenario.close()
+    }
+
+    // AuthorizationResult equality + TransactionBatchResult invariants are
+    // exercised by tests in :artemis-mwa-compat (where those types live).
+    // See MwaCompatResultsTest.
+
     private fun nativeToCompat(
         native: com.selenus.artemis.wallet.mwa.protocol.MwaAuthorizeResult
     ): MobileWalletAdapterClient.AuthorizationResult {
@@ -629,5 +716,57 @@ private class RecordingBridge(
                 signAndSendResult.map { it.toByteArray() }.toTypedArray()
             )
         )
+    }
+}
+
+/**
+ * In-memory [SessionEngine] that produces a fixed, distinct keypair per
+ * instance. Scenario consumes identity from here instead of generating
+ * its own, which is how the injection story is validated.
+ */
+private class RecordingSessionEngine : SessionEngine {
+    private val identity: SessionEngine.AssociationIdentity = run {
+        val kpg = java.security.KeyPairGenerator.getInstance("EC")
+        kpg.initialize(java.security.spec.ECGenParameterSpec("secp256r1"))
+        val kp = kpg.generateKeyPair()
+        val pk = kp.public as java.security.interfaces.ECPublicKey
+        val w = pk.w
+        fun pad(b: java.math.BigInteger): ByteArray {
+            val raw = b.toByteArray()
+            return when {
+                raw.size == 32 -> raw
+                raw.size == 33 && raw[0] == 0.toByte() -> raw.copyOfRange(1, 33)
+                else -> ByteArray(32).also { out -> raw.copyInto(out, 32 - raw.size) }
+            }
+        }
+        val encoded = ByteArray(65).also {
+            it[0] = 0x04
+            pad(w.affineX).copyInto(it, 1)
+            pad(w.affineY).copyInto(it, 33)
+        }
+        SessionEngine.AssociationIdentity(kp, encoded)
+    }
+    override fun currentAssociation(): SessionEngine.AssociationIdentity = identity
+    override fun close() = Unit
+}
+
+/**
+ * Fake [SecureTransport] that returns a caller-chosen port and counts
+ * reserve / close calls so tests can assert the scenario actually
+ * delegates rather than managing a socket itself.
+ */
+private class FakeSecureTransport(private val fixedPort: Int) : SecureTransport {
+    var reserveCalls = 0
+    var closeCalls = 0
+    @Volatile private var _port = 0
+    override val port: Int get() = _port
+    override fun reservePort(): Int {
+        reserveCalls++
+        _port = fixedPort
+        return fixedPort
+    }
+    override fun close() {
+        closeCalls++
+        _port = 0
     }
 }

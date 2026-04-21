@@ -20,6 +20,15 @@ android {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
+
+    testOptions {
+        unitTests {
+            // `android.net.Uri` resolves to the JVM stub on the unit-test
+            // classpath; returning default values lets the AuthorizationResult
+            // / TransactionResult invariants compile without Robolectric.
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {
@@ -34,4 +43,7 @@ dependencies {
     api(project(":artemis-mwa-clientlib-compat"))
     implementation(libs.androidx.activity.ktx)
     implementation(libs.kotlinx.coroutines.android)
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.mockk)
 }

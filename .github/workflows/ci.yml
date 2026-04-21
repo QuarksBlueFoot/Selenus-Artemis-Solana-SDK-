@@ -145,7 +145,10 @@ jobs:
       - name: Install Android platforms
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
       - name: Compat runtime parity tests
-        run: ./gradlew --no-daemon :artemis-mwa-clientlib-compat:testDebugUnitTest
+        run: |
+          ./gradlew --no-daemon \
+            :artemis-mwa-clientlib-compat:testDebugUnitTest \
+            :artemis-mwa-compat:testDebugUnitTest
       - name: Upload compat parity report on failure
         if: failure()
         uses: actions/upload-artifact@v4

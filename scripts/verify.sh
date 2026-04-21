@@ -19,6 +19,11 @@ echo "==> unit tests (foundation + wallet + MWA + Seed Vault)"
 echo "==> MWA walletlib 2.0 behavior gate"
 ./gradlew --no-daemon :artemis-wallet-mwa-android:testDebugUnitTest --tests '*BehaviorTest*'
 
+echo "==> compat parity gate (ktx + non-ktx)"
+./gradlew --no-daemon \
+    :artemis-mwa-clientlib-compat:testDebugUnitTest \
+    :artemis-mwa-compat:testDebugUnitTest
+
 echo "==> dependency ring enforcement"
 ./gradlew --no-daemon checkDependencyRings
 

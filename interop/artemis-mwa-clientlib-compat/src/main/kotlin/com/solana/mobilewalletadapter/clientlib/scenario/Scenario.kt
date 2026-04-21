@@ -48,42 +48,65 @@ internal class ArtemisNotifyingFuture<T>(
  * - optional nullable `Callbacks mCallbacks`
  * - abstract `void start()` / `void close()`
  * - nested `Callbacks` interface
+ *
+ * Internal ownership inversion: Scenario no longer generates its own
+ * keypair, nor does it instantiate the protocol client inline. Both
+ * arrive through [SessionEngine] and an injected [MobileWalletAdapterClient],
+ * with sensible defaults so existing Java subclasses that do
+ * `super(clientTimeoutMs)` keep working. The public field shape
+ * (`associationKeyPair`, `associationPublicKey`, `mMobileWalletAdapterClient`)
+ * is preserved exactly so drop-in dapps do not see an API change.
  */
-abstract class Scenario protected constructor(
+abstract class Scenario
+@JvmOverloads
+protected constructor(
     clientTimeoutMs: Int,
     @JvmField protected val mCallbacks: Callbacks? = null,
-    associationKeyPair: java.security.KeyPair = MwaAssociationKeys.generateKeyPair()
+    sessionEngine: SessionEngine = DefaultSessionEngine(),
+    mobileWalletAdapterClient: MobileWalletAdapterClient = MobileWalletAdapterClient(clientTimeoutMs)
 ) {
 
     /**
-     * Ephemeral P-256 keypair used for the association handshake. The public
-     * portion (SEC1 uncompressed encoding, 65 bytes) is what the dapp puts
-     * in the `association` URI parameter; the wallet uses it to derive the
-     * shared AES-128-GCM session key per the MWA spec.
-     *
-     * Generation is delegated to [MwaAssociationKeys]. Scenario does not
-     * implement the crypto itself; it holds the material so the upstream
-     * public field shape (`Scenario.associationKeyPair`) continues to
-     * resolve for dapps migrating from the official clientlib.
+     * Owner of the association identity. Scenario reads identity from
+     * this engine but never mutates or generates it. Subclasses that
+     * want to share an identity across a reconnect cycle keep the same
+     * engine alive; callers who want a fresh identity create a new
+     * Scenario with a new engine.
      */
-    val associationKeyPair: java.security.KeyPair = associationKeyPair
-
-    /** SEC1 uncompressed encoding of the P-256 public point (65 bytes). */
-    @JvmField
-    val associationPublicKey: ByteArray = MwaAssociationKeys.encodedPublicKey(associationKeyPair)
+    protected val sessionEngine: SessionEngine = sessionEngine
 
     /**
-     * Low-level MWA protocol client used during this scenario's lifetime.
+     * Ephemeral P-256 keypair used for the association handshake. The
+     * public portion (SEC1 uncompressed, 65 bytes) is what the dapp
+     * puts in the association URI parameter; the wallet uses it to
+     * derive the shared AES-128-GCM session key per the MWA spec.
      *
-     * The upstream clientlib treats the client as Scenario-owned; the
-     * non-ktx API surface depends on that relationship (dapps reach into
-     * `scenario.getMobileWalletAdapterClient()` to install a bridge or
-     * read nested result types). We mirror that ownership exactly rather
-     * than invent a parallel shape.
+     * Owned by [sessionEngine]; Scenario exposes the upstream field
+     * shape (`Scenario.associationKeyPair`) for dapps migrating from the
+     * official clientlib.
+     */
+    val associationKeyPair: java.security.KeyPair
+        get() = sessionEngine.currentAssociation().keyPair
+
+    /**
+     * SEC1 uncompressed encoding of the P-256 public point (65 bytes).
+     * `@JvmField` so Java source callers see a public final byte[]
+     * field exactly like upstream. The value is captured once at
+     * construction from the engine; reconnects that reuse the same
+     * engine see the same bytes.
      */
     @JvmField
-    protected val mMobileWalletAdapterClient: MobileWalletAdapterClient =
-        MobileWalletAdapterClient(clientTimeoutMs)
+    val associationPublicKey: ByteArray = sessionEngine.currentAssociation().publicKey
+
+    /**
+     * Low-level MWA protocol client used during this scenario's
+     * lifetime. Injectable so tests can swap in a recording client and
+     * so a caller that wants a shared client across multiple scenarios
+     * can pass one in. The default keeps upstream behavior: one
+     * scenario, one client.
+     */
+    @JvmField
+    protected val mMobileWalletAdapterClient: MobileWalletAdapterClient = mobileWalletAdapterClient
 
     /**
      * Public accessor for the underlying [MobileWalletAdapterClient]. Needed
@@ -136,77 +159,50 @@ abstract class Scenario protected constructor(
 }
 
 /**
- * Association-key primitives. Extracted from [Scenario] so the scenario
- * class carries no crypto logic of its own: it holds material produced
- * here, nothing more. Kept internal because the public surface consumers
- * see is `Scenario.associationKeyPair` / `associationPublicKey`, not
- * these helpers.
+ * Local (same-device) association scenario.
+ *
+ * Transport and identity both arrive through injection. The defaults
+ * preserve upstream behavior exactly: a fresh [DefaultSessionEngine]
+ * per scenario, a fresh [LocalSocketTransport] that binds an ephemeral
+ * loopback port, and a fresh [MobileWalletAdapterClient] wired to the
+ * caller-supplied timeout. Tests drop in fake transport and engine
+ * implementations to drive the full lifecycle without a real socket or
+ * a real keypair.
  */
-internal object MwaAssociationKeys {
+open class LocalAssociationScenario
+@JvmOverloads constructor(
+    private val clientTimeoutMs: Int = Scenario.DEFAULT_CLIENT_TIMEOUT_MS,
+    sessionEngine: SessionEngine = DefaultSessionEngine(),
+    private val transport: SecureTransport = LocalSocketTransport(),
+    mobileWalletAdapterClient: MobileWalletAdapterClient = MobileWalletAdapterClient(clientTimeoutMs)
+) : Scenario(
+    clientTimeoutMs = clientTimeoutMs,
+    mCallbacks = null,
+    sessionEngine = sessionEngine,
+    mobileWalletAdapterClient = mobileWalletAdapterClient
+) {
 
-    /** Fresh ephemeral P-256 keypair for an association handshake. */
-    fun generateKeyPair(): java.security.KeyPair {
-        val kpg = java.security.KeyPairGenerator.getInstance("EC")
-        kpg.initialize(java.security.spec.ECGenParameterSpec("secp256r1"))
-        return kpg.generateKeyPair()
-    }
-
-    /** SEC1 uncompressed encoding of [keyPair]'s public point (65 bytes). */
-    fun encodedPublicKey(keyPair: java.security.KeyPair): ByteArray {
-        val pk = keyPair.public as java.security.interfaces.ECPublicKey
-        val w = pk.w
-        fun pad(b: java.math.BigInteger): ByteArray {
-            val raw = b.toByteArray()
-            return when {
-                raw.size == 32 -> raw
-                raw.size == 33 && raw[0] == 0.toByte() -> raw.copyOfRange(1, 33)
-                else -> ByteArray(32).also { out -> raw.copyInto(out, 32 - raw.size) }
-            }
-        }
-        val x = pad(w.affineX)
-        val y = pad(w.affineY)
-        return ByteArray(65).also { buf ->
-            buf[0] = 0x04
-            x.copyInto(buf, 1)
-            y.copyInto(buf, 33)
-        }
-    }
-}
-
-/** Local (same-device) association scenario. */
-open class LocalAssociationScenario @JvmOverloads constructor(
-    private val clientTimeoutMs: Int = Scenario.DEFAULT_CLIENT_TIMEOUT_MS
-) : Scenario(clientTimeoutMs = clientTimeoutMs) {
-
-    @Volatile private var _port: Int = 0
-    @Volatile private var reservedSocket: java.net.ServerSocket? = null
-
-    /** Ephemeral TCP port chosen at association time. Range 0..65535. */
-    fun getPort(): Int = _port
+    /** Ephemeral TCP port reserved by [transport]. Range 0..65535. */
+    fun getPort(): Int = transport.port
 
     /**
-     * Allocate an ephemeral TCP port + mark the scenario ready. The real
-     * wallet connection is established by the ktx [MobileWalletAdapter]
-     * after the wallet honours the association URI; this scenario reserves
-     * the port so the URI emitted by [createAssociationUri] points at a
-     * socket nothing else on the device can steal.
+     * Reserve a port through [transport] and mark the scenario ready.
+     * The real wallet connection is established by the ktx
+     * [MobileWalletAdapter] after the wallet honours the association
+     * URI; Scenario's job is to promise the wallet a port nothing else
+     * on the device can snipe.
      */
     override fun start() {
-        if (reservedSocket != null) return
-        val ss = java.net.ServerSocket(0).apply {
-            reuseAddress = true
-        }
-        reservedSocket = ss
-        _port = ss.localPort
+        if (transport.port != 0) return
+        transport.reservePort()
         mCallbacks?.onScenarioReady()
     }
 
-    /** Releases the reserved port and clears the session bridge. */
+    /** Release the transport and clear the session bridge. */
     override fun close() {
         mMobileWalletAdapterClient.installBridge(null)
-        try { reservedSocket?.close() } catch (_: Exception) {}
-        reservedSocket = null
-        _port = 0
+        transport.close()
+        sessionEngine.close()
         mCallbacks?.onScenarioTeardownComplete()
     }
 
@@ -239,7 +235,7 @@ open class LocalAssociationScenario @JvmOverloads constructor(
      * cannot diverge on encoding.
      */
     fun createAssociationUri(endpointPrefix: Uri?): Uri =
-        createAssociationUri(endpointPrefix, _port)
+        createAssociationUri(endpointPrefix, transport.port)
 
     /** Raised by `start()` when the wallet cannot be reached. */
     class ConnectionFailedException : Exception {
