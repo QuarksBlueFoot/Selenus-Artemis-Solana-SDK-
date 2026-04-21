@@ -1,4 +1,4 @@
-# ADR 0001 — Engine architecture and layer rules
+# ADR 0001: Engine architecture and layer rules
 
 Status: Accepted  (2026-04-20)
 
@@ -122,9 +122,9 @@ Specifically:
 
 ## References
 
-- `docs/PARITY_MATRIX.md` — per-capability status map.
-- `docs/REPLACE_SOLANA_MOBILE_STACK.md` — both migration tracks.
-- `docs/DEPENDENCY_RULES.md` — ring hierarchy that prevents compat from
+- `docs/PARITY_MATRIX.md`: per-capability status map.
+- `docs/REPLACE_SOLANA_MOBILE_STACK.md`: both migration tracks.
+- `docs/DEPENDENCY_RULES.md`: ring hierarchy that prevents compat from
   depending on advanced modules.
 - MWA 2.0 migration notes (upstream): authorize-with-auth-token,
   deprecated reauthorize, mandatory sign-and-send for wallets.

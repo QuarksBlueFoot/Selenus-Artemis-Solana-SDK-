@@ -45,7 +45,7 @@ Mobile Wallet Adapter is Android only because it is part of the Solana Mobile St
 ## Installation
 
 \`\`\`bash
-npm install artemis-solana-sdk @solana/web3.js @solana/wallet-adapter-base buffer
+npm install @selenus/artemis-solana-sdk @solana/web3.js @solana/wallet-adapter-base buffer
 \`\`\`
 
 ### Android Setup

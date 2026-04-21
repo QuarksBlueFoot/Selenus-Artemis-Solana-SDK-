@@ -29,14 +29,14 @@ import java.util.concurrent.atomic.AtomicLong
  *
  * Coroutine-first entry point for the Solana Seed Vault. Owns the binder
  * lifecycle and exposes typed verbs. The typed surface is implemented by
- * [SeedVaultAccountProviderImpl] and [SeedVaultSigningProviderImpl] — the
- * manager is a facade that composes:
+ * [SeedVaultAccountProviderImpl] and [SeedVaultSigningProviderImpl]; the
+ * manager is a facade that composes them:
  *
- *   ServiceBinderContract  — raw IPC (this file, internal)
- *        ↓
- *   SeedVaultAccountProvider / SeedVaultSigningProvider  — typed IO, response validation
- *        ↓
- *   SeedVaultManager.getAccounts / signTransactions / signMessages / ... — public API
+ *   ServiceBinderContract: raw IPC (this file, internal)
+ *        v
+ *   SeedVaultAccountProvider / SeedVaultSigningProvider: typed IO, response validation
+ *        v
+ *   SeedVaultManager.getAccounts / signTransactions / signMessages / ... : public API
  *
  * Binder-death / disconnect semantics are deterministic: every in-flight
  * call is tracked; if the binder dies or the system service disconnects,
@@ -327,7 +327,7 @@ class SeedVaultManager(private val context: Context) {
         return keys ?: emptyList()
     }
 
-    // ─── Typed verbs — delegated to providers ─────────────────────────────
+    // Typed verbs, delegated to providers.
 
     suspend fun getAccounts(authToken: String): List<SeedVaultAccount> =
         accountProvider.getAccounts(authToken)

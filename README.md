@@ -356,6 +356,8 @@ A devnet test runner is at [run-devnet-tests.sh](run-devnet-tests.sh) and exerci
 | [docs/MODULE_MAP.md](docs/MODULE_MAP.md) | Every module with purpose and adoption context |
 | [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md) | Side-by-side feature comparison vs solana-kmp, sol4k, Solana Mobile SDK, Metaplex KMM |
 | [docs/REPLACE_SOLANA_MOBILE_STACK.md](docs/REPLACE_SOLANA_MOBILE_STACK.md) | Step-by-step migration from the official Solana Mobile Stack |
+| [docs/RELEASE_READINESS.md](docs/RELEASE_READINESS.md) | Release-label checklist and the CI gates that back each claim |
+| [docs/adr/0001-engine-architecture.md](docs/adr/0001-engine-architecture.md) | Engine / Provider / Adapter / Compat layering rules |
 | [docs/MOBILE_APP_GUIDE.md](docs/MOBILE_APP_GUIDE.md) | Android mobile app integration walkthrough |
 | [docs/DEPENDENCY_RULES.md](docs/DEPENDENCY_RULES.md) | What can depend on what, and why |
 | [docs/ADOPTION_BUNDLES.md](docs/ADOPTION_BUNDLES.md) | Recommended dependency sets per use case |

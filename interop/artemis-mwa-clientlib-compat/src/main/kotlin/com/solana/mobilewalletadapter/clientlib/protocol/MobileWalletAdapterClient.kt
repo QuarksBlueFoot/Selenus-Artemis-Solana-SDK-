@@ -245,8 +245,8 @@ open class MobileWalletAdapterClient(
         "MobileWalletAdapterClient.$method was called before a SessionBridge " +
         "was installed. Options:\n" +
         "  1. (recommended) use the ktx wrapper: " +
-        "com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter.transact { ... } — " +
-        "it installs a bridge automatically for the duration of the block.\n" +
+        "com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter.transact { ... }, " +
+        "which installs a bridge automatically for the duration of the block.\n" +
         "  2. install a bridge manually: " +
         "MwaSessionBridge.attach(scenario, Artemis.MwaWalletAdapter(...)) before invoking " +
         "client methods."
@@ -381,7 +381,7 @@ abstract class MobileWalletAdapterSessionCommon {
 /**
  * Concrete subclass used by the local association scenario.
  *
- * Each instance owns an ephemeral P-256 keypair — the same key material
+ * Each instance owns an ephemeral P-256 keypair, the same key material
  * used by [com.solana.mobilewalletadapter.clientlib.scenario.Scenario] to
  * build the `association` URI. Earlier revisions threw on
  * [getAssociationPublicKey] and returned an empty array from

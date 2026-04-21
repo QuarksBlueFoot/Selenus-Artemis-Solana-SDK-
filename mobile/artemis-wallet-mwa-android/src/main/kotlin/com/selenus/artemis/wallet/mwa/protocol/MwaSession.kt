@@ -117,7 +117,7 @@ class MwaSession internal constructor(
     /**
      * Test-only factory that returns a session backed by an in-memory
      * transport and a throwaway AES-128-GCM key. The returned session will
-     * throw on any send/receive attempt — it exists only so behavior tests
+     * throw on any send/receive attempt. It exists only so behavior tests
      * can pass an opaque token through a stubbed [MwaClient] without
      * standing up a real association socket. Never call this from
      * production code paths.

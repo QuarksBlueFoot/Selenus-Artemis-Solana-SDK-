@@ -45,7 +45,7 @@ sealed class SeedVaultException(message: String) : Exception(message) {
     class InvalidRequest(message: String) : SeedVaultException(message)
     class InternalError(message: String) : SeedVaultException(message)
     /**
-     * The Seed Vault system service is not reachable — either the binder
+     * The Seed Vault system service is not reachable. Either the binder
      * died mid-call, the service disconnected before responding, or the
      * app was never able to bind to it. Raised immediately for every
      * in-flight call so callers never hang waiting on a dead service.

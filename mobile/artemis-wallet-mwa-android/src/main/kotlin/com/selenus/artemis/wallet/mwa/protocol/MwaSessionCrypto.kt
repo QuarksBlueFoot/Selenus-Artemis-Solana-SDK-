@@ -1,7 +1,7 @@
 /*
  * Transport-layer crypto for the MWA session handshake.
  *
- * Everything here is session/transport concern — Diffie-Hellman shared
+ * Everything here is session/transport concern: Diffie-Hellman shared
  * secrets for peer-to-peer handshakes, HKDF-SHA256 expansion, and the
  * matching keypair generation. These primitives previously lived under
  * the `seedvault` package, which muddled two distinct responsibilities:
@@ -12,8 +12,8 @@
  *     an ephemeral symmetric key so they can talk privately over an
  *     otherwise-public channel.
  *
- * The official Solana Mobile docs keep the two layers cleanly separated
- * — we mirror that split so nothing in the Seed Vault module depends on
+ * The official Solana Mobile docs keep the two layers separated. Artemis
+ * mirrors that split so nothing in the Seed Vault module depends on
  * transport-style DH primitives.
  */
 package com.selenus.artemis.wallet.mwa.protocol
@@ -29,7 +29,7 @@ import javax.crypto.spec.SecretKeySpec
 
 /**
  * Session-level crypto helpers used by the MWA handshake and other
- * endpoint-to-endpoint transports. Pure crypto primitives — no
+ * endpoint-to-endpoint transports. Pure crypto primitives with no
  * dependency on Activity, Keystore, Binder, or any Android runtime
  * machinery, so the code is testable on the plain JVM and reusable by
  * non-MWA transports (custom pairing flows, sidechannel-hardened RPC).
@@ -48,7 +48,7 @@ object MwaSessionCrypto {
      *
      * Both peers run this with their own private scalar and the peer's
      * public point; they land on the same 32-byte session key. The raw
-     * DH output is biased and is never handed to an AEAD directly — the
+     * DH output is biased and is never handed to an AEAD directly. The
      * HKDF extract-and-expand step with an Artemis domain-separated salt
      * guarantees that two pairs running with the same DH secret but
      * different contexts end up with different session keys.

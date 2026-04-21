@@ -1,7 +1,7 @@
 {
   "name": "@selenus/artemis-solana-sdk",
-  "version": "2.1.0",
-  "description": "Artemis Solana SDK for React Native - The most comprehensive Kotlin/Android Solana SDK. Features: Anchor, Jupiter, Jito, Actions/Blinks, NLP Transactions, Zero-Copy Streaming, and more.",
+  "version": "2.2.0",
+  "description": "Artemis Solana SDK bindings for React Native: Mobile Wallet Adapter 2.0, Seed Vault, RPC, realtime subscriptions, transactions, NFT/DAS, Token-2022, Jupiter, Anchor, and Solana Actions from one package.",
   "main": "index.js",
   "types": "index.d.ts",
   "repository": {
@@ -36,7 +36,8 @@
     "ios",
     "sdk",
     "mobile-wallet-adapter",
-    "base58",
+    "mwa",
+    "seed-vault",
     "kotlin",
     "swift",
     "anchor",
@@ -44,8 +45,11 @@
     "jito",
     "actions",
     "blinks",
-    "defi",
-    "mev-protection",
+    "solana-pay",
+    "token-2022",
+    "metaplex",
+    "compressed-nft",
+    "das",
     "priority-fees"
   ],
   "author": "Bluefoot Labs <contact@bluefootlabs.com>",

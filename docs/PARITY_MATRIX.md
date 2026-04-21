@@ -4,19 +4,19 @@ Feature-by-feature honest status of Artemis against the Kotlin/Android Solana SD
 
 ## Legend
 
-- **Verified** — implementation shipped and exercised by a test that would fail if the feature broke.
-- **In Progress** — implementation shipped, more work scheduled; treat as a preview surface.
-- **Partial** — feature works for the documented happy path; known edge cases or upstream behaviours are not covered yet.
-- **Experimental** — surface exists; behaviour may shift before 1.0 of that module.
-- **Planned** — on the roadmap, no code yet.
-- **N/A** — not applicable to that SDK.
+- **Verified**: implementation shipped and exercised by a test that would fail if the feature broke.
+- **In Progress**: implementation shipped, more work scheduled; treat as a preview surface.
+- **Partial**: feature works for the documented happy path; known edge cases or upstream behaviours are not covered yet.
+- **Experimental**: surface exists; behaviour may shift before 1.0 of that module.
+- **Planned**: on the roadmap, no code yet.
+- **N/A**: not applicable to that SDK.
 
 ## Release labels
 
 Two orthogonal labels appear throughout the docs:
 
-- `Artemis-native ready` — safe to adopt using Artemis APIs directly (`ArtemisMobile.create()`, `WalletSession`, `TxEngine`, `RpcApi`). Everything `Verified` here qualifies.
-- `SMS-drop-in ready` — safe to use the `interop/artemis-*-compat` shims as a drop-in replacement for the official Solana Mobile clientlib/walletlib/seedvault imports. Requires both the native path and the compat parity tests to pass. Today this label applies to `Verified` items in the Wallet/Mobile and RPC rows below; the rest is `Partial` or `In Progress`.
+- `Artemis-native ready`: safe to adopt using Artemis APIs directly (`ArtemisMobile.create()`, `WalletSession`, `TxEngine`, `RpcApi`). Everything `Verified` here qualifies.
+- `SMS-drop-in ready`: safe to use the `interop/artemis-*-compat` shims as a drop-in replacement for the official Solana Mobile clientlib/walletlib/seedvault imports. Requires both the native path and the compat parity tests to pass. Today this label applies to `Verified` items in the Wallet/Mobile and RPC rows below; the rest is `Partial` or `In Progress`.
 
 ## Core primitives
 

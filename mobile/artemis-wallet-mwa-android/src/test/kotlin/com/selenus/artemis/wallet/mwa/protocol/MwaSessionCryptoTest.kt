@@ -9,7 +9,7 @@ import org.junit.Test
  * X25519 ECDH conformance for the MWA session transport layer.
  *
  * Previously lived under the Seed Vault module, which muddled the
- * custody/transport boundary. These tests belong here — the code under
+ * custody/transport boundary. These tests belong here because the code under
  * test [MwaSessionCrypto] is a transport primitive, not a custody one.
  */
 class MwaSessionCryptoTest {

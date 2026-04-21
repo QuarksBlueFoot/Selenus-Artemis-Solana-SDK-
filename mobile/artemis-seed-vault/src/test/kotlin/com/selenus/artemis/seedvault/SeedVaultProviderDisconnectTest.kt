@@ -13,8 +13,8 @@ import org.junit.jupiter.api.assertThrows
  * [SeedVaultManager] tracks every in-flight IPC and fails them with
  * [SeedVaultException.ServiceUnavailable] when the binder dies or the
  * system service disconnects. Driving a real binder from a JVM unit test
- * is not practical — those paths are exercised by instrumented tests on
- * a device — but we can still prove the error vocabulary end-to-end by:
+ * is not practical (those paths are exercised by instrumented tests on a
+ * device), but we can still prove the error vocabulary end-to-end by:
  *
  *   - pushing a ServiceUnavailable out of a fake [SeedVaultContractClient]
  *   - running it through both providers (account + signing)

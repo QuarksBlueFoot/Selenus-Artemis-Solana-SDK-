@@ -2,11 +2,11 @@
  * Copyright (c) 2024-2025 Selenus Technologies. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Offline Transaction Queue - Main Queue Implementation
+ * Offline Transaction Queue.
  *
- * This is a first-of-its-kind feature in Solana SDKs. No competitor
- * (solana-kmp, Sol4k, Solana Mobile) offers offline transaction queueing
- * with automatic retry and durable nonce support.
+ * Prepares transactions while offline, durable-nonce-backed, and submits
+ * them when connectivity returns. solana-kmp, Sol4k, and the Solana Mobile
+ * Stack do not ship an equivalent offline queue today.
  */
 
 @file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)

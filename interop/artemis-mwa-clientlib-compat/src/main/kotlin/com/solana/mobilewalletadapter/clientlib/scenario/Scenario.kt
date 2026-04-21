@@ -248,7 +248,7 @@ object LocalAssociationIntentCreator {
         port: Int,
         scenario: Scenario
     ): Intent {
-        // Every association URI — primary or fallback — must use the same
+        // Every association URI, primary or fallback, must use the same
         // base64url-without-padding encoding for the association token that
         // the MWA spec mandates. Earlier revisions let a non-
         // LocalAssociationScenario subclass fall back to Base58, which

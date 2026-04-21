@@ -116,7 +116,7 @@ The test will output detailed results for each module:
 - **Cryptographic Primitives** - All crypto operations work correctly
 - **Data Structures** - Serialization and deserialization
 - **Instruction Building** - Transaction construction
-- **Integration** - Modules work together seamlessly
+- **Integration** - Modules compose end to end
 - ⚠️ **Note**: Does not submit to blockchain (saves devnet SOL)
 
 ## Real Blockchain Testing

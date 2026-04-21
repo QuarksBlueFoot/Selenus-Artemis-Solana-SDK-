@@ -17,7 +17,7 @@ There are two honest ways to adopt Artemis. Pick one up front.
 
 - Keep your existing `com.solanamobile.*` / `org.sol4k.*` / `com.solana.*` imports. Swap the Maven coordinates to the Artemis compat artifacts under `interop/artemis-*-compat`.
 - Artemis matches the upstream public API so the surface-level imports compile unchanged. Behaviour is backed by Artemis engines under the hood.
-- Today this track is `Verified` for the MWA client (ktx + non-ktx), the Seed Vault static surface, and the compat typed results. Other compat modules are `Partial` — see PARITY_MATRIX.md.
+- Today this track is `Verified` for the MWA client (ktx + non-ktx), the Seed Vault static surface, and the compat typed results. Other compat modules are `Partial`. See PARITY_MATRIX.md.
 - Best for: large apps that do NOT want to update call sites, or apps that depend on a specific upstream class shape that Artemis may not expose as a native type.
 
 The rest of this document shows both forms where they differ.

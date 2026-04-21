@@ -2,10 +2,11 @@
  * Copyright (c) 2024-2025 Selenus Technologies. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Predictive Transaction Scheduler - Main Implementation
+ * Predictive Transaction Scheduler.
  *
- * This is a first-of-its-kind feature in Solana SDKs. No competitor
- * (solana-kmp, Sol4k, Solana Mobile) offers predictive scheduling.
+ * Picks a submission slot based on recent block production and fee
+ * pressure. Not present in solana-kmp, Sol4k, or the Solana Mobile Stack
+ * at the time of writing.
  */
 
 package com.selenus.artemis.scheduler

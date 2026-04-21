@@ -2,10 +2,11 @@
  * Copyright (c) 2024-2025 Selenus Technologies. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Intelligent Batching Engine - Main Implementation
+ * Transaction batching engine.
  *
- * This is a first-of-its-kind feature in Solana SDKs. No competitor
- * (solana-kmp, Sol4k, Solana Mobile) offers automatic transaction batching.
+ * Groups multiple instructions into compute-budget-optimized transactions
+ * automatically. solana-kmp, Sol4k, and the Solana Mobile Stack leave this
+ * to the caller today.
  */
 
 package com.selenus.artemis.batch

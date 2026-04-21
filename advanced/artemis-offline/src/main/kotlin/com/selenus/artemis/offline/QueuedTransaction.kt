@@ -2,10 +2,10 @@
  * Copyright (c) 2024-2025 Selenus Technologies. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Offline Transaction Queue - Transaction Model
+ * Offline Transaction Queue: transaction row model.
  *
- * This module enables preparing transactions while offline and submitting
- * them when connectivity is restored. First-of-its-kind in Solana SDKs.
+ * Represents a transaction prepared while offline, persisted, and
+ * awaiting submission once connectivity is back.
  */
 
 package com.selenus.artemis.offline

@@ -2,10 +2,9 @@
  * Copyright (c) 2024-2025 Selenus Technologies. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Intelligent Batching Engine - Batch Types
+ * Transaction batching engine: row types.
  *
- * This module automatically combines multiple operations into optimized
- * transactions. First-of-its-kind in Solana SDKs.
+ * Small data classes consumed by [TransactionBatchEngine].
  */
 
 package com.selenus.artemis.batch

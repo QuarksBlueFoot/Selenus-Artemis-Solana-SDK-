@@ -32,8 +32,8 @@ import java.security.spec.ECGenParameterSpec
  * Behavior conformance for the Artemis MWA 2.0 adapter.
  *
  * These tests drive [MwaWalletAdapter] through every walletlib-2.0-sensitive
- * verb — authorize variants, capability negotiation, signAndSendTransactions,
- * sign-only fallback, clone_authorization, reauthorize, session teardown — by
+ * verb (authorize variants, capability negotiation, signAndSendTransactions,
+ * sign-only fallback, clone_authorization, reauthorize, session teardown) by
  * installing a [RecordingMwaClient] that captures requests and returns
  * scripted responses. They complement the primitive crypto tests
  * ([HkdfVectorsTest], [EcP256Test], [Aes128GcmTest]) by asserting on the

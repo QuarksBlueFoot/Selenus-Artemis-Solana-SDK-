@@ -2,10 +2,11 @@
  * Copyright (c) 2024-2025 Selenus Technologies. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Real-Time Portfolio Sync - Main Tracker Implementation
+ * Real-time portfolio tracker.
  *
- * This is a first-of-its-kind feature in Solana SDKs. No competitor
- * (solana-kmp, Sol4k, Solana Mobile) offers real-time portfolio tracking.
+ * Subscribes to account changes for a wallet's token accounts and
+ * publishes balance deltas over a Flow. solana-kmp, Sol4k, and the
+ * Solana Mobile Stack do not expose a comparable tracker today.
  */
 
 @file:OptIn(kotlinx.coroutines.FlowPreview::class)

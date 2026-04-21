@@ -2,10 +2,10 @@
  * Copyright (c) 2024-2025 Selenus Technologies. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Predictive Transaction Scheduler - Network Metrics
+ * Predictive Transaction Scheduler - Network Metrics.
  *
- * This module analyzes network conditions to suggest optimal transaction
- * submission times. First-of-its-kind in Solana SDKs.
+ * Analyzes recent block production and fee-market pressure to suggest
+ * submission windows. Feeds [TransactionScheduler].
  */
 
 package com.selenus.artemis.scheduler

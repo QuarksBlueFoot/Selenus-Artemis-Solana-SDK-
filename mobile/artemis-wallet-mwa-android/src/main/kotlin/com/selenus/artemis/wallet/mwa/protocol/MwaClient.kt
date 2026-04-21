@@ -17,7 +17,7 @@ import java.security.KeyPair
  * The class is `open` and every suspend verb is `open` so behavior tests can
  * substitute a fake that returns canned responses without standing up a real
  * WebSocket server or driving an Activity. Production code keeps using the
- * default implementation — the openness is purely a testability affordance
+ * default implementation. The openness is purely a testability affordance
  * and does not change any existing call-site semantics.
  */
 open class MwaClient(

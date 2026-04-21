@@ -32,7 +32,7 @@ import org.junit.Test
  *    65-byte uncompressed EC point instead of throwing (P1.7).
  *  - Core client methods (`authorize`, `signAndSendTransactions`, ...)
  *    throw a typed `SessionNotReadyException` with remediation text when
- *    invoked without a bridge — no more opaque `UnsupportedOperationException`
+ *    invoked without a bridge; no more opaque `UnsupportedOperationException`
  *    from placeholder branches (P1.7).
  *  - `LocalAssociationScenario` generates an ephemeral P-256 keypair and
  *    exposes a valid 65-byte SEC1 uncompressed `associationPublicKey`.
@@ -81,7 +81,7 @@ class MwaCompatParityTest {
     }
 
     /**
-     * P1.7 parity — MobileWalletAdapterSession exposes a real P-256
+     * P1.7 parity:MobileWalletAdapterSession exposes a real P-256
      * association key. Previously this method threw
      * `UnsupportedOperationException`, which made the shim
      * indistinguishable from a broken placeholder.
@@ -100,7 +100,7 @@ class MwaCompatParityTest {
     }
 
     /**
-     * P1.7 parity — calling a core method without a bridge throws the
+     * P1.7 parity:calling a core method without a bridge throws the
      * typed [MobileWalletAdapterClient.SessionNotReadyException] rather
      * than `UnsupportedOperationException`. The typed variant names the
      * remedy (install a bridge or use the ktx wrapper) so callers aren't
@@ -144,7 +144,7 @@ class MwaCompatParityTest {
     }
 
     /**
-     * P1.6 parity — LocalAssociationScenario emits a base64url-no-padding
+     * P1.6 parity:LocalAssociationScenario emits a base64url-no-padding
      * association token. The old Base58 fallback is gone; both primary
      * and `createAssociationIntent` paths must agree byte-for-byte on the
      * encoding the spec requires.
@@ -156,13 +156,13 @@ class MwaCompatParityTest {
         assertEquals("SEC1 uncompressed point", 65, apk.size)
         assertEquals(0x04.toByte(), apk[0])
 
-        // EC public key material is not all zeros (sanity — catches the
+        // EC public key material is not all zeros (sanity check; catches the
         // old placeholder empty-array path).
         assertTrue(apk.any { it != 0.toByte() })
     }
 
     /**
-     * P1.6 parity — LocalAssociationScenario emits a base64url-no-padding
+     * P1.6 parity:LocalAssociationScenario emits a base64url-no-padding
      * association token. The old Base58 fallback is gone; the URI built
      * here must use the spec-conformant encoding.
      */
@@ -184,7 +184,7 @@ class MwaCompatParityTest {
     }
 
     /**
-     * P1.6 parity — the custom-Scenario-subclass fallback branch in
+     * P1.6 parity:the custom-Scenario-subclass fallback branch in
      * [LocalAssociationIntentCreator.createAssociationIntent] no longer
      * reaches for Base58. We can't introspect the returned Intent under
      * the stub `android.jar`, so instead we exercise the same private
@@ -346,7 +346,7 @@ private fun Scenario.mobileWalletAdapterClient(): MobileWalletAdapterClient =
 /**
  * Recording [MobileWalletAdapterClient.SessionBridge]. Replaces the real
  * [com.solana.mobilewalletadapter.clientlib.MwaSessionBridge] in compat
- * parity tests so we never need a live wallet — we just assert that the
+ * parity tests so we never need a live wallet. It just asserts that the
  * compat layer forwarded every argument verbatim.
  */
 private class RecordingBridge(
