@@ -309,6 +309,21 @@ tasks.register("checkDependencyRings") {
         // Exception: Compat (5) cannot depend on Advanced (4)
         // Exception: Interop (6) may depend on Foundation, Mobile, Ecosystem only
         // Exception: Testing (99) can depend on anything
+        //
+        // Explicit, narrow allowlist for deliberate bundler edges. Each entry
+        // is a `sub -> dep` pair that is permitted despite the default ring
+        // rules. The comment on every entry documents why.
+        val allowedEdges: Set<Pair<String, String>> = setOf(
+            // ArtemisMobile is the documented convenience entry point for
+            // apps that want a full mobile stack in one object: RPC, wallet,
+            // realtime, and NFT helpers. It lives in the MWA wallet module
+            // (ring Mobile) and bundles in :artemis-cnft (ring Ecosystem) so
+            // callers don't have to wire five modules by hand. Moving the
+            // bundler to its own module would be the purest fix; until that
+            // refactor, this edge is explicitly allowed.
+            "artemis-wallet-mwa-android" to "artemis-cnft"
+        )
+
         val violations = mutableListOf<String>()
 
         subprojects.forEach { sub ->
@@ -325,6 +340,7 @@ tasks.register("checkDependencyRings") {
                             if (depRing == -1) return@forEach
 
                             val forbidden = when {
+                                (sub.name to dep.dependencyProject.name) in allowedEdges -> false
                                 subRing == 5 && depRing == 4 -> true  // Compat cannot depend on Advanced
                                 subRing == 6 && depRing == 4 -> true  // Interop cannot depend on Advanced
                                 subRing == 6 && depRing == 5 -> true  // Interop cannot depend on Compat

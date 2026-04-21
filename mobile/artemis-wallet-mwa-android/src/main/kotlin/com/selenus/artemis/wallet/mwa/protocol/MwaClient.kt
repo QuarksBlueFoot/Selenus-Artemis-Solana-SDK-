@@ -11,11 +11,20 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonPrimitive
 import java.security.KeyPair
 
-class MwaClient(
+/**
+ * Transport-level MWA 2.0 RPC client.
+ *
+ * The class is `open` and every suspend verb is `open` so behavior tests can
+ * substitute a fake that returns canned responses without standing up a real
+ * WebSocket server or driving an Activity. Production code keeps using the
+ * default implementation — the openness is purely a testability affordance
+ * and does not change any existing call-site semantics.
+ */
+open class MwaClient(
   private val json: Json = Json { ignoreUnknownKeys = true }
 ) {
 
-  suspend fun openSession(
+  open suspend fun openSession(
     activity: Activity,
     walletUriPrefix: Uri? = null,
     protocolVersionMajor: Int = 2,
@@ -43,12 +52,12 @@ class MwaClient(
     return session to associationKeypair
   }
 
-  suspend fun getCapabilities(session: MwaSession, timeoutMs: Long = 10_000): MwaCapabilities {
+  open suspend fun getCapabilities(session: MwaSession, timeoutMs: Long = 10_000): MwaCapabilities {
     val rsp = withTimeout(timeoutMs) { session.sendJsonRpc("get_capabilities").await() }
     return parseResult(rsp)
   }
 
-  suspend fun authorize(
+  open suspend fun authorize(
     session: MwaSession,
     identity: MwaIdentity,
     chain: String? = null,
@@ -73,7 +82,7 @@ class MwaClient(
     return parseResult(rsp)
   }
 
-  suspend fun signTransactions(
+  open suspend fun signTransactions(
     session: MwaSession,
     payloads: List<ByteArray>,
     timeoutMs: Long = 60_000
@@ -86,7 +95,7 @@ class MwaClient(
     return result.signedPayloads.map { java.util.Base64.getDecoder().decode(it) }
   }
 
-  suspend fun signAndSend(
+  open suspend fun signAndSend(
     session: MwaSession,
     payloads: List<ByteArray>,
     options: MwaSendOptions? = null,
@@ -109,7 +118,7 @@ class MwaClient(
    * `authorize(auth_token=...)` first and falls back to the legacy method
    * if the wallet returns `method not found`.
    */
-  suspend fun reauthorize(
+  open suspend fun reauthorize(
     session: MwaSession,
     identity: MwaIdentity,
     authToken: String,
@@ -136,7 +145,7 @@ class MwaClient(
     return parseResult(rsp)
   }
 
-  suspend fun deauthorize(
+  open suspend fun deauthorize(
     session: MwaSession,
     authToken: String,
     timeoutMs: Long = 10_000
@@ -148,7 +157,7 @@ class MwaClient(
     withTimeout(timeoutMs) { session.sendJsonRpc("deauthorize", params).await() }
   }
 
-  suspend fun signMessages(
+  open suspend fun signMessages(
     session: MwaSession,
     payloads: List<ByteArray>,
     addresses: List<ByteArray>,
@@ -178,7 +187,7 @@ class MwaClient(
    * @return A new auth token with the same permissions
    * @throws IllegalStateException if wallet doesn't support clone_authorization
    */
-  suspend fun cloneAuthorization(
+  open suspend fun cloneAuthorization(
     session: MwaSession,
     @Suppress("UNUSED_PARAMETER") authToken: String,
     timeoutMs: Long = 10_000
@@ -205,7 +214,7 @@ class MwaClient(
    * @param addresses List of addresses (one per message, or one for all)
    * @return Pair of (original messages, signatures for each message)
    */
-  suspend fun signMessagesDetached(
+  open suspend fun signMessagesDetached(
     session: MwaSession,
     messages: List<ByteArray>,
     addresses: List<ByteArray>,

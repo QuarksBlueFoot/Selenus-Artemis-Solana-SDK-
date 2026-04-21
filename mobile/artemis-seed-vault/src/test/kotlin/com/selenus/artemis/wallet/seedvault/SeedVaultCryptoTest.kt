@@ -261,31 +261,10 @@ class SeedVaultCryptoTest {
         assertArrayEquals(shared1, shared2)
     }
 
-    @Test
-    fun `X25519 ECDH is symmetric`() {
-        // Real Diffie-Hellman: alice computes dh(aPriv, bPub), bob computes
-        // dh(bPriv, aPub); both must land on the same session key.
-        val (aPriv, aPub) = SeedVaultCrypto.generateX25519Keypair()
-        val (bPriv, bPub) = SeedVaultCrypto.generateX25519Keypair()
+    // X25519 ECDH tests live in `mobile/artemis-wallet-mwa-android/src/test/`:
+    // they exercise session/transport crypto, which was deliberately split
+    // out of this module so the Seed Vault module stays focused on custody.
 
-        val aliceKey = SeedVaultCrypto.deriveX25519SharedSecret(aPriv, bPub, context = "test")
-        val bobKey = SeedVaultCrypto.deriveX25519SharedSecret(bPriv, aPub, context = "test")
-
-        assertArrayEquals(aliceKey, bobKey)
-        assertEquals(32, aliceKey.size)
-    }
-
-    @Test
-    fun `X25519 ECDH context separation`() {
-        val (aPriv, aPub) = SeedVaultCrypto.generateX25519Keypair()
-        val (bPriv, bPub) = SeedVaultCrypto.generateX25519Keypair()
-
-        val keyA = SeedVaultCrypto.deriveX25519SharedSecret(aPriv, bPub, context = "ctx-a")
-        val keyB = SeedVaultCrypto.deriveX25519SharedSecret(aPriv, bPub, context = "ctx-b")
-
-        assertFalse(keyA.contentEquals(keyB))
-    }
-    
     // ═══════════════════════════════════════════════════════════════════════════
     // Edge Cases
     // ═══════════════════════════════════════════════════════════════════════════

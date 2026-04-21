@@ -44,6 +44,13 @@ sealed class SeedVaultException(message: String) : Exception(message) {
     class UserRejected(message: String) : SeedVaultException(message)
     class InvalidRequest(message: String) : SeedVaultException(message)
     class InternalError(message: String) : SeedVaultException(message)
+    /**
+     * The Seed Vault system service is not reachable — either the binder
+     * died mid-call, the service disconnected before responding, or the
+     * app was never able to bind to it. Raised immediately for every
+     * in-flight call so callers never hang waiting on a dead service.
+     */
+    class ServiceUnavailable(message: String) : SeedVaultException(message)
     class Unknown(message: String) : SeedVaultException(message)
 
     companion object {

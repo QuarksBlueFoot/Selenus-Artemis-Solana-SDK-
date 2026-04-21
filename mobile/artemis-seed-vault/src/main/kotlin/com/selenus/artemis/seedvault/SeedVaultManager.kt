@@ -10,10 +10,10 @@ import android.os.RemoteException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import com.selenus.artemis.runtime.Pubkey
-
 import com.selenus.artemis.seedvault.internal.SeedVaultConstants
 import com.selenus.artemis.seedvault.internal.SeedVaultConstants.ACTION_AUTHORIZE_SEED_ACCESS
 import com.selenus.artemis.seedvault.internal.SeedVaultConstants.ACTION_CREATE_SEED
@@ -21,40 +21,76 @@ import com.selenus.artemis.seedvault.internal.SeedVaultConstants.ACTION_IMPORT_S
 import com.selenus.artemis.seedvault.internal.SeedVaultConstants.SERVICE_PACKAGE
 import com.selenus.artemis.seedvault.internal.ipc.ISeedVaultService
 import com.selenus.artemis.seedvault.internal.ipc.ISeedVaultCallback
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * SeedVaultManager
  *
- * A modern, Coroutine-first client for the Solana Seed Vault.
- * Handles service binding, lifecycle, and IPC with the system service.
+ * Coroutine-first entry point for the Solana Seed Vault. Owns the binder
+ * lifecycle and exposes typed verbs. The typed surface is implemented by
+ * [SeedVaultAccountProviderImpl] and [SeedVaultSigningProviderImpl] — the
+ * manager is a facade that composes:
+ *
+ *   ServiceBinderContract  — raw IPC (this file, internal)
+ *        ↓
+ *   SeedVaultAccountProvider / SeedVaultSigningProvider  — typed IO, response validation
+ *        ↓
+ *   SeedVaultManager.getAccounts / signTransactions / signMessages / ... — public API
+ *
+ * Binder-death / disconnect semantics are deterministic: every in-flight
+ * call is tracked; if the binder dies or the system service disconnects,
+ * all pending continuations fail immediately with
+ * [SeedVaultException.ServiceUnavailable] instead of hanging until the
+ * per-call timeout.
  */
 class SeedVaultManager(private val context: Context) {
-    
+
     @Volatile private var serviceBinder: IBinder? = null
     @Volatile private var service: ISeedVaultService? = null
     @Volatile private var isBound = false
 
-    /**
-     * Continuations waiting for [onServiceConnected]. The previous
-     * implementation called [Context.bindService] asynchronously and
-     * returned immediately, so callers that hit an RPC method between
-     * `connect()` and the binder landing would race with a null service
-     * reference. The list + lock here makes `connectSuspending()` deterministic.
-     */
     private val pendingBindWaiters =
-        mutableListOf<kotlin.coroutines.Continuation<ISeedVaultService>>()
+        mutableListOf<Continuation<ISeedVaultService>>()
     private val bindLock = Any()
+
+    /**
+     * In-flight IPC calls. Keyed by a monotonically-increasing request id
+     * so binder death / disconnect can enumerate every outstanding
+     * continuation and fail it with a typed error. The map is populated
+     * inside [performActionInner] before the AIDL verb is dispatched and
+     * cleared by the [ISeedVaultCallback.Stub] on success or error.
+     */
+    private val pendingRequests = ConcurrentHashMap<Long, PendingRequest>()
+    private val nextRequestId = AtomicLong(1L)
+
+    /** Snapshot of a pending IPC call used when failing it on disconnect. */
+    private data class PendingRequest(
+        val method: String,
+        val cont: Continuation<Bundle>
+    )
+
+    private val binderDeathRecipient = IBinder.DeathRecipient {
+        failAllPending("Seed Vault binder died")
+        synchronized(bindLock) {
+            serviceBinder = null
+            service = null
+            isBound = false
+        }
+    }
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             val svc = binder?.let { ISeedVaultService.Stub.asInterface(it) }
-            synchronized(bindLock) {
+            runCatching { binder?.linkToDeath(binderDeathRecipient, 0) }
+            val waiters = synchronized(bindLock) {
                 serviceBinder = binder
                 service = svc
-                val waiters = pendingBindWaiters.toList()
+                val snapshot = pendingBindWaiters.toList()
                 pendingBindWaiters.clear()
-                waiters
-            }.forEach { cont ->
+                snapshot
+            }
+            waiters.forEach { cont ->
                 if (svc != null) cont.resume(svc)
                 else cont.resumeWithException(
                     IllegalStateException("Seed Vault returned a null binder")
@@ -63,6 +99,7 @@ class SeedVaultManager(private val context: Context) {
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
+            failAllPending("Seed Vault service disconnected")
             synchronized(bindLock) {
                 serviceBinder = null
                 service = null
@@ -70,6 +107,30 @@ class SeedVaultManager(private val context: Context) {
             }
         }
     }
+
+    /**
+     * Internal [SeedVaultContractClient] backed by the bound binder. Every
+     * AIDL verb routes through [performAction] so binder-death handling is
+     * uniform. The providers (account / signing) are constructed on this
+     * contract; [SeedVaultManager] delegates its typed verbs to them so
+     * the Manager is a thin facade instead of a god-object.
+     */
+    private val binderContract: SeedVaultContractClient = object : SeedVaultContractClient {
+        override suspend fun authorize(params: Bundle) = performAction("authorize", params)
+        override suspend fun createSeed(params: Bundle) = performAction("createSeed", params)
+        override suspend fun importSeed(params: Bundle) = performAction("importSeed", params)
+        override suspend fun updateSeed(params: Bundle) = performAction("updateSeed", params)
+        override suspend fun getAccounts(params: Bundle) = performAction("getAccounts", params)
+        override suspend fun resolveDerivationPath(params: Bundle) =
+            performAction("resolveDerivationPath", params)
+        override suspend fun signTransactions(params: Bundle) =
+            performAction("signTransactions", params)
+        override suspend fun signMessages(params: Bundle) = performAction("signMessages", params)
+        override suspend fun deauthorize(params: Bundle) = performAction("deauthorize", params)
+    }
+
+    private val accountProvider: SeedVaultAccountProvider = SeedVaultAccountProviderImpl(binderContract)
+    private val signingProvider: SeedVaultSigningProvider = SeedVaultSigningProviderImpl(binderContract)
 
     companion object {
         private const val ACTION_BIND_SEED_VAULT = SeedVaultConstants.ACTION_BIND_SEED_VAULT
@@ -81,10 +142,7 @@ class SeedVaultManager(private val context: Context) {
          */
         const val DEFAULT_IPC_TIMEOUT_MS: Long = 30_000
 
-        /**
-         * Resolves the component for the Intent using Artemis internal check logic.
-         * Ensures we target the valid System Seed Vault.
-         */
+        /** Resolves the component for the Intent using Artemis internal check logic. */
         fun resolveComponent(context: Context, intent: Intent) {
              com.selenus.artemis.seedvault.internal.SeedVaultCheck.resolveComponentForIntent(context, intent)
         }
@@ -103,12 +161,9 @@ class SeedVaultManager(private val context: Context) {
                 )
     }
 
-    /**
-     * Fire-and-forget bind. Retained for callers that already guard their
-     * RPC calls with a readiness check. Prefer [connectSuspending] for new
-     * code: it awaits the binder landing so the next call is guaranteed to
-     * see a non-null [service].
-     */
+    /** Expose the internal contract client for tests and advanced callers. */
+    internal fun contractClient(): SeedVaultContractClient = binderContract
+
     fun connect() {
         if (isBound) return
         val intent = Intent(ACTION_BIND_SEED_VAULT).apply {
@@ -118,14 +173,6 @@ class SeedVaultManager(private val context: Context) {
         isBound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
-    /**
-     * Suspends until the Seed Vault binder is connected. Safe to call
-     * multiple times; subsequent calls return the already-bound service
-     * immediately.
-     *
-     * @throws IllegalStateException if the bind intent is rejected or the
-     *   service returns a null binder.
-     */
     suspend fun connectSuspending(): ISeedVaultService = suspendCancellableCoroutine { cont ->
         synchronized(bindLock) {
             service?.let { existing ->
@@ -154,25 +201,38 @@ class SeedVaultManager(private val context: Context) {
         }
     }
 
-    /**
-     * Disconnects from the Seed Vault service.
-     * Should be called when the manager is no longer needed (e.g. onDestroy).
-     */
     fun disconnect() {
+        failAllPending("Seed Vault disconnect() called by host")
+        val binder = serviceBinder
         if (isBound) {
+            runCatching { binder?.unlinkToDeath(binderDeathRecipient, 0) }
             context.unbindService(connection)
             isBound = false
             service = null
             serviceBinder = null
         }
     }
-    
+
     /**
-     * Creates an Intent to authorize the app to access the Seed Vault.
-     * Use this with startActivityForResult or ActivityResultCaller.
-     * 
-     * @param purpose One of the PURPOSE_* constants from SeedVaultConstants
+     * Fail every in-flight continuation with a typed ServiceUnavailable
+     * error. Invoked from [onServiceDisconnected], from [binderDeathRecipient],
+     * and from [disconnect]. Callers waiting on any IPC get an immediate
+     * error instead of hanging until [DEFAULT_IPC_TIMEOUT_MS].
      */
+    private fun failAllPending(reason: String) {
+        val snapshot = pendingRequests.toMap()
+        pendingRequests.clear()
+        snapshot.values.forEach { pending ->
+            runCatching {
+                pending.cont.resumeWithException(
+                    SeedVaultException.ServiceUnavailable(
+                        "Seed Vault ${pending.method} aborted: $reason"
+                    )
+                )
+            }
+        }
+    }
+
     fun buildAuthorizeIntent(purpose: Int = SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION): Intent {
         val intent = Intent(ACTION_AUTHORIZE_SEED_ACCESS).apply {
             setPackage(SERVICE_PACKAGE)
@@ -182,12 +242,6 @@ class SeedVaultManager(private val context: Context) {
         return intent
     }
 
-    /**
-     * Creates an Intent to create a new seed in the Seed Vault.
-     * NOTE: Uses implicit Intent (no package) per upstream contract.
-     * 
-     * @param purpose One of the PURPOSE_* constants from SeedVaultConstants
-     */
     fun buildCreateSeedIntent(purpose: Int = SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION): Intent {
         val intent = Intent(ACTION_CREATE_SEED).apply {
             putExtra(SeedVaultConstants.EXTRA_PURPOSE, purpose)
@@ -196,12 +250,6 @@ class SeedVaultManager(private val context: Context) {
         return intent
     }
 
-    /**
-     * Creates an Intent to import a seed into the Seed Vault.
-     * NOTE: Uses implicit Intent (no package) per upstream contract.
-     * 
-     * @param purpose One of the PURPOSE_* constants from SeedVaultConstants
-     */
     fun buildImportSeedIntent(purpose: Int = SeedVaultConstants.PURPOSE_SIGN_SOLANA_TRANSACTION): Intent {
         val intent = Intent(ACTION_IMPORT_SEED).apply {
             putExtra(SeedVaultConstants.EXTRA_PURPOSE, purpose)
@@ -210,12 +258,6 @@ class SeedVaultManager(private val context: Context) {
         return intent
     }
 
-    /**
-     * Creates an Intent to sign transactions with the Seed Vault.
-     * 
-     * @param authToken The authorization token from authorize/createSeed/importSeed
-     * @param signingRequests The list of signing requests
-     */
     fun buildSignTransactionsIntent(
         authToken: Long,
         signingRequests: ArrayList<android.os.Parcelable>
@@ -228,9 +270,6 @@ class SeedVaultManager(private val context: Context) {
         return intent
     }
 
-    /**
-     * Creates an Intent to sign messages with the Seed Vault.
-     */
     fun buildSignMessagesIntent(
         authToken: Long,
         signingRequests: ArrayList<android.os.Parcelable>
@@ -243,9 +282,6 @@ class SeedVaultManager(private val context: Context) {
         return intent
     }
 
-    /**
-     * Creates an Intent to request public keys for derivation paths.
-     */
     fun buildGetPublicKeysIntent(
         authToken: Long,
         derivationPaths: ArrayList<android.net.Uri>
@@ -258,9 +294,6 @@ class SeedVaultManager(private val context: Context) {
         return intent
     }
 
-    /**
-     * Creates an Intent to show seed settings. Requires privileged access.
-     */
     fun buildSeedSettingsIntent(authToken: Long): Intent {
         val intent = Intent(SeedVaultConstants.ACTION_SEED_SETTINGS).apply {
             putExtra(SeedVaultConstants.EXTRA_AUTH_TOKEN, authToken)
@@ -269,24 +302,13 @@ class SeedVaultManager(private val context: Context) {
         return intent
     }
 
-    /**
-     * Parses the result Intent from an Authorize/Create/Import action.
-     * Returns the raw auth token and account ID from the Intent extras.
-     * Call [resolveAuthorization] to fetch the actual account details including the public key.
-     */
     fun parseAuthorizationResult(data: Intent): SeedVaultTokenResult {
         val token = data.getLongExtra(SeedVaultConstants.EXTRA_AUTH_TOKEN, -1L)
         if (token == -1L) throw SeedVaultException.Unknown("Invalid auth token in result")
-        
         val accountId = data.getLongExtra(SeedVaultConstants.EXTRA_ACCOUNT_ID, 0L)
         return SeedVaultTokenResult(token, accountId)
     }
 
-    /**
-     * Resolves a [SeedVaultTokenResult] into a full [SeedVaultAuthorization] by fetching
-     * the actual account details (including the real public key) from the Seed Vault
-     * ContentProvider.
-     */
     suspend fun resolveAuthorization(result: SeedVaultTokenResult): SeedVaultAuthorization {
         val accounts = getAccounts(result.authToken.toString())
         val account = accounts.firstOrNull { it.id == result.accountId }
@@ -295,212 +317,128 @@ class SeedVaultManager(private val context: Context) {
         return SeedVaultAuthorization(result.authToken.toString(), account)
     }
 
-    /**
-     * Parses signing response from an onActivityResult for sign transactions/messages.
-     * @return List of SigningResponse objects
-     */
     fun parseSigningResult(data: Intent): List<SigningResponse> {
         val responses = data.getParcelableArrayListExtra<SigningResponse>(SeedVaultConstants.EXTRA_SIGNING_RESPONSE)
         return responses ?: emptyList()
     }
 
-    /**
-     * Parses public key response from an onActivityResult for get public key.
-     * @return List of PublicKeyResponse objects
-     */
     fun parsePublicKeyResult(data: Intent): List<PublicKeyResponse> {
         val keys = data.getParcelableArrayListExtra<PublicKeyResponse>(SeedVaultConstants.EXTRA_PUBLIC_KEY)
         return keys ?: emptyList()
     }
 
-    suspend fun getAccounts(authToken: String): List<SeedVaultAccount> {
-        val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
-        }
-        val response = performAction("getAccounts", params)
-        
-        val list = response.getParcelableArrayList<Bundle>(SeedVaultConstants.EXTRA_ACCOUNTS) 
-            ?: return emptyList()
-            
-        return list.map { SeedVaultAccount.fromBundle(it) }
-    }
-    
-    suspend fun signTransactions(authToken: String, transactions: List<ByteArray>): List<ByteArray> {
-        val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
-            putSerializable(SeedVaultConstants.KEY_PAYLOADS, ArrayList(transactions))
-        }
-        
-        val response = performAction("signTransactions", params)
-        
-        val sigs = response.getSerializable(SeedVaultConstants.KEY_SIGNATURES) as? ArrayList<ByteArray>
-            ?: throw SeedVaultException.Unknown("No signatures returned")
-            
-        return sigs
-    }
+    // ─── Typed verbs — delegated to providers ─────────────────────────────
 
-    suspend fun signMessages(authToken: String, messages: List<ByteArray>): List<ByteArray> {
-        val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
-            putSerializable(SeedVaultConstants.KEY_PAYLOADS, ArrayList(messages))
-        }
-        val response = performAction("signMessages", params)
-        
-        val sigs = response.getSerializable(SeedVaultConstants.KEY_SIGNATURES) as? ArrayList<ByteArray>
-            ?: throw SeedVaultException.Unknown("No signatures returned")
-            
-        return sigs
-    }
+    suspend fun getAccounts(authToken: String): List<SeedVaultAccount> =
+        accountProvider.getAccounts(authToken)
+
+    suspend fun requestPublicKeys(
+        authToken: String,
+        derivationPaths: List<android.net.Uri>
+    ): List<Pubkey> = accountProvider.requestPublicKeys(authToken, derivationPaths)
+
+    suspend fun resolveDerivationPath(
+        authToken: String,
+        derivationPath: android.net.Uri
+    ): Pubkey = accountProvider.resolveDerivationPath(authToken, derivationPath)
+
+    suspend fun signTransactions(
+        authToken: String,
+        transactions: List<ByteArray>
+    ): List<ByteArray> = signingProvider.signTransactions(authToken, transactions)
+
+    suspend fun signMessages(
+        authToken: String,
+        messages: List<ByteArray>
+    ): List<ByteArray> = signingProvider.signMessages(authToken, messages)
+
+    suspend fun signWithDerivationPath(
+        authToken: String,
+        derivationPath: android.net.Uri,
+        payloads: List<ByteArray>
+    ): List<ByteArray> = signingProvider.signWithDerivationPath(authToken, derivationPath, payloads)
 
     suspend fun deauthorize(authToken: String) {
         val params = Bundle().apply {
             putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
         }
-        performAction("deauthorize", params)
+        binderContract.deauthorize(params)
     }
 
-    /**
-     * Request public keys for specific derivation paths via IPC.
-     * 
-     * This is the Seed Vault equivalent of HD wallet key derivation.
-     * @param authToken The authorization token from authorize/createSeed/importSeed
-     * @param derivationPaths List of BIP32/BIP44 derivation path URIs
-     * @return List of public keys corresponding to each derivation path
-     */
-    suspend fun requestPublicKeys(authToken: String, derivationPaths: List<android.net.Uri>): List<Pubkey> {
-        val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
-            putParcelableArrayList(SeedVaultConstants.EXTRA_DERIVATION_PATH, ArrayList(derivationPaths))
-        }
-        val response = performAction("requestPublicKeys", params)
-        
-        val keys = response.getParcelableArrayList<Bundle>(SeedVaultConstants.EXTRA_PUBLIC_KEY)
-            ?: throw SeedVaultException.Unknown("No public keys returned")
-            
-        return keys.map { bundle ->
-            val raw = bundle.getByteArray("public_key_raw")
-                ?: throw SeedVaultException.Unknown("Missing public key bytes")
-            Pubkey(raw)
-        }
-    }
-
-    /**
-     * Sign payloads using a specific derivation path via IPC.
-     *
-     * This allows signing with keys derived from arbitrary BIP32 paths,
-     * not just the default account.
-     * @param authToken The authorization token
-     * @param derivationPath The BIP32 derivation path URI for the signing key
-     * @param payloads List of messages/transactions to sign
-     * @return List of signatures
-     */
-    suspend fun signWithDerivationPath(
-        authToken: String, 
-        derivationPath: android.net.Uri, 
-        payloads: List<ByteArray>
-    ): List<ByteArray> {
-        val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
-            putParcelable(SeedVaultConstants.EXTRA_DERIVATION_PATH, derivationPath)
-            putSerializable(SeedVaultConstants.KEY_PAYLOADS, ArrayList(payloads))
-        }
-        
-        val response = performAction("signWithDerivationPath", params)
-        
-        val sigs = response.getSerializable(SeedVaultConstants.KEY_SIGNATURES) as? ArrayList<ByteArray>
-            ?: throw SeedVaultException.Unknown("No signatures returned")
-            
-        return sigs
-    }
-
-    /**
-     * Resolve a BIP32 derivation path for a specific auth token.
-     * This uses the content provider's call() method per the upstream SDK contract.
-     * 
-     * @param authToken The authorization token
-     * @param derivationPath The BIP32 derivation path URI to resolve
-     * @return The resolved public key
-     */
-    suspend fun resolveDerivationPath(authToken: String, derivationPath: android.net.Uri): Pubkey {
-        val params = Bundle().apply {
-            putLong(SeedVaultConstants.EXTRA_AUTH_TOKEN, parseAuthTokenStrict(authToken))
-            putParcelable(SeedVaultConstants.EXTRA_DERIVATION_PATH, derivationPath)
-        }
-        
-        val response = performAction("resolveDerivationPath", params)
-        
-        val keyBytes = response.getByteArray(SeedVaultConstants.EXTRA_PUBLIC_KEY)
-            ?: throw SeedVaultException.Unknown("No public key returned from resolve")
-            
-        return Pubkey(keyBytes)
-    }
+    // ─── Internal IPC dispatch ────────────────────────────────────────────
 
     private suspend fun performAction(
         method: String,
         params: Bundle,
         timeoutMs: Long = DEFAULT_IPC_TIMEOUT_MS
-    ): Bundle {
-        // IPC calls to the Seed Vault service can stall indefinitely when
-        // the provider is wedged, under Doze throttling, or after binder
-        // death. Bound every call. Translate the coroutine timeout into a
-        // typed Seed Vault exception so the caller can distinguish "no
-        // response" from "bad response".
-        return try {
-            withTimeout(timeoutMs) { performActionInner(method, params) }
-        } catch (e: TimeoutCancellationException) {
-            throw SeedVaultException.Unknown(
-                "Seed Vault $method timed out after ${timeoutMs}ms"
-            )
-        }
+    ): Bundle = try {
+        withTimeout(timeoutMs) { performActionInner(method, params) }
+    } catch (e: TimeoutCancellationException) {
+        throw SeedVaultException.Unknown(
+            "Seed Vault $method timed out after ${timeoutMs}ms"
+        )
     }
 
-    private suspend fun performActionInner(method: String, params: Bundle): Bundle = suspendCancellableCoroutine { cont ->
+    private suspend fun performActionInner(
+        method: String,
+        params: Bundle
+    ): Bundle = suspendCancellableCoroutine { cont ->
+        val requestId = nextRequestId.getAndIncrement()
         try {
-            checkConnected()
-            
-            // Define the callback
+            val svc = service ?: throw SeedVaultException.ServiceUnavailable(
+                "Seed Vault not connected. Call connect() or connectSuspending() first."
+            )
+
+            pendingRequests[requestId] = PendingRequest(method, cont)
+            cont.invokeOnCancellation { pendingRequests.remove(requestId) }
+
             val callback = object : ISeedVaultCallback.Stub() {
                 override fun onResponse(response: Bundle) {
-                    if (cont.isActive) cont.resume(response)
+                    val pending = pendingRequests.remove(requestId) ?: return
+                    if (pending.cont.context[kotlinx.coroutines.Job]?.isActive == true) {
+                        pending.cont.resume(response)
+                    }
                 }
                 override fun onError(error: Bundle) {
-                    if (cont.isActive) cont.resumeWithException(SeedVaultException.fromBundle(error))
+                    val pending = pendingRequests.remove(requestId) ?: return
+                    if (pending.cont.context[kotlinx.coroutines.Job]?.isActive == true) {
+                        pending.cont.resumeWithException(SeedVaultException.fromBundle(error))
+                    }
                 }
             }
-            
+
             when (method) {
-                "authorize" -> service!!.authorize(params, callback)
-                "createSeed" -> service!!.createSeed(params, callback)
-                "importSeed" -> service!!.importSeed(params, callback)
-                "updateSeed" -> service!!.updateSeed(params, callback)
-                "getAccounts" -> service!!.getAccounts(params, callback)
-                "resolveDerivationPath" -> service!!.resolveDerivationPath(params, callback)
-                "signTransactions" -> service!!.signTransactions(params, callback)
-                "signMessages" -> service!!.signMessages(params, callback)
-                "deauthorize" -> service!!.deauthorize(params, callback)
-                // The Seed Vault AIDL defines 9 IPC verbs. These higher-level
-                // operations map to the same IPC methods with different Bundle params:
-                // requestPublicKeys = resolveDerivationPath with multiple paths
-                // signWithDerivationPath = signTransactions with derivation path in params
-                "requestPublicKeys" -> service!!.resolveDerivationPath(params, callback)
-                "signWithDerivationPath" -> service!!.signTransactions(params, callback)
+                "authorize" -> svc.authorize(params, callback)
+                "createSeed" -> svc.createSeed(params, callback)
+                "importSeed" -> svc.importSeed(params, callback)
+                "updateSeed" -> svc.updateSeed(params, callback)
+                "getAccounts" -> svc.getAccounts(params, callback)
+                "resolveDerivationPath" -> svc.resolveDerivationPath(params, callback)
+                "signTransactions" -> svc.signTransactions(params, callback)
+                "signMessages" -> svc.signMessages(params, callback)
+                "deauthorize" -> svc.deauthorize(params, callback)
                 else -> {
-                    if (cont.isActive) cont.resumeWithException(IllegalArgumentException("Unknown method: $method"))
+                    pendingRequests.remove(requestId)
+                    cont.resumeWithException(IllegalArgumentException("Unknown method: $method"))
                 }
             }
         } catch (e: RemoteException) {
+            pendingRequests.remove(requestId)
             if (cont.isActive) {
-                cont.resumeWithException(SeedVaultException.InternalError("Remote exception: ${e.message}"))
+                cont.resumeWithException(
+                    SeedVaultException.ServiceUnavailable("Seed Vault $method: ${e.message}")
+                )
             }
+        } catch (e: SeedVaultException) {
+            pendingRequests.remove(requestId)
+            if (cont.isActive) cont.resumeWithException(e)
         } catch (e: Exception) {
-             if (cont.isActive) {
-                cont.resumeWithException(SeedVaultException.InternalError("Unexpected exception: ${e.message}"))
+            pendingRequests.remove(requestId)
+            if (cont.isActive) {
+                cont.resumeWithException(
+                    SeedVaultException.InternalError("Seed Vault $method: ${e.message}")
+                )
             }
         }
     }
-
-    private fun checkConnected() {
-        if (service == null) throw IllegalStateException("Seed Vault not connected. Call connect() first.")
-    }
 }
-

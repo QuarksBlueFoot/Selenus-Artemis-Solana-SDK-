@@ -18,6 +18,16 @@ android {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
+
+    testOptions {
+        unitTests {
+            // `android.net.Uri` is resolved by the stub `android.jar` on the
+            // unit-test classpath. Compat parity tests drive Uri through
+            // the association flow; returning default values keeps the
+            // stub navigable without Robolectric.
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {
@@ -26,4 +36,8 @@ dependencies {
     api(project(":artemis-wallet-mwa-android"))
     api(project(":artemis-mwa-common-compat"))
     implementation(libs.kotlinx.coroutines.android)
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
 }

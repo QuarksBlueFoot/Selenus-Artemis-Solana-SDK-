@@ -248,16 +248,27 @@ object LocalAssociationIntentCreator {
         port: Int,
         scenario: Scenario
     ): Intent {
+        // Every association URI — primary or fallback — must use the same
+        // base64url-without-padding encoding for the association token that
+        // the MWA spec mandates. Earlier revisions let a non-
+        // LocalAssociationScenario subclass fall back to Base58, which
+        // wallets that strictly follow the spec reject as malformed. The
+        // encoding logic below is intentionally identical to
+        // `LocalAssociationScenario.createAssociationUri`.
         val uri = if (scenario is LocalAssociationScenario) {
             scenario.createAssociationUri(endpointPrefix)
         } else {
             val base = endpointPrefix ?: Uri.parse("${AssociationContract.SCHEME_MOBILE_WALLET_ADAPTER}://")
+            val associationToken = android.util.Base64.encodeToString(
+                scenario.associationPublicKey,
+                android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP
+            )
             base.buildUpon()
                 .appendEncodedPath(AssociationContract.LOCAL_PATH_SUFFIX)
                 .appendQueryParameter(AssociationContract.LOCAL_PARAMETER_PORT, port.toString())
                 .appendQueryParameter(
                     AssociationContract.PARAMETER_ASSOCIATION_TOKEN,
-                    com.selenus.artemis.runtime.Base58.encode(scenario.associationPublicKey)
+                    associationToken
                 )
                 .build()
         }

@@ -20,32 +20,34 @@
   L97  class SignPayloadsFuture internal constructor(backing: CompletableFuture<SignPayloadsResult>) :
   L99  class SignMessagesFuture internal constructor(backing: CompletableFuture<SignMessagesResult>) :
   L101  class SignAndSendTransactionsFuture internal constructor(backing: CompletableFuture<SignAndSendTransactionsResult>) :
-  L127  val b = bridge ?: return AuthorizationFuture(notYetAuthorized("chain=$chain"))
-  L152  val b = bridge
-  L158  val b = bridge
-  L165  val b = bridge ?: return SignPayloadsFuture(unsupported("signTransactions"))
-  L174  val b = bridge ?: return SignPayloadsFuture(unsupported("signMessages"))
-  L179  val packed = det.messages.mapIndexed { i, sm ->
-  L180  val sig = sm.signatures.firstOrNull() ?: ByteArray(0)
-  L191  val b = bridge ?: return SignMessagesFuture(unsupported("signMessagesDetached"))
-  L210  val b = bridge
-  L223  val f = CompletableFuture<T>()
-  L259  class AuthorizationResult(
-  L267  val publicKey: ByteArray
-  L271  val accountLabel: String?
-  L275  fun with(signInResult: SignInResult?): AuthorizationResult = AuthorizationResult(
-  L283  class AuthorizedAccount(
-  L293  class SignInResult(
-  L301  class GetCapabilitiesResult(
-  L312  class SignPayloadsResult(@JvmField val signedPayloads: Array<ByteArray>)
-  L314  class SignMessagesResult(@JvmField val messages: Array<SignedMessage>) {
-  L315  class SignedMessage(
-  L322  class SignAndSendTransactionsResult(@JvmField val signatures: Array<ByteArray>)
-  L330  class InvalidPayloadsException(
-  L344  class NotSubmittedException(
-  L355  class NotClonedException(
-  L369  abstract class MobileWalletAdapterSessionCommon {
-  L377  class MobileWalletAdapterSession : MobileWalletAdapterSessionCommon() {
+  L164  val b = bridge
+  L187  val packed = det.messages.map { sm ->
+  L188  val sig = sm.signatures.firstOrNull() ?: ByteArray(0)
+  L244  class SessionNotReadyException(method: String) : IllegalStateException(
+  L264  class AuthorizationResult(
+  L272  val publicKey: ByteArray
+  L276  val accountLabel: String?
+  L280  fun with(signInResult: SignInResult?): AuthorizationResult = AuthorizationResult(
+  L288  class AuthorizedAccount(
+  L298  class SignInResult(
+  L306  class GetCapabilitiesResult(
+  L317  class SignPayloadsResult(@JvmField val signedPayloads: Array<ByteArray>)
+  L319  class SignMessagesResult(@JvmField val messages: Array<SignedMessage>) {
+  L320  class SignedMessage(
+  L327  class SignAndSendTransactionsResult(@JvmField val signatures: Array<ByteArray>)
+  L335  class InvalidPayloadsException(
+  L349  class NotSubmittedException(
+  L360  class NotClonedException(
+  L374  abstract class MobileWalletAdapterSessionCommon {
+  L391  class MobileWalletAdapterSession @JvmOverloads constructor(
+  L406  val pk = keyPair.public as ECPublicKey
+  L407  val point = pk.w
+  L408  fun pad(b: java.math.BigInteger): ByteArray {
+  L409  val raw = b.toByteArray()
+  L416  val x = pad(point.affineX)
+  L417  val y = pad(point.affineY)
+  L432  fun generateAssociationKeyPair(): java.security.KeyPair {
+  L433  val kpg = java.security.KeyPairGenerator.getInstance("EC")
 
 ## main/kotlin/com/solana/mobilewalletadapter/clientlib/scenario/Scenario.kt (package com.solana.mobilewalletadapter.clientlib.scenario)
   L52  abstract class Scenario protected constructor(
@@ -79,7 +81,72 @@
   L232  const val CONNECT_TIMEOUT_MS: Int = 200
   L243  object LocalAssociationIntentCreator {
   L246  fun createAssociationIntent(
-  L251  val uri = if (scenario is LocalAssociationScenario) {
-  L254  val base = endpointPrefix ?: Uri.parse("${AssociationContract.SCHEME_MOBILE_WALLET_ADAPTER}://")
-  L269  fun isWalletEndpointAvailable(pm: PackageManager): Boolean {
-  L270  val probe = Intent(
+  L258  val uri = if (scenario is LocalAssociationScenario) {
+  L261  val base = endpointPrefix ?: Uri.parse("${AssociationContract.SCHEME_MOBILE_WALLET_ADAPTER}://")
+  L262  val associationToken = android.util.Base64.encodeToString(
+  L280  fun isWalletEndpointAvailable(pm: PackageManager): Boolean {
+  L281  val probe = Intent(
+
+## test/kotlin/com/solana/mobilewalletadapter/clientlib/MwaCompatParityTest.kt (package com.solana.mobilewalletadapter.clientlib)
+  L40  class MwaCompatParityTest {
+  L43  fun setUp() {
+  L51  val bytes = firstArg<ByteArray>()
+  L52  val flags = secondArg<Int>()
+  L53  val urlSafe = (flags and android.util.Base64.URL_SAFE) != 0
+  L54  val noPadding = (flags and android.util.Base64.NO_PADDING) != 0
+  L55  val encoder = if (urlSafe) java.util.Base64.getUrlEncoder() else java.util.Base64.getEncoder()
+  L56  val withOrWithoutPadding = if (noPadding) encoder.withoutPadding() else encoder
+  L61  val s = firstArg<String>()
+  L63  val builder = mockk<Uri.Builder>(relaxed = true)
+  L68  val k = firstArg<String>()
+  L69  val v = secondArg<String>()
+  L72  val current = uri.toString()
+  L90  fun `MobileWalletAdapterSession exposes real association public key`() {
+  L91  val session = MobileWalletAdapterSession()
+  L92  val pk = session.getAssociationPublicKey()
+  L97  val encoded = session.getEncodedAssociationPublicKey()
+  L110  fun `core methods throw SessionNotReadyException when no bridge`() {
+  L111  val client = MobileWalletAdapterClient(clientTimeoutMs = 100)
+  L142  val deauthFuture = client.deauthorize("auth-token")
+  L153  fun `LocalAssociationScenario generates real P-256 association key`() {
+  L154  val scenario = LocalAssociationScenario()
+  L155  val apk = scenario.associationPublicKey
+  L170  fun `createAssociationUri uses base64url encoding`() {
+  L171  val scenario = LocalAssociationScenario()
+  L173  val uri = scenario.createAssociationUri(null).toString()
+  L174  val tokenParam = Regex("${AssociationContract.PARAMETER_ASSOCIATION_TOKEN}=([^&]+)")
+  L177  val token = tokenParam!!.groupValues[1]
+  L197  fun `fallback path encodes association key as base64url`() {
+  L198  val custom = object : Scenario(clientTimeoutMs = 100) {
+  L202  val apk = custom.associationPublicKey
+  L204  val token = android.util.Base64.encodeToString(
+  L224  fun `Scenario lifecycle reserves then releases the association port`() {
+  L225  val scenario = LocalAssociationScenario()
+  L228  val port = scenario.getPort()
+  L241  fun `signTransactions compat routes payloads through installed bridge`() {
+  L242  val client = MobileWalletAdapterClient(clientTimeoutMs = 1_000)
+  L243  val bridge = RecordingBridge(
+  L247  val future = @Suppress("DEPRECATION") client.signTransactions(
+  L250  val result = future.get(1, java.util.concurrent.TimeUnit.SECONDS)
+  L265  fun `signAndSendTransactions compat forwards every option to the bridge`() {
+  L266  val client = MobileWalletAdapterClient(clientTimeoutMs = 1_000)
+  L267  val bridge = RecordingBridge(
+  L271  val future = client.signAndSendTransactions(
+  L279  val result = future.get(1, java.util.concurrent.TimeUnit.SECONDS)
+  L283  val call = bridge.signAndSendCalls.single()
+  L298  fun `Scenario close clears the bridge on the underlying client`() {
+  L299  val scenario = LocalAssociationScenario()
+  L301  val client = scenario.mobileWalletAdapterClient()
+  L320  fun `bridge failures propagate through the compat future as ExecutionException`() {
+  L321  val client = MobileWalletAdapterClient(clientTimeoutMs = 1_000)
+  L322  val underlying = IllegalStateException("wallet rejected: invalid payloads")
+  L323  val bridge = RecordingBridge(signAndSendThrowable = underlying)
+  L326  val future = client.signAndSendTransactions(arrayOf(byteArrayOf(0x00)), 0)
+  L358  data class SignAndSendCall(
+  L359  val minContextSlot: Int?,
+  L360  val commitment: String?,
+  L361  val skipPreflight: Boolean?,
+  L362  val maxRetries: Int?,
+  L363  val waitForCommitmentToSendNextTransaction: Boolean?
+  L366  val signTransactionsCalls = mutableListOf<Array<ByteArray>>()
+  L367  val signAndSendCalls = mutableListOf<SignAndSendCall>()

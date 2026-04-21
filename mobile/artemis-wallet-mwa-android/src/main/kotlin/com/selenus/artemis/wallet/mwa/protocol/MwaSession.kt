@@ -114,6 +114,23 @@ class MwaSession internal constructor(
   }
 
   companion object {
+    /**
+     * Test-only factory that returns a session backed by an in-memory
+     * transport and a throwaway AES-128-GCM key. The returned session will
+     * throw on any send/receive attempt — it exists only so behavior tests
+     * can pass an opaque token through a stubbed [MwaClient] without
+     * standing up a real association socket. Never call this from
+     * production code paths.
+     */
+    internal fun testSession(): MwaSession {
+      val transport = object : MwaTransport {
+        override fun send(data: ByteArray) = error("test session: send not supported")
+        override fun close(code: Int, reason: String) = Unit
+        override val incoming: Channel<ByteArray> = Channel()
+      }
+      return MwaSession(transport = transport, cipher = Aes128Gcm(ByteArray(16)))
+    }
+
     internal suspend fun connectLocal(
       server: MwaWebSocketServer,
       associationKeypair: java.security.KeyPair,

@@ -39,7 +39,7 @@ jobs:
           if [ -z "$ARTEMIS_DEVNET_RPC" ]; then
             echo "::warning::ARTEMIS_DEVNET_RPC not set; running with public devnet (may rate limit)"
           fi
-          ./gradlew --no-daemon :artemis-devnet-tests:test || true
+          ./gradlew --no-daemon :artemis-devnet-tests:test
 
       - name: Upload results
         if: always()

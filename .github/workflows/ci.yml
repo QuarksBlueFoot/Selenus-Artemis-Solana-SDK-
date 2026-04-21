@@ -41,8 +41,17 @@ jobs:
       - name: Assemble debug
         run: ./gradlew --no-daemon assembleDebug
 
-      - name: Unit tests (MWA)
-        run: ./gradlew --no-daemon :artemis-wallet-mwa-android:testDebugUnitTest
+      - name: Unit tests (foundation + wallet + MWA + Seed Vault)
+        run: |
+          ./gradlew --no-daemon \
+            :artemis-rpc:jvmTest \
+            :artemis-ws:jvmTest \
+            :artemis-wallet:jvmTest \
+            :artemis-wallet-mwa-android:testDebugUnitTest \
+            :artemis-seed-vault:testDebugUnitTest
+
+      - name: Dependency ring enforcement
+        run: ./gradlew --no-daemon checkDependencyRings
 
       - name: Upload test report on failure
         if: failure()
@@ -54,8 +63,130 @@ jobs:
             foundation/**/build/reports/tests/**
             interop/**/build/reports/tests/**
 
+  mwa-behavior:
+    name: MWA behavior conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-mwa-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+      - uses: android-actions/setup-android@v3
+      - name: Install Android platforms
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
+      - name: MWA walletlib 2.0 behavior tests
+        # Runs the `*BehaviorTest` suite in the MWA module. These drive a
+        # fake MwaClient through every walletlib-2.0-sensitive flow
+        # (authorize + addresses/features/SIWS, clone_authorization,
+        # getCapabilities, signAndSendTransactions, reauthorize, session
+        # expiry). Primitive crypto tests continue to run in the main
+        # build job; this gate specifically guards the protocol surface.
+        run: ./gradlew --no-daemon :artemis-wallet-mwa-android:testDebugUnitTest --tests '*BehaviorTest*'
+      - name: Upload MWA report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mwa-behavior-report
+          path: mobile/artemis-wallet-mwa-android/build/reports/tests/**
+
+  seed-vault-conformance:
+    name: Seed Vault conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-sv-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+      - uses: android-actions/setup-android@v3
+      - name: Install Android platforms
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
+      - name: Seed Vault unit + contract/provider tests
+        run: ./gradlew --no-daemon :artemis-seed-vault:testDebugUnitTest
+      - name: Upload Seed Vault report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seed-vault-report
+          path: mobile/artemis-seed-vault/build/reports/tests/**
+
+  compat-parity:
+    name: MWA compat parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-compat-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+      - uses: android-actions/setup-android@v3
+      - name: Install Android platforms
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
+      - name: Compat runtime parity tests
+        run: ./gradlew --no-daemon :artemis-mwa-clientlib-compat:testDebugUnitTest
+      - name: Upload compat parity report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compat-parity-report
+          path: interop/artemis-mwa-clientlib-compat/build/reports/tests/**
+
+  api-surface-gate:
+    name: Compat API surface gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-api-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+      - uses: android-actions/setup-android@v3
+      - name: Install Android platforms
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
+      - name: Regenerate compat API snapshots
+        run: ./gradlew --no-daemon dumpApi
+      - name: Diff against committed snapshots
+        # Fails CI when the current compat public surface drifts from the
+        # committed .api files. Intentional changes must update the
+        # snapshots in the same PR (run `./gradlew dumpApi` locally).
+        run: |
+          if ! git diff --exit-code -- 'interop/*/api/*.api'; then
+            echo "::error::Compat API surface drifted. Run './gradlew dumpApi' and commit the updated .api files if the change is intentional."
+            git --no-pager diff -- 'interop/*/api/*.api'
+            exit 1
+          fi
+
   lint:
-    name: Lint + API surface check
+    name: Lint + compile check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -68,12 +199,3 @@ jobs:
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
       - name: Kotlin compile check
         run: ./gradlew --no-daemon compileDebugKotlin || ./gradlew --no-daemon compileKotlinJvm
-      - name: API surface dump (compat modules)
-        run: |
-          mkdir -p build/api
-          for m in artemis-mwa-compat artemis-mwa-clientlib-compat artemis-mwa-common-compat \
-                   artemis-seedvault-compat artemis-sol4k-compat artemis-web3-solana-compat \
-                   artemis-rpc-core-compat artemis-solana-kmp-compat artemis-metaplex-android-compat; do
-            echo "=== $m ==="
-            find "interop/$m/src" -name "*.kt" 2>/dev/null | head -20
-          done

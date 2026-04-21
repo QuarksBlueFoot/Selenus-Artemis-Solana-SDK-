@@ -112,7 +112,18 @@ open class MobileWalletAdapterClient(
         iconUri: Uri?,
         identityName: String?,
         cluster: String?
-    ): AuthorizationFuture = AuthorizationFuture(notYetAuthorized("cluster=$cluster"))
+    ): AuthorizationFuture = authorize(
+        identityUri = identityUri,
+        iconUri = iconUri,
+        identityName = identityName,
+        chain = when (cluster?.lowercase()) {
+            null, "" -> null
+            "mainnet-beta", "mainnet" -> "solana:mainnet"
+            "testnet" -> "solana:testnet"
+            "devnet" -> "solana:devnet"
+            else -> "solana:$cluster"
+        }
+    )
 
     open fun authorize(
         identityUri: Uri?,
@@ -123,12 +134,11 @@ open class MobileWalletAdapterClient(
         features: Array<String>? = null,
         addresses: Array<ByteArray>? = null,
         signInPayload: SignInWithSolana.Payload? = null
-    ): AuthorizationFuture {
-        val b = bridge ?: return AuthorizationFuture(notYetAuthorized("chain=$chain"))
-        return AuthorizationFuture(
-            b.authorize(identityUri, iconUri, identityName, chain, authToken, features, addresses, signInPayload)
+    ): AuthorizationFuture = AuthorizationFuture(
+        requireBridge("authorize").authorize(
+            identityUri, iconUri, identityName, chain, authToken, features, addresses, signInPayload
         )
-    }
+    )
 
     /**
      * Unified reauthorize. MWA 2.0 merges reauthorize into authorize with the
@@ -149,48 +159,46 @@ open class MobileWalletAdapterClient(
     )
 
     open fun deauthorize(authToken: String): DeauthorizeFuture {
+        // Deauthorize with no live bridge is a no-op by design: there is
+        // nothing to deauthorize and the caller is clearing local state.
         val b = bridge
             ?: return DeauthorizeFuture(CompletableFuture.completedFuture(null))
         return DeauthorizeFuture(b.deauthorize(authToken))
     }
 
-    open fun getCapabilities(): GetCapabilitiesFuture {
-        val b = bridge
-            ?: return GetCapabilitiesFuture(CompletableFuture.completedFuture(defaultCapabilities()))
-        return GetCapabilitiesFuture(b.getCapabilities())
-    }
+    open fun getCapabilities(): GetCapabilitiesFuture = GetCapabilitiesFuture(
+        requireBridge("getCapabilities").getCapabilities()
+    )
 
     @Deprecated("Use signAndSendTransactions.", level = DeprecationLevel.WARNING)
-    open fun signTransactions(transactions: Array<ByteArray>): SignPayloadsFuture {
-        val b = bridge ?: return SignPayloadsFuture(unsupported("signTransactions"))
-        return SignPayloadsFuture(b.signTransactions(transactions))
-    }
+    open fun signTransactions(transactions: Array<ByteArray>): SignPayloadsFuture =
+        SignPayloadsFuture(requireBridge("signTransactions").signTransactions(transactions))
 
     @Deprecated("Use signMessagesDetached.", level = DeprecationLevel.WARNING)
     open fun signMessages(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
     ): SignPayloadsFuture {
-        val b = bridge ?: return SignPayloadsFuture(unsupported("signMessages"))
         // Pre-2.0 legacy path: wallet returned concatenated (message || signature)
         // blobs. Bridge sits on the detached API and re-packs so callers that
         // still consume signedPayloads get parity with upstream legacy output.
-        return SignPayloadsFuture(b.signMessagesDetached(messages, addresses).thenApply { det ->
-            val packed = det.messages.mapIndexed { i, sm ->
-                val sig = sm.signatures.firstOrNull() ?: ByteArray(0)
-                sm.message + sig
-            }.toTypedArray()
-            SignPayloadsResult(packed)
-        })
+        return SignPayloadsFuture(
+            requireBridge("signMessages").signMessagesDetached(messages, addresses).thenApply { det ->
+                val packed = det.messages.map { sm ->
+                    val sig = sm.signatures.firstOrNull() ?: ByteArray(0)
+                    sm.message + sig
+                }.toTypedArray()
+                SignPayloadsResult(packed)
+            }
+        )
     }
 
     open fun signMessagesDetached(
         messages: Array<ByteArray>,
         addresses: Array<ByteArray>
-    ): SignMessagesFuture {
-        val b = bridge ?: return SignMessagesFuture(unsupported("signMessagesDetached"))
-        return SignMessagesFuture(b.signMessagesDetached(messages, addresses))
-    }
+    ): SignMessagesFuture = SignMessagesFuture(
+        requireBridge("signMessagesDetached").signMessagesDetached(messages, addresses)
+    )
 
     open fun signAndSendTransactions(
         transactions: Array<ByteArray>,
@@ -206,45 +214,42 @@ open class MobileWalletAdapterClient(
         skipPreflight: Boolean?,
         maxRetries: Int?,
         waitForCommitmentToSendNextTransaction: Boolean?
-    ): SignAndSendTransactionsFuture {
-        val b = bridge
-            ?: return SignAndSendTransactionsFuture(unsupported("signAndSendTransactions"))
-        return SignAndSendTransactionsFuture(
-            b.signAndSendTransactions(
-                transactions, minContextSlot, commitment, skipPreflight,
-                maxRetries, waitForCommitmentToSendNextTransaction
-            )
+    ): SignAndSendTransactionsFuture = SignAndSendTransactionsFuture(
+        requireBridge("signAndSendTransactions").signAndSendTransactions(
+            transactions, minContextSlot, commitment, skipPreflight,
+            maxRetries, waitForCommitmentToSendNextTransaction
         )
-    }
+    )
 
     // ─── Helpers ──────────────────────────────────────────────────────────
 
-    private fun <T> unsupported(method: String): CompletableFuture<T> {
-        val f = CompletableFuture<T>()
-        f.completeExceptionally(
-            UnsupportedOperationException(
-                "$method is not invokable from this shim directly. " +
-                "Use com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter (ktx) " +
-                "or the Artemis MwaWalletAdapter from artemis-wallet-mwa-android."
-            )
-        )
-        return f
-    }
+    /**
+     * Returns the currently installed bridge or throws a typed, actionable
+     * [SessionNotReadyException]. Previous revisions returned a future that
+     * completed with an opaque [UnsupportedOperationException] pointing
+     * nowhere; this variant tells the caller exactly how to wire a bridge
+     * (via [scenario.LocalAssociationScenario.start] plus
+     * [com.solana.mobilewalletadapter.clientlib.MwaSessionBridge.attach],
+     * or the ktx [com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter.transact]).
+     */
+    private fun requireBridge(method: String): SessionBridge =
+        bridge ?: throw SessionNotReadyException(method)
 
-    private fun notYetAuthorized(context: String): CompletableFuture<AuthorizationResult> =
-        unsupported<AuthorizationResult>("authorize ($context)")
-
-    private fun defaultCapabilities(): GetCapabilitiesResult = GetCapabilitiesResult(
-        supportsCloneAuthorization = false,
-        supportsSignAndSendTransactions = true,
-        maxTransactionsPerSigningRequest = 0,
-        maxMessagesPerSigningRequest = 0,
-        supportedTransactionVersions = arrayOf("legacy", 0),
-        supportedOptionalFeatures = arrayOf(
-            ProtocolContract.FEATURE_ID_SIGN_TRANSACTIONS,
-            ProtocolContract.FEATURE_ID_SIGN_MESSAGES,
-            ProtocolContract.FEATURE_ID_SIGN_AND_SEND_TRANSACTIONS
-        )
+    /**
+     * Raised when the low-level MWA client is invoked before any bridge has
+     * been installed. The message names the missing operation and the two
+     * supported remedies; callers that catch it know exactly what to do
+     * next instead of discovering it in Stack Overflow.
+     */
+    class SessionNotReadyException(method: String) : IllegalStateException(
+        "MobileWalletAdapterClient.$method was called before a SessionBridge " +
+        "was installed. Options:\n" +
+        "  1. (recommended) use the ktx wrapper: " +
+        "com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter.transact { ... } — " +
+        "it installs a bridge automatically for the duration of the block.\n" +
+        "  2. install a bridge manually: " +
+        "MwaSessionBridge.attach(scenario, Artemis.MwaWalletAdapter(...)) before invoking " +
+        "client methods."
     )
 
     // ─── Nested result classes (FQNs: MobileWalletAdapterClient.X) ────────
@@ -373,18 +378,61 @@ abstract class MobileWalletAdapterSessionCommon {
     abstract fun getSupportedProtocolVersions(): Set<SessionProperties.ProtocolVersion>
 }
 
-/** Concrete subclass used by the local association scenario. */
-class MobileWalletAdapterSession : MobileWalletAdapterSessionCommon() {
-    override fun getAssociationPublicKey(): ECPublicKey =
-        throw UnsupportedOperationException(
-            "Association public key is generated by the Artemis MWA protocol layer; " +
-            "this shim exposes only the upstream Java class hierarchy."
-        )
+/**
+ * Concrete subclass used by the local association scenario.
+ *
+ * Each instance owns an ephemeral P-256 keypair — the same key material
+ * used by [com.solana.mobilewalletadapter.clientlib.scenario.Scenario] to
+ * build the `association` URI. Earlier revisions threw on
+ * [getAssociationPublicKey] and returned an empty array from
+ * [getEncodedAssociationPublicKey]; both now return real values so
+ * callers that inspect the session's public key work end-to-end.
+ */
+class MobileWalletAdapterSession @JvmOverloads constructor(
+    private val keyPair: java.security.KeyPair = generateAssociationKeyPair(),
+    private val supportedVersions: Set<SessionProperties.ProtocolVersion> = setOf(
+        SessionProperties.ProtocolVersion.LEGACY,
+        SessionProperties.ProtocolVersion.V1
+    ),
+    private val properties: SessionProperties = SessionProperties(
+        SessionProperties.ProtocolVersion.V1
+    )
+) : MobileWalletAdapterSessionCommon() {
 
-    override fun getEncodedAssociationPublicKey(): ByteArray = ByteArray(0)
-    override fun getSessionProperties(): SessionProperties =
-        SessionProperties(SessionProperties.ProtocolVersion.V1)
+    override fun getAssociationPublicKey(): ECPublicKey =
+        keyPair.public as ECPublicKey
+
+    override fun getEncodedAssociationPublicKey(): ByteArray {
+        val pk = keyPair.public as ECPublicKey
+        val point = pk.w
+        fun pad(b: java.math.BigInteger): ByteArray {
+            val raw = b.toByteArray()
+            return when {
+                raw.size == 32 -> raw
+                raw.size == 33 && raw[0] == 0.toByte() -> raw.copyOfRange(1, 33)
+                else -> ByteArray(32).also { out -> raw.copyInto(out, 32 - raw.size) }
+            }
+        }
+        val x = pad(point.affineX)
+        val y = pad(point.affineY)
+        return ByteArray(65).also { buf ->
+            buf[0] = 0x04
+            x.copyInto(buf, 1)
+            y.copyInto(buf, 33)
+        }
+    }
+
+    override fun getSessionProperties(): SessionProperties = properties
 
     override fun getSupportedProtocolVersions(): Set<SessionProperties.ProtocolVersion> =
-        setOf(SessionProperties.ProtocolVersion.LEGACY, SessionProperties.ProtocolVersion.V1)
+        supportedVersions
+
+    companion object {
+        @JvmStatic
+        fun generateAssociationKeyPair(): java.security.KeyPair {
+            val kpg = java.security.KeyPairGenerator.getInstance("EC")
+            kpg.initialize(java.security.spec.ECGenParameterSpec("secp256r1"))
+            return kpg.generateKeyPair()
+        }
+    }
 }
