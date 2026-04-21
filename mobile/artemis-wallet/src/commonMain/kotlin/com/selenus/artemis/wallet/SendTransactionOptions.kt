@@ -255,12 +255,30 @@ data class SendTransactionResult(
 ) {
     val isSuccess: Boolean get() = error == null && signature.isNotEmpty()
     val isFailure: Boolean get() = error != null
+
     /**
      * True when the wallet produced a valid signed blob but did not broadcast.
      * Caller should route [signedRaw] through its own RPC submit path.
      */
     val isSignedButNotBroadcast: Boolean
         get() = error == null && signature.isEmpty() && signedRaw != null
+
+    /**
+     * Enforced invariant: exactly one of [isSuccess], [isFailure], or
+     * [isSignedButNotBroadcast] is true, and no result is in a fourth state
+     * (empty signature + null error + null signedRaw). Call this to
+     * assert the result is well-formed in tests or at a trust boundary.
+     *
+     * Returns true when the invariant holds. Never throws; a false return
+     * means the caller is inspecting a malformed result constructed by
+     * hand outside the adapter.
+     */
+    fun invariantsHold(): Boolean {
+        val signalCount = (if (isSuccess) 1 else 0) +
+            (if (isFailure) 1 else 0) +
+            (if (isSignedButNotBroadcast) 1 else 0)
+        return signalCount == 1
+    }
 
     // Custom equals/hashCode because the data class default `contentEquals`
     // for ByteArray compares references. Avoid surprising test behaviour.

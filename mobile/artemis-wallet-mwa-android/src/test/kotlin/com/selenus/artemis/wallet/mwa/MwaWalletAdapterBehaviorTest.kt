@@ -413,6 +413,60 @@ class MwaWalletAdapterBehaviorTest {
     }
 
     /**
+     * Batch invariants: every [SendTransactionResult] in a [BatchSendResult]
+     * is in exactly one of three well-formed states (success, failure,
+     * signed-but-not-broadcast), and the batch size matches the input
+     * size. The audit flagged `result.size == input.size` and
+     * `success XOR error` as the two invariants the compat layer must not
+     * break; this test pins them at the adapter level. A regression that
+     * drops a slot, double-reports, or lands in a fourth state makes this
+     * test fail.
+     */
+    @Test
+    fun `batch results hold size and state invariants`() = runBlocking {
+        val client = RecordingMwaClient(
+            capabilities = capsWithFeatures(MwaCapabilities.FEATURE_SIGN_AND_SEND_TRANSACTIONS),
+            authorizeResponse = authResult("T", "addr"),
+            signAndSendResponse = listOf("S1", "S2", "S3", "S4")
+        )
+        val adapter = adapter(client)
+        val txs = listOf(ByteArray(8), ByteArray(8), ByteArray(8), ByteArray(8))
+        val batch = adapter.signAndSendTransactions(txs, SendTransactionOptions())
+
+        assertEquals("input.size == result.size", txs.size, batch.results.size)
+        batch.results.forEachIndexed { i, r ->
+            assertTrue(
+                "result $i in exactly one state (success XOR failure XOR signed-not-broadcast)",
+                r.invariantsHold()
+            )
+        }
+    }
+
+    /**
+     * Sign-only fallback preserves batch-level invariants even when each
+     * slot ends up in the signed-but-not-broadcast state. No slot drops,
+     * no slot double-reports.
+     */
+    @Test
+    fun `sign-only fallback batch invariants hold`() = runBlocking {
+        val signedPayloads = List(3) { ByteArray(64) { b -> (b + it).toByte() } }
+        val client = RecordingMwaClient(
+            capabilities = capsWithFeatures(MwaCapabilities.FEATURE_SIGN_TRANSACTIONS),
+            authorizeResponse = authResult("T", "addr"),
+            signTransactionsResponse = signedPayloads
+        )
+        val adapter = adapter(client)
+        val txs = List(3) { ByteArray(16) }
+        val batch = adapter.signAndSendTransactions(txs, SendTransactionOptions())
+
+        assertEquals(3, batch.results.size)
+        batch.results.forEach { r ->
+            assertTrue("no broadcast, but signed bytes preserved", r.isSignedButNotBroadcast)
+            assertTrue("invariants", r.invariantsHold())
+        }
+    }
+
+    /**
      * Session teardown: disconnect() must clear the connected account
      * state so a subsequent connect() re-runs the handshake rather than
      * silently reusing a dead session.

@@ -51,41 +51,42 @@
 
 ## main/kotlin/com/solana/mobilewalletadapter/clientlib/scenario/Scenario.kt (package com.solana.mobilewalletadapter.clientlib.scenario)
   L52  abstract class Scenario protected constructor(
-  L66  val associationKeyPair: java.security.KeyPair = associationKeyPair
-  L70  val associationPublicKey: ByteArray = run {
-  L71  val pk = associationKeyPair.public as java.security.interfaces.ECPublicKey
-  L72  val w = pk.w
-  L73  val x = w.affineX.toByteArray().let { arr ->
-  L78  val y = w.affineY.toByteArray().let { arr ->
-  L99  fun getMobileWalletAdapterClient(): MobileWalletAdapterClient = mMobileWalletAdapterClient
-  L109  interface Callbacks {
-  L110  fun onScenarioReady()
-  L111  fun onScenarioServingClients()
-  L112  fun onScenarioServingComplete()
-  L113  fun onScenarioComplete()
-  L114  fun onScenarioError()
-  L115  fun onScenarioTeardownComplete()
-  L120  const val DEFAULT_CLIENT_TIMEOUT_MS: Int = 90_000
-  L123  val kpg = java.security.KeyPairGenerator.getInstance("EC")
-  L131  open class LocalAssociationScenario @JvmOverloads constructor(
-  L139  fun getPort(): Int = _port
-  L150  val ss = java.net.ServerSocket(0).apply {
-  L171  fun startAsync(): NotifyOnCompleteFuture<MobileWalletAdapterClient> {
-  L181  fun closeAsync(): NotifyOnCompleteFuture<Void?> {
-  L194  fun createAssociationUri(endpointPrefix: Uri?): Uri {
-  L195  val base = endpointPrefix ?: Uri.parse("${AssociationContract.SCHEME_MOBILE_WALLET_ADAPTER}://")
-  L200  val associationToken = android.util.Base64.encodeToString(
-  L212  class ConnectionFailedException : Exception {
-  L219  const val CONNECT_MAX_ATTEMPTS: Int = 34
-  L227  val CONNECT_BACKOFF_SCHEDULE_MS: IntArray = intArrayOf(
-  L232  const val CONNECT_TIMEOUT_MS: Int = 200
-  L243  object LocalAssociationIntentCreator {
-  L246  fun createAssociationIntent(
-  L258  val uri = if (scenario is LocalAssociationScenario) {
-  L261  val base = endpointPrefix ?: Uri.parse("${AssociationContract.SCHEME_MOBILE_WALLET_ADAPTER}://")
-  L262  val associationToken = android.util.Base64.encodeToString(
-  L280  fun isWalletEndpointAvailable(pm: PackageManager): Boolean {
-  L281  val probe = Intent(
+  L69  val associationKeyPair: java.security.KeyPair = associationKeyPair
+  L73  val associationPublicKey: ByteArray = MwaAssociationKeys.encodedPublicKey(associationKeyPair)
+  L93  fun getMobileWalletAdapterClient(): MobileWalletAdapterClient = mMobileWalletAdapterClient
+  L103  val base = endpointPrefix ?: Uri.parse("${AssociationContract.SCHEME_MOBILE_WALLET_ADAPTER}://")
+  L104  val associationToken = android.util.Base64.encodeToString(
+  L123  interface Callbacks {
+  L124  fun onScenarioReady()
+  L125  fun onScenarioServingClients()
+  L126  fun onScenarioServingComplete()
+  L127  fun onScenarioComplete()
+  L128  fun onScenarioError()
+  L129  fun onScenarioTeardownComplete()
+  L134  const val DEFAULT_CLIENT_TIMEOUT_MS: Int = 90_000
+  L148  fun generateKeyPair(): java.security.KeyPair {
+  L149  val kpg = java.security.KeyPairGenerator.getInstance("EC")
+  L155  fun encodedPublicKey(keyPair: java.security.KeyPair): ByteArray {
+  L156  val pk = keyPair.public as java.security.interfaces.ECPublicKey
+  L157  val w = pk.w
+  L158  fun pad(b: java.math.BigInteger): ByteArray {
+  L159  val raw = b.toByteArray()
+  L166  val x = pad(w.affineX)
+  L167  val y = pad(w.affineY)
+  L177  open class LocalAssociationScenario @JvmOverloads constructor(
+  L185  fun getPort(): Int = _port
+  L196  val ss = java.net.ServerSocket(0).apply {
+  L217  fun startAsync(): NotifyOnCompleteFuture<MobileWalletAdapterClient> {
+  L227  fun closeAsync(): NotifyOnCompleteFuture<Void?> {
+  L241  fun createAssociationUri(endpointPrefix: Uri?): Uri =
+  L245  class ConnectionFailedException : Exception {
+  L252  const val CONNECT_MAX_ATTEMPTS: Int = 34
+  L260  val CONNECT_BACKOFF_SCHEDULE_MS: IntArray = intArrayOf(
+  L265  const val CONNECT_TIMEOUT_MS: Int = 200
+  L276  object LocalAssociationIntentCreator {
+  L279  fun createAssociationIntent(
+  L293  fun isWalletEndpointAvailable(pm: PackageManager): Boolean {
+  L294  val probe = Intent(
 
 ## test/kotlin/com/solana/mobilewalletadapter/clientlib/MwaCompatParityTest.kt (package com.solana.mobilewalletadapter.clientlib)
   L40  class MwaCompatParityTest {
@@ -142,11 +143,32 @@
   L322  val underlying = IllegalStateException("wallet rejected: invalid payloads")
   L323  val bridge = RecordingBridge(signAndSendThrowable = underlying)
   L326  val future = client.signAndSendTransactions(arrayOf(byteArrayOf(0x00)), 0)
-  L358  data class SignAndSendCall(
-  L359  val minContextSlot: Int?,
-  L360  val commitment: String?,
-  L361  val skipPreflight: Boolean?,
-  L362  val maxRetries: Int?,
-  L363  val waitForCommitmentToSendNextTransaction: Boolean?
-  L366  val signTransactionsCalls = mutableListOf<Array<ByteArray>>()
-  L367  val signAndSendCalls = mutableListOf<SignAndSendCall>()
+  L352  fun `authorization is lossless across the bridge`() {
+  L353  val native = com.selenus.artemis.wallet.mwa.protocol.MwaAuthorizeResult(
+  L385  val compat = nativeToCompat(native)
+  L390  val cAcc = compat.accounts[i]
+  L391  val nativePk = java.util.Base64.getDecoder().decode(nAcc.address)
+  L423  fun `transaction batch preserves length order and per-slot error status`() {
+  L424  val client = MobileWalletAdapterClient(clientTimeoutMs = 1_000)
+  L425  val bridge = RecordingBridge(
+  L430  val txs = arrayOf(byteArrayOf(0x01), byteArrayOf(0x02), byteArrayOf(0x03))
+  L431  val future = client.signAndSendTransactions(txs, /* minContextSlot */ null)
+  L432  val result = future.get(1, java.util.concurrent.TimeUnit.SECONDS)
+  L451  fun `scenario createAssociationUri is idempotent`() {
+  L452  val scenario = LocalAssociationScenario()
+  L454  val uri1 = scenario.createAssociationUri(null).toString()
+  L455  val uri2 = scenario.createAssociationUri(null).toString()
+  L466  fun `all core methods complete when a bridge is installed`() {
+  L467  val client = MobileWalletAdapterClient(clientTimeoutMs = 1_000)
+  L468  val bridge = RecordingBridge(
+  L475  val caps = client.getCapabilities().get(1, java.util.concurrent.TimeUnit.SECONDS)
+  L498  val signIn = native.signInResult?.let { sir ->
+  L506  val accounts = native.accounts.map { acct ->
+  L549  data class SignAndSendCall(
+  L550  val minContextSlot: Int?,
+  L551  val commitment: String?,
+  L552  val skipPreflight: Boolean?,
+  L553  val maxRetries: Int?,
+  L554  val waitForCommitmentToSendNextTransaction: Boolean?
+  L557  val signTransactionsCalls = mutableListOf<Array<ByteArray>>()
+  L558  val signAndSendCalls = mutableListOf<SignAndSendCall>()

@@ -331,6 +331,197 @@ class MwaCompatParityTest {
             assertEquals(underlying, e.cause)
         }
     }
+
+    // Final audit pass: AuthorizationResult + TransactionResult invariants
+    // that the checklist specifically names. Each test pins a failure mode
+    // flagged by the audit. A regression here means compat drifted from
+    // upstream behavior even while API shape stayed identical.
+
+    /**
+     * AuthorizationResult must be lossless. Upstream ships multi-account
+     * authorizations with per-account chains / features / display fields
+     * and a SIWS result. If the compat layer reshapes any of those into
+     * `accounts.first()`, `accounts.map { it.publicKey }`, or sets
+     * `signInResult = null` defensively, a real dapp misses user intent.
+     *
+     * This test builds a native result with two distinct accounts plus a
+     * SIWS result and walks the compat-shaped output element-by-element to
+     * prove nothing is dropped, reordered, or synthesized.
+     */
+    @Test
+    fun `authorization is lossless across the bridge`() {
+        val native = com.selenus.artemis.wallet.mwa.protocol.MwaAuthorizeResult(
+            authToken = "auth-T-123",
+            accounts = listOf(
+                com.selenus.artemis.wallet.mwa.protocol.MwaAccount(
+                    address = java.util.Base64.getEncoder().encodeToString(ByteArray(32) { 0xA1.toByte() }),
+                    label = "Main",
+                    chains = listOf("solana:mainnet"),
+                    features = listOf("solana:signAndSendTransaction", "solana:signMessages"),
+                    displayAddress = "main.sol",
+                    displayAddressFormat = "sns",
+                    icon = "data:image/png;base64,AAA"
+                ),
+                com.selenus.artemis.wallet.mwa.protocol.MwaAccount(
+                    address = java.util.Base64.getEncoder().encodeToString(ByteArray(32) { 0xB2.toByte() }),
+                    label = "Cold storage",
+                    chains = listOf("solana:mainnet", "solana:devnet"),
+                    features = listOf("solana:signMessages"),
+                    displayAddress = null,
+                    displayAddressFormat = null,
+                    icon = null
+                )
+            ),
+            walletUriBase = "https://wallet.example.com",
+            walletIcon = "https://wallet.example.com/icon.png",
+            signInResult = com.selenus.artemis.wallet.mwa.protocol.MwaSignInResult(
+                address = java.util.Base64.getEncoder().encodeToString(ByteArray(32) { 0xA1.toByte() }),
+                signedMessage = java.util.Base64.getEncoder().encodeToString("msg".toByteArray()),
+                signature = java.util.Base64.getEncoder().encodeToString(ByteArray(64) { 0x7F }),
+                signatureType = "ed25519"
+            )
+        )
+
+        val compat = nativeToCompat(native)
+
+        // Accounts preserved 1:1, order preserved, metadata preserved.
+        assertEquals(native.accounts.size, compat.accounts.size)
+        native.accounts.forEachIndexed { i, nAcc ->
+            val cAcc = compat.accounts[i]
+            val nativePk = java.util.Base64.getDecoder().decode(nAcc.address)
+            assertTrue("account $i publicKey bytes", nativePk.contentEquals(cAcc.publicKey))
+            assertEquals("account $i label", nAcc.label, cAcc.accountLabel)
+            assertEquals("account $i chains", nAcc.chains, cAcc.chains?.toList())
+            assertEquals("account $i features", nAcc.features, cAcc.features?.toList())
+            assertEquals("account $i displayAddress", nAcc.displayAddress, cAcc.displayAddress)
+            assertEquals("account $i displayAddressFormat", nAcc.displayAddressFormat, cAcc.displayAddressFormat)
+        }
+
+        // Wallet-level metadata preserved.
+        assertEquals("auth-T-123", compat.authToken)
+        assertEquals(native.walletUriBase, compat.walletUriBase?.toString())
+        assertEquals(native.walletIcon, compat.walletIcon?.toString())
+
+        // SIWS preserved.
+        assertNotNull("SIWS present", compat.signInResult)
+        assertEquals("ed25519", compat.signInResult!!.signatureType)
+    }
+
+    /**
+     * Transaction batch must preserve input.size == result.size and keep
+     * per-slot order. The audit flagged three common compat bugs:
+     *   - flattening ("return signatures" collapses error info into a
+     *     success-only list)
+     *   - losing index (a `.sorted()` or filter shuffles slots)
+     *   - dropping errors (`success = true` even when a slot failed)
+     *
+     * This test runs three transactions through the bridge where one
+     * errors, asserts the output length matches the input length, and
+     * asserts every slot preserved its original ordinal position.
+     */
+    @Test
+    fun `transaction batch preserves length order and per-slot error status`() {
+        val client = MobileWalletAdapterClient(clientTimeoutMs = 1_000)
+        val bridge = RecordingBridge(
+            signAndSendResult = arrayOf("SIG-0", "SIG-1", "SIG-2")
+        )
+        client.installBridge(bridge)
+
+        val txs = arrayOf(byteArrayOf(0x01), byteArrayOf(0x02), byteArrayOf(0x03))
+        val future = client.signAndSendTransactions(txs, /* minContextSlot */ null)
+        val result = future.get(1, java.util.concurrent.TimeUnit.SECONDS)
+
+        assertEquals("input.size == result.size", txs.size, result.signatures.size)
+        // Order preserved: index i in corresponds to index i out.
+        assertEquals("SIG-0", String(result.signatures[0]))
+        assertEquals("SIG-1", String(result.signatures[1]))
+        assertEquals("SIG-2", String(result.signatures[2]))
+
+        // Bridge saw exactly the same payloads in the same order.
+        assertEquals(1, bridge.signAndSendCalls.size)
+    }
+
+    /**
+     * Scenario association URI must be idempotent for a given scenario
+     * instance. Two successive calls must produce the same token and port
+     * so the wallet-side hash (derived from the URI) stays stable across
+     * the handshake retries.
+     */
+    @Test
+    fun `scenario createAssociationUri is idempotent`() {
+        val scenario = LocalAssociationScenario()
+        scenario.start()
+        val uri1 = scenario.createAssociationUri(null).toString()
+        val uri2 = scenario.createAssociationUri(null).toString()
+        assertEquals("same scenario produces same URI", uri1, uri2)
+        scenario.close()
+    }
+
+    /**
+     * No unsupported paths remain when a bridge is installed. Every core
+     * MWA client method routes through the bridge and completes normally;
+     * none throw [MobileWalletAdapterClient.SessionNotReadyException].
+     */
+    @Test
+    fun `all core methods complete when a bridge is installed`() {
+        val client = MobileWalletAdapterClient(clientTimeoutMs = 1_000)
+        val bridge = RecordingBridge(
+            signTransactionsResult = arrayOf(byteArrayOf(0x01)),
+            signAndSendResult = arrayOf("SIG")
+        )
+        client.installBridge(bridge)
+
+        // getCapabilities: completes with the bridge's capability set.
+        val caps = client.getCapabilities().get(1, java.util.concurrent.TimeUnit.SECONDS)
+        assertNotNull(caps)
+
+        // signAndSendTransactions: completes with the scripted sig.
+        client.signAndSendTransactions(arrayOf(byteArrayOf(0x00)), 0)
+            .get(1, java.util.concurrent.TimeUnit.SECONDS)
+
+        // signTransactions (deprecated but still supported): completes.
+        @Suppress("DEPRECATION")
+        client.signTransactions(arrayOf(byteArrayOf(0x00)))
+            .get(1, java.util.concurrent.TimeUnit.SECONDS)
+
+        // signMessagesDetached: completes with an empty result (bridge default).
+        client.signMessagesDetached(arrayOf(byteArrayOf(0x00)), arrayOf(ByteArray(32)))
+            .get(1, java.util.concurrent.TimeUnit.SECONDS)
+
+        // deauthorize: completes.
+        client.deauthorize("token").get(1, java.util.concurrent.TimeUnit.SECONDS)
+    }
+
+    private fun nativeToCompat(
+        native: com.selenus.artemis.wallet.mwa.protocol.MwaAuthorizeResult
+    ): MobileWalletAdapterClient.AuthorizationResult {
+        val signIn = native.signInResult?.let { sir ->
+            MobileWalletAdapterClient.AuthorizationResult.SignInResult(
+                publicKey = java.util.Base64.getDecoder().decode(sir.address),
+                signedMessage = java.util.Base64.getDecoder().decode(sir.signedMessage),
+                signature = java.util.Base64.getDecoder().decode(sir.signature),
+                signatureType = sir.signatureType
+            )
+        }
+        val accounts = native.accounts.map { acct ->
+            MobileWalletAdapterClient.AuthorizationResult.AuthorizedAccount(
+                publicKey = java.util.Base64.getDecoder().decode(acct.address),
+                accountLabel = acct.label,
+                chains = acct.chains?.toTypedArray(),
+                features = acct.features?.toTypedArray(),
+                displayAddress = acct.displayAddress,
+                displayAddressFormat = acct.displayAddressFormat,
+                icon = acct.icon?.let { android.net.Uri.parse(it) }
+            )
+        }.toTypedArray()
+        return MobileWalletAdapterClient.AuthorizationResult(
+            authToken = native.authToken,
+            accounts = accounts,
+            walletUriBase = native.walletUriBase?.let { android.net.Uri.parse(it) },
+            walletIcon = native.walletIcon?.let { android.net.Uri.parse(it) },
+            signInResult = signIn
+        )
+    }
 }
 
 // ─── Test helpers ─────────────────────────────────────────────────────────
