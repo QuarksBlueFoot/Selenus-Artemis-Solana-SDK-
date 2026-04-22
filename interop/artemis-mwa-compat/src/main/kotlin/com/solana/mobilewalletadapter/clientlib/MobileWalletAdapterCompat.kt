@@ -128,6 +128,11 @@ class MobileWalletAdapter @JvmOverloads constructor(
                     signatureType = sir.signatureType
                 )
             }
+            // `publicKey` and `accountLabel` are MWA-1.x legacy projections
+            // from `accounts[0]`; kept for upstream source compatibility
+            // but explicitly deprecated on the result class. The
+            // authoritative state is the `accounts` list.
+            @Suppress("DEPRECATION")
             val authResult = AuthorizationResult(
                 authToken = raw?.authToken ?: authStore.get() ?: "",
                 publicKey = pubkey.bytes,

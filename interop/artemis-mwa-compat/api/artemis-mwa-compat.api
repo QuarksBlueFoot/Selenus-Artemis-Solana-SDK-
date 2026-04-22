@@ -95,8 +95,8 @@
   L44  val nested = requireClient().authorize(
   L122  val topLevelAccounts = accounts.map { a ->
   L132  val siwsResult = signInResult?.let { s ->
-  L156  val MobileWalletAdapterClient.SignPayloadsResult.payloads: Array<ByteArray>
-  L159  val MobileWalletAdapterClient.SignAndSendTransactionsResult.signatureStrings: Array<String>
+  L163  val MobileWalletAdapterClient.SignPayloadsResult.payloads: Array<ByteArray>
+  L166  val MobileWalletAdapterClient.SignAndSendTransactionsResult.signatureStrings: Array<String>
 
 ## main/kotlin/com/solana/mobilewalletadapter/clientlib/LocalAssociationDetails.kt (package com.solana.mobilewalletadapter.clientlib)
   L19  typealias MobileWalletAdapterSession = Any
@@ -119,27 +119,27 @@
   L109  val walletIconStr = raw?.walletIcon
   L110  val accounts = raw?.accounts.orEmpty().map { acc ->
   L123  val signInResultNative = raw?.signInResult?.let { sir ->
-  L131  val authResult = AuthorizationResult(
-  L143  val operations = MwaAdapterOperations(
-  L150  val payload = operations.block(authResult)
-  L168  suspend fun connect(sender: ActivityResultSender): TransactionResult<Unit> =
-  L175  suspend fun signIn(
-  L179  val authTxResult = transact(sender, signInPayload) { authResult ->
-  L206  suspend fun disconnect(sender: ActivityResultSender): TransactionResult<Unit> {
-  L207  val token = authStore.get()
-  L209  val adapter = liveAdapter ?: createAdapter(sender).also { fresh ->
-  L237  fun disconnect() {
-  L277  val pubkey = adapter.connect()
-  L308  val results = adapter.signMessages(
-  L326  val batch = signAndSendTransactionsBatch(transactions, params)
-  L327  val sigBytes = batch.toUpstreamSignaturesOrThrow()
-  L336  val options = com.selenus.artemis.wallet.SendTransactionOptions(
-  L361  val signed = messages.map { msg ->
-  L362  val sig = adapter.signArbitraryMessage(
-  L381  val caps = runCatching { adapter.getCapabilities() }.getOrNull()
-  L382  val versions = buildList<Any> {
-  L403  object MobileWalletAdapterCompat {
-  L404  fun create(
+  L136  val authResult = AuthorizationResult(
+  L148  val operations = MwaAdapterOperations(
+  L155  val payload = operations.block(authResult)
+  L173  suspend fun connect(sender: ActivityResultSender): TransactionResult<Unit> =
+  L180  suspend fun signIn(
+  L184  val authTxResult = transact(sender, signInPayload) { authResult ->
+  L211  suspend fun disconnect(sender: ActivityResultSender): TransactionResult<Unit> {
+  L212  val token = authStore.get()
+  L214  val adapter = liveAdapter ?: createAdapter(sender).also { fresh ->
+  L242  fun disconnect() {
+  L282  val pubkey = adapter.connect()
+  L313  val results = adapter.signMessages(
+  L331  val batch = signAndSendTransactionsBatch(transactions, params)
+  L332  val sigBytes = batch.toUpstreamSignaturesOrThrow()
+  L341  val options = com.selenus.artemis.wallet.SendTransactionOptions(
+  L366  val signed = messages.map { msg ->
+  L367  val sig = adapter.signArbitraryMessage(
+  L386  val caps = runCatching { adapter.getCapabilities() }.getOrNull()
+  L387  val versions = buildList<Any> {
+  L408  object MobileWalletAdapterCompat {
+  L409  fun create(
 
 ## main/kotlin/com/solana/mobilewalletadapter/clientlib/MwaSessionBridge.kt (package com.solana.mobilewalletadapter.clientlib)
   L29  class MwaSessionBridge internal constructor(
@@ -159,41 +159,39 @@
   L189  val bridge = MwaSessionBridge(adapter)
 
 ## main/kotlin/com/solana/mobilewalletadapter/clientlib/TransactionResult.kt (package com.solana.mobilewalletadapter.clientlib)
-  L17  sealed class TransactionResult<out T> {
-  L29  data class Success<T>(
-  L30  val payload: T,
-  L31  val authResult: AuthorizationResult? = null,
-  L32  val batch: TransactionBatchResult? = null
-  L35  data class Failure(
-  L36  val message: String,
-  L37  val e: Exception? = null
-  L40  data class NoWalletFound(
-  L41  val message: String
-  L45  val <T> TransactionResult<T>.successPayload: T?
-  L49  val <T> TransactionResult<T>.batchResult: TransactionBatchResult?
-  L67  data class TransactionItemResult(
-  L68  val index: Int,
-  L69  val signature: String? = null,
-  L70  val error: Throwable? = null,
-  L71  val success: Boolean = (signature != null && error == null)
-  L82  val isSuccess: Boolean get() = success
-  L83  val isFailure: Boolean get() = !success
-  L100  data class TransactionBatchResult(
-  L101  val results: List<TransactionItemResult>
-  L111  val allSuccess: Boolean get() = results.all { it.isSuccess }
-  L112  val anyFailure: Boolean get() = results.any { it.isFailure }
-  L113  val successCount: Int get() = results.count { it.isSuccess }
-  L114  val failureCount: Int get() = results.count { it.isFailure }
-  L117  fun signatures(): List<String> = results.mapNotNull { it.signature }
-  L120  fun failures(): List<TransactionItemResult> = results.filter { it.isFailure }
-  L129  fun of(
-  L140  val items = (0 until inputSize).map { i ->
-  L167  fun com.selenus.artemis.wallet.BatchSendResult.toTransactionBatchResult(): TransactionBatchResult {
-  L168  val items = results.mapIndexed { index, slot ->
-  L169  val sig = slot.signature.takeIf { it.isNotEmpty() }
-  L170  val err: Throwable? = when {
-  L203  fun TransactionBatchResult.toUpstreamSignaturesOrThrow(): Array<ByteArray> {
-  L215  val sig = item.signature!!
+  L19  sealed class TransactionResult<out T> {
+  L21  data class Success<T>(
+  L22  val payload: T,
+  L23  val authResult: AuthorizationResult? = null
+  L26  data class Failure(
+  L27  val message: String,
+  L28  val e: Exception? = null
+  L31  data class NoWalletFound(
+  L32  val message: String
+  L36  val <T> TransactionResult<T>.successPayload: T?
+  L54  data class TransactionItemResult(
+  L55  val index: Int,
+  L56  val signature: String? = null,
+  L57  val error: Throwable? = null,
+  L58  val success: Boolean = (signature != null && error == null)
+  L69  val isSuccess: Boolean get() = success
+  L70  val isFailure: Boolean get() = !success
+  L87  data class TransactionBatchResult(
+  L88  val results: List<TransactionItemResult>
+  L98  val allSuccess: Boolean get() = results.all { it.isSuccess }
+  L99  val anyFailure: Boolean get() = results.any { it.isFailure }
+  L100  val successCount: Int get() = results.count { it.isSuccess }
+  L101  val failureCount: Int get() = results.count { it.isFailure }
+  L104  fun signatures(): List<String> = results.mapNotNull { it.signature }
+  L107  fun failures(): List<TransactionItemResult> = results.filter { it.isFailure }
+  L116  fun of(
+  L127  val items = (0 until inputSize).map { i ->
+  L154  fun com.selenus.artemis.wallet.BatchSendResult.toTransactionBatchResult(): TransactionBatchResult {
+  L155  val items = results.mapIndexed { index, slot ->
+  L156  val sig = slot.signature.takeIf { it.isNotEmpty() }
+  L157  val err: Throwable? = when {
+  L190  fun TransactionBatchResult.toUpstreamSignaturesOrThrow(): Array<ByteArray> {
+  L202  val sig = item.signature!!
 
 ## test/kotlin/com/solana/mobilewalletadapter/clientlib/MwaCompatResultsTest.kt (package com.solana.mobilewalletadapter.clientlib)
   L28  class MwaCompatResultsTest {
@@ -237,7 +235,21 @@
   L386  val zeros = "1111111111111111111111111111111111111111111111111111111111111111"
   L387  val batch = TransactionBatchResult.of(
   L392  val arr = batch.toUpstreamSignaturesOrThrow()
-  L400  fun `authorize and reauthorize results are shape-equivalent`() {
-  L401  val account = AuthorizationResult.Account(
-  L410  val fresh = AuthorizationResult(
-  L420  val reauth = AuthorizationResult(
+  L406  fun `SignInResult preserves wallet payload byte for byte`() {
+  L407  val pk = ByteArray(32) { 0x11 }
+  L408  val signedMsg = "Sign in to artemis.test\n\nNonce: abc123".toByteArray()
+  L409  val sig = ByteArray(64) { 0x7F }
+  L411  val a = SignInResult(
+  L417  val b = SignInResult(
+  L426  val different = a.copy(signatureType = "secp256k1")
+  L429  val differentSignedMessage = a.copy(signedMessage = "different".toByteArray())
+  L435  val differentSignature = a.copy(signature = ByteArray(64) { 0x33 })
+  L450  fun `multi-account authorization preserves each account and its metadata`() {
+  L451  val accountA = AuthorizationResult.Account(
+  L459  val accountB = AuthorizationResult.Account(
+  L467  val accountC = AuthorizationResult.Account(
+  L475  val result = AuthorizationResult(
+  L498  fun `authorize and reauthorize results are shape-equivalent`() {
+  L499  val account = AuthorizationResult.Account(
+  L508  val fresh = AuthorizationResult(
+  L518  val reauth = AuthorizationResult(

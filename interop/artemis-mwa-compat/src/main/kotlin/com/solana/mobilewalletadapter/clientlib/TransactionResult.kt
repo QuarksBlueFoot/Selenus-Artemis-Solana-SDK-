@@ -8,28 +8,19 @@ package com.solana.mobilewalletadapter.clientlib
  * Result of an MWA `transact` call.
  *
  * Top-level shape matches upstream `com.solana.mobilewalletadapter.clientlib.TransactionResult`.
- * The [Success] variant wraps an arbitrary payload so ktx callers can
- * return whatever the block produced (a signature, a SignIn result, a
- * custom DTO). Batch signAndSend callers should read [Success.batch]
- * instead: it exposes per-transaction status without collapsing partial
- * failures into a single message.
+ * The [Success] variant wraps the payload the `transact { }` block
+ * returned, which may be a signature, a SIWS result, or a
+ * [TransactionBatchResult] when the caller invoked
+ * [AdapterOperations.signAndSendTransactionsBatch]. Typing the batch
+ * case as `TransactionResult<TransactionBatchResult>` is the idiom for
+ * batch-aware callers; no extra slot is needed on [Success] because the
+ * payload already carries everything.
  */
 sealed class TransactionResult<out T> {
 
-    /**
-     * Payload wrapper for non-failed transact blocks. [payload] is whatever
-     * the block returned; [authResult] is the authorization state the
-     * adapter observed during the block; [batch] is populated when the
-     * caller invoked sign-and-send and wants per-transaction status.
-     *
-     * At most one of [payload] and [batch] is semantically meaningful for
-     * a given call. Both fields may be populated (payload for ktx return
-     * value, batch for the underlying MWA response).
-     */
     data class Success<T>(
         val payload: T,
-        val authResult: AuthorizationResult? = null,
-        val batch: TransactionBatchResult? = null
+        val authResult: AuthorizationResult? = null
     ) : TransactionResult<T>()
 
     data class Failure(
@@ -44,10 +35,6 @@ sealed class TransactionResult<out T> {
 
 val <T> TransactionResult<T>.successPayload: T?
     get() = (this as? TransactionResult.Success)?.payload
-
-/** Batch of per-transaction results from a sign-and-send call. */
-val <T> TransactionResult<T>.batchResult: TransactionBatchResult?
-    get() = (this as? TransactionResult.Success)?.batch
 
 /**
  * Status for a single transaction inside a sign-and-send batch.

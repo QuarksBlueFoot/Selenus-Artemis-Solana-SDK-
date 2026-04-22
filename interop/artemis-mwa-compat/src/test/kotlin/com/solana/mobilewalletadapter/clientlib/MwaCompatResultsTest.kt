@@ -396,6 +396,104 @@ class MwaCompatResultsTest {
         assertTrue(arr[0].all { it == 0.toByte() })
     }
 
+    /**
+     * SIWS result parity: every field the wallet returned (address,
+     * signed message, signature, signature type) must survive the trip
+     * through the compat shape. Structural equality holds byte-for-byte
+     * on the three ByteArray fields.
+     */
+    @Test
+    fun `SignInResult preserves wallet payload byte for byte`() {
+        val pk = ByteArray(32) { 0x11 }
+        val signedMsg = "Sign in to artemis.test\n\nNonce: abc123".toByteArray()
+        val sig = ByteArray(64) { 0x7F }
+
+        val a = SignInResult(
+            publicKey = pk,
+            signedMessage = signedMsg,
+            signature = sig,
+            signatureType = "ed25519"
+        )
+        val b = SignInResult(
+            publicKey = pk.copyOf(),
+            signedMessage = signedMsg.copyOf(),
+            signature = sig.copyOf(),
+            signatureType = "ed25519"
+        )
+        assertEquals("same bytes => equal", a, b)
+        assertEquals(a.hashCode(), b.hashCode())
+
+        val different = a.copy(signatureType = "secp256k1")
+        assertNotEquals("different signatureType => not equal", a, different)
+
+        val differentSignedMessage = a.copy(signedMessage = "different".toByteArray())
+        assertNotEquals(
+            "different signedMessage bytes => not equal",
+            a, differentSignedMessage
+        )
+
+        val differentSignature = a.copy(signature = ByteArray(64) { 0x33 })
+        assertNotEquals(
+            "different signature bytes => not equal",
+            a, differentSignature
+        )
+    }
+
+    /**
+     * Multi-account authorization parity: a wallet returning three
+     * distinct accounts must surface all three on the compat side, each
+     * with its own metadata intact. The shim must not pull account[0]
+     * forward and drop the tail.
+     */
+    @Suppress("DEPRECATION")
+    @Test
+    fun `multi-account authorization preserves each account and its metadata`() {
+        val accountA = AuthorizationResult.Account(
+            publicKey = ByteArray(32) { 0x11 },
+            displayAddress = "addrA.sol",
+            displayAddressFormat = "sns",
+            label = "Main",
+            chains = listOf("solana:mainnet"),
+            features = listOf("solana:signAndSendTransaction")
+        )
+        val accountB = AuthorizationResult.Account(
+            publicKey = ByteArray(32) { 0x22 },
+            displayAddress = null,
+            displayAddressFormat = null,
+            label = "Cold",
+            chains = listOf("solana:mainnet", "solana:devnet"),
+            features = listOf("solana:signMessages")
+        )
+        val accountC = AuthorizationResult.Account(
+            publicKey = ByteArray(32) { 0x33 },
+            displayAddress = "AbC...XYZ",
+            displayAddressFormat = "base58",
+            label = null,
+            chains = null,
+            features = null
+        )
+        val result = AuthorizationResult(
+            authToken = "T",
+            publicKey = accountA.publicKey,
+            accountLabel = "Main",
+            walletUriBase = null,
+            walletIcon = null,
+            accounts = listOf(accountA, accountB, accountC),
+            signInResult = null
+        )
+
+        assertEquals(3, result.accounts.size)
+        assertEquals(accountA, result.accounts[0])
+        assertEquals(accountB, result.accounts[1])
+        assertEquals(accountC, result.accounts[2])
+
+        // Legacy flat fields project from accounts[0]; they must stay
+        // consistent with the primary account but callers should read
+        // from `accounts` directly.
+        assertTrue(accountA.publicKey.contentEquals(result.publicKey))
+        assertEquals(accountA.label, result.accountLabel)
+    }
+
     @Test
     fun `authorize and reauthorize results are shape-equivalent`() {
         val account = AuthorizationResult.Account(

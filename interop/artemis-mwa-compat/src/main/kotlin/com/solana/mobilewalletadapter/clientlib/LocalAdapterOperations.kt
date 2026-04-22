@@ -137,6 +137,13 @@ class LocalAdapterOperations @JvmOverloads constructor(
                 signatureType = s.signatureType
             )
         }
+        // `publicKey` and `accountLabel` are legacy MWA-1.x projections
+        // from `accounts[0]`. The authoritative account state is the
+        // `accounts` list itself; we populate the flat fields only
+        // because upstream-aligned Java call sites still read them (the
+        // fields carry `@Deprecated` so new Kotlin call sites emit a
+        // compile-time warning pointing at `accounts`).
+        @Suppress("DEPRECATION")
         return AuthorizationResult(
             authToken = authToken,
             publicKey = topLevelAccounts.firstOrNull()?.publicKey ?: ByteArray(0),
