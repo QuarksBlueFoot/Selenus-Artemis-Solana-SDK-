@@ -1,776 +1,264 @@
-# artemis-anchor - Native Anchor Client Generator
+# artemis-anchor
 
-## First Compile-Time Anchor Client Generator for Kotlin
+Runtime Anchor program client for Kotlin. Load an IDL JSON, construct an `AnchorProgram`, and build type-resolved instructions, fetch and decode state accounts, derive PDAs from IDL seeds, parse events, and decode program errors. No KSP, no codegen step, no extra build configuration.
 
-Generate type-safe Kotlin clients from Anchor IDL files at compile time. Full instruction builders, account deserializers, and event parsers with zero runtime reflection.
+The module lives at [../../ecosystem/artemis-anchor/](../../ecosystem/artemis-anchor/). The Anchor discriminator helpers live at [../../compatibility/artemis-discriminators/](../../compatibility/artemis-discriminators/).
 
----
+## When to reach for this module
 
-## Overview
+Pick `artemis-anchor` when you want to talk to an Anchor program without writing manual Borsh serializers or hand-rolling discriminator bytes. If you already have a typed Kotlin client for a specific program (for example a hand-written builder), you do not need this module.
 
-`artemis-anchor` provides a KSP (Kotlin Symbol Processing) plugin that generates complete program clients from Anchor IDL files, enabling:
+The runtime IDL path lets you ship one client binary that works against many programs or against programs whose IDL changes between versions. The tradeoff is that argument types are validated at call time, not at compile time.
 
-- **Compile-time code generation** from IDL
-- **Type-safe instruction builders** with named parameters
-- **Account deserializers** with proper discriminator handling
-- **Event parsing** for transaction logs
-- **PDA derivation helpers** with seed building
-- **Error code mapping** for friendly error messages
-
----
-
-## Installation
-
-### Gradle Configuration
+## Install
 
 ```kotlin
-plugins {
-    id("com.google.devtools.ksp") version "2.1.0-1.0.29"
-}
-
 dependencies {
     implementation("xyz.selenus:artemis-anchor:2.2.0")
-    ksp("xyz.selenus:artemis-anchor-processor:2.2.0")
-}
-
-// Configure IDL source directory
-ksp {
-    arg("anchor.idl.dir", "$projectDir/src/main/idl")
-    arg("anchor.output.package", "com.myapp.programs")
 }
 ```
 
----
+## Load an IDL
 
-## Quick Start
-
-### 1. Add IDL File
-
-Place your Anchor IDL in `src/main/idl/my_program.json`:
-
-```json
-{
-  "version": "0.1.0",
-  "name": "my_program",
-  "instructions": [
-    {
-      "name": "initialize",
-      "accounts": [
-        { "name": "authority", "isMut": false, "isSigner": true },
-        { "name": "state", "isMut": true, "isSigner": false },
-        { "name": "systemProgram", "isMut": false, "isSigner": false }
-      ],
-      "args": [
-        { "name": "name", "type": "string" },
-        { "name": "bump", "type": "u8" }
-      ]
-    }
-  ],
-  "accounts": [
-    {
-      "name": "State",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          { "name": "authority", "type": "publicKey" },
-          { "name": "name", "type": "string" },
-          { "name": "counter", "type": "u64" }
-        ]
-      }
-    }
-  ]
-}
-```
-
-### 2. Build Project
-
-```bash
-./gradlew build
-```
-
-### 3. Use Generated Client
+`AnchorProgram` is constructed from an `AnchorIdl`. The IDL is a plain JSON string that you load however you like. Two equivalent forms:
 
 ```kotlin
-import com.myapp.programs.myprogram.*
+import com.selenus.artemis.anchor.AnchorIdl
+import com.selenus.artemis.anchor.AnchorProgram
+import com.selenus.artemis.runtime.Pubkey
 
-// Create client
-val client = MyProgramClient(rpc, MY_PROGRAM_ID)
+val idlJson: String = loadIdlFromAssets("my_program.json")
 
-// Build instruction with type safety
-val ix = client.initialize(
-    authority = wallet.publicKey,
-    state = statePda,
-    systemProgram = SystemProgram.PROGRAM_ID,
-    name = "My State",
-    bump = stateBump
-)
+// Two-step form
+val idl: AnchorIdl = AnchorProgram.parseIdl(idlJson)
+val program = AnchorProgram(idl, Pubkey.fromBase58(MY_PROGRAM_ID), rpc)
 
-// Create and send transaction
-val tx = Transaction.create(recentBlockhash) {
-    add(ix)
-    feePayer = wallet.publicKey
-}
-
-val signature = wallet.signAndSend(tx)
+// One-step form
+val program = AnchorProgram.fromIdl(idlJson, Pubkey.fromBase58(MY_PROGRAM_ID), rpc)
 ```
 
----
+The third argument (`rpc: RpcApi?`) is optional. It is only needed for the account-fetch helpers that make RPC calls; instruction building, PDA derivation, and event/error decoding do not need it.
 
-## Generated Code Structure
+The parser ignores unknown keys and accepts lenient JSON, so newer IDL formats with fields Artemis does not yet understand will still load without throwing.
 
-For each IDL, the processor generates:
-
-```
-com.myapp.programs.myprogram/
-├── MyProgramClient.kt       # Main client class
-├── Instructions.kt          # Instruction builders
-├── Accounts.kt              # Account data classes
-├── Types.kt                 # Custom types (structs, enums)
-├── Events.kt                # Event data classes
-├── Errors.kt                # Error code enum
-└── Pdas.kt                  # PDA derivation helpers
-```
-
----
-
-## Instruction Builders
-
-### Generated Instruction Methods
+## Build an instruction
 
 ```kotlin
-// Generated from IDL
-class MyProgramClient(
-    val rpc: RpcClient,
-    val programId: Pubkey
-) {
-    /**
-     * Initialize a new state account
-     *
-     * @param authority The authority that controls the state
-     * @param state The state account to initialize
-     * @param systemProgram System program for account creation
-     * @param name The name for this state
-     * @param bump PDA bump seed
-     */
-    fun initialize(
-        authority: Pubkey,
-        state: Pubkey,
-        systemProgram: Pubkey,
-        name: String,
-        bump: UByte
-    ): TransactionInstruction {
-        val data = buildInstructionData {
-            // Discriminator
-            write(INITIALIZE_DISCRIMINATOR)
-            // Args
-            writeString(name)
-            writeU8(bump)
-        }
-        
-        val accounts = listOf(
-            AccountMeta(authority, isSigner = true, isWritable = false),
-            AccountMeta(state, isSigner = false, isWritable = true),
-            AccountMeta(systemProgram, isSigner = false, isWritable = false)
-        )
-        
-        return TransactionInstruction(programId, accounts, data)
+import com.selenus.artemis.runtime.Pubkey
+import com.selenus.artemis.programs.SystemProgram
+
+val authority = wallet.publicKey
+val statePda: Pubkey = /* derive below */
+
+val ix = program.methods
+    .instruction("initialize")
+    .args(mapOf("name" to "MyToken", "decimals" to 9.toByte()))
+    .accounts {
+        writable("state", statePda)
+        signer("authority", authority)
+        program("systemProgram", SystemProgram.PROGRAM_ID)
     }
-    
-    companion object {
-        val INITIALIZE_DISCRIMINATOR = byteArrayOf(
-            0xaf.toByte(), 0xaf.toByte(), 0x6d.toByte(), 0x1f.toByte(),
-            0x0d.toByte(), 0x98.toByte(), 0x9b.toByte(), 0xed.toByte()
-        )
-    }
+    .build()
+```
+
+The shape mirrors Anchor's TypeScript client (`program.methods.x(args).accounts({}).rpc()`) so anyone coming from TS will read it the same way.
+
+### `args` accepts two forms
+
+Map form, when the argument values come from variables:
+
+```kotlin
+.args(mapOf(
+    "amount" to 1_000_000L,
+    "memo"   to "hello"
+))
+```
+
+DSL form, when you are spelling them out inline. The `infix to` places each pair into the underlying map:
+
+```kotlin
+.args {
+    "amount" to 1_000_000L
+    "memo"   to "hello"
 }
 ```
 
-### Complex Instruction Types
+Supported argument types are whatever `BorshSerializer` supports for IDL primitive types: `bool`, `u8`/`u16`/`u32`/`u64`, `i8`/`i16`/`i32`/`i64`, `string`, `publicKey` (pass a `Pubkey`), `bytes` (pass a `ByteArray`), plus vectors, options, and defined structs/enums from the IDL's `types` section.
+
+### `accounts { }` helpers
+
+The accounts block maps IDL account names to pubkeys and role flags. The helper names reflect the role:
 
 ```kotlin
-// Struct arguments
-data class ConfigInput(
-    val maxSupply: ULong,
-    val mintPrice: ULong,
-    val startTime: Long?
-)
-
-fun createWithConfig(
-    config: ConfigInput,
-    // ... accounts
-): TransactionInstruction
-
-// Enum arguments
-sealed class Status {
-    object Active : Status()
-    object Paused : Status()
-    data class Scheduled(val startAt: Long) : Status()
-}
-
-fun setStatus(
-    status: Status,
-    // ... accounts
-): TransactionInstruction
-
-// Usage
-client.setStatus(Status.Scheduled(startAt = 1699999999L), ...)
-```
-
----
-
-## Account Deserialization
-
-### Generated Account Classes
-
-```kotlin
-// Generated from IDL accounts
-@Serializable
-data class State(
-    val authority: Pubkey,
-    val name: String,
-    val counter: ULong
-) {
-    companion object {
-        val DISCRIMINATOR = byteArrayOf(/* ... */)
-        const val SIZE = 8 + 32 + 4 + 256 + 8  // discriminator + fields
-        
-        fun deserialize(data: ByteArray): State {
-            require(data.sliceArray(0..7).contentEquals(DISCRIMINATOR)) {
-                "Invalid account discriminator"
-            }
-            return BorshDecoder(data.drop(8).toByteArray()).run {
-                State(
-                    authority = readPubkey(),
-                    name = readString(),
-                    counter = readU64()
-                )
-            }
-        }
-    }
+.accounts {
+    account("config", configPda)              // readonly, non-signer
+    writable("state", statePda)               // writable, non-signer
+    signer("authority", wallet.publicKey)     // readonly signer
+    signerWritable("payer", wallet.publicKey) // writable signer
+    program("tokenProgram", TokenProgram.PROGRAM_ID)  // readonly, non-signer (semantic hint)
 }
 ```
 
-### Fetching Accounts
+If the IDL marks an account as `writable: true` or `signer: true`, Artemis ORs that with the role you picked, so you can pass `account(...)` for an account the IDL already marks writable and it will still be writable.
+
+Required accounts that you do not provide raise `IllegalStateException` at `build()` time. Accounts marked `optional: true` in the IDL may be omitted.
+
+### Remaining accounts
+
+Some instructions take a tail of variable-length accounts. Pass them as raw `AccountMeta` entries:
 
 ```kotlin
-// Fetch and deserialize
-val stateData = rpc.getAccountInfo(stateAddress)
-val state = State.deserialize(stateData.data)
+import com.selenus.artemis.tx.AccountMeta
 
-println("Authority: ${state.authority}")
-println("Name: ${state.name}")
-println("Counter: ${state.counter}")
+.remainingAccounts(listOf(
+    AccountMeta(proofNode0, isSigner = false, isWritable = false),
+    AccountMeta(proofNode1, isSigner = false, isWritable = false)
+))
+```
 
-// Using client helper
-val state = client.fetchState(stateAddress)
+They are appended after the named accounts in the order given.
 
-// Fetch multiple
-val states = client.fetchAllStates(listOf(addr1, addr2, addr3))
+## Send the instruction
 
-// With filters
-val myStates = client.findStates {
-    memcmp(8, wallet.publicKey.toByteArray())  // filter by authority
+Instructions built through `program.methods` are ordinary `com.selenus.artemis.tx.Instruction` values. Hand them to `TxEngine`, `WalletSession`, or any other Artemis path.
+
+```kotlin
+val result = artemis.session.send(ix)
+if (result is TxResult.Success) println("signature: ${result.signature}")
+```
+
+Batch multiple anchor calls in one transaction:
+
+```kotlin
+val ix1 = program.methods.instruction("initialize").accounts { /* ... */ }.build()
+val ix2 = program.methods.instruction("setConfig").args(/* ... */).accounts { /* ... */ }.build()
+
+artemis.session.sendBatch(listOf(ix1, ix2))
+```
+
+## Fetch and decode an account
+
+The `account` builder targets a named account type from the IDL and either fetches a single address, fetches many, or scans the program for every account of that type.
+
+```kotlin
+val fetcher = program.account.type("TokenState")
+
+// Single
+val acct = fetcher.fetch(statePda, rpc)
+acct?.get<Long>("totalSupply")?.let { println("supply = $it") }
+
+// Multiple (one `getMultipleAccounts` call)
+val results: List<DecodedAccount?> = fetcher.fetchMultiple(listOf(a, b, c), rpc)
+
+// All accounts of this type, with memcmp filter
+val mine = fetcher.all()
+    .filter(offset = 0, bytes = authority.bytes)
+    .fetch(rpc)
+```
+
+`DecodedAccount` exposes the decoded struct as `Map<String, Any?>` via `data`, plus a typed accessor helper (`account.get<Long>("totalSupply")`) and the raw `ByteArray`. Use the map form when you iterate; use `get<T>()` when you know the expected type.
+
+The discriminator is verified when decoding. Accounts whose first 8 bytes do not match are returned as `null` rather than decoded into the wrong struct.
+
+### Typed memcmp by field name
+
+`AllAccountsFetcher.filterByField` computes the offset of a struct field from the IDL and applies a memcmp filter at that offset. Today it is wired for `Pubkey` fields:
+
+```kotlin
+val mine = program.account.type("TokenState")
+    .all()
+    .filterByField("authority", wallet.publicKey)
+    .fetch(rpc)
+```
+
+For types other than `Pubkey`, compute the offset yourself and call `filter(offset, bytes)`.
+
+### Watch an account
+
+`watch` polls an account on an interval and emits decoded updates whenever the raw bytes change. It is a coroutine `Flow`, so it plays nicely with Compose:
+
+```kotlin
+program.account.type("TokenState")
+    .watch(statePda, rpc, intervalMs = 2_000L)
+    .onEach { account -> updateUi(account) }
+    .launchIn(scope)
+```
+
+For push-based updates use `RealtimeEngine.subscribeAccount(...)` from `artemis-ws` and decode the notification with `fetcher.decode(data)` yourself.
+
+## Derive a PDA from IDL seeds
+
+When the IDL declares a PDA for an account, `program.pda.findForAccount` rebuilds the address from the same recipe:
+
+```kotlin
+val (statePda, bump) = program.pda
+    .findForAccount(
+        instructionName = "initialize",
+        accountName     = "state",
+        args            = mapOf("name" to "MyToken"),
+        accounts        = mapOf("authority" to wallet.publicKey)
+    ) ?: error("state account has no PDA definition in the IDL")
+```
+
+`args` satisfies `IdlSeed.Arg` entries by name. `accounts` satisfies `IdlSeed.Account` entries by name. Constant seeds are resolved from the IDL directly.
+
+If the account does not declare a `pda` block in the IDL, or a required seed input is missing, `findForAccount` returns `null`.
+
+For anything outside the IDL, use `Pubkey.findProgramAddress(seeds, programId)` directly from `artemis-core`.
+
+## Parse events
+
+Anchor programs emit events as log messages or CPIs. If you have the raw event bytes (for example from a log or a notification), `program.events.parse` walks every `events[]` entry in the IDL and returns the first match:
+
+```kotlin
+val parsed = program.events.parse(eventBytes)
+parsed?.let {
+    println("${it.name} fields=${it.fields}")
 }
 ```
 
----
+`parsed.fields` is a `Map<String, Any?>` using the same decoder as account fetching.
 
-## PDA Derivation
+## Decode errors
 
-### Generated PDA Helpers
-
-```kotlin
-// IDL with seeds
-{
-  "name": "State",
-  "pda": {
-    "seeds": [
-      { "kind": "const", "value": [115, 116, 97, 116, 101] },
-      { "kind": "account", "path": "authority" }
-    ]
-  }
-}
-
-// Generated code
-object StatePda {
-    fun find(
-        authority: Pubkey,
-        programId: Pubkey = MY_PROGRAM_ID
-    ): PdaResult {
-        val seeds = listOf(
-            "state".toByteArray(),
-            authority.toByteArray()
-        )
-        return Pubkey.findProgramAddress(seeds, programId)
-    }
-}
-
-// Usage
-val (statePda, bump) = StatePda.find(wallet.publicKey)
-```
-
-### Complex PDA Seeds
+Anchor programs emit `Program log: Error Code: NNN ...` lines when an instruction fails. `program.errors.decode` maps a numeric code to the IDL entry, and `decodeFromLogs` scans a list of log lines for the first matching pattern:
 
 ```kotlin
-// With multiple dynamic seeds
-object UserStatePda {
-    fun find(
-        user: Pubkey,
-        stateId: ULong,
-        programId: Pubkey = MY_PROGRAM_ID
-    ): PdaResult {
-        val seeds = listOf(
-            "user_state".toByteArray(),
-            user.toByteArray(),
-            stateId.toLeByteArray()
-        )
-        return Pubkey.findProgramAddress(seeds, programId)
-    }
-}
-```
-
----
-
-## Event Parsing
-
-### Generated Event Classes
-
-```kotlin
-// IDL events
-{
-  "events": [
-    {
-      "name": "TransferEvent",
-      "fields": [
-        { "name": "from", "type": "publicKey", "index": true },
-        { "name": "to", "type": "publicKey", "index": true },
-        { "name": "amount", "type": "u64", "index": false }
-      ]
-    }
-  ]
-}
-
-// Generated code
-@Serializable
-data class TransferEvent(
-    val from: Pubkey,
-    val to: Pubkey,
-    val amount: ULong
-) {
-    companion object {
-        val DISCRIMINATOR = byteArrayOf(/* ... */)
-        
-        fun parse(data: ByteArray): TransferEvent? {
-            if (!data.sliceArray(0..7).contentEquals(DISCRIMINATOR)) {
-                return null
-            }
-            return BorshDecoder(data.drop(8).toByteArray()).run {
-                TransferEvent(
-                    from = readPubkey(),
-                    to = readPubkey(),
-                    amount = readU64()
-                )
-            }
+when (val r = artemis.session.send(ix)) {
+    is TxResult.SimulationFailed -> {
+        val decoded = program.errors.decodeFromLogs(r.logs.orEmpty())
+        if (decoded != null) {
+            toast("${decoded.name}: ${decoded.message ?: "code ${decoded.code}"}")
+        } else {
+            toast("Simulation failed: ${r.error}")
         }
     }
+    is TxResult.Success -> toast("confirmed")
+    else -> toast("failed")
 }
 ```
 
-### Parsing Events from Logs
+`DecodedError` exposes `code: Int`, `name: String`, and `message: String?`.
+
+## Discriminator helpers
+
+You usually do not need these directly. If you do (for example writing your own raw instruction where Anchor is not involved everywhere), they are in `artemis-discriminators`:
 
 ```kotlin
-// Parse events from transaction
-val tx = rpc.getTransaction(signature)
+import com.selenus.artemis.disc.AnchorDiscriminators
 
-val events = client.parseEvents(tx.meta.logMessages)
-
-events.forEach { event ->
-    when (event) {
-        is TransferEvent -> {
-            println("Transfer: ${event.amount} from ${event.from} to ${event.to}")
-        }
-        is InitializeEvent -> {
-            println("Initialized: ${event.name}")
-        }
-    }
-}
+val ixDisc: ByteArray   = AnchorDiscriminators.global("transfer")    // sha256("global:transfer")[0..8]
+val acctDisc: ByteArray = AnchorDiscriminators.account("TokenState") // sha256("account:TokenState")[0..8]
 ```
 
-### Subscribe to Events
+`AnchorProgram` precomputes these on construction. If the IDL supplies explicit `discriminator: [...]` bytes, those are used in preference to the derived ones, matching recent Anchor IDL versions.
 
-```kotlin
-// Real-time event subscription
-client.subscribeEvents { event ->
-    when (event) {
-        is TransferEvent -> updateBalance(event)
-        is NewStateEvent -> addState(event)
-    }
-}
-```
+## Status
 
----
+Listed as `Partial` in [../PARITY_MATRIX.md](../PARITY_MATRIX.md). The runtime path is exercised by `AnchorModuleTest` in [../../ecosystem/artemis-anchor/src/jvmTest/kotlin/com/selenus/artemis/anchor/AnchorModuleTest.kt](../../ecosystem/artemis-anchor/src/jvmTest/kotlin/com/selenus/artemis/anchor/AnchorModuleTest.kt) covering IDL parsing, discriminator computation, instruction building with map and DSL args, PDA derivation scaffolding, and account-type lookup. Broader coverage (full enum support in args, generics, `bytemuck` layouts) is on the roadmap.
 
-## Error Handling
+A compile-time client generator is not shipped today. If you want generated Kotlin classes per program, hand-roll the client for now and let the runtime path handle the dynamic cases.
 
-### Generated Error Enum
+## License
 
-```kotlin
-// IDL errors
-{
-  "errors": [
-    { "code": 6000, "name": "Unauthorized", "msg": "You are not authorized" },
-    { "code": 6001, "name": "InvalidAmount", "msg": "Amount must be greater than zero" },
-    { "code": 6002, "name": "AlreadyInitialized", "msg": "Account already initialized" }
-  ]
-}
-
-// Generated code
-enum class MyProgramError(val code: Int, val message: String) {
-    UNAUTHORIZED(6000, "You are not authorized"),
-    INVALID_AMOUNT(6001, "Amount must be greater than zero"),
-    ALREADY_INITIALIZED(6002, "Account already initialized");
-    
-    companion object {
-        fun fromCode(code: Int): MyProgramError? =
-            entries.find { it.code == code }
-            
-        fun fromTransaction(tx: TransactionResponse): MyProgramError? {
-            val errorCode = tx.meta?.err?.instructionError?.custom
-            return errorCode?.let { fromCode(it) }
-        }
-    }
-}
-```
-
-### Using Errors
-
-```kotlin
-try {
-    val sig = wallet.signAndSend(tx)
-    val result = rpc.confirmTransaction(sig)
-    
-    if (result.err != null) {
-        val error = MyProgramError.fromCode(result.err.instructionError.custom)
-        when (error) {
-            MyProgramError.UNAUTHORIZED -> 
-                showError("You don't have permission")
-            MyProgramError.INVALID_AMOUNT -> 
-                showError("Please enter a valid amount")
-            else -> 
-                showError(error?.message ?: "Unknown error")
-        }
-    }
-} catch (e: RpcException) {
-    val error = MyProgramError.fromCode(e.code)
-    showError(error?.message ?: e.message)
-}
-```
-
----
-
-## Custom Types
-
-### Structs
-
-```kotlin
-// IDL type
-{
-  "name": "UserProfile",
-  "type": {
-    "kind": "struct",
-    "fields": [
-      { "name": "name", "type": "string" },
-      { "name": "level", "type": "u8" },
-      { "name": "experience", "type": "u64" },
-      { "name": "achievements", "type": { "vec": "u32" } }
-    ]
-  }
-}
-
-// Generated code
-@Serializable
-data class UserProfile(
-    val name: String,
-    val level: UByte,
-    val experience: ULong,
-    val achievements: List<UInt>
-)
-```
-
-### Enums
-
-```kotlin
-// IDL type
-{
-  "name": "Rarity",
-  "type": {
-    "kind": "enum",
-    "variants": [
-      { "name": "Common" },
-      { "name": "Uncommon" },
-      { "name": "Rare" },
-      { "name": "Epic" },
-      { "name": "Legendary" }
-    ]
-  }
-}
-
-// Generated code
-sealed class Rarity {
-    object Common : Rarity()
-    object Uncommon : Rarity()
-    object Rare : Rarity()
-    object Epic : Rarity()
-    object Legendary : Rarity()
-    
-    fun ordinal(): Int = when (this) {
-        Common -> 0
-        Uncommon -> 1
-        Rare -> 2
-        Epic -> 3
-        Legendary -> 4
-    }
-}
-```
-
-### Enums with Data
-
-```kotlin
-// IDL type with tuple variants
-{
-  "name": "Reward",
-  "type": {
-    "kind": "enum",
-    "variants": [
-      { "name": "None" },
-      { "name": "Tokens", "fields": [{ "name": "amount", "type": "u64" }] },
-      { "name": "Nft", "fields": [{ "name": "mint", "type": "publicKey" }] }
-    ]
-  }
-}
-
-// Generated code
-sealed class Reward {
-    object None : Reward()
-    data class Tokens(val amount: ULong) : Reward()
-    data class Nft(val mint: Pubkey) : Reward()
-}
-```
-
----
-
-## Complete Example
-
-### Token Staking Program
-
-```kotlin
-// staking.json IDL placed in src/main/idl/
-
-// Generated client usage
-class StakingViewModel(
-    private val rpc: RpcClient,
-    private val wallet: WalletAdapter
-) : ViewModel() {
-    
-    private val client = StakingClient(rpc, STAKING_PROGRAM_ID)
-    
-    private val _stakes = MutableStateFlow<List<StakeAccount>>(emptyList())
-    val stakes = _stakes.asStateFlow()
-    
-    init {
-        loadStakes()
-    }
-    
-    private fun loadStakes() {
-        viewModelScope.launch {
-            // Find all stakes for this user
-            val userStakes = client.findStakeAccounts {
-                memcmp(8, wallet.publicKey.toByteArray())
-            }
-            _stakes.value = userStakes
-        }
-    }
-    
-    suspend fun stake(amount: ULong) {
-        // Derive PDAs
-        val (stakePda, stakeBump) = StakeAccountPda.find(wallet.publicKey)
-        val (vaultPda, vaultBump) = VaultPda.find()
-        
-        // Build instruction
-        val ix = client.stake(
-            user = wallet.publicKey,
-            stakeAccount = stakePda,
-            vault = vaultPda,
-            userTokenAccount = userAta,
-            tokenProgram = TokenProgram.PROGRAM_ID,
-            amount = amount,
-            stakeBump = stakeBump.toUByte(),
-            vaultBump = vaultBump.toUByte()
-        )
-        
-        // Send transaction
-        val tx = Transaction.create(rpc.getLatestBlockhash()) {
-            add(ix)
-            feePayer = wallet.publicKey
-        }
-        
-        wallet.signAndSend(tx)
-        loadStakes()
-    }
-    
-    suspend fun unstake(stakeAccount: StakeAccount) {
-        val ix = client.unstake(
-            user = wallet.publicKey,
-            stakeAccount = stakeAccount.address,
-            vault = VaultPda.find().first,
-            userTokenAccount = userAta,
-            tokenProgram = TokenProgram.PROGRAM_ID
-        )
-        
-        val tx = Transaction.create(rpc.getLatestBlockhash()) {
-            add(ix)
-            feePayer = wallet.publicKey
-        }
-        
-        wallet.signAndSend(tx)
-        loadStakes()
-    }
-    
-    suspend fun claimRewards() {
-        val (stakePda, _) = StakeAccountPda.find(wallet.publicKey)
-        
-        val ix = client.claim(
-            user = wallet.publicKey,
-            stakeAccount = stakePda,
-            rewardVault = RewardVaultPda.find().first,
-            userRewardAccount = userRewardAta,
-            tokenProgram = TokenProgram.PROGRAM_ID
-        )
-        
-        val tx = Transaction.create(rpc.getLatestBlockhash()) {
-            add(ix)
-            feePayer = wallet.publicKey
-        }
-        
-        wallet.signAndSend(tx)
-    }
-}
-```
-
----
-
-## Configuration Options
-
-### KSP Arguments
-
-```kotlin
-ksp {
-    // Required: IDL directory
-    arg("anchor.idl.dir", "$projectDir/src/main/idl")
-    
-    // Required: Output package
-    arg("anchor.output.package", "com.myapp.programs")
-    
-    // Optional: Generate suspend functions
-    arg("anchor.generate.suspend", "true")
-    
-    // Optional: Include fetch helpers
-    arg("anchor.generate.fetch", "true")
-    
-    // Optional: Include subscription helpers
-    arg("anchor.generate.subscribe", "true")
-    
-    // Optional: Generate Compose-friendly State wrappers
-    arg("anchor.generate.compose", "true")
-}
-```
-
-### Multiple Programs
-
-```kotlin
-// Place multiple IDL files in the idl directory
-// Each generates its own package
-
-// src/main/idl/
-//   staking.json -> com.myapp.programs.staking.*
-//   marketplace.json -> com.myapp.programs.marketplace.*
-//   governance.json -> com.myapp.programs.governance.*
-```
-
----
-
-## Best Practices
-
-### 1. Keep IDLs Updated
-
-```bash
-# Download latest IDL from chain
-anchor idl fetch <PROGRAM_ID> -o src/main/idl/my_program.json
-```
-
-### 2. Version Your Clients
-
-```kotlin
-// Check program version before using
-val programData = rpc.getAccountInfo(programId)
-val version = client.parseVersion(programData)
-
-if (version.major != EXPECTED_VERSION) {
-    showError("Program updated - please update the app")
-}
-```
-
-### 3. Use Extension Functions
-
-```kotlin
-// Add convenience methods
-fun StakingClient.stakeMax(wallet: Pubkey) = viewModelScope.launch {
-    val balance = rpc.getTokenBalance(userAta)
-    stake(balance.amount)
-}
-```
-
----
-
-## API Reference
-
-### Processor Annotations
-
-```kotlin
-// Force regeneration
-@AnchorIdl("my_program.json")
-interface MyProgramMarker
-
-// Custom program ID
-@AnchorIdl(
-    file = "my_program.json",
-    programId = "MyProg111111111111111111111111111111111"
-)
-interface MyProgramMarker
-```
-
-### Generated Client
-
-```kotlin
-class [ProgramName]Client(
-    val rpc: RpcClient,
-    val programId: Pubkey
-) {
-    // For each instruction
-    fun [instructionName](
-        // accounts...
-        // args...
-    ): TransactionInstruction
-    
-    // For each account type
-    suspend fun fetch[AccountName](address: Pubkey): [AccountName]
-    suspend fun findAll[AccountName](filter: FilterBuilder.() -> Unit): List<[AccountName]>
-    
-    // Event parsing
-    fun parseEvents(logs: List<String>): List<[ProgramName]Event>
-}
-```
-
----
-
-*artemis-anchor - Type-safe Anchor clients for Kotlin*
+Apache License 2.0. See [../../LICENSE](../../LICENSE).

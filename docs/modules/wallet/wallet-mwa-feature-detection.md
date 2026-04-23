@@ -10,7 +10,10 @@ Artemis' native MWA adapter calls `get_capabilities` and routes automatically:
 Sign-only gives you full control over RPC routing and resend logic:
 
 ```kotlin
-val signed = adapter.signMessages(listOf(txBytes))
+val signed = adapter.signMessages(
+    messages = listOf(txBytes),
+    request  = SignTxRequest(purpose = "send")
+)
 val sig = rpc.sendAndConfirmRawTransaction(signed.first())
 ```
 

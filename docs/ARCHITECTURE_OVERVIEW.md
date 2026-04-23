@@ -63,11 +63,11 @@ This is the base layer. Every Solana app built with Artemis uses some or all of 
 
 - Pubkey, Keypair, PDA derivation, Base58, Base64
 - Ed25519, SHA-256, secure random behind `expect/actual`
-- JSON-RPC client with 80+ methods, typed result wrappers, batch DSL, blockhash cache, endpoint pool, circuit breaker
+- JSON-RPC client with 110 methods declared on `RpcApi`, typed result wrappers, batch DSL, blockhash cache, endpoint pool, circuit breaker
 - Websocket subscriptions with auto-reconnect, deterministic resubscribe, polling fallback, and a typed `ConnectionState` StateFlow
 - Legacy and v0 versioned transaction construction and serialization
 - Address lookup tables
-- System (12 instruction builders), Token (9), Associated Token, Compute Budget, Stake (5)
+- System (12 instruction builders), Token (10), Associated Token, Compute Budget, Stake (5)
 - Compute unit estimation and priority fee helpers
 - Structured Solana error types and on-chain error decoding
 - Durable nonce support

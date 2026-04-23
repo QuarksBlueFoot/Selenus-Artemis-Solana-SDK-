@@ -1,857 +1,252 @@
-# artemis-actions - Solana Actions & Blinks
+# artemis-actions
 
-## First Kotlin Implementation of Solana Actions
+Native Kotlin implementation of the [Solana Actions specification](https://solana.com/docs/advanced/actions). Parse action and Blink URLs, fetch action metadata (`GET /action`), execute an action to get a signable transaction (`POST /action`), follow the action-chaining callback, and validate an `actions.json` rules file for a domain.
 
-Full implementation of the Solana Actions specification, enabling Blinks (Blockchain Links) support for mobile wallets. Create shareable, executable blockchain actions.
+Source: [../../ecosystem/artemis-actions/](../../ecosystem/artemis-actions/). Public entry point is `ActionsClient`.
 
----
-
-## Overview
-
-`artemis-actions` implements the complete [Solana Actions Specification](https://solana.com/docs/advanced/actions) for Kotlin/JVM, enabling:
-
-- **Action URL parsing** and validation
-- **Action metadata fetching** with icons and labels
-- **Transaction request handling** for any action
-- **Parameter validation** with type checking
-- **QR code generation** for Blinks
-- **Deep link handling** for mobile integration
-
----
-
-## Installation
+## Install
 
 ```kotlin
-implementation("xyz.selenus:artemis-actions:2.2.0")
-```
-
----
-
-## Quick Start
-
-### Executing an Action
-
-```kotlin
-import com.selenus.artemis.actions.*
-
-// Parse an action URL
-val actionUrl = "solana-action:https://example.com/api/donate"
-val client = ActionsClient.create()
-
-// Fetch action metadata
-val action = client.fetchAction(actionUrl)
-
-println("Title: ${action.title}")
-println("Description: ${action.description}")
-println("Icon: ${action.icon}")
-
-// Show available actions
-action.links.actions.forEach { linkedAction ->
-    println("Action: ${linkedAction.label}")
-}
-
-// Execute an action
-val tx = client.execute(action.links.actions[0]) {
-    account = wallet.publicKey
-}
-
-// Sign and send
-val signature = wallet.signAndSend(tx)
-```
-
-### Handling Actions with Parameters
-
-```kotlin
-// Action with input parameters
-val action = client.fetchAction("solana-action:https://example.com/api/swap")
-
-// Find the action with parameters
-val swapAction = action.links.actions.find { it.parameters != null }!!
-
-// Build parameter map
-val params = mapOf(
-    "amount" to "100",
-    "token" to "USDC"
-)
-
-// Execute with parameters
-val tx = client.execute(swapAction, params) {
-    account = wallet.publicKey
+dependencies {
+    implementation("xyz.selenus:artemis-actions:2.2.0")
 }
 ```
 
----
-
-## Action Structure
-
-### Understanding the Actions Spec
+## Create a client
 
 ```kotlin
-data class Action(
-    val type: ActionType,           // "action" | "completed" | "error"
-    val title: String,              // Display title
-    val description: String,        // Description
-    val icon: String,               // Icon URL
-    val label: String,              // Primary button label
-    val disabled: Boolean?,         // If action is disabled
-    val error: ActionError?,        // Error info if failed
-    val links: ActionLinks?         // Linked actions
-)
+import com.selenus.artemis.actions.ActionsClient
+import com.selenus.artemis.actions.ActionsConfig
 
-data class ActionLinks(
-    val actions: List<LinkedAction>
-)
+val actions = ActionsClient.create()
 
-data class LinkedAction(
-    val label: String,              // Button label
-    val href: String,               // Action endpoint
-    val parameters: List<ActionParameter>?  // Input parameters
-)
-
-data class ActionParameter(
-    val name: String,               // Parameter name
-    val label: String?,             // Display label
-    val required: Boolean?,         // If required
-    val type: ParameterType?,       // text | email | url | number | date | etc
-    val pattern: String?,           // Regex pattern for validation
-    val patternDescription: String?, // Error message for pattern
-    val min: String?,               // Min value (for number/date)
-    val max: String?,               // Max value (for number/date)
-    val options: List<ActionOption>? // For select parameters
-)
-```
-
----
-
-## Building a Blinks-Enabled Wallet
-
-### ViewModel
-
-```kotlin
-class ActionViewModel(
-    private val actionsClient: ActionsClient,
-    private val wallet: WalletAdapter
-) : ViewModel() {
-    
-    private val _action = MutableStateFlow<Action?>(null)
-    val action = _action.asStateFlow()
-    
-    private val _loading = MutableStateFlow(false)
-    val loading = _loading.asStateFlow()
-    
-    private val _error = MutableStateFlow<String?>(null)
-    val error = _error.asStateFlow()
-    
-    private val _parameters = MutableStateFlow<Map<String, String>>(emptyMap())
-    val parameters = _parameters.asStateFlow()
-    
-    fun loadAction(url: String) {
-        viewModelScope.launch {
-            _loading.value = true
-            _error.value = null
-            
-            try {
-                val parsed = ActionsClient.parseUrl(url)
-                val fetchedAction = actionsClient.fetchAction(parsed)
-                _action.value = fetchedAction
-            } catch (e: InvalidActionUrlException) {
-                _error.value = "Invalid action URL"
-            } catch (e: ActionFetchException) {
-                _error.value = "Failed to fetch action: ${e.message}"
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
-    
-    fun setParameter(name: String, value: String) {
-        _parameters.value = _parameters.value + (name to value)
-    }
-    
-    fun executeAction(linkedAction: LinkedAction) {
-        viewModelScope.launch {
-            _loading.value = true
-            
-            try {
-                // Validate parameters
-                linkedAction.parameters?.forEach { param ->
-                    if (param.required == true) {
-                        val value = _parameters.value[param.name]
-                        if (value.isNullOrBlank()) {
-                            throw MissingParameterException(param.name)
-                        }
-                    }
-                }
-                
-                // Execute action
-                val tx = actionsClient.execute(
-                    linkedAction, 
-                    _parameters.value
-                ) {
-                    account = wallet.publicKey
-                }
-                
-                val signature = wallet.signAndSend(tx)
-                
-                // Handle success
-                _action.value = Action(
-                    type = ActionType.COMPLETED,
-                    title = "Success!",
-                    description = "Transaction confirmed",
-                    icon = _action.value?.icon ?: "",
-                    label = "Done"
-                )
-            } catch (e: Exception) {
-                _error.value = e.message
-            } finally {
-                _loading.value = false
-            }
-        }
-    }
-}
-```
-
-### Action Display Composable
-
-```kotlin
-@Composable
-fun ActionScreen(viewModel: ActionViewModel) {
-    val action by viewModel.action.collectAsState()
-    val loading by viewModel.loading.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val parameters by viewModel.parameters.collectAsState()
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        action?.let { a ->
-            // Header
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Icon
-                    AsyncImage(
-                        model = a.icon,
-                        contentDescription = a.title,
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                    )
-                    
-                    Spacer(Modifier.height(16.dp))
-                    
-                    // Title
-                    Text(
-                        text = a.title,
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    
-                    // Description
-                    Text(
-                        text = a.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-            
-            Spacer(Modifier.height(16.dp))
-            
-            // Action buttons
-            when (a.type) {
-                ActionType.ACTION -> {
-                    a.links?.actions?.forEach { linkedAction ->
-                        ActionButton(
-                            action = linkedAction,
-                            parameters = parameters,
-                            onParameterChange = { name, value ->
-                                viewModel.setParameter(name, value)
-                            },
-                            onExecute = {
-                                viewModel.executeAction(linkedAction)
-                            },
-                            loading = loading
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
-                }
-                
-                ActionType.COMPLETED -> {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = "Success",
-                        modifier = Modifier.size(64.dp),
-                        tint = Color.Green
-                    )
-                }
-                
-                ActionType.ERROR -> {
-                    a.error?.let { err ->
-                        Text(
-                            text = err.message,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            }
-        }
-        
-        error?.let { errorMsg ->
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                ),
-                modifier = Modifier.padding(top = 16.dp)
-            ) {
-                Text(
-                    text = errorMsg,
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun ActionButton(
-    action: LinkedAction,
-    parameters: Map<String, String>,
-    onParameterChange: (String, String) -> Unit,
-    onExecute: () -> Unit,
-    loading: Boolean
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Parameter inputs
-            action.parameters?.forEach { param ->
-                ParameterInput(
-                    parameter = param,
-                    value = parameters[param.name] ?: "",
-                    onValueChange = { onParameterChange(param.name, it) }
-                )
-                Spacer(Modifier.height(8.dp))
-            }
-            
-            // Execute button
-            Button(
-                onClick = onExecute,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !loading
-            ) {
-                if (loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text(action.label)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ParameterInput(
-    parameter: ActionParameter,
-    value: String,
-    onValueChange: (String) -> Unit
-) {
-    when (parameter.type) {
-        ParameterType.SELECT -> {
-            var expanded by remember { mutableStateOf(false) }
-            
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                OutlinedTextField(
-                    value = value,
-                    onValueChange = { },
-                    readOnly = true,
-                    label = { Text(parameter.label ?: parameter.name) },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor()
-                )
-                
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    parameter.options?.forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(option.label) },
-                            onClick = {
-                                onValueChange(option.value)
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-        
-        ParameterType.NUMBER -> {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                label = { Text(parameter.label ?: parameter.name) },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        
-        else -> {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                label = { Text(parameter.label ?: parameter.name) },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-```
-
----
-
-## Creating Actions (Server-Side)
-
-### Action Endpoint
-
-While `artemis-actions` is for consuming actions, here's how to create them:
-
-```kotlin
-// Using Ktor server
-fun Application.configureActionsRoutes() {
-    routing {
-        // GET returns action metadata
-        get("/api/donate") {
-            call.respond(Action(
-                type = ActionType.ACTION,
-                icon = "https://example.com/icon.png",
-                title = "Donate to Project",
-                description = "Support open source development",
-                label = "Donate",
-                links = ActionLinks(
-                    actions = listOf(
-                        LinkedAction(
-                            label = "Donate 1 SOL",
-                            href = "/api/donate?amount=1"
-                        ),
-                        LinkedAction(
-                            label = "Donate 5 SOL",
-                            href = "/api/donate?amount=5"
-                        ),
-                        LinkedAction(
-                            label = "Custom Amount",
-                            href = "/api/donate?amount={amount}",
-                            parameters = listOf(
-                                ActionParameter(
-                                    name = "amount",
-                                    label = "Amount (SOL)",
-                                    required = true,
-                                    type = ParameterType.NUMBER,
-                                    min = "0.01"
-                                )
-                            )
-                        )
-                    )
-                )
-            ))
-        }
-        
-        // POST executes the action
-        post("/api/donate") {
-            val request = call.receive<ActionPostRequest>()
-            val amount = call.parameters["amount"]?.toDoubleOrNull()
-                ?: throw BadRequestException("Invalid amount")
-            
-            // Build transaction
-            val tx = Transaction.create(recentBlockhash) {
-                add(SystemProgram.transfer(
-                    fromPubkey = Pubkey.fromBase58(request.account),
-                    toPubkey = DONATION_WALLET,
-                    lamports = (amount * LAMPORTS_PER_SOL).toLong().toULong()
-                ))
-                feePayer = Pubkey.fromBase58(request.account)
-            }
-            
-            call.respond(ActionPostResponse(
-                transaction = Base64.encode(tx.serialize()),
-                message = "Thank you for your donation of $amount SOL!"
-            ))
-        }
-    }
-}
-```
-
----
-
-## Deep Link Handling
-
-### Android Manifest
-
-```xml
-<activity android:name=".ActionActivity">
-    <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        
-        <!-- Handle solana-action: scheme -->
-        <data android:scheme="solana-action" />
-    </intent-filter>
-    
-    <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        
-        <!-- Handle solana: scheme for Blinks -->
-        <data android:scheme="solana" />
-    </intent-filter>
-</activity>
-```
-
-### Activity Handler
-
-```kotlin
-class ActionActivity : ComponentActivity() {
-    
-    private val actionsClient = ActionsClient.create()
-    
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        val uri = intent.data
-        
-        setContent {
-            MaterialTheme {
-                when {
-                    uri?.scheme == "solana-action" -> {
-                        // Direct action URL
-                        ActionScreen(uri.toString())
-                    }
-                    uri?.scheme == "solana" -> {
-                        // Blink URL
-                        val actionUrl = ActionsClient.blinkToAction(uri.toString())
-                        ActionScreen(actionUrl)
-                    }
-                    else -> {
-                        ErrorScreen("Invalid URL")
-                    }
-                }
-            }
-        }
-    }
-}
-```
-
----
-
-## QR Code Support
-
-### Generate Action QR Code
-
-```kotlin
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.qrcode.QRCodeWriter
-
-fun generateActionQR(actionUrl: String, size: Int = 512): Bitmap {
-    val writer = QRCodeWriter()
-    val bitMatrix = writer.encode(
-        "solana-action:$actionUrl",
-        BarcodeFormat.QR_CODE,
-        size,
-        size
+// Or with custom timeouts
+val actions = ActionsClient.create(
+    ActionsConfig(
+        connectTimeoutMs = 5_000,
+        readTimeoutMs    = 15_000,
+        writeTimeoutMs   = 15_000,
+        validateSsl      = true
     )
-    
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    for (x in 0 until size) {
-        for (y in 0 until size) {
-            bitmap.setPixel(
-                x, y,
-                if (bitMatrix.get(x, y)) Color.BLACK else Color.WHITE
-            )
-        }
-    }
-    return bitmap
-}
-```
-
-### Scan Action QR Code
-
-```kotlin
-class QRScannerActivity : ComponentActivity() {
-    
-    private val scanner = GmsBarcodeScanning.getClient(this)
-    
-    fun startScanning() {
-        scanner.startScan()
-            .addOnSuccessListener { barcode ->
-                barcode.rawValue?.let { url ->
-                    if (url.startsWith("solana-action:")) {
-                        navigateToAction(url)
-                    }
-                }
-            }
-    }
-}
-```
-
----
-
-## URL Validation
-
-### Validate Action URLs
-
-```kotlin
-// Check if URL is valid action
-val isValid = ActionsClient.isValidActionUrl(url)
-
-// Parse and validate
-try {
-    val parsed = ActionsClient.parseUrl(url)
-    println("Valid action URL: ${parsed.endpoint}")
-} catch (e: InvalidActionUrlException) {
-    println("Invalid: ${e.reason}")
-}
-```
-
-### Security Checks
-
-```kotlin
-// Verify action comes from trusted source
-val trustedDomains = listOf(
-    "jupiter.exchange",
-    "dialect.io",
-    "tensor.trade"
 )
+```
 
-val parsed = ActionsClient.parseUrl(actionUrl)
-val isTrusted = trustedDomains.any { domain ->
-    parsed.endpoint.host?.endsWith(domain) == true
-}
+If you already manage an HTTP client, pass it as the first argument: `ActionsClient.create(httpClient, config)`.
 
-if (!isTrusted) {
-    showWarning("This action is from an unverified source")
+## Parse an action or Blink URL
+
+`parseActionUrl` tells you what kind of URL you're looking at so you can route the rest accordingly:
+
+```kotlin
+import com.selenus.artemis.actions.ActionUrlType
+
+val info = actions.parseActionUrl(userInput)
+when (info.type) {
+    ActionUrlType.ACTION_SCHEME -> handleScheme(info.resolvedPath)  // "solana-action:..."
+    ActionUrlType.BLINK         -> handleBlink(info.resolvedPath)   // dial.to / actions.solana.com / blink.to
+    ActionUrlType.DIRECT_ACTION -> handleDirect(info.resolvedPath)  // /api/actions/... or actions.json hosts
+    ActionUrlType.SOLANA_PAY    -> /* Solana Pay URI */ TODO()
+    ActionUrlType.UNKNOWN       -> reject("Not a recognized Actions URL")
 }
 ```
 
----
+`actions.isBlink(url)` is a quick boolean shortcut for the common hosted-Blink case.
 
-## Caching
-
-### Cache Action Metadata
+## Fetch action metadata
 
 ```kotlin
-// Create client with caching
-val client = ActionsClient.create {
-    cache = ActionCache.create(
-        maxSize = 100,
-        ttl = Duration.minutes(5)
-    )
-}
+val action = actions.getAction(url)
 
-// First call fetches from network
-val action1 = client.fetchAction(url)
+println(action.title)
+println(action.description)
+println(action.icon)           // URL (validator checks it starts with http)
+println(action.label)          // default button label
 
-// Second call returns cached
-val action2 = client.fetchAction(url)  // Instant!
-
-// Force refresh
-val action3 = client.fetchAction(url, forceRefresh = true)
-```
-
----
-
-## Error Handling
-
-### Action Errors
-
-```kotlin
-try {
-    val action = client.fetchAction(url)
-    
-    // Check for error state
-    if (action.type == ActionType.ERROR) {
-        showError(action.error?.message ?: "Unknown error")
-        return
+action.links?.actions?.forEach { linked ->
+    println("${linked.label} -> ${linked.href}")
+    linked.parameters?.forEach { p ->
+        println("  ${p.name} (${p.type ?: ActionParameterType.TEXT}) required=${p.required == true}")
     }
-    
-    // Check if disabled
-    if (action.disabled == true) {
-        showError("This action is currently disabled")
-        return
-    }
-    
-} catch (e: InvalidActionUrlException) {
-    showError("Invalid action URL format")
-} catch (e: ActionFetchException) {
-    showError("Failed to fetch action: ${e.message}")
-} catch (e: ActionExecutionException) {
-    showError("Failed to execute: ${e.message}")
 }
 ```
 
-### Transaction Errors
+`ActionGetResponse` mirrors the spec: `type`, `title`, `icon`, `description`, `label`, optional `disabled`, optional `error: ActionError`, optional `links: ActionLinks` containing `actions: List<LinkedAction>?` and an optional `next: NextAction` for inline chaining.
+
+### Validate before you render
+
+Before you paint a Blink card, run the response through `validateAction`:
 
 ```kotlin
-try {
-    val tx = client.execute(action, params) { account = wallet.publicKey }
-    val sig = wallet.signAndSend(tx)
-} catch (e: ActionTransactionException) {
-    // Action server returned error
-    showError(e.message)
-} catch (e: TransactionFailedException) {
-    // Transaction simulation/execution failed
-    showError("Transaction failed: ${e.logs?.lastOrNull()}")
-}
-```
-
----
-
-## Best Practices
-
-### 1. Always Preview Before Execution
-
-```kotlin
-// Show transaction simulation before signing
-val tx = client.execute(action, params) { account = wallet.publicKey }
-
-val simulation = rpc.simulateTransaction(tx)
-if (simulation.err != null) {
-    showError("Transaction would fail: ${simulation.err}")
+val validation = actions.validateAction(action)
+if (!validation.isValid) {
+    Log.w("actions", "invalid action: ${validation.issues.joinToString()}")
     return
 }
-
-// Show what will happen
-val changes = parseSimulation(simulation)
-showPreview(changes)
 ```
 
-### 2. Validate Parameters Client-Side
+The checker flags blank title / icon / description, non-URL icons, disabled actions without an error message, blank linked-action labels, and blank parameter names.
+
+### UI shortcut: blink preview
+
+`createBlinkPreview` squashes the metadata into a flat UI struct so the card view has no null-walking:
 
 ```kotlin
-fun validateParameter(
-    param: ActionParameter,
-    value: String
-): ValidationResult {
-    if (param.required == true && value.isBlank()) {
-        return ValidationResult.Error("${param.label} is required")
-    }
-    
-    param.pattern?.let { pattern ->
-        if (!Regex(pattern).matches(value)) {
-            return ValidationResult.Error(
-                param.patternDescription ?: "Invalid format"
-            )
-        }
-    }
-    
-    when (param.type) {
-        ParameterType.NUMBER -> {
-            val num = value.toDoubleOrNull()
-                ?: return ValidationResult.Error("Must be a number")
-            
-            param.min?.toDoubleOrNull()?.let { min ->
-                if (num < min) return ValidationResult.Error("Minimum is $min")
-            }
-            param.max?.toDoubleOrNull()?.let { max ->
-                if (num > max) return ValidationResult.Error("Maximum is $max")
-            }
-        }
-        // ... other types
-    }
-    
-    return ValidationResult.Valid
-}
+val preview = actions.createBlinkPreview(action)
+BlinkCard(
+    title       = preview.title,
+    description = preview.description,
+    iconUrl     = preview.iconUrl,
+    primary     = preview.primaryActionLabel,
+    disabled    = preview.isDisabled,
+    error       = preview.errorMessage,
+    hasForm     = preview.hasFormInputs,
+    count       = preview.actionCount
+)
 ```
 
-### 3. Handle Chained Actions
+## Execute an action
+
+Two entry points. Use `executeAction(url, block)` when you already have the final action URL (for example one of the linked-action hrefs). Use `executeLinkedAction(action, linkedAction, block)` when you want Artemis to resolve the URL from the parent and substitute form inputs into templated paths.
+
+### Simple execute
 
 ```kotlin
-// Some actions return new actions after completion
-suspend fun executeWithChaining(action: LinkedAction) {
-    val response = client.execute(action, params) { account = wallet.publicKey }
-    
-    when (response) {
-        is ActionResponse.Transaction -> {
-            val sig = wallet.signAndSend(response.transaction)
-            showSuccess(response.message)
-        }
-        is ActionResponse.NextAction -> {
-            // Action returned a new action to execute
-            navigateToAction(response.nextAction)
-        }
-        is ActionResponse.Message -> {
-            // No transaction, just a message
-            showMessage(response.message)
-        }
+import com.selenus.artemis.actions.ActionExecuteBuilder
+
+val post = actions.executeAction(action.links!!.actions!!.first().href) {
+    account(wallet.publicKey)        // Pubkey or base58 String
+}
+
+// post.transaction is a base64 serialized transaction
+// post.message is an optional human string to show the user
+// post.links?.next is the chaining hint (may be null)
+```
+
+### Execute with form parameters
+
+`ActionExecuteBuilder` uses method-call setters. Three overloads of `input(...)` cover strings, numbers, and booleans. `inputs(...)` takes a varargs of pairs if you have them ready as a list.
+
+```kotlin
+val swap = action.links!!.actions!!.first { it.parameters != null }
+
+val post = actions.executeLinkedAction(action, swap) {
+    account(wallet.publicKey)
+    input("amount", 100)             // Number -> "100"
+    input("slippage", "0.5")         // String
+    input("confirm", true)           // Boolean -> "true"
+    // Or: inputs("amount" to "100", "slippage" to "0.5")
+}
+```
+
+The builder only emits a `data` block in the POST body when at least one input is present (absent when `inputs` is empty), matching the spec.
+
+### Sign and send the transaction
+
+```kotlin
+import com.selenus.artemis.runtime.PlatformBase64
+import com.selenus.artemis.wallet.SignTxRequest
+
+val txBytes = PlatformBase64.decode(post.transaction)
+val signed  = artemis.wallet.signMessage(txBytes, SignTxRequest(purpose = "blink"))
+val signature = artemis.rpc.sendRawTransaction(signed)
+
+post.message?.let { toast(it) }  // Spec recommends showing this in the result sheet
+```
+
+## Action chaining
+
+If `post.links?.next` is set, the provider wants to run another step after confirmation. `confirmTransaction` handles both variants (`PostAction` that needs a callback, and `InlineAction` that is already embedded):
+
+```kotlin
+import com.selenus.artemis.actions.NextActionResult
+
+when (val next = actions.confirmTransaction(post, signature)) {
+    is NextActionResult.Continue -> {
+        // next.action is an ActionGetResponse you can render like a normal step
+        renderStep(next.action)
+    }
+    NextActionResult.Complete -> {
+        // End of the chain
+        toast("Done")
     }
 }
 ```
 
----
+For a `PostAction.next.href`, `confirmTransaction` POSTs `{ "signature": "<sig>" }` to the callback URL and returns the parsed `ActionGetResponse` for the next step.
 
-## API Reference
+## Identity verification
 
-### ActionsClient
+If you want the provider to see an identity header (for example to track which app submitted a swap), use `postActionWithIdentity`. You supply a pubkey and a signer lambda; Artemis builds the `X-Action-Identity`, `X-Action-Signature`, and `X-Action-Timestamp` headers per the spec:
 
 ```kotlin
-class ActionsClient {
-    suspend fun fetchAction(url: String): Action
-    suspend fun execute(
-        action: LinkedAction,
-        parameters: Map<String, String> = emptyMap(),
-        config: ExecuteConfig.() -> Unit
-    ): Transaction
-    
-    companion object {
-        fun create(config: ClientConfig.() -> Unit = {}): ActionsClient
-        fun parseUrl(url: String): ParsedActionUrl
-        fun isValidActionUrl(url: String): Boolean
-        fun blinkToAction(blinkUrl: String): String
-    }
+import com.selenus.artemis.actions.ActionIdentity
+
+val identity = ActionIdentity(
+    publicKey = wallet.publicKey.toBase58(),
+    name      = "MyApp"
+)
+
+val request = ActionExecuteBuilder().apply {
+    account(wallet.publicKey)
+    input("amount", 100)
+}.build()
+
+val post = actions.postActionWithIdentity(
+    url      = action.links!!.actions!!.first().href,
+    request  = request,
+    identity = identity,
+    signer   = { payload -> keypair.sign(payload) }
+)
+```
+
+## actions.json and allowlist
+
+A domain publishes a [`/actions.json`](https://solana.com/docs/advanced/actions#actions-json) file that maps URL patterns to action endpoints. Use `getActionsJson` to fetch it and `isActionAllowed` to check whether a candidate URL is covered by the rules:
+
+```kotlin
+val rules = actions.getActionsJson("example.com")
+rules?.rules?.forEach { println("${it.pathPattern} -> ${it.apiPath ?: "(same path)"}") }
+
+val ok = actions.isActionAllowed("https://example.com/donate")
+if (!ok) reject("Action not allowed by domain rules")
+```
+
+`getActionsJson` returns `null` on any network or parse error (never throws); `isActionAllowed` is conservative and returns `false` when no rules file is available.
+
+## QR codes and deep links
+
+For mobile flows, wrap an action URL in the `solana-action:` scheme and either render it as a QR code payload or hand it to `Intent.ACTION_VIEW`:
+
+```kotlin
+val qr = actions.generateActionQrCode(actionUrl)
+// qr.data is the `solana-action:<percent-encoded-url>` payload you encode
+// qr.actionUrl is the original URL
+// qr.protocol is "solana-action"
+
+val intent = actions.createDeepLinkIntent(actionUrl)
+// intent.uri is "solana-action:<percent-encoded-url>"
+// intent.schemes lists which deep-link schemes you should register in AndroidManifest.xml
+```
+
+Register the intent filter in your manifest (see [../MOBILE_APP_GUIDE.md](../MOBILE_APP_GUIDE.md#10-manifest-deep-links-and-sign-in-with-solana)).
+
+## Error handling
+
+Non-2xx responses raise `ActionException(code, message, details)`. The message is the HTTP status; `details` is the raw response body when the server provided one. Catch and surface them to the user:
+
+```kotlin
+val action = try {
+    actions.getAction(url)
+} catch (e: ActionException) {
+    log("actions failed ${e.code}: ${e.details ?: "no details"}")
+    return
 }
 ```
 
-### Action Types
+## Status
 
-```kotlin
-enum class ActionType {
-    ACTION,     // Normal executable action
-    COMPLETED,  // Action completed successfully
-    ERROR       // Action in error state
-}
+Listed as `In Progress` in [../PARITY_MATRIX.md](../PARITY_MATRIX.md). GET/POST, parameter builders, action-chaining callback, identity-verified POST, actions.json, and the Blink/QR/deep-link helpers are implemented. Not yet on the `Verified` tier: interactive action replays, the `next.inline` case in the execute-time spec revisions, and cross-origin `actions.json` delegation. Tests live at [../../ecosystem/artemis-actions/src/jvmTest/kotlin/com/selenus/artemis/actions/ActionsModuleTest.kt](../../ecosystem/artemis-actions/src/jvmTest/kotlin/com/selenus/artemis/actions/ActionsModuleTest.kt).
 
-enum class ParameterType {
-    TEXT,       // Text input
-    EMAIL,      // Email input
-    URL,        // URL input
-    NUMBER,     // Numeric input
-    DATE,       // Date picker
-    DATETIME,   // Date and time picker
-    CHECKBOX,   // Boolean checkbox
-    RADIO,      // Radio button group
-    SELECT,     // Dropdown select
-    TEXTAREA    // Multi-line text
-}
-```
+## License
 
----
-
-*artemis-actions - Bringing Blinks to Kotlin wallets*
+Apache License 2.0. See [../../LICENSE](../../LICENSE).

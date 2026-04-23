@@ -1,599 +1,240 @@
-# artemis-nlp - Natural Language Transaction Builder
+# artemis-nlp
 
-## Natural Language Transaction Builder
+Deterministic natural-language intent parser for Solana transactions. Takes a plain-English input like "send 1 SOL to alice.sol" and returns a typed `TransactionIntent` plus a `TransactionBuilder` that can describe, simulate, or execute the operation. Pattern matching is fully on-device; no LLM, no external inference calls, no network round-trips for the parse step itself.
 
-Build Solana transactions by simply typing what you want to do in plain English. No forms, no technical knowledge, no learning curve.
+Source: [../../advanced/artemis-nlp/](../../advanced/artemis-nlp/). Public entry points are `NaturalLanguageBuilder`, `RpcEntityResolver`, and `NlpExecutor`.
 
----
+## What it does
 
-## Overview
+Two pieces:
 
-`artemis-nlp` is a module that parses natural language input and converts it into ready-to-sign Solana transactions. Unlike AI/LLM-based approaches, this uses deterministic pattern matching that:
+1. **`NaturalLanguageBuilder.parse(input)`** runs the string through a tokenizer, matches it against a registry of patterns (transfer, swap, stake, wrap, airdrop, memo, account management, authority management, etc.), extracts entities (amount, token, recipient, validator), and resolves them against an `EntityResolver` you supply (SNS domains, token symbols, program aliases, validator names, optional wallet aliases and `.skr` SeedVault references).
 
-- Works completely **offline**
-- No external API calls
-- No privacy concerns
-- Instant response
-- Predictable behavior
+2. **`NlpExecutor(rpc, wallet)`** takes the resulting `TransactionIntent` and turns it into real Solana instructions, builds and signs the transaction, and submits it. `simulate(intent)` runs the same pipeline but calls RPC `simulateTransaction` instead of sending.
 
----
-
-## Installation
+## Install
 
 ```kotlin
-implementation("xyz.selenus:artemis-nlp:2.2.0")
+dependencies {
+    implementation("xyz.selenus:artemis-nlp:2.2.0")
+}
 ```
 
----
-
-## Quick Start
+## Parse an input
 
 ```kotlin
-import com.selenus.artemis.nlp.*
+import com.selenus.artemis.nlp.NaturalLanguageBuilder
+import com.selenus.artemis.nlp.RpcEntityResolver
+import com.selenus.artemis.nlp.ParseResult
 
-// Create the NLP builder
-val resolver = EntityResolver.create(rpc)
-val nlp = NaturalLanguageBuilder.create(resolver)
+val resolver = RpcEntityResolver(rpc)
+val nlp      = NaturalLanguageBuilder.create(resolver)
 
-// Parse user input
-val result = nlp.parse("send 1 SOL to alice.sol")
-
-when (result) {
+when (val result = nlp.parse("send 1 SOL to alice.sol")) {
     is ParseResult.Success -> {
-        // Transaction understood!
-        println(result.intent.summary)
-        // "Transfer 1 SOL to alice.sol (7xKXn...)"
-        
-        // Build and send
-        val tx = result.buildTransaction()
-        val signature = wallet.signAndSend(tx)
+        println(result.intent.summary)             // "Transfer 1 SOL to alice.sol"
+        println("confidence: ${result.confidence}")
+        // result.builder is a TransactionBuilder (see below)
     }
-    
+
     is ParseResult.Ambiguous -> {
-        // Multiple interpretations possible
-        println("Did you mean:")
-        result.alternatives.forEach { 
-            println("  - ${it.summary}") 
-        }
+        println("Primary:       ${result.primary.summary}")
+        println("Alternatives:")
+        result.alternatives.forEach { alt -> println("  - ${alt.summary}") }
     }
-    
+
     is ParseResult.NeedsInfo -> {
-        // Missing required information
-        println("Please provide: ${result.missing}")
-        println("Suggestion: ${result.suggestion}")
+        // `missing` is a list of field names the pattern still needs
+        println("Missing: ${result.missing.joinToString()}")
+        println(result.suggestion)
     }
-    
+
     is ParseResult.Unknown -> {
-        // Couldn't understand
-        println("Try one of these:")
-        result.suggestions.forEach { 
-            println("  - ${it.template}") 
+        println("Didn't understand. Try one of:")
+        result.suggestions.forEach { s ->
+            println("  ${s.template}   (${s.description})")
         }
     }
 }
 ```
 
----
+`parse` is a `suspend` function because entity resolution may hit RPC (SNS domain lookup, validator lookups, token registry). Non-network resolutions (amount, known token symbol) stay in process.
 
-## Supported Commands
+## Supported intents
 
-### Transfers
+The registry lives in `NaturalLanguageBuilder.buildPatternRegistry()`. As of 2.2.0:
 
-```
-"send 1 SOL to alice.sol"
-"send 100 USDC to 7xKXn..."
-"transfer 50 BONK to bob.sol"
-"pay alice.sol 10 USDT"
-```
+Transfer and send ("send N SOL to X", "transfer N USDC to X", "pay X N USDT"). Swap family ("swap N USDC for SOL", "exchange", "convert", "buy N worth of Y", "sell N X for Y"). Token operations (create, mint, burn). NFT transfer and burn. Staking (stake, unstake, delegate). Account management (close account, create ATA). Authority management (approve / revoke). SOL wrap / unwrap. Devnet helpers (airdrop, check balance). Memo. The full enum is `IntentType` in [../../advanced/artemis-nlp/src/main/kotlin/com/selenus/artemis/nlp/NaturalLanguageBuilder.kt](../../advanced/artemis-nlp/src/main/kotlin/com/selenus/artemis/nlp/NaturalLanguageBuilder.kt).
 
-**Entities extracted:**
-- Amount (required)
-- Token (required, defaults to SOL)
-- Recipient (required, .sol domain or base58 address)
+`nlp.getSupportedTypes()` returns a list of `TransactionTypeInfo(type, description, template, examples, requiredEntities)`, which is useful if you want to render a hint UI listing what the parser accepts.
 
-### Swaps
+## Entity resolution
 
-```
-"swap 100 USDC for SOL"
-"exchange 50 USDT to USDC"
-"convert 1 SOL to BONK"
-"buy 0.5 SOL worth of BONK"
-"sell 1000 BONK for USDC"
-```
+`RpcEntityResolver` covers the common cases:
 
-**Entities extracted:**
-- Amount (required)
-- Input token (required)
-- Output token (required)
+- `.sol` domains are resolved via the on-chain SNS program (derives the hashed-name account, reads the owner bytes at offset 32).
+- Token symbols map to mint addresses via the Jupiter token registry (`token.jup.ag/all`), cached in memory after the first hit.
+- Program aliases (`"system"`, `"token"`, `"jupiter"`, `"marinade"`, `"orca"`, ...) map to program IDs.
+- A small validator table maps names like `"marinade"`, `"jito"`, `"figment"`, `"everstake"`, `"solflare"` to vote accounts.
 
-### Staking
-
-```
-"stake 10 SOL"
-"stake 10 SOL with Marinade"
-"unstake 5 SOL"
-"claim staking rewards"
-```
-
-**Entities extracted:**
-- Amount (required for stake/unstake)
-- Validator/Protocol (optional)
-
-### Token Operations
-
-```
-"create token with 1M supply"
-"mint 1000 tokens to alice.sol"
-"burn 500 tokens"
-```
-
-### NFT Operations
-
-```
-"list my NFT for 5 SOL"
-"buy NFT at 7xKXn..."
-"transfer NFT to alice.sol"
-```
-
----
-
-## Entity Resolution
-
-The NLP builder automatically resolves various entity types:
-
-### Addresses
-- **Base58 addresses:** `7xKXn...` → Validated and used directly
-- **SNS domains:** `alice.sol` → Resolved via Solana Name Service
-- **Known aliases:** `@alice` → Looked up in local address book
-
-### Tokens
-- **Symbols:** `SOL`, `USDC`, `BONK` → Resolved to mint addresses
-- **Names:** `Solana`, `USD Coin` → Matched to known tokens
-- **Addresses:** Direct mint addresses supported
-
-### Amounts
-- **Integers:** `100` → Converted to lamports/smallest unit
-- **Decimals:** `1.5` → Properly scaled
-- **Suffixes:** `1M`, `1K` → Expanded (1M = 1,000,000)
-
----
-
-## Building a Chat-Based Wallet
-
-### ViewModel
+Optional resolvers:
 
 ```kotlin
-class ChatWalletViewModel(
-    private val nlp: NaturalLanguageBuilder,
-    private val wallet: WalletAdapter
-) : ViewModel() {
-    
-    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
-    val messages = _messages.asStateFlow()
-    
-    private val _pendingTransaction = MutableStateFlow<PendingTransaction?>(null)
-    val pendingTransaction = _pendingTransaction.asStateFlow()
-    
-    fun sendMessage(text: String) {
-        // Add user message
-        addMessage(ChatMessage.User(text))
-        
-        viewModelScope.launch {
-            processInput(text)
-        }
-    }
-    
-    private suspend fun processInput(input: String) {
-        when (val result = nlp.parse(input)) {
-            is ParseResult.Success -> {
-                addMessage(ChatMessage.Bot(
-                    "Got it! Here's what I'll do:\n\n" +
-                    "**${result.intent.summary}**\n\n" +
-                    "Confirm to proceed."
-                ))
-                
-                _pendingTransaction.value = PendingTransaction(
-                    intent = result.intent,
-                    builder = result.builder
-                )
-            }
-            
-            is ParseResult.NeedsInfo -> {
-                addMessage(ChatMessage.Bot(
-                    "I need more information. ${result.suggestion}"
-                ))
-            }
-            
-            is ParseResult.Ambiguous -> {
-                addMessage(ChatMessage.Bot(
-                    "I found multiple options:\n\n" +
-                    result.alternatives.mapIndexed { i, alt ->
-                        "${i + 1}. ${alt.summary}"
-                    }.joinToString("\n")
-                ))
-            }
-            
-            is ParseResult.Unknown -> {
-                addMessage(ChatMessage.Bot(
-                    "I didn't understand that. Try:\n\n" +
-                    result.suggestions.take(3).joinToString("\n") { 
-                        "• ${it.template}" 
-                    }
-                ))
-            }
-        }
-    }
-    
-    fun confirmTransaction() {
-        val pending = _pendingTransaction.value ?: return
-        
-        viewModelScope.launch {
-            try {
-                addMessage(ChatMessage.Bot("Sending transaction..."))
-                
-                val tx = pending.builder.buildTransaction()
-                val signature = wallet.signAndSend(tx)
-                
-                addMessage(ChatMessage.Bot(
-                    "Transaction sent!\n\n" +
-                    "Signature: `${signature.take(20)}...`"
-                ))
-                
-                _pendingTransaction.value = null
-            } catch (e: Exception) {
-                addMessage(ChatMessage.Bot("Failed: ${e.message}"))
-            }
-        }
-    }
-    
-    fun cancelTransaction() {
-        _pendingTransaction.value = null
-        addMessage(ChatMessage.Bot("Transaction cancelled."))
-    }
-}
-```
+import com.selenus.artemis.nlp.WalletAliasStore
+import com.selenus.artemis.nlp.SkrResolver
 
-### Compose UI
-
-```kotlin
-@Composable
-fun ChatWalletScreen(viewModel: ChatWalletViewModel) {
-    val messages by viewModel.messages.collectAsState()
-    val pending by viewModel.pendingTransaction.collectAsState()
-    var input by remember { mutableStateOf("") }
-    
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Chat messages
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            reverseLayout = true
-        ) {
-            items(messages.reversed()) { message ->
-                ChatBubble(message)
-            }
-        }
-        
-        // Confirmation buttons
-        pending?.let {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { viewModel.cancelTransaction() },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Cancel")
-                }
-                Button(
-                    onClick = { viewModel.confirmTransaction() },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Confirm")
-                }
-            }
-        }
-        
-        // Quick suggestions
-        LazyRow(
-            modifier = Modifier.padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(quickSuggestions) { suggestion ->
-                SuggestionChip(
-                    onClick = { input = suggestion },
-                    label = { Text(suggestion) }
-                )
-            }
-        }
-        
-        // Input field
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextField(
-                value = input,
-                onValueChange = { input = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Type a command...") },
-                singleLine = true
-            )
-            IconButton(
-                onClick = {
-                    if (input.isNotBlank()) {
-                        viewModel.sendMessage(input)
-                        input = ""
-                    }
-                }
-            ) {
-                Icon(Icons.Default.Send, "Send")
-            }
-        }
-    }
+val aliases = WalletAliasStore().apply {
+    // your app persists alias -> base58 mappings here
 }
 
-val quickSuggestions = listOf(
-    "send 1 SOL to...",
-    "swap USDC for SOL",
-    "check balance",
-    "stake SOL"
+val resolver = RpcEntityResolver(
+    rpc              = rpc,
+    walletAliases    = aliases,
+    skrResolver      = SkrResolver() // resolves "<name>.skr" SeedVault references
 )
 ```
 
----
+Anything that does not resolve comes back as the raw input with confidence `0.0`, so you can gate UI on `entity.confidence > threshold`.
 
-## Custom Patterns
+### Implement a custom resolver
 
-You can add custom patterns for your specific use case:
-
-```kotlin
-val customNlp = NaturalLanguageBuilder.create(resolver) {
-    // Add custom pattern
-    pattern(
-        intentType = IntentType.CUSTOM,
-        template = "vote {option} on proposal {id}",
-        patterns = listOf(
-            Regex("vote\\s+(yes|no|abstain)\\s+on\\s+proposal\\s+(\\d+)")
-        ),
-        requiredEntities = listOf(EntityType.STRING, EntityType.NUMBER),
-        description = "Vote on a DAO proposal"
-    ) { entities ->
-        VoteIntent(
-            option = entities[0].value,
-            proposalId = entities[1].value.toLong()
-        )
-    }
-}
-
-// Now works:
-val result = customNlp.parse("vote yes on proposal 42")
-```
-
----
-
-## Custom Entity Resolver
+If you want a different data source, implement `EntityResolver` directly:
 
 ```kotlin
-class MyEntityResolver(
-    private val addressBook: AddressBook,
-    private val tokenRegistry: TokenRegistry
-) : EntityResolver {
-    
-    override suspend fun resolveDomain(domain: String): Pubkey? {
-        // Custom SNS resolution
-        return snsClient.resolve(domain)
-    }
-    
-    override suspend fun resolveToken(symbol: String): TokenInfo? {
-        // Check local registry first
-        return tokenRegistry.find(symbol)
-            ?: jupiterClient.getTokenInfo(symbol)
-    }
-    
-    override fun isKnownToken(symbol: String): Boolean {
-        return tokenRegistry.contains(symbol) ||
-               COMMON_TOKENS.contains(symbol.uppercase())
-    }
-    
-    override suspend fun resolveAddress(input: String): Pubkey? {
-        // Check address book
-        return addressBook.lookup(input)
-            ?: if (input.length in 32..44) {
-                Pubkey.fromBase58OrNull(input)
-            } else null
-    }
+import com.selenus.artemis.nlp.EntityResolver
+
+class MyResolver(private val myDirectory: MyDirectory) : EntityResolver {
+    override suspend fun resolveDomain(domain: String): String? = null
+    override suspend fun resolveTokenSymbol(symbol: String): String? = myDirectory.mintFor(symbol)
+    override suspend fun resolveProgramName(name: String): String? = null
+    override suspend fun resolveValidatorName(name: String): String? = null
+    override suspend fun resolveSkrKey(skrRef: String): String? = null
+    override suspend fun resolveWalletAlias(alias: String): String? = myDirectory.aliasFor(alias)
 }
 ```
 
----
+Every method has a safe default (`null`) on the interface, so you only override what you use.
 
-## Localization
-
-The NLP builder supports multiple languages:
+## What `TransactionBuilder` exposes
 
 ```kotlin
-val nlp = NaturalLanguageBuilder.create(resolver) {
-    language(Language.SPANISH)
-}
+val result = nlp.parse("send 1 SOL to alice.sol") as ParseResult.Success
 
-// Spanish commands
-nlp.parse("enviar 1 SOL a alice.sol")
-nlp.parse("cambiar 100 USDC por SOL")
+val builder = result.builder
+println(builder.getSummary())        // "Transfer 1 SOL to alice.sol"
+println(builder.getDescription())    // longer description
+val intent = builder.getIntent()     // back-reference to the TransactionIntent
+
+// Declarative breakdown for previews/confirmations
+val templates = builder.getInstructionTemplates()
+templates.forEach { t ->
+    println("${t.program}.${t.action}: ${t.description}")
+    t.params.forEach { (k, v) -> println("  $k = $v") }
+}
 ```
 
-Supported languages:
-- English (default)
-- Spanish
-- Portuguese
-- French
-- German
-- Chinese (Simplified)
-- Japanese
-- Korean
+`InstructionTemplate` is an app-facing description (program name, action name, parameter map, human string). It is not yet a compiled `Instruction`; the compile step happens inside `NlpExecutor`, which builds real instructions using `SystemProgram`, `TokenProgram`, `AssociatedTokenProgram`, `StakeProgram`, `MemoProgram`, and the Jupiter client where applicable.
 
----
-
-## Voice Integration
-
-Combine with Android Speech Recognition:
+## Execute the intent
 
 ```kotlin
-class VoiceWalletActivity : AppCompatActivity() {
-    
-    private val speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-    private val nlp = NaturalLanguageBuilder.create(resolver)
-    
-    fun startListening() {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, 
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-        }
-        speechRecognizer.startListening(intent)
+import com.selenus.artemis.nlp.NlpExecutor
+import com.selenus.artemis.nlp.NlpExecutorConfig
+import com.selenus.artemis.nlp.ExecutionResult
+
+val executor = NlpExecutor(
+    rpc    = artemis.rpc,
+    wallet = artemis.wallet,
+    config = NlpExecutorConfig(cluster = "mainnet-beta")
+)
+
+when (val r = executor.execute(intent)) {
+    is ExecutionResult.Success -> {
+        println("signed: ${r.signature}")
+        println("explorer: ${r.explorerUrl}")
     }
-    
-    init {
-        speechRecognizer.setRecognitionListener(object : RecognitionListener {
-            override fun onResults(results: Bundle) {
-                val matches = results.getStringArrayList(
-                    SpeechRecognizer.RESULTS_RECOGNITION
-                )
-                matches?.firstOrNull()?.let { spokenText ->
-                    lifecycleScope.launch {
-                        val result = nlp.parse(spokenText)
-                        handleResult(result)
-                    }
-                }
-            }
-            // ... other callbacks
-        })
+    is ExecutionResult.Failed -> {
+        log("nlp failed: ${r.error} (recoverable=${r.recoverable})")
+    }
+    is ExecutionResult.BalanceResult -> {
+        // Emitted for CHECK_BALANCE intents; no transaction was sent
+        println("${r.address}: ${r.balance} ${r.token}")
     }
 }
 ```
 
----
+`NlpExecutorConfig` defaults are `cluster = "devnet"`, `explorerBaseUrl = "https://explorer.solana.com"`, `skipPreflight = false`, `maxRetries = 3`, `confirmationTimeout = 30_000L`. Override the cluster and explorer URL for mainnet builds.
 
-## Best Practices
+### Simulate first
 
-### 1. Always Show Confirmation
+For a preview/confirmation UI, call `simulate(intent)` before `execute` so the user sees compute units, the expected fee, and any simulation error:
+
 ```kotlin
-// Never auto-execute transactions
-when (result) {
-    is ParseResult.Success -> {
-        showConfirmationDialog(
-            summary = result.intent.summary,
-            details = result.intent.details,
-            onConfirm = { execute(result) },
-            onCancel = { /* dismiss */ }
-        )
+when (val s = executor.simulate(intent)) {
+    is SimulationResult.Success -> {
+        Text("units: ${s.unitsConsumed}")
+        Text("fee:   ${s.estimatedFee} lamports")
+        // show logs in a collapsible if you want debug detail
+    }
+    is SimulationResult.Failed -> {
+        Text("simulation failed: ${s.error}", color = Error)
     }
 }
 ```
 
-### 2. Provide Context
-```kotlin
-// Set context for better resolution
-nlp.setContext(NlpContext(
-    defaultToken = "SOL",
-    recentRecipients = listOf("alice.sol", "bob.sol"),
-    preferredDex = "Jupiter"
-))
-```
+`SimulationResult.Success.unitsConsumed` is a `Long` from `simulateTransaction.value.unitsConsumed`, and `estimatedFee` is computed from the compute units by the executor.
 
-### 3. Handle Errors Gracefully
+## End-to-end example
+
 ```kotlin
-when (result) {
-    is ParseResult.Unknown -> {
-        // Show helpful suggestions
-        showSuggestions(result.suggestions)
+suspend fun runUserText(input: String): String {
+    val result = nlp.parse(input)
+
+    if (result !is ParseResult.Success) {
+        return "Could not parse: $input"
     }
-    is ParseResult.NeedsInfo -> {
-        // Ask for specific missing info
-        promptForInput(result.missing.first(), result.suggestion)
+    if (result.confidence < 0.7) {
+        return "Not confident: ${result.intent.summary}"
+    }
+
+    // Show a preview
+    val sim = executor.simulate(result.intent)
+    if (sim is SimulationResult.Failed) return "Would fail: ${sim.error}"
+
+    // Confirm with user, then execute
+    if (!askUserToConfirm(result.intent, sim as SimulationResult.Success)) {
+        return "Cancelled"
+    }
+
+    return when (val exec = executor.execute(result.intent)) {
+        is ExecutionResult.Success      -> "Confirmed: ${exec.signature}"
+        is ExecutionResult.Failed       -> "Failed: ${exec.error}"
+        is ExecutionResult.BalanceResult -> "${exec.balance} ${exec.token}"
     }
 }
 ```
 
----
+## Hooking into suggestions
 
-## API Reference
-
-### ParseResult
+Two helpers for building a hint UI:
 
 ```kotlin
-sealed class ParseResult {
-    data class Success(
-        val intent: TransactionIntent,
-        val confidence: Double,
-        val builder: TransactionBuilder
-    ) : ParseResult()
-    
-    data class Ambiguous(
-        val primary: TransactionIntent,
-        val alternatives: List<TransactionIntent>,
-        val confidence: Double
-    ) : ParseResult()
-    
-    data class NeedsInfo(
-        val intent: IntentType,
-        val missing: List<String>,
-        val partial: List<ExtractedEntity>,
-        val suggestion: String
-    ) : ParseResult()
-    
-    data class Unknown(
-        val input: String,
-        val suggestions: List<Suggestion>
-    ) : ParseResult()
+// While the user is typing, suggest pattern templates that partially match
+val hints: List<Suggestion> = nlp.getSuggestions("send 1")
+hints.forEach { s -> Text(s.template) }
+
+// For an onboarding screen, list every supported operation
+nlp.getSupportedTypes().forEach { info ->
+    Section(info.description, info.examples)
 }
 ```
 
-### TransactionIntent
+`Suggestion(template, description, examples)` is what `ParseResult.Unknown.suggestions` returns as well, so the same renderer works for both paths.
 
-```kotlin
-sealed class TransactionIntent {
-    abstract val summary: String
-    abstract val details: Map<String, String>
-    
-    data class Transfer(
-        val amount: BigDecimal,
-        val token: TokenInfo,
-        val recipient: Pubkey
-    ) : TransactionIntent()
-    
-    data class Swap(
-        val amount: BigDecimal,
-        val fromToken: TokenInfo,
-        val toToken: TokenInfo
-    ) : TransactionIntent()
-    
-    // ... more intent types
-}
-```
+## Status
 
----
+Listed as `Experimental` in [../PARITY_MATRIX.md](../PARITY_MATRIX.md). The parser and entity resolver ship with tests (`NlpDevnetTest`, `WalletAliasAndSkrTest` under [../../advanced/artemis-nlp/src/test/kotlin/com/selenus/artemis/nlp/](../../advanced/artemis-nlp/src/test/kotlin/com/selenus/artemis/nlp/)). Treat this module as a UX accelerator rather than a safety boundary: always surface the decoded `TransactionIntent` and a simulation preview to the user before executing.
 
-## Troubleshooting
+## License
 
-### "Unknown command"
-- Check spelling
-- Use simpler phrasing
-- Check supported command list
-
-### Domain resolution fails
-- Ensure `.sol` domain exists
-- Check network connectivity
-- Verify SNS is accessible
-
-### Token not recognized
-- Use standard symbol (USDC, not "US Dollar Coin")
-- Check token is in registry
-- Use mint address directly
-
----
-
-*artemis-nlp - Making blockchain accessible to everyone*
+Apache License 2.0. See [../../LICENSE](../../LICENSE).
