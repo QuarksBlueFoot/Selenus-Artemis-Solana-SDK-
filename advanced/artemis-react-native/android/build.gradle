@@ -76,5 +76,6 @@ dependencies {
     implementation "xyz.selenus:artemis-solana-pay:${artemis}"
     implementation "xyz.selenus:artemis-depin:${artemis}"
     implementation "xyz.selenus:artemis-gaming:${artemis}"
+    implementation "xyz.selenus:artemis-cnft:${artemis}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
 }

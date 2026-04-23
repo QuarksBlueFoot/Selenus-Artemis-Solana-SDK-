@@ -6,6 +6,11 @@
  * bridge; `WritableMap` structures are consumed as plain objects.
  */
 
+export {
+    Realtime,
+    RealtimeStateKind,
+} from './Realtime';
+
 // Re-export MobileWalletAdapter + related types.
 export {
     MobileWalletAdapter,
@@ -125,6 +130,54 @@ export interface SolanaPayRequest {
     memo?: string;
 }
 
+export interface RealtimeStateEvent {
+    kind: 'Idle' | 'Connecting' | 'Connected' | 'Reconnecting' | 'Closed';
+    epoch: number;
+    endpoint?: string;
+    subscriptions?: number;
+    attempt?: number;
+    nextDelayMs?: number;
+    reason?: string;
+}
+
+export interface AccountNotification {
+    pubkey: string;
+    lamports: number;
+    slot: number;
+    data?: string;
+    owner?: string;
+}
+
+export interface SignatureNotification {
+    signature: string;
+    confirmed: boolean;
+}
+
+export interface DigitalAsset {
+    id: string;
+    name: string;
+    symbol: string;
+    uri: string;
+    owner: string;
+    royaltyBasisPoints: number;
+    isCompressed: boolean;
+    frozen: boolean;
+    collectionAddress?: string;
+    collectionVerified: boolean;
+}
+
+export interface InstructionShape {
+    programId: string;
+    accounts: Array<{ pubkey: string; isSigner: boolean; isWritable: boolean }>;
+    /** Base64 encoded instruction data. */
+    data: string;
+}
+
+export interface PdaResult {
+    address: string;
+    bump: number;
+}
+
 declare const Artemis: {
     /** Initialize the MWA adapter. Required before any wallet method. */
     initialize(
@@ -167,8 +220,81 @@ declare const Artemis: {
     // ─── RPC ──────────────────────────────────────────────────────────────
 
     setRpcUrl(url: string): void;
+    setWsUrl(url: string): void;
+    setDasUrl(url: string): void;
+
     getBalance(pubkey: string): Promise<string>;
     getLatestBlockhash(): Promise<string>;
+    getAccountInfo(
+        pubkey: string,
+        commitment?: string | null,
+        encoding?: string | null,
+    ): Promise<string>;
+    getMultipleAccounts(pubkeys: string[], commitment?: string | null): Promise<string>;
+    getTokenAccountsByOwner(
+        owner: string,
+        mint?: string | null,
+        programId?: string | null,
+        commitment?: string | null,
+    ): Promise<string>;
+    simulateTransaction(
+        base64Tx: string,
+        sigVerify: boolean,
+        replaceRecentBlockhash: boolean,
+        commitment?: string | null,
+    ): Promise<string>;
+    sendRawTransaction(
+        base64Tx: string,
+        skipPreflight: boolean,
+        maxRetries?: number | null,
+    ): Promise<string>;
+    getSignatureStatuses(
+        signatures: string[],
+        searchTransactionHistory: boolean,
+    ): Promise<string>;
+    getSlot(commitment?: string | null): Promise<string>;
+    getBlockHeight(commitment?: string | null): Promise<string>;
+    getMinimumBalanceForRentExemption(
+        dataLength: number,
+        commitment?: string | null,
+    ): Promise<string>;
+
+    // ─── Realtime (WebSocket subscriptions) ───────────────────────────────
+
+    realtimeConnect(): Promise<void>;
+    realtimeClose(): Promise<void>;
+    /**
+     * Subscribe to account changes. Returns the event name the native
+     * side will emit on `DeviceEventEmitter`. Pair with
+     * `DeviceEventEmitter.addListener(eventName, handler)` on the JS
+     * side; the handler receives an [AccountNotification].
+     */
+    subscribeAccount(pubkey: string, commitment?: string | null): Promise<string>;
+    /**
+     * Subscribe to signature confirmation. Returns the event name the
+     * native side will emit with a [SignatureNotification] body.
+     */
+    subscribeSignature(signature: string, commitment?: string | null): Promise<string>;
+
+    // ─── DAS (digital asset standard) ─────────────────────────────────────
+
+    dasAssetsByOwner(owner: string, page: number, limit: number): Promise<DigitalAsset[]>;
+    dasAsset(assetId: string): Promise<DigitalAsset | null>;
+    dasAssetsByCollection(collectionAddress: string): Promise<DigitalAsset[]>;
+
+    // ─── Compute budget ───────────────────────────────────────────────────
+
+    computeBudgetSetUnitLimit(units: number): Promise<InstructionShape>;
+    computeBudgetSetUnitPrice(microLamports: string): Promise<InstructionShape>;
+
+    // ─── PDA / ATA derivation ─────────────────────────────────────────────
+
+    findProgramAddress(seedsBase64: string[], programId: string): Promise<PdaResult>;
+    getAssociatedTokenAddress(
+        owner: string,
+        mint: string,
+        tokenProgram?: string | null,
+    ): Promise<string>;
 
     // ─── System program helpers ───────────────────────────────────────────
 

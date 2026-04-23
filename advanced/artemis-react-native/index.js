@@ -2,6 +2,7 @@ import { NativeModules } from 'react-native';
 
 export { MobileWalletAdapter, MWA_FEATURES, transact } from './MobileWalletAdapter';
 export { Base58, Base58Check, Crypto, ArtemisPlatform } from './Base58';
+export { Realtime } from './Realtime';
 export { ArcanaFlow, GameSessionManager, AdaptiveFee } from './Gaming';
 export {
     VersionedTx,
@@ -57,8 +58,67 @@ const Artemis = {
 
     // ─── RPC ─────────────────────────────────────────────────────────────
 
+    setWsUrl: (url) => ArtemisModule.setWsUrl(url),
+    setDasUrl: (url) => ArtemisModule.setDasUrl(url),
+
     getBalance: (pubkey) => ArtemisModule.getBalance(pubkey),
     getLatestBlockhash: () => ArtemisModule.getLatestBlockhash(),
+    getAccountInfo: (pubkey, commitment, encoding) =>
+        ArtemisModule.getAccountInfo(pubkey, commitment ?? null, encoding ?? null),
+    getMultipleAccounts: (pubkeys, commitment) =>
+        ArtemisModule.getMultipleAccounts(pubkeys, commitment ?? null),
+    getTokenAccountsByOwner: (owner, mint, programId, commitment) =>
+        ArtemisModule.getTokenAccountsByOwner(
+            owner,
+            mint ?? null,
+            programId ?? null,
+            commitment ?? null,
+        ),
+    simulateTransaction: (base64Tx, sigVerify, replaceRecentBlockhash, commitment) =>
+        ArtemisModule.simulateTransaction(
+            base64Tx,
+            !!sigVerify,
+            !!replaceRecentBlockhash,
+            commitment ?? null,
+        ),
+    sendRawTransaction: (base64Tx, skipPreflight, maxRetries) =>
+        ArtemisModule.sendRawTransaction(base64Tx, !!skipPreflight, maxRetries ?? null),
+    getSignatureStatuses: (signatures, searchHistory) =>
+        ArtemisModule.getSignatureStatuses(signatures, !!searchHistory),
+    getSlot: (commitment) => ArtemisModule.getSlot(commitment ?? null),
+    getBlockHeight: (commitment) => ArtemisModule.getBlockHeight(commitment ?? null),
+    getMinimumBalanceForRentExemption: (dataLength, commitment) =>
+        ArtemisModule.getMinimumBalanceForRentExemption(dataLength, commitment ?? null),
+
+    // ─── Realtime (WebSocket) ────────────────────────────────────────────
+
+    realtimeConnect: () => ArtemisModule.realtimeConnect(),
+    realtimeClose: () => ArtemisModule.realtimeClose(),
+    subscribeAccount: (pubkey, commitment) =>
+        ArtemisModule.subscribeAccount(pubkey, commitment ?? null),
+    subscribeSignature: (signature, commitment) =>
+        ArtemisModule.subscribeSignature(signature, commitment ?? null),
+
+    // ─── DAS ─────────────────────────────────────────────────────────────
+
+    dasAssetsByOwner: (owner, page = 1, limit = 100) =>
+        ArtemisModule.dasAssetsByOwner(owner, page, limit),
+    dasAsset: (assetId) => ArtemisModule.dasAsset(assetId),
+    dasAssetsByCollection: (collectionAddress) =>
+        ArtemisModule.dasAssetsByCollection(collectionAddress),
+
+    // ─── Compute budget ──────────────────────────────────────────────────
+
+    computeBudgetSetUnitLimit: (units) => ArtemisModule.computeBudgetSetUnitLimit(units),
+    computeBudgetSetUnitPrice: (microLamports) =>
+        ArtemisModule.computeBudgetSetUnitPrice(String(microLamports)),
+
+    // ─── PDA / ATA ───────────────────────────────────────────────────────
+
+    findProgramAddress: (seedsBase64, programId) =>
+        ArtemisModule.findProgramAddress(seedsBase64, programId),
+    getAssociatedTokenAddress: (owner, mint, tokenProgram) =>
+        ArtemisModule.getAssociatedTokenAddress(owner, mint, tokenProgram ?? null),
 
     // ─── System program helpers ──────────────────────────────────────────
 

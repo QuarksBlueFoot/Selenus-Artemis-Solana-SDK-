@@ -29,19 +29,30 @@ import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
+import com.facebook.react.modules.core.DeviceEventManagerModule
+import com.selenus.artemis.cnft.das.ArtemisDas
+import com.selenus.artemis.cnft.das.CompositeDas
+import com.selenus.artemis.cnft.das.HeliusDas
+import com.selenus.artemis.cnft.das.RpcFallbackDas
+import com.selenus.artemis.compute.ComputeBudgetPresets
 import com.selenus.artemis.depin.DeviceIdentity
 import com.selenus.artemis.gaming.MerkleDistributor
+import com.selenus.artemis.programs.AssociatedToken
 import com.selenus.artemis.programs.SystemProgram
 import com.selenus.artemis.rpc.JsonRpcClient
+import com.selenus.artemis.rpc.RpcApi
 import com.selenus.artemis.rpc.RpcClientConfig
 import com.selenus.artemis.runtime.Base58 as ArtemisBase58
 import com.selenus.artemis.runtime.Keypair
+import com.selenus.artemis.runtime.Pda
 import com.selenus.artemis.runtime.PlatformCrypto
 import com.selenus.artemis.runtime.PlatformEd25519
 import com.selenus.artemis.runtime.Pubkey
 import com.selenus.artemis.seedvault.SeedVaultManager
 import com.selenus.artemis.solanapay.SolanaPayUri
 import com.selenus.artemis.tx.Transaction
+import com.selenus.artemis.ws.ConnectionState
+import com.selenus.artemis.ws.RealtimeEngine
 import com.selenus.artemis.wallet.Commitment
 import com.selenus.artemis.wallet.SendTransactionOptions
 import com.selenus.artemis.wallet.SignTxRequest
@@ -69,6 +80,15 @@ class ArtemisModule(
 
     @Volatile private var adapter: MwaWalletAdapter? = null
     @Volatile private var rpcClient: JsonRpcClient? = null
+    @Volatile private var rpcApi: RpcApi? = null
+    @Volatile private var rpcUrl: String = "https://api.mainnet-beta.solana.com"
+    @Volatile private var wsUrl: String? = null
+    @Volatile private var realtime: RealtimeEngine? = null
+    @Volatile private var dasClient: ArtemisDas? = null
+    @Volatile private var dasUrl: String? = null
+    private val realtimeStateJob = java.util.concurrent.atomic.AtomicReference<kotlinx.coroutines.Job?>(null)
+
+    private val reactContextRef: ReactApplicationContext = reactContext
 
     private val seedVaultManager: SeedVaultManager = SeedVaultManager(reactContext)
     @Volatile private var seedVaultPromise: Promise? = null
@@ -78,6 +98,13 @@ class ArtemisModule(
 
     init {
         reactContext.addActivityEventListener(this)
+    }
+
+    private fun emitEvent(name: String, payload: WritableMap) {
+        if (!reactContextRef.hasActiveCatalystInstance()) return
+        reactContextRef
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+            .emit(name, payload)
     }
 
     override fun getName(): String = "ArtemisModule"
@@ -136,7 +163,24 @@ class ArtemisModule(
 
     @ReactMethod
     fun setRpcUrl(url: String) {
-        rpcClient = JsonRpcClient(RpcClientConfig(url))
+        rpcUrl = url
+        val client = JsonRpcClient(RpcClientConfig(url))
+        rpcClient = client
+        rpcApi = RpcApi(client)
+    }
+
+    @ReactMethod
+    fun setWsUrl(url: String) {
+        wsUrl = url
+    }
+
+    @ReactMethod
+    fun setDasUrl(url: String) {
+        dasUrl = url
+        dasClient = CompositeDas(
+            primary = HeliusDas(rpcUrl = url),
+            fallback = RpcFallbackDas(requireRpc())
+        )
     }
 
     // ─── MWA 2.0 ──────────────────────────────────────────────────────────
@@ -440,6 +484,409 @@ class ArtemisModule(
             } catch (e: Exception) {
                 promise.reject("RPC_ERROR", e.message, e)
             }
+        }
+    }
+
+    /**
+     * RPC expansion. These wrap [RpcApi] so apps don't have to ship a
+     * separate HTTP client alongside the bridge. Results come back as
+     * JSON strings (the upstream RPC responses are already JSON);
+     * callers parse with `JSON.parse`. Returning raw JSON avoids
+     * double-serializing through the bridge for methods whose response
+     * shapes vary by encoding and commitment.
+     */
+
+    @ReactMethod
+    fun getAccountInfo(pubkeyStr: String, commitment: String?, encoding: String?, promise: Promise) {
+        scope.launch {
+            try {
+                val json = requireRpcApi().getAccountInfo(
+                    pubkeyBase58 = pubkeyStr,
+                    commitment = commitment ?: "confirmed",
+                    encoding = encoding ?: "base64"
+                )
+                promise.resolve(json.toString())
+            } catch (e: Exception) {
+                promise.reject("RPC_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun getMultipleAccounts(pubkeys: ReadableArray, commitment: String?, promise: Promise) {
+        scope.launch {
+            try {
+                val list = readableArrayOfStrings(pubkeys)
+                val json = requireRpcApi().getMultipleAccounts(
+                    pubkeys = list,
+                    commitment = commitment ?: "confirmed",
+                    encoding = "base64"
+                )
+                promise.resolve(json.toString())
+            } catch (e: Exception) {
+                promise.reject("RPC_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun getTokenAccountsByOwner(
+        ownerStr: String,
+        mintStr: String?,
+        programIdStr: String?,
+        commitment: String?,
+        promise: Promise
+    ) {
+        scope.launch {
+            try {
+                val json = requireRpcApi().getTokenAccountsByOwner(
+                    owner = ownerStr,
+                    mint = mintStr,
+                    programId = programIdStr,
+                    commitment = commitment ?: "confirmed"
+                )
+                promise.resolve(json.toString())
+            } catch (e: Exception) {
+                promise.reject("RPC_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun simulateTransaction(
+        base64Tx: String,
+        sigVerify: Boolean,
+        replaceRecentBlockhash: Boolean,
+        commitment: String?,
+        promise: Promise
+    ) {
+        scope.launch {
+            try {
+                val json = requireRpcApi().simulateTransaction(
+                    base64Tx = base64Tx,
+                    sigVerify = sigVerify,
+                    replaceRecentBlockhash = replaceRecentBlockhash,
+                    commitment = commitment ?: "processed"
+                )
+                promise.resolve(json.toString())
+            } catch (e: Exception) {
+                promise.reject("RPC_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun sendRawTransaction(
+        base64Tx: String,
+        skipPreflight: Boolean,
+        maxRetries: Double?,
+        promise: Promise
+    ) {
+        scope.launch {
+            try {
+                val txBytes = Base64.getDecoder().decode(base64Tx)
+                val sig = requireRpcApi().sendRawTransaction(
+                    txBytes = txBytes,
+                    skipPreflight = skipPreflight,
+                    maxRetries = maxRetries?.toInt()
+                )
+                promise.resolve(sig)
+            } catch (e: Exception) {
+                promise.reject("RPC_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun getSignatureStatuses(
+        signatures: ReadableArray,
+        searchTransactionHistory: Boolean,
+        promise: Promise
+    ) {
+        scope.launch {
+            try {
+                val list = readableArrayOfStrings(signatures)
+                val json = requireRpcApi().getSignatureStatuses(
+                    signatures = list,
+                    searchTransactionHistory = searchTransactionHistory
+                )
+                promise.resolve(json.toString())
+            } catch (e: Exception) {
+                promise.reject("RPC_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun getSlot(commitment: String?, promise: Promise) {
+        scope.launch {
+            try {
+                promise.resolve(
+                    requireRpcApi().getSlot(commitment ?: "confirmed").toString()
+                )
+            } catch (e: Exception) {
+                promise.reject("RPC_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun getBlockHeight(commitment: String?, promise: Promise) {
+        scope.launch {
+            try {
+                promise.resolve(
+                    requireRpcApi().getBlockHeight(commitment ?: "confirmed").toString()
+                )
+            } catch (e: Exception) {
+                promise.reject("RPC_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun getMinimumBalanceForRentExemption(dataLength: Double, commitment: String?, promise: Promise) {
+        scope.launch {
+            try {
+                promise.resolve(
+                    requireRpcApi().getMinimumBalanceForRentExemption(
+                        dataLength = dataLength.toLong(),
+                        commitment = commitment ?: "confirmed"
+                    ).toString()
+                )
+            } catch (e: Exception) {
+                promise.reject("RPC_ERROR", e.message, e)
+            }
+        }
+    }
+
+    // ─── Realtime (WebSocket subscriptions) ──────────────────────────────
+    // The native [RealtimeEngine] owns reconnect + deterministic
+    // resubscribe + endpoint rotation. The bridge relays every typed
+    // notification back to JS through `DeviceEventEmitter` so a
+    // subscribing component just wires a listener for the event name
+    // the bridge returns from subscribeAccount / subscribeSignature.
+
+    private fun ensureRealtime(): RealtimeEngine {
+        realtime?.let { return it }
+        val ws = wsUrl ?: derivedWsFromRpc(rpcUrl)
+        val engine = RealtimeEngine(endpoints = listOf(ws))
+        realtime = engine
+        // One state-stream subscription per engine; previous subscription is
+        // cancelled when the engine is replaced.
+        realtimeStateJob.getAndSet(scope.launch {
+            engine.state.collect { state ->
+                val map = Arguments.createMap()
+                map.putString("kind", state::class.simpleName ?: "Unknown")
+                map.putDouble("epoch", state.epoch.toDouble())
+                when (state) {
+                    is ConnectionState.Connected -> {
+                        map.putString("endpoint", state.endpoint)
+                        map.putInt("subscriptions", state.subscriptions)
+                    }
+                    is ConnectionState.Connecting -> map.putString("endpoint", state.endpoint)
+                    is ConnectionState.Reconnecting -> {
+                        map.putString("endpoint", state.endpoint)
+                        map.putInt("attempt", state.attempt)
+                        map.putDouble("nextDelayMs", state.nextDelayMs.toDouble())
+                        map.putString("reason", state.reason)
+                    }
+                    is ConnectionState.Closed -> map.putString("reason", state.reason)
+                    else -> Unit
+                }
+                emitEvent("ArtemisRealtimeState", map)
+            }
+        })?.cancel()
+        return engine
+    }
+
+    @ReactMethod
+    fun realtimeConnect(promise: Promise) {
+        scope.launch {
+            try {
+                ensureRealtime().connect()
+                promise.resolve(null)
+            } catch (e: Exception) {
+                promise.reject("REALTIME_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun realtimeClose(promise: Promise) {
+        try {
+            realtimeStateJob.getAndSet(null)?.cancel()
+            realtime?.close()
+            realtime = null
+            promise.resolve(null)
+        } catch (e: Exception) {
+            promise.reject("REALTIME_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun subscribeAccount(pubkeyStr: String, commitment: String?, promise: Promise) {
+        scope.launch {
+            try {
+                val engine = ensureRealtime()
+                engine.connect()
+                val eventName = "ArtemisAccount:$pubkeyStr"
+                engine.subscribeAccount(pubkeyStr, commitment ?: "confirmed") { note ->
+                    val map = Arguments.createMap()
+                    map.putString("pubkey", note.pubkey)
+                    map.putDouble("lamports", note.lamports.toDouble())
+                    map.putDouble("slot", note.slot.toDouble())
+                    note.data?.let { map.putString("data", it) }
+                    note.owner?.let { map.putString("owner", it) }
+                    emitEvent(eventName, map)
+                }
+                promise.resolve(eventName)
+            } catch (e: Exception) {
+                promise.reject("REALTIME_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun subscribeSignature(signature: String, commitment: String?, promise: Promise) {
+        scope.launch {
+            try {
+                val engine = ensureRealtime()
+                engine.connect()
+                val eventName = "ArtemisSignature:$signature"
+                engine.subscribeSignature(signature, commitment ?: "confirmed") { confirmed ->
+                    val map = Arguments.createMap()
+                    map.putString("signature", signature)
+                    map.putBoolean("confirmed", confirmed)
+                    emitEvent(eventName, map)
+                }
+                promise.resolve(eventName)
+            } catch (e: Exception) {
+                promise.reject("REALTIME_ERROR", e.message, e)
+            }
+        }
+    }
+
+    /**
+     * React Native requires modules that emit events to implement
+     * `addListener` / `removeListeners` so it can manage listener
+     * lifecycle. No-op here; the native event emitter does the real
+     * work.
+     */
+    @ReactMethod fun addListener(eventName: String) { /* no-op */ }
+    @ReactMethod fun removeListeners(count: Double) { /* no-op */ }
+
+    // ─── DAS (Digital Asset Standard) ────────────────────────────────────
+    // Helius primary with RPC fallback. Callers choose the provider via
+    // setDasUrl(); without a DAS URL configured, the fallback RPC path
+    // serves getAssetsByOwner from SPL token accounts + Metaplex metadata.
+
+    @ReactMethod
+    fun dasAssetsByOwner(ownerStr: String, page: Double, limit: Double, promise: Promise) {
+        scope.launch {
+            try {
+                val das = requireDas()
+                val assets = das.assetsByOwner(
+                    owner = Pubkey.fromBase58(ownerStr),
+                    page = page.toInt().coerceAtLeast(1),
+                    limit = limit.toInt().coerceAtLeast(1)
+                )
+                val arr = Arguments.createArray()
+                assets.forEach { arr.pushMap(digitalAssetToMap(it)) }
+                promise.resolve(arr)
+            } catch (e: Exception) {
+                promise.reject("DAS_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun dasAsset(assetIdStr: String, promise: Promise) {
+        scope.launch {
+            try {
+                val asset = requireDas().asset(assetIdStr)
+                if (asset == null) promise.resolve(null)
+                else promise.resolve(digitalAssetToMap(asset))
+            } catch (e: Exception) {
+                promise.reject("DAS_ERROR", e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun dasAssetsByCollection(collectionAddress: String, promise: Promise) {
+        scope.launch {
+            try {
+                val assets = requireDas().assetsByCollection(collectionAddress)
+                val arr = Arguments.createArray()
+                assets.forEach { arr.pushMap(digitalAssetToMap(it)) }
+                promise.resolve(arr)
+            } catch (e: Exception) {
+                promise.reject("DAS_ERROR", e.message, e)
+            }
+        }
+    }
+
+    // ─── Compute budget helpers ──────────────────────────────────────────
+    // Returns a base64-encoded serialized `SetComputeUnitLimit` /
+    // `SetComputeUnitPrice` instruction so the JS layer can assemble a
+    // transaction without re-implementing the compute-budget program.
+
+    @ReactMethod
+    fun computeBudgetSetUnitLimit(units: Double, promise: Promise) {
+        try {
+            val ix = ComputeBudgetPresets.setComputeUnitLimit(units.toInt())
+            promise.resolve(encodeInstruction(ix))
+        } catch (e: Exception) {
+            promise.reject("COMPUTE_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun computeBudgetSetUnitPrice(microLamports: String, promise: Promise) {
+        try {
+            val ix = ComputeBudgetPresets.setComputeUnitPrice(microLamports.toLong())
+            promise.resolve(encodeInstruction(ix))
+        } catch (e: Exception) {
+            promise.reject("COMPUTE_ERROR", e.message, e)
+        }
+    }
+
+    // ─── PDA + ATA derivation ────────────────────────────────────────────
+
+    @ReactMethod
+    fun findProgramAddress(seedsB64: ReadableArray, programIdStr: String, promise: Promise) {
+        try {
+            val seeds = (0 until seedsB64.size()).mapNotNull { i ->
+                seedsB64.getString(i)?.let { Base64.getDecoder().decode(it) }
+            }
+            val result = Pda.findProgramAddress(seeds, Pubkey.fromBase58(programIdStr))
+            val map = Arguments.createMap()
+            map.putString("address", result.address.toBase58())
+            map.putInt("bump", result.bump.toInt() and 0xFF)
+            promise.resolve(map)
+        } catch (e: Exception) {
+            promise.reject("PDA_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun getAssociatedTokenAddress(
+        ownerStr: String,
+        mintStr: String,
+        tokenProgramStr: String?,
+        promise: Promise
+    ) {
+        try {
+            val owner = Pubkey.fromBase58(ownerStr)
+            val mint = Pubkey.fromBase58(mintStr)
+            val ata = if (tokenProgramStr != null) {
+                AssociatedToken.address(owner, mint, Pubkey.fromBase58(tokenProgramStr))
+            } else {
+                AssociatedToken.address(owner, mint)
+            }
+            promise.resolve(ata.toBase58())
+        } catch (e: Exception) {
+            promise.reject("ATA_ERROR", e.message, e)
         }
     }
 
@@ -843,8 +1290,56 @@ class ArtemisModule(
         adapter ?: error("ArtemisModule.initialize(...) must be called before MWA methods")
 
     private fun requireRpc(): JsonRpcClient = rpcClient
-        ?: JsonRpcClient(RpcClientConfig("https://api.mainnet-beta.solana.com"))
-            .also { rpcClient = it }
+        ?: JsonRpcClient(RpcClientConfig(rpcUrl)).also {
+            rpcClient = it
+            rpcApi = RpcApi(it)
+        }
+
+    private fun requireRpcApi(): RpcApi = rpcApi
+        ?: RpcApi(requireRpc()).also { rpcApi = it }
+
+    private fun requireDas(): ArtemisDas = dasClient ?: run {
+        val rpc = requireRpc()
+        val das = dasUrl?.let { url ->
+            CompositeDas(primary = HeliusDas(rpcUrl = url), fallback = RpcFallbackDas(rpc))
+        } ?: RpcFallbackDas(rpc)
+        dasClient = das
+        das
+    }
+
+    private fun derivedWsFromRpc(url: String): String =
+        url.replaceFirst("https://", "wss://").replaceFirst("http://", "ws://")
+
+    private fun digitalAssetToMap(a: com.selenus.artemis.cnft.das.DigitalAsset): WritableMap {
+        val map = Arguments.createMap()
+        map.putString("id", a.id)
+        map.putString("name", a.name)
+        map.putString("symbol", a.symbol)
+        map.putString("uri", a.uri)
+        map.putString("owner", a.owner)
+        map.putInt("royaltyBasisPoints", a.royaltyBasisPoints)
+        map.putBoolean("isCompressed", a.isCompressed)
+        map.putBoolean("frozen", a.frozen)
+        a.collectionAddress?.let { map.putString("collectionAddress", it) }
+        map.putBoolean("collectionVerified", a.collectionVerified)
+        return map
+    }
+
+    private fun encodeInstruction(ix: com.selenus.artemis.tx.Instruction): WritableMap {
+        val map = Arguments.createMap()
+        map.putString("programId", ix.programId.toBase58())
+        val accounts = Arguments.createArray()
+        ix.accounts.forEach { meta ->
+            val accMap = Arguments.createMap()
+            accMap.putString("pubkey", meta.pubkey.toBase58())
+            accMap.putBoolean("isSigner", meta.isSigner)
+            accMap.putBoolean("isWritable", meta.isWritable)
+            accounts.pushMap(accMap)
+        }
+        map.putArray("accounts", accounts)
+        map.putString("data", Base64.getEncoder().encodeToString(ix.data))
+        return map
+    }
 
     /**
      * Build the AuthorizationResult object the TS side consumes. Mirrors
