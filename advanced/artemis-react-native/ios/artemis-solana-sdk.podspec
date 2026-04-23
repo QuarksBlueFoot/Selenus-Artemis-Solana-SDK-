@@ -1,11 +1,13 @@
 Pod::Spec.new do |s|
-  s.name         = "artemis-solana-sdk"
-  s.version      = "1.0.9"
-  s.summary      = "Artemis Solana SDK for React Native - iOS Native Module"
+  s.name         = "ArtemisSolanaSDK"
+  s.version      = "2.2.0"
+  s.summary      = "Artemis Solana SDK for React Native (iOS utility layer)"
   s.description  = <<-DESC
-    A modular, mobile-first Solana SDK for React Native.
-    Provides Base58 encoding/decoding, cryptographic utilities, and Solana-specific
-    validation functions. Cross-platform parity with the Android Kotlin implementation.
+    iOS side of the Artemis React Native bindings. Provides cross-
+    platform Base58, Base58Check, SHA-256, and Ed25519 primitives.
+    Mobile Wallet Adapter 2.0 and Seed Vault are Android-only features
+    defined by Solana Mobile and are not shipped on this pod; pair
+    with WalletConnect on iOS if you need wallet connectivity.
   DESC
   s.homepage     = "https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-"
   s.license      = { :type => "Apache-2.0", :file => "../LICENSE" }

@@ -1,4 +1,20 @@
+/*
+ * React Native bridge to the Artemis Solana SDK Android libraries.
+ *
+ * The native artifacts consumed here MUST match the RN package version
+ * so `npm install @selenus/artemis-solana-sdk@x.y.z` actually bundles
+ * the x.y.z native libraries. Version pinning goes through one source
+ * of truth: the `artemisVersion` ext property, defaulting to the value
+ * in the root gradle.properties of the SDK repo. Overrides via
+ * -PartemisVersion=<v> let release automation pin a specific release.
+ */
+
 buildscript {
+    ext {
+        artemisVersion = project.findProperty("artemisVersion") as String?
+            ?: rootProject.findProperty("version") as String?
+            ?: "2.2.0"
+    }
     repositories {
         google()
         mavenCentral()
@@ -14,16 +30,20 @@ apply plugin: "kotlin-android"
 
 android {
     namespace "com.selenus.artemis.reactnative"
-    compileSdkVersion 34
+    compileSdkVersion 35
 
     defaultConfig {
         minSdkVersion 26
-        targetSdkVersion 34
+        targetSdkVersion 35
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
@@ -33,16 +53,28 @@ repositories {
     google()
 }
 
+def artemis = rootProject.ext.has("artemisVersion")
+    ? rootProject.ext.artemisVersion
+    : (project.findProperty("artemisVersion") ?: "2.2.0")
+
 dependencies {
     implementation "com.facebook.react:react-native:+"
-    implementation "xyz.selenus:artemis-wallet-mwa-android:1.0.9"
-    implementation "xyz.selenus:artemis-core:1.0.9"
-    implementation "xyz.selenus:artemis-tx:1.0.9"
-    implementation "xyz.selenus:artemis-rpc:1.0.9"
-    implementation "xyz.selenus:artemis-programs:1.0.9"
-    implementation "xyz.selenus:artemis-depin:1.0.9"
-    implementation "xyz.selenus:artemis-solana-pay:1.0.9"
-    implementation "xyz.selenus:artemis-gaming:1.0.9"
-    implementation "xyz.selenus:artemis-compute:1.0.9"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+    // Pin every Artemis artifact to the same coordinate. Version drift
+    // across the bridge is a publish blocker the audit specifically
+    // flagged; the `artemis` variable above is the single source of
+    // truth so a release bump updates all of them together.
+    implementation "xyz.selenus:artemis-core:${artemis}"
+    implementation "xyz.selenus:artemis-rpc:${artemis}"
+    implementation "xyz.selenus:artemis-tx:${artemis}"
+    implementation "xyz.selenus:artemis-vtx:${artemis}"
+    implementation "xyz.selenus:artemis-programs:${artemis}"
+    implementation "xyz.selenus:artemis-compute:${artemis}"
+    implementation "xyz.selenus:artemis-ws:${artemis}"
+    implementation "xyz.selenus:artemis-wallet:${artemis}"
+    implementation "xyz.selenus:artemis-wallet-mwa-android:${artemis}"
+    implementation "xyz.selenus:artemis-seed-vault:${artemis}"
+    implementation "xyz.selenus:artemis-solana-pay:${artemis}"
+    implementation "xyz.selenus:artemis-depin:${artemis}"
+    implementation "xyz.selenus:artemis-gaming:${artemis}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
 }

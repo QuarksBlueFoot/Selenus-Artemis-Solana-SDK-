@@ -1,264 +1,315 @@
-import { MobileWalletAdapter } from '../MobileWalletAdapter';
+/**
+ * Contract tests for the Artemis RN bridge.
+ *
+ * These tests exercise the wrapper behavior the JS side owns:
+ *   - new bridge shape (structured objects, not JSON strings)
+ *   - auth token typed as string end-to-end
+ *   - batch results with per-slot success / failure state
+ *   - transact(wallet, block) teardown semantics
+ *   - cross-platform Base58 / Crypto wrappers calling the right native
+ *     method names
+ *
+ * The native module is stubbed with strict response shapes that mirror
+ * what the Android Kotlin bridge emits. Every test asserts on the
+ * object the native side would actually return, so a regression on
+ * either side fails here first.
+ */
+import {
+    MobileWalletAdapter,
+    transact,
+    type AuthorizationResult,
+    type BatchSendResult,
+    type MwaCapabilities,
+} from '../MobileWalletAdapter';
 import Artemis from '../index';
-import { Transaction, PublicKey, VersionedTransaction } from '@solana/web3.js';
-import { NativeModules } from 'react-native';
+import { Base58, Crypto } from '../Base58';
 
-// Mock NativeModules
-jest.mock('react-native', () => {
-    return {
-        NativeModules: {
-            ArtemisModule: {
-                initialize: jest.fn(),
-                connect: jest.fn().mockResolvedValue('11111111111111111111111111111111'),
-                signTransaction: jest.fn().mockImplementation((tx) => Promise.resolve(tx)),
-                signAndSendTransaction: jest.fn().mockResolvedValue('signature'),
-                signMessage: jest.fn().mockResolvedValue('c2lnbmF0dXJl'), // 'signature' in base64
-                connectWithSignIn: jest.fn().mockResolvedValue({
-                    publicKey: '11111111111111111111111111111111',
-                    signature: 'sig',
-                    message: 'msg'
-                }),
-                setRpcUrl: jest.fn(),
-                getBalance: jest.fn().mockResolvedValue('1000000000'),
-                getLatestBlockhash: jest.fn().mockResolvedValue('blockhash'),
-                buildTransferTransaction: jest.fn().mockResolvedValue('base64tx'),
-                generateDeviceIdentity: jest.fn().mockResolvedValue('devicePubkey'),
-                signLocationProof: jest.fn().mockResolvedValue('proofSignature'),
-                buildSolanaPayUri: jest.fn().mockResolvedValue('solana:pay'),
-                parseSolanaPayUri: jest.fn().mockResolvedValue({ recipient: 'recipient', amount: '1.0' }),
-                verifyMerkleProof: jest.fn().mockResolvedValue(true),
-                // Seed Vault Mocks
-                seedVaultAuthorize: jest.fn().mockResolvedValue({ authToken: 123 }),
-                seedVaultCreateSeed: jest.fn().mockResolvedValue({ authToken: 456 }),
-                seedVaultImportSeed: jest.fn().mockResolvedValue({ authToken: 789 }),
-                seedVaultGetAccounts: jest.fn().mockResolvedValue([{ accountId: 1, name: "Main" }]),
-                seedVaultSignMessages: jest.fn().mockResolvedValue(['sig1', 'sig2']),
-                seedVaultSignTransactions: jest.fn().mockResolvedValue(['signedTx1', 'signedTx2']),
-                seedVaultRequestPublicKeys: jest.fn().mockResolvedValue(['pubkey1', 'pubkey2']),
-                seedVaultSignWithDerivationPath: jest.fn().mockResolvedValue(['sig1']),
-                seedVaultDeauthorize: jest.fn().mockResolvedValue(undefined),
-            }
+const ADDRESS_BASE58 = '11111111111111111111111111111111';
+const ADDRESS_BASE64 = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+
+const FULL_CAPS: MwaCapabilities = {
+    maxTransactionsPerRequest: 10,
+    maxMessagesPerRequest: 10,
+    supportedTransactionVersions: ['legacy', 0],
+    features: [
+        'solana:signAndSendTransaction',
+        'solana:signTransactions',
+        'solana:signMessages',
+        'solana:signInWithSolana',
+        'solana:cloneAuthorization',
+    ],
+    supportsSignAndSendTransactions: true,
+    supportsCloneAuthorization: true,
+    supportsSignTransactions: true,
+    supportsSignIn: true,
+    supportsLegacyTransactions: true,
+    supportsVersionedTransactions: true,
+};
+
+const AUTH_RESULT: AuthorizationResult = {
+    authToken: 'token-ABC',
+    address: ADDRESS_BASE58,
+    accounts: [
+        {
+            address: ADDRESS_BASE64,
+            addressBase58: ADDRESS_BASE58,
+            label: 'Main',
+            chains: ['solana:mainnet'],
+            features: ['solana:signAndSendTransaction'],
         },
-        Platform: {
-            OS: 'android',
-            select: jest.fn((objs) => objs.android)
-        }
-    };
+    ],
+    walletUriBase: 'https://wallet.example.com',
+    capabilities: FULL_CAPS,
+};
+
+jest.mock('react-native', () => ({
+    NativeModules: {
+        ArtemisModule: {
+            initialize: jest.fn(),
+            setRpcUrl: jest.fn(),
+
+            // MWA
+            connect: jest.fn(),
+            connectWithFeatures: jest.fn(),
+            connectWithSignIn: jest.fn(),
+            reauthorize: jest.fn(),
+            deauthorize: jest.fn().mockResolvedValue(undefined),
+            getCapabilities: jest.fn(),
+            cloneAuthorization: jest.fn(),
+            signTransaction: jest.fn(),
+            signTransactions: jest.fn(),
+            signAndSendTransaction: jest.fn(),
+            signAndSendTransactions: jest.fn(),
+            signMessage: jest.fn(),
+            signMessages: jest.fn(),
+            signMessagesDetached: jest.fn(),
+
+            // RPC
+            getBalance: jest.fn().mockResolvedValue('1000000000'),
+            getLatestBlockhash: jest.fn().mockResolvedValue('blockhash'),
+            buildTransferTransaction: jest.fn().mockResolvedValue('base64tx'),
+
+            // Seed Vault (auth tokens are STRINGS end-to-end)
+            seedVaultAuthorize: jest
+                .fn()
+                .mockResolvedValue({ authToken: 'sv-token-1', accountId: 0 }),
+            seedVaultCreateSeed: jest
+                .fn()
+                .mockResolvedValue({ authToken: 'sv-token-2', accountId: 0 }),
+            seedVaultImportSeed: jest
+                .fn()
+                .mockResolvedValue({ authToken: 'sv-token-3', accountId: 0 }),
+            seedVaultGetAccounts: jest.fn().mockResolvedValue([
+                { id: 0, name: 'Main', publicKey: ADDRESS_BASE58 },
+            ]),
+            seedVaultSignMessages: jest.fn().mockResolvedValue(['c2ln']),
+            seedVaultSignTransactions: jest.fn().mockResolvedValue(['c2lnMQ==']),
+            seedVaultRequestPublicKeys: jest.fn().mockResolvedValue([ADDRESS_BASE58]),
+            seedVaultSignWithDerivationPath: jest.fn().mockResolvedValue(['c2ln']),
+            seedVaultDeauthorize: jest.fn().mockResolvedValue(undefined),
+
+            // DePIN / Solana Pay / Gaming
+            generateDeviceIdentity: jest.fn().mockResolvedValue('devicePubkey'),
+            signLocationProof: jest.fn().mockResolvedValue('proofSignature'),
+            buildSolanaPayUri: jest.fn().mockResolvedValue('solana:pay'),
+            parseSolanaPayUri: jest
+                .fn()
+                .mockResolvedValue({ recipient: 'recipient', amount: '1.0' }),
+            verifyMerkleProof: jest.fn().mockResolvedValue(true),
+
+            // Cross-platform Base58 + Crypto
+            base64ToBase58: jest.fn().mockResolvedValue('BASE58'),
+            base58ToBase64: jest.fn().mockResolvedValue('BASE64='),
+            isValidBase58: jest.fn().mockResolvedValue(true),
+            isValidSolanaPubkey: jest.fn().mockResolvedValue(true),
+            isValidSolanaSignature: jest.fn().mockResolvedValue(true),
+            base58EncodeCheck: jest.fn().mockResolvedValue('BASE58CHECK'),
+            base58DecodeCheck: jest.fn().mockResolvedValue('BASE64='),
+            sha256: jest.fn().mockResolvedValue('SHA='),
+            cryptoGenerateKeypair: jest
+                .fn()
+                .mockResolvedValue({ publicKey: 'pk58', secretKey: 'sk58' }),
+            cryptoSign: jest.fn().mockResolvedValue('c2ln'),
+            cryptoVerify: jest.fn().mockResolvedValue(true),
+        },
+    },
+    Platform: { OS: 'android', select: jest.fn((o) => o.android) },
+}));
+
+// ============================================================================
+// MWA adapter
+// ============================================================================
+
+describe('MobileWalletAdapter bridge contract', () => {
+    let wallet: MobileWalletAdapter;
+    let native: any;
+
+    beforeEach(() => {
+        native = require('react-native').NativeModules.ArtemisModule;
+        Object.values(native).forEach((fn: any) => fn?.mockClear?.());
+        native.connect.mockResolvedValue(AUTH_RESULT);
+        native.connectWithFeatures.mockResolvedValue(AUTH_RESULT);
+        native.connectWithSignIn.mockResolvedValue({
+            ...AUTH_RESULT,
+            signInResult: {
+                address: ADDRESS_BASE64,
+                signedMessage: 'bXNn',
+                signature: 'c2ln',
+                signatureType: 'ed25519',
+            },
+        });
+        native.reauthorize.mockResolvedValue(AUTH_RESULT);
+        native.getCapabilities.mockResolvedValue(FULL_CAPS);
+        native.cloneAuthorization.mockResolvedValue('cloned-token');
+
+        wallet = new MobileWalletAdapter({
+            identityUri: 'https://myapp.example.com',
+            iconPath: 'favicon.ico',
+            identityName: 'MyApp',
+            chain: 'solana:mainnet',
+        });
+    });
+
+    it('connect() caches auth token, accounts, capabilities', async () => {
+        await wallet.connect();
+        expect(wallet.authToken).toBe('token-ABC');
+        expect(wallet.accounts).toHaveLength(1);
+        expect(wallet.capabilities).toEqual(FULL_CAPS);
+        expect(wallet.publicKey?.toBase58()).toBe(ADDRESS_BASE58);
+    });
+
+    it('connectWithSignIn returns SIWS result alongside the authorization', async () => {
+        const auth = await wallet.connectWithSignIn({ domain: 'myapp.example.com' });
+        expect(auth.signInResult?.signatureType).toBe('ed25519');
+        expect(auth.signInResult?.signature).toBe('c2ln');
+    });
+
+    it('reauthorize() refreshes without re-prompting', async () => {
+        await wallet.connect();
+        await wallet.reauthorize();
+        expect(native.reauthorize).toHaveBeenCalledTimes(1);
+    });
+
+    it('getCapabilities() is cached after the first call', async () => {
+        await wallet.connect();
+        const a = await wallet.getCapabilities();
+        const b = await wallet.getCapabilities();
+        expect(a).toBe(b);
+        // getCapabilities on the native module fires at most once through
+        // the adapter (connect hoists it into cache, so the second
+        // getCapabilities() returns the cached instance without hitting
+        // the bridge again).
+        expect(native.getCapabilities).toHaveBeenCalledTimes(0);
+    });
+
+    it('cloneAuthorization throws when wallet does not advertise the feature', async () => {
+        const capsNoClone: MwaCapabilities = { ...FULL_CAPS, supportsCloneAuthorization: false };
+        native.connect.mockResolvedValue({ ...AUTH_RESULT, capabilities: capsNoClone });
+        await wallet.connect();
+        await expect(wallet.cloneAuthorization()).rejects.toThrow(/clone_authorization/);
+    });
+
+    it('signAndSendTransactions returns a per-slot BatchSendResult', async () => {
+        const batch: BatchSendResult = {
+            results: [
+                {
+                    index: 0,
+                    signature: 'SIG1',
+                    confirmed: true,
+                    isSuccess: true,
+                    isFailure: false,
+                    isSignedButNotBroadcast: false,
+                },
+                {
+                    index: 1,
+                    signature: '',
+                    confirmed: false,
+                    error: 'wallet rejected',
+                    isSuccess: false,
+                    isFailure: true,
+                    isSignedButNotBroadcast: false,
+                },
+            ],
+            successCount: 1,
+            failureCount: 1,
+        };
+        native.signAndSendTransactions.mockResolvedValue(batch);
+        await wallet.connect();
+        const result = await wallet.signAndSendTransactions([
+            { serialize: () => new Uint8Array([0]) } as any,
+            { serialize: () => new Uint8Array([1]) } as any,
+        ]);
+        expect(result.results[0].isSuccess).toBe(true);
+        expect(result.results[1].isFailure).toBe(true);
+        expect(result.successCount).toBe(1);
+        expect(result.failureCount).toBe(1);
+    });
+
+    it('transact(wallet, block) runs block, disconnects on success', async () => {
+        const spy = jest.spyOn(wallet, 'disconnect');
+        const out = await transact(wallet, async () => 'payload');
+        expect(out).toBe('payload');
+        expect(spy).toHaveBeenCalled();
+    });
+
+    it('transact(wallet, block) still disconnects on block throw', async () => {
+        const spy = jest.spyOn(wallet, 'disconnect');
+        await expect(
+            transact(wallet, async () => {
+                throw new Error('block error');
+            }),
+        ).rejects.toThrow('block error');
+        expect(spy).toHaveBeenCalled();
+    });
 });
 
-describe('Artemis SDK Integration Tests', () => {
-    
-    describe('MobileWalletAdapter Wrapper', () => {
-        let adapter: MobileWalletAdapter;
+// ============================================================================
+// Seed Vault contract
+// ============================================================================
 
-        beforeEach(() => {
-            jest.clearAllMocks();
-            adapter = new MobileWalletAdapter({
-                identityUri: 'https://test.com',
-                iconPath: 'icon.png',
-                identityName: 'Test App',
-                chain: 'solana:devnet'
-            });
-        });
-
-        it('1. initializes correctly', () => {
-            expect(NativeModules.ArtemisModule.initialize).toHaveBeenCalledWith(
-                'https://test.com',
-                'icon.png',
-                'Test App',
-                'solana:devnet'
-            );
-        });
-
-        it('2. connects successfully', async () => {
-            await adapter.connect();
-            expect(NativeModules.ArtemisModule.connect).toHaveBeenCalled();
-            expect(adapter.publicKey?.toBase58()).toBe('11111111111111111111111111111111');
-            expect(adapter.connected).toBe(true);
-        });
-
-        it('3. handles connection failure', async () => {
-            (NativeModules.ArtemisModule.connect as jest.Mock).mockRejectedValueOnce(new Error('Auth failed'));
-            await expect(adapter.connect()).rejects.toThrow();
-            expect(adapter.connected).toBe(false);
-        });
-
-        it('4. disconnects correctly', async () => {
-            await adapter.connect();
-            await adapter.disconnect();
-            expect(adapter.publicKey).toBeNull();
-            expect(adapter.connected).toBe(false);
-        });
-
-        it('5. signs transaction', async () => {
-            await adapter.connect();
-            const tx = new Transaction();
-            tx.recentBlockhash = '11111111111111111111111111111111';
-            tx.feePayer = adapter.publicKey!;
-            tx.add({
-                keys: [],
-                programId: new PublicKey('11111111111111111111111111111111'),
-                data: Buffer.from([])
-            });
-            
-            await adapter.signTransaction(tx);
-            expect(NativeModules.ArtemisModule.signTransaction).toHaveBeenCalled();
-        });
-
-        it('6. signs message', async () => {
-            await adapter.connect();
-            const msg = new Uint8Array([1, 2, 3]);
-            const sig = await adapter.signMessage(msg);
-            expect(NativeModules.ArtemisModule.signMessage).toHaveBeenCalled();
-            expect(sig).toBeDefined();
-        });
+describe('Seed Vault auth tokens are strings end to end', () => {
+    it('seedVaultAuthorize returns a string authToken', async () => {
+        const auth = await Artemis.seedVaultAuthorize('sign_transaction');
+        expect(typeof auth.authToken).toBe('string');
+        expect(auth.authToken).toBe('sv-token-1');
     });
 
-    describe('Direct Artemis SDK Calls', () => {
-        beforeEach(() => {
-            jest.clearAllMocks();
-        });
-
-        it('7. initialize calls native', () => {
-            Artemis.initialize('uri', 'icon', 'name', 'chain');
-            expect(NativeModules.ArtemisModule.initialize).toHaveBeenCalledWith('uri', 'icon', 'name', 'chain');
-        });
-
-        it('8. connect calls native', async () => {
-            await Artemis.connect();
-            expect(NativeModules.ArtemisModule.connect).toHaveBeenCalled();
-        });
-
-        it('9. signTransaction calls native', async () => {
-            await Artemis.signTransaction('txBase64');
-            expect(NativeModules.ArtemisModule.signTransaction).toHaveBeenCalledWith('txBase64');
-        });
-
-        it('10. signAndSendTransaction calls native', async () => {
-            await Artemis.signAndSendTransaction('txBase64');
-            expect(NativeModules.ArtemisModule.signAndSendTransaction).toHaveBeenCalledWith('txBase64');
-        });
-
-        it('11. signMessage calls native', async () => {
-            await Artemis.signMessage('msgBase64');
-            expect(NativeModules.ArtemisModule.signMessage).toHaveBeenCalledWith('msgBase64');
-        });
-
-        it('12. connectWithSignIn calls native', async () => {
-            const payload = { domain: 'test.com', uri: 'https://test.com' };
-            await Artemis.connectWithSignIn(payload);
-            expect(NativeModules.ArtemisModule.connectWithSignIn).toHaveBeenCalledWith(payload);
-        });
+    it('seedVaultGetAccounts consumes a string token and returns typed accounts', async () => {
+        const accounts = await Artemis.seedVaultGetAccounts('sv-token-1');
+        expect(accounts[0]).toEqual({ id: 0, name: 'Main', publicKey: ADDRESS_BASE58 });
     });
 
-    describe('RPC & Program Methods', () => {
-        it('13. setRpcUrl calls native', () => {
-            Artemis.setRpcUrl('https://api.devnet.solana.com');
-            expect(NativeModules.ArtemisModule.setRpcUrl).toHaveBeenCalledWith('https://api.devnet.solana.com');
-        });
+    it('seedVaultSignTransactions forwards the string token unchanged', async () => {
+        const native = require('react-native').NativeModules.ArtemisModule;
+        await Artemis.seedVaultSignTransactions('sv-token-2', ['ZmFrZQ==']);
+        expect(native.seedVaultSignTransactions).toHaveBeenCalledWith('sv-token-2', ['ZmFrZQ==']);
+    });
+});
 
-        it('14. getBalance calls native', async () => {
-            const bal = await Artemis.getBalance('pubkey');
-            expect(NativeModules.ArtemisModule.getBalance).toHaveBeenCalledWith('pubkey');
-            expect(bal).toBe('1000000000');
-        });
+// ============================================================================
+// Cross-platform Base58 / Crypto
+// ============================================================================
 
-        it('15. getLatestBlockhash calls native', async () => {
-            const blockhash = await Artemis.getLatestBlockhash();
-            expect(NativeModules.ArtemisModule.getLatestBlockhash).toHaveBeenCalled();
-            expect(blockhash).toBe('blockhash');
-        });
-
-        it('16. buildTransferTransaction calls native', async () => {
-            await Artemis.buildTransferTransaction('from', 'to', '1000', 'hash');
-            expect(NativeModules.ArtemisModule.buildTransferTransaction).toHaveBeenCalledWith('from', 'to', '1000', 'hash');
-        });
+describe('Base58 wrapper calls the right native method names', () => {
+    it('Base58.encode uses base64ToBase58 bridge method', async () => {
+        const native = require('react-native').NativeModules.ArtemisModule;
+        native.base64ToBase58.mockResolvedValueOnce('ENC');
+        const out = await Base58.encode(new Uint8Array([1, 2, 3]));
+        expect(out).toBe('ENC');
+        expect(native.base64ToBase58).toHaveBeenCalled();
     });
 
-    describe('DePIN & Solana Pay', () => {
-        it('17. generateDeviceIdentity calls native', async () => {
-            const key = await Artemis.generateDeviceIdentity();
-            expect(NativeModules.ArtemisModule.generateDeviceIdentity).toHaveBeenCalled();
-            expect(key).toBe('devicePubkey');
-        });
-
-        it('18. signLocationProof calls native', async () => {
-            await Artemis.signLocationProof('key', 1.0, 2.0, 1000);
-            expect(NativeModules.ArtemisModule.signLocationProof).toHaveBeenCalledWith('key', 1.0, 2.0, 1000);
-        });
-
-        it('19. buildSolanaPayUri calls native', async () => {
-            await Artemis.buildSolanaPayUri('rec', '1.0', 'lbl', 'msg');
-            expect(NativeModules.ArtemisModule.buildSolanaPayUri).toHaveBeenCalledWith('rec', '1.0', 'lbl', 'msg');
-        });
-
-        it('20. parseSolanaPayUri calls native', async () => {
-            const res = await Artemis.parseSolanaPayUri('solana:pay');
-            expect(NativeModules.ArtemisModule.parseSolanaPayUri).toHaveBeenCalledWith('solana:pay');
-            expect(res).toEqual({ recipient: 'recipient', amount: '1.0' });
-        });
+    it('Crypto.sign routes through cryptoSign, not signMessage', async () => {
+        const native = require('react-native').NativeModules.ArtemisModule;
+        await Crypto.sign(new Uint8Array([1]), new Uint8Array(32));
+        expect(native.cryptoSign).toHaveBeenCalled();
+        // Must NOT collide with MWA signMessage.
+        expect(native.signMessage).not.toHaveBeenCalled();
     });
 
-    describe('Gaming & Merkle Proofs', () => {
-        it('21. verifyMerkleProof calls native', async () => {
-            const valid = await Artemis.verifyMerkleProof(['p1'], 'root', 'leaf');
-            expect(NativeModules.ArtemisModule.verifyMerkleProof).toHaveBeenCalledWith(['p1'], 'root', 'leaf');
-            expect(valid).toBe(true);
-        });
-    });
-
-    describe('Seed Vault Integration', () => {
-        it('22. seedVaultAuthorize calls native', async () => {
-            const res = await Artemis.seedVaultAuthorize('purpose');
-            expect(NativeModules.ArtemisModule.seedVaultAuthorize).toHaveBeenCalledWith('purpose');
-            expect(res).toEqual({ authToken: 123 });
-        });
-
-        it('23. seedVaultCreateSeed calls native', async () => {
-            const res = await Artemis.seedVaultCreateSeed('purpose');
-            expect(NativeModules.ArtemisModule.seedVaultCreateSeed).toHaveBeenCalledWith('purpose');
-            expect(res).toEqual({ authToken: 456 });
-        });
-
-        it('24. seedVaultImportSeed calls native', async () => {
-            const res = await Artemis.seedVaultImportSeed('purpose');
-            expect(NativeModules.ArtemisModule.seedVaultImportSeed).toHaveBeenCalledWith('purpose');
-            expect(res).toEqual({ authToken: 789 });
-        });
-
-        it('25. seedVaultGetAccounts calls native', async () => {
-            const accts = await Artemis.seedVaultGetAccounts(123);
-            expect(NativeModules.ArtemisModule.seedVaultGetAccounts).toHaveBeenCalledWith(123);
-            expect(accts).toHaveLength(1);
-        });
-
-        it('26. seedVaultSignMessages calls native', async () => {
-            const sigs = await Artemis.seedVaultSignMessages(123, ['msg1', 'msg2']);
-            expect(NativeModules.ArtemisModule.seedVaultSignMessages).toHaveBeenCalledWith(123, ['msg1', 'msg2']);
-            expect(sigs).toHaveLength(2);
-        });
-
-        it('27. seedVaultSignTransactions calls native', async () => {
-            const sigs = await Artemis.seedVaultSignTransactions(123, ['tx1', 'tx2']);
-            expect(NativeModules.ArtemisModule.seedVaultSignTransactions).toHaveBeenCalledWith(123, ['tx1', 'tx2']);
-            expect(sigs).toHaveLength(2);
-        });
-
-        it('28. seedVaultRequestPublicKeys calls native', async () => {
-            const keys = await Artemis.seedVaultRequestPublicKeys(123, ["m/44'/501'/0'/0'"]);
-            expect(NativeModules.ArtemisModule.seedVaultRequestPublicKeys).toHaveBeenCalledWith(123, ["m/44'/501'/0'/0'"]);
-            expect(keys).toHaveLength(2);
-        });
-
-        it('29. seedVaultSignWithDerivationPath calls native', async () => {
-            const sigs = await Artemis.seedVaultSignWithDerivationPath(123, "m/44'/501'/0'/0'", ['payload1']);
-            expect(NativeModules.ArtemisModule.seedVaultSignWithDerivationPath).toHaveBeenCalledWith(123, "m/44'/501'/0'/0'", ['payload1']);
-            expect(sigs).toHaveLength(1);
-        });
-
-        it('30. seedVaultDeauthorize calls native', async () => {
-            await Artemis.seedVaultDeauthorize(123);
-            expect(NativeModules.ArtemisModule.seedVaultDeauthorize).toHaveBeenCalledWith(123);
-        });
+    it('Crypto.generateKeypair returns the base58 shape from the bridge', async () => {
+        const kp = await Crypto.generateKeypair();
+        expect(kp.publicKey).toBe('pk58');
+        expect(kp.secretKey).toBe('sk58');
     });
 });

@@ -1,227 +1,102 @@
-import { NativeModules, Platform } from 'react-native';
-export { MobileWalletAdapter } from './MobileWalletAdapter';
+import { NativeModules } from 'react-native';
+
+export { MobileWalletAdapter, MWA_FEATURES, transact } from './MobileWalletAdapter';
 export { Base58, Base58Check, Crypto, ArtemisPlatform } from './Base58';
 export { ArcanaFlow, GameSessionManager, AdaptiveFee } from './Gaming';
-export { 
-  VersionedTx, 
-  ComputeOptimizer, 
-  Cnft, 
-  SolanaPay, 
-  TransactionPreview, 
-  AccountDetector 
+export {
+    VersionedTx,
+    ComputeOptimizer,
+    Cnft,
+    SolanaPay,
+    TransactionPreview,
+    AccountDetector,
 } from './Enhanced';
 
 const { ArtemisModule } = NativeModules;
 
 /**
- * Artemis SDK for React Native
- * Provides access to Solana Mobile Wallet Adapter, RPC, DePIN, Gaming, and Solana Pay features.
+ * Artemis SDK for React Native.
+ *
+ * All methods delegate 1:1 to the Android native bridge. No JSON
+ * round-tripping: the bridge resolves structured objects which this
+ * file forwards untouched. Types are documented in index.d.ts.
+ *
+ * Android is the only platform with MWA and Seed Vault support. iOS
+ * exposes the Base58 / Ed25519 utilities from Base58.ts; the MWA-shaped
+ * methods below throw on non-Android if called.
  */
 const Artemis = {
-  /**
-   * Initialize the wallet adapter.
-   * @param {string} identityUri - URI of your app
-   * @param {string} iconPath - Path to your app icon
-   * @param {string} identityName - Name of your app
-   * @param {string} chain - Chain to connect to (e.g., "solana:mainnet")
-   */
-  initialize: (identityUri, iconPath, identityName, chain) => ArtemisModule.initialize(identityUri, iconPath, identityName, chain),
+    // ─── Initialization ──────────────────────────────────────────────────
 
-  /**
-   * Connect to a wallet.
-   * @returns {Promise<string>} The public key of the connected wallet.
-   */
-  connect: () => ArtemisModule.connect(),
+    initialize: (identityUri, iconPath, identityName, chain) =>
+        ArtemisModule.initialize(identityUri, iconPath, identityName, chain),
 
-  /**
-   * Sign a transaction.
-   * @param {string} base64Tx - The transaction to sign, base64 encoded.
-   * @returns {Promise<string>} The signed transaction, base64 encoded.
-   */
-  signTransaction: (base64Tx) => ArtemisModule.signTransaction(base64Tx),
+    setRpcUrl: (url) => ArtemisModule.setRpcUrl(url),
 
-  /**
-   * Sign and send a transaction.
-   * @param {string} base64Tx - The transaction to sign and send, base64 encoded.
-   * @returns {Promise<string>} The transaction signature.
-   */
-  signAndSendTransaction: (base64Tx) => ArtemisModule.signAndSendTransaction(base64Tx),
+    // ─── MWA 2.0 ─────────────────────────────────────────────────────────
 
-  /**
-   * Sign a message.
-   * @param {string} base64Msg - The message to sign, base64 encoded.
-   * @returns {Promise<string>} The signature, base64 encoded.
-   */
-  signMessage: (base64Msg) => ArtemisModule.signMessage(base64Msg),
-  
-  /**
-   * Helper payload for SignInWithSolana
-   * @typedef {Object} SignInPayload
-   * @property {string} domain - Domain name using the wallet
-   * @property {string} [uri] - URI
-   * @property {string} [statement] - Statement to sign
-   * @property {string[]} [resources] - Resources
-   * @property {string} [chainId] - Chain ID (e.g. solana:mainnet)
-   */
+    connect: () => ArtemisModule.connect(),
+    connectWithFeatures: (features, addresses) =>
+        ArtemisModule.connectWithFeatures(features ?? null, addresses ?? null),
+    connectWithSignIn: (payload) => ArtemisModule.connectWithSignIn(payload),
+    reauthorize: () => ArtemisModule.reauthorize(),
+    deauthorize: () => ArtemisModule.deauthorize(),
+    getCapabilities: () => ArtemisModule.getCapabilities(),
+    cloneAuthorization: () => ArtemisModule.cloneAuthorization(),
 
-  /**
-   * Connect with SignInWithSolana (SIWS).
-   * @param {SignInPayload} payload - The SIWS payload.
-   * @returns {Promise<Object>} An object containing the public key, signature, and message.
-   */
-  connectWithSignIn: (payload) => ArtemisModule.connectWithSignIn(payload),
+    signTransaction: (base64Tx) => ArtemisModule.signTransaction(base64Tx),
+    signTransactions: (base64Txs) => ArtemisModule.signTransactions(base64Txs),
+    signAndSendTransaction: (base64Tx, options) =>
+        ArtemisModule.signAndSendTransaction(base64Tx, options ?? null),
+    signAndSendTransactions: (base64Txs, options) =>
+        ArtemisModule.signAndSendTransactions(base64Txs, options ?? null),
 
-  // --- RPC Methods ---
+    signMessage: (base64Msg) => ArtemisModule.signMessage(base64Msg),
+    signMessages: (base64Msgs) => ArtemisModule.signMessages(base64Msgs),
+    signMessagesDetached: (base64Msgs) => ArtemisModule.signMessagesDetached(base64Msgs),
 
-  /**
-   * Set the RPC URL for subsequent calls.
-   * @param {string} url - The RPC URL.
-   */
-  setRpcUrl: (url) => ArtemisModule.setRpcUrl(url),
+    // ─── RPC ─────────────────────────────────────────────────────────────
 
-  /**
-   * Get the balance of an account.
-   * @param {string} pubkey - The public key to check.
-   * @returns {Promise<string>} The balance in lamports.
-   */
-  getBalance: (pubkey) => ArtemisModule.getBalance(pubkey),
+    getBalance: (pubkey) => ArtemisModule.getBalance(pubkey),
+    getLatestBlockhash: () => ArtemisModule.getLatestBlockhash(),
 
-  /**
-   * Get the latest blockhash.
-   * @returns {Promise<string>} The latest blockhash.
-   */
-  getLatestBlockhash: () => ArtemisModule.getLatestBlockhash(),
-  
-  // --- Program Methods ---
+    // ─── System program helpers ──────────────────────────────────────────
 
-  /**
-   * Build a transfer transaction.
-   * @param {string} from - Sender public key.
-   * @param {string} to - Recipient public key.
-   * @param {string} lamports - Amount in lamports.
-   * @param {string} blockhash - Recent blockhash.
-   * @returns {Promise<string>} The compiled transaction, base64 encoded.
-   */
-  buildTransferTransaction: (from, to, lamports, blockhash) => ArtemisModule.buildTransferTransaction(from, to, lamports, blockhash),
-  
-  // --- DePIN Methods ---
+    buildTransferTransaction: (from, to, lamports, blockhash) =>
+        ArtemisModule.buildTransferTransaction(from, to, lamports, blockhash),
 
-  /**
-   * Generate a new device identity for DePIN.
-   * The identity is stored in memory on the native side.
-   * @returns {Promise<string>} The public key of the device.
-   */
-  generateDeviceIdentity: () => ArtemisModule.generateDeviceIdentity(),
+    // ─── DePIN ───────────────────────────────────────────────────────────
 
-  /**
-   * Sign a location proof using a generated device identity.
-   * @param {string} devicePubkey - The public key of the device (returned from generateDeviceIdentity).
-   * @param {number} lat - Latitude.
-   * @param {number} lng - Longitude.
-   * @param {number} timestamp - Timestamp.
-   * @returns {Promise<string>} The signature of the proof.
-   */
-  signLocationProof: (devicePubkey, lat, lng, timestamp) => ArtemisModule.signLocationProof(devicePubkey, lat, lng, timestamp),
-  
-  // --- Solana Pay Methods ---
+    generateDeviceIdentity: () => ArtemisModule.generateDeviceIdentity(),
+    signLocationProof: (devicePubkey, lat, lng, timestamp) =>
+        ArtemisModule.signLocationProof(devicePubkey, lat, lng, timestamp),
 
-  /**
-   * Build a Solana Pay URI.
-   * @param {string} recipient - Recipient public key.
-   * @param {string} amount - Amount in SOL.
-   * @param {string} label - Label.
-   * @param {string} message - Message.
-   * @returns {Promise<string>} The Solana Pay URI.
-   */
-  buildSolanaPayUri: (recipient, amount, label, message) => ArtemisModule.buildSolanaPayUri(recipient, amount, label, message),
+    // ─── Solana Pay ──────────────────────────────────────────────────────
 
-  /**
-   * Parse a Solana Pay URI.
-   * @param {string} uri - The URI to parse.
-   * @returns {Promise<Object>} The parsed request object.
-   */
-  parseSolanaPayUri: (uri) => ArtemisModule.parseSolanaPayUri(uri),
-  
-  // --- Gaming Methods ---
+    buildSolanaPayUri: (recipient, amount, label, message) =>
+        ArtemisModule.buildSolanaPayUri(recipient, amount, label, message),
+    parseSolanaPayUri: (uri) => ArtemisModule.parseSolanaPayUri(uri),
 
-  /**
-   * Verify a Merkle Proof.
-   * @param {string[]} proof - Array of base64 encoded proof elements.
-   * @param {string} root - Base64 encoded root.
-   * @param {string} leaf - Base64 encoded leaf.
-   * @returns {Promise<boolean>} True if valid.
-   */
-  verifyMerkleProof: (proof, root, leaf) => ArtemisModule.verifyMerkleProof(proof, root, leaf),
+    // ─── Gaming ──────────────────────────────────────────────────────────
 
-  // --- Seed Vault Methods (Android Only) ---
+    verifyMerkleProof: (proof, root, leaf) =>
+        ArtemisModule.verifyMerkleProof(proof, root, leaf),
 
-  /**
-   * Authorize usage of the Seed Vault.
-   * @param {string} purpose - Purpose text (e.g. "sign_transaction").
-   * @returns {Promise<Object>} Object containing authToken.
-   */
-  seedVaultAuthorize: (purpose) => ArtemisModule.seedVaultAuthorize(purpose),
+    // ─── Seed Vault (Android wallet apps only) ──────────────────────────
 
-  /**
-   * Create a new seed in the Seed Vault.
-   * @param {string} purpose - Purpose text.
-   * @returns {Promise<Object>} Object containing authToken.
-   */
-  seedVaultCreateSeed: (purpose) => ArtemisModule.seedVaultCreateSeed(purpose),
-
-  /**
-   * Import a seed into the Seed Vault.
-   * @param {string} purpose - Purpose text.
-   * @returns {Promise<Object>} Object containing authToken.
-   */
-  seedVaultImportSeed: (purpose) => ArtemisModule.seedVaultImportSeed(purpose),
-
-  /**
-   * Get accounts for a Seed Vault auth token.
-   * @param {string} authToken - The auth token.
-   * @returns {Promise<Array<{accountId: number, name: string}>>} List of accounts.
-   */
-  seedVaultGetAccounts: (authToken) => ArtemisModule.seedVaultGetAccounts(authToken),
-
-  /**
-   * Sign messages using the Seed Vault.
-   * @param {string} authToken - The auth token.
-   * @param {string[]} messages - Array of base64 encoded messages.
-   * @returns {Promise<string[]>} Array of base64 encoded signatures.
-   */
-  seedVaultSignMessages: (authToken, messages) => ArtemisModule.seedVaultSignMessages(authToken, messages),
-
-  /**
-   * Sign transactions using the Seed Vault.
-   * @param {string} authToken - The auth token.
-   * @param {string[]} transactions - Array of base64 encoded transactions.
-   * @returns {Promise<string[]>} Array of base64 encoded signed transactions.
-   */
-  seedVaultSignTransactions: (authToken, transactions) => ArtemisModule.seedVaultSignTransactions(authToken, transactions),
-
-  /**
-   * Request public keys for specific derivation paths.
-   * @param {string} authToken - The auth token.
-   * @param {string[]} derivationPaths - Array of BIP32/BIP44 paths (e.g. "m/44'/501'/0'/0'").
-   * @returns {Promise<string[]>} Array of base58 encoded public keys.
-   */
-  seedVaultRequestPublicKeys: (authToken, derivationPaths) => ArtemisModule.seedVaultRequestPublicKeys(authToken, derivationPaths),
-
-  /**
-   * Sign payloads using a specific derivation path.
-   * @param {string} authToken - The auth token.
-   * @param {string} derivationPath - The BIP32 derivation path.
-   * @param {string[]} payloads - Array of base64 encoded payloads.
-   * @returns {Promise<string[]>} Array of base64 encoded signatures.
-   */
-  seedVaultSignWithDerivationPath: (authToken, derivationPath, payloads) => ArtemisModule.seedVaultSignWithDerivationPath(authToken, derivationPath, payloads),
-
-  /**
-   * Deauthorize access to the Seed Vault.
-   * @param {string} authToken - The auth token to revoke.
-   * @returns {Promise<void>}
-   */
-  seedVaultDeauthorize: (authToken) => ArtemisModule.seedVaultDeauthorize(authToken),
+    seedVaultAuthorize: (purpose) => ArtemisModule.seedVaultAuthorize(purpose),
+    seedVaultCreateSeed: (purpose) => ArtemisModule.seedVaultCreateSeed(purpose),
+    seedVaultImportSeed: (purpose) => ArtemisModule.seedVaultImportSeed(purpose),
+    seedVaultGetAccounts: (authToken) => ArtemisModule.seedVaultGetAccounts(authToken),
+    seedVaultSignMessages: (authToken, base64Messages) =>
+        ArtemisModule.seedVaultSignMessages(authToken, base64Messages),
+    seedVaultSignTransactions: (authToken, base64Transactions) =>
+        ArtemisModule.seedVaultSignTransactions(authToken, base64Transactions),
+    seedVaultRequestPublicKeys: (authToken, derivationPaths) =>
+        ArtemisModule.seedVaultRequestPublicKeys(authToken, derivationPaths),
+    seedVaultSignWithDerivationPath: (authToken, derivationPath, base64Payloads) =>
+        ArtemisModule.seedVaultSignWithDerivationPath(authToken, derivationPath, base64Payloads),
+    seedVaultDeauthorize: (authToken) => ArtemisModule.seedVaultDeauthorize(authToken),
 };
 
 export default Artemis;

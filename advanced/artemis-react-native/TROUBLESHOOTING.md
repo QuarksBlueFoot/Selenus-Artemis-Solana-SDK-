@@ -33,7 +33,7 @@ This document outlines common issues with the Mobile Wallet Adapter (MWA) on And
 To use the Artemis SDK as a standard Wallet Adapter plugin:
 
 ```typescript
-import { MobileWalletAdapter } from 'artemis-solana-sdk/MobileWalletAdapter';
+import { MobileWalletAdapter } from '@selenus/artemis-solana-sdk';
 
 const wallet = new MobileWalletAdapter({
     identityUri: 'https://myapp.com',

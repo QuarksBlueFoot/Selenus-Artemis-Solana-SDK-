@@ -1,128 +1,194 @@
-# Artemis Solana SDK for React Native
+# @selenus/artemis-solana-sdk (React Native bindings)
 
-A modular, mobile-first Solana SDK for React Native. Powered by the Artemis Kotlin SDK on Android and native Swift on iOS.
-
-Parity with the Solana Mobile Stack where the platform allows: MWA 2.0, Seed Vault on Android, plus native Base58 and Ed25519 on both platforms.
-
-## Why Artemis for React Native?
-
-| Feature | @solana/web3.js | Solana Mobile RN | Artemis |
-| --- | --- | --- | --- |
-| Base58 (native) | JS polyfill | partial | native Kotlin and Swift |
-| Ed25519 (native) | JS polyfill | partial | native |
-| MWA 2.0 | no | yes | parity |
-| Seed Vault | no | yes | parity |
-| iOS support | yes | no | yes |
-| DePIN proofs | no | no | yes |
-| Solana Pay | partial | no | native |
-
-## Features
-
-- **Cross-platform Base58**: native Base58 encoding and decoding on both iOS and Android.
-- **Mobile Wallet Adapter**: direct integration with the Solana Mobile Stack on Android.
-- **Sign-In With Solana**: authentication through the MWA 2.0 SIWS flow.
-- **Seed Vault access**: for wallet apps, direct management of keys in the system Seed Vault on Saga.
-- **Ed25519 crypto**: native key generation and signing on both platforms.
-- **High performance**: heavy lifting runs in native Kotlin and Swift.
-- **Modular**: pay only for what you import.
+React Native bindings for the Artemis Solana SDK. Ships Android-first
+Mobile Wallet Adapter 2.0 + Seed Vault integration plus cross-platform
+crypto utilities (Base58, Ed25519, SHA-256).
 
 ## Platform support
 
-| Feature | iOS | Android |
+| Capability | Android | iOS |
 | --- | --- | --- |
-| Base58 encode and decode | yes | yes |
-| Base58Check | yes | yes |
-| Ed25519 keypair | yes | yes |
-| Ed25519 signing | yes | yes |
+| Mobile Wallet Adapter 2.0 (connect, Sign-In With Solana, sign + send) | yes | not available on iOS (platform restriction) |
+| Seed Vault (Saga / Seeker wallet apps) | yes | not applicable |
+| Base58 / Base58Check utilities | yes | yes |
+| Ed25519 keygen / sign / verify | yes | yes |
 | SHA-256 | yes | yes |
-| Mobile Wallet Adapter | no | yes |
-| Seed Vault | no | yes |
-| DePIN proofs | yes | yes |
-| Solana Pay | yes | yes |
+| Solana Pay URI parse and build | yes (native) | via JS |
+| RPC helpers (`getBalance`, `getLatestBlockhash`) | yes | via `@solana/web3.js` |
 
-Mobile Wallet Adapter is Android only because it is part of the Solana Mobile Stack. For iOS wallet connections, use WalletConnect or another iOS-compatible protocol.
+Mobile Wallet Adapter is an Android-only contract defined by Solana
+Mobile. On iOS, `MobileWalletAdapter.readyState` is
+`WalletReadyState.Unsupported` so wallet-adapter UIs hide the entry
+point; pair it with WalletConnect or an iOS-compatible alternative.
 
 ## Installation
 
-\`\`\`bash
+```bash
 npm install @selenus/artemis-solana-sdk @solana/web3.js @solana/wallet-adapter-base buffer
-\`\`\`
+```
 
-### Android Setup
+### Dev build requirement
 
-1. Open \`android/build.gradle\` and ensure you have \`mavenCentral()\` in your repositories.
+This package links against native Kotlin/Swift code. It will not load
+in Expo Go. Your app needs a custom dev build. Pick the path that
+matches your setup:
 
-2. In \`android/app/build.gradle\`, add the Artemis dependencies:
+- Bare React Native: `npx react-native run-android` / `npx react-native run-ios`.
+- Expo with config plugins: `npx expo prebuild` followed by
+  `npx expo run:android` or `npx expo run:ios`.
+- EAS Build: add this package to `package.json`, then run
+  `eas build --profile development --platform android` so the native
+  module is bundled into your dev client.
 
-\`\`\`gradle
-dependencies {
-    implementation project(':artemis-react-native')
-}
-\`\`\`
+There is no pure-JS fallback: Mobile Wallet Adapter, Seed Vault, and
+the native Base58 / Ed25519 primitives all reach through the native
+bridge by design. The JS-only surface you can use without a native
+build is limited to type declarations and pure helpers from
+`@solana/web3.js`.
 
-### iOS Setup
+### Android
 
-1. Add to your \`Podfile\`:
+Autolinking detects the module in `node_modules/@selenus/artemis-solana-sdk/android`
+and pulls in the Android artifacts it depends on. Gradle dependencies
+are pinned to the same version as the npm package (one source of
+truth). If you build against a local SDK checkout, set
+`-PartemisVersion=<version>`.
 
-\`\`\`ruby
-pod 'artemis-solana-sdk', :path => '../node_modules/artemis-solana-sdk/ios'
-\`\`\`
+### iOS
 
-2. Run \`pod install\` in your \`ios\` directory.
+The iOS side exposes the crypto utility layer only. Add to your Podfile:
+
+```ruby
+pod 'ArtemisSolanaSDK', :path => '../node_modules/@selenus/artemis-solana-sdk/ios'
+```
+
+Then run `pod install` in your `ios` directory.
 
 ## Usage
 
-### Cross-Platform Base58 Utilities
+### Mobile Wallet Adapter 2.0 (Android)
 
-\`\`\`typescript
-import { Base58, Crypto } from 'artemis-solana-sdk';
+```typescript
+import {
+  MobileWalletAdapter,
+  MWA_FEATURES,
+  transact,
+} from '@selenus/artemis-solana-sdk';
 
-// Encode bytes to Base58
-const encoded = await Base58.encode(myBytes);
-
-// Decode Base58 to bytes
-const decoded = await Base58.decode('abc123...');
-
-// Validate Solana addresses
-const isValidPubkey = await Base58.isValidPubkey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-const isValidSig = await Base58.isValidSignature(signatureString);
-
-// Convert between encodings
-const base64 = await Base58.toBase64(base58String);
-const base58 = await Base58.fromBase64(base64String);
-
-// Generate keypair (Ed25519)
-const { publicKey, secretKey } = await Crypto.generateKeypair();
-\`\`\`
-
-### Mobile Wallet Adapter with SIWS (Android)
-
-\`\`\`typescript
-import Artemis from 'artemis-solana-sdk';
-
-const result = await Artemis.connectWithSignIn({
-    domain: 'myapp.com',
-    uri: 'https://myapp.com/login',
-    statement: 'Login to My App',
-    chainId: 'solana:mainnet'
+const wallet = new MobileWalletAdapter({
+  identityUri: 'https://myapp.example.com',
+  iconPath: 'https://myapp.example.com/favicon.ico',
+  identityName: 'My App',
+  chain: 'solana:mainnet',
 });
 
-console.log('User Address:', result.address);
-console.log('Signature:', result.signature);
-\`\`\`
+await wallet.connect();
+console.log(wallet.publicKey?.toBase58());
+console.log(wallet.accounts);
+console.log(wallet.capabilities);
+```
 
-### Platform Detection
+### `transact` block (drop-in parity with `@solana-mobile/mobile-wallet-adapter-protocol-mobile`)
 
-\`\`\`typescript
-import { ArtemisPlatform } from 'artemis-solana-sdk';
+```typescript
+const signature = await transact(wallet, async (w) => {
+  const result = await w.signAndSendTransaction(tx, { commitment: 'confirmed' });
+  if (result.isSuccess) return result.signature;
+  throw new Error(result.error ?? 'unknown wallet error');
+});
+```
+
+`transact` handles session open + teardown around your block. The
+wallet is automatically deauthorized when the block resolves or
+throws.
+
+### Sign-In With Solana
+
+```typescript
+const auth = await wallet.connectWithSignIn({
+  domain: 'myapp.example.com',
+  uri: 'https://myapp.example.com/login',
+  statement: 'Sign in to My App',
+  chainId: 'solana:mainnet',
+});
+console.log(auth.signInResult?.address, auth.signInResult?.signature);
+```
+
+### Sign and send a batch (per-slot results)
+
+```typescript
+const batch = await wallet.signAndSendTransactions(
+  [tx1, tx2, tx3],
+  { commitment: 'confirmed', waitForCommitmentToSendNextTransaction: true },
+);
+batch.results.forEach((slot) => {
+  if (slot.isSuccess) console.log(`slot ${slot.index}: ${slot.signature}`);
+  else if (slot.isFailure) console.warn(`slot ${slot.index} failed: ${slot.error}`);
+  else if (slot.isSignedButNotBroadcast) {
+    // Wallet signed but did not broadcast. Submit slot.signedRaw via
+    // your own RPC to obtain a signature.
+  }
+});
+```
+
+### Cross-platform Base58 / Ed25519 utilities
+
+```typescript
+import { Base58, Crypto } from '@selenus/artemis-solana-sdk';
+
+const encoded = await Base58.encode(myBytes);
+const decoded = await Base58.decode('abc123...');
+const isValid = await Base58.isValidPubkey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+
+const { publicKey, secretKey } = await Crypto.generateKeypair();
+const signature = await Crypto.sign(message, secretKey);
+const ok = await Crypto.verify(signature, message, publicKey);
+```
+
+### Seed Vault (Android wallet apps)
+
+```typescript
+import Artemis from '@selenus/artemis-solana-sdk';
+
+const auth = await Artemis.seedVaultAuthorize('sign_transaction');
+const accounts = await Artemis.seedVaultGetAccounts(auth.authToken);
+const signatures = await Artemis.seedVaultSignTransactions(
+  auth.authToken,
+  [base64Tx1, base64Tx2],
+);
+```
+
+Seed Vault is available only on devices that ship the system service
+(Saga, Seeker, and some emulator images). Calls on devices without
+Seed Vault fail fast with a typed error.
+
+### Platform detection
+
+```typescript
+import { ArtemisPlatform } from '@selenus/artemis-solana-sdk';
 
 if (ArtemisPlatform.hasMWA) {
-  // Use Mobile Wallet Adapter (Android)
+  // Use Mobile Wallet Adapter on Android.
 } else {
-  // Use WalletConnect or other iOS-compatible solution
+  // Fall back to WalletConnect or another iOS-compatible protocol.
 }
-\`\`\`
+```
+
+## Bridge contract
+
+Every method returns a structured JS object. No JSON stringification
+across the native bridge. Shapes are documented in
+[`index.d.ts`](./index.d.ts) and enforced by the TypeScript exports
+in [`MobileWalletAdapter.ts`](./MobileWalletAdapter.ts).
+
+Seed Vault auth tokens are opaque strings end to end: the native
+bridge accepts strings, the TS types declare strings, and the upstream
+Seed Vault contract treats the token as a string identifier.
 
 ## Troubleshooting
 
 See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues.
+
+## License
+
+Apache License 2.0. See [LICENSE](../../LICENSE) in the repository root.
