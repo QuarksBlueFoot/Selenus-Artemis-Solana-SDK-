@@ -25,7 +25,7 @@ transact(sender) { authResult ->
 
 ```kotlin
 // Gradle
-implementation("xyz.selenus:artemis-wallet-mwa-android:2.2.0")
+implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
 
 // One-line setup
 val artemis = ArtemisMobile.create(
@@ -107,7 +107,7 @@ Wallet.signTransaction(activity, requestCode, authToken, signingRequests)
 ### After (Artemis)
 
 ```kotlin
-implementation("xyz.selenus:artemis-seed-vault:2.2.0")
+implementation("xyz.selenus:artemis-seed-vault:2.3.0")
 
 val manager = SeedVaultManager(context)
 manager.connect()

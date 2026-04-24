@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "ArtemisSolanaSDK"
-  s.version      = "2.2.0"
+  s.version      = "2.3.0"
   s.summary      = "Artemis Solana SDK for React Native (iOS utility layer)"
   s.description  = <<-DESC
     iOS side of the Artemis React Native bindings. Provides cross-

@@ -13,7 +13,7 @@ buildscript {
     ext {
         artemisVersion = project.findProperty("artemisVersion") as String?
             ?: rootProject.findProperty("version") as String?
-            ?: "2.2.0"
+            ?: "2.3.0"
     }
     repositories {
         google()
@@ -55,7 +55,7 @@ repositories {
 
 def artemis = rootProject.ext.has("artemisVersion")
     ? rootProject.ext.artemisVersion
-    : (project.findProperty("artemisVersion") ?: "2.2.0")
+    : (project.findProperty("artemisVersion") ?: "2.3.0")
 
 dependencies {
     implementation "com.facebook.react:react-native:+"

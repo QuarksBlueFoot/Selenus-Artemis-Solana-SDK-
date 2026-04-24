@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Artemis SDK 2.2.0: devnet test runner
+# Artemis SDK 2.3.0: devnet test runner
 # Sets up a devnet keypair (or reuses one from ~/.config/solana/id.json)
 # and runs the integration test module at testing/artemis-devnet-tests/.
 
 set -e
 
-echo "Artemis SDK 2.2.0 devnet test suite"
+echo "Artemis SDK 2.3.0 devnet test suite"
 echo "==================================="
 echo ""
 
@@ -148,7 +148,7 @@ if [ $TEST_RESULT -eq 0 ]; then
     echo ""
     echo "Next steps:"
     echo "   1. Publish to Maven Central: ./publish.sh"
-    echo "   2. Tag the release:          git tag v2.2.0 && git push origin v2.2.0"
+    echo "   2. Tag the release:          git tag v2.3.0 && git push origin v2.3.0"
     exit 0
 else
     echo -e "${RED}[error] Some tests failed${NC}"

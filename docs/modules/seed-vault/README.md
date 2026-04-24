@@ -14,12 +14,12 @@
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-seed-vault:2.2.0")
-    implementation("xyz.selenus:artemis-core:2.2.0")
+    implementation("xyz.selenus:artemis-seed-vault:2.3.0")
+    implementation("xyz.selenus:artemis-core:2.3.0")
 }
 ```
 
-Published version is `2.2.0`. Source of truth is `version` in [gradle.properties](../../../gradle.properties).
+Published version is `2.3.0`. Source of truth is `version` in [gradle.properties](../../../gradle.properties).
 
 ## Authorise and sign (native Artemis API)
 

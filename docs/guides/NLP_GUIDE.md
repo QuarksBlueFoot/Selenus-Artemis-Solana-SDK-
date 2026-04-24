@@ -16,7 +16,7 @@ Two pieces:
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-nlp:2.2.0")
+    implementation("xyz.selenus:artemis-nlp:2.3.0")
 }
 ```
 
@@ -62,7 +62,7 @@ when (val result = nlp.parse("send 1 SOL to alice.sol")) {
 
 ## Supported intents
 
-The registry lives in `NaturalLanguageBuilder.buildPatternRegistry()`. As of 2.2.0:
+The registry lives in `NaturalLanguageBuilder.buildPatternRegistry()`. As of 2.3.0:
 
 Transfer and send ("send N SOL to X", "transfer N USDC to X", "pay X N USDT"). Swap family ("swap N USDC for SOL", "exchange", "convert", "buy N worth of Y", "sell N X for Y"). Token operations (create, mint, burn). NFT transfer and burn. Staking (stake, unstake, delegate). Account management (close account, create ATA). Authority management (approve / revoke). SOL wrap / unwrap. Devnet helpers (airdrop, check balance). Memo. The full enum is `IntentType` in [../../advanced/artemis-nlp/src/main/kotlin/com/selenus/artemis/nlp/NaturalLanguageBuilder.kt](../../advanced/artemis-nlp/src/main/kotlin/com/selenus/artemis/nlp/NaturalLanguageBuilder.kt).
 

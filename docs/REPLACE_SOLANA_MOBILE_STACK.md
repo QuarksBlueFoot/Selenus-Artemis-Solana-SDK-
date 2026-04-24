@@ -35,7 +35,7 @@ The rest of this document shows both forms where they differ.
 | No equivalent | `xyz.selenus:artemis-cnft` | `ArtemisDas`, `HeliusDas`, `RpcFallbackDas`, `CompositeDas`, `MarketplaceEngine`, `AtaEnsurer` |
 | No equivalent | `xyz.selenus:artemis-ws` | `RealtimeEngine`, typed `ConnectionState` StateFlow |
 
-The current published version is `2.2.0`. The version field is the source of truth in [../gradle.properties](../gradle.properties).
+The current published version is `2.3.0`. The version field is the source of truth in [../gradle.properties](../gradle.properties).
 
 ## Gradle migration
 
@@ -56,20 +56,20 @@ dependencies {
 ```kotlin
 dependencies {
     // Foundation
-    implementation("xyz.selenus:artemis-core:2.2.0")
-    implementation("xyz.selenus:artemis-rpc:2.2.0")
-    implementation("xyz.selenus:artemis-ws:2.2.0")
-    implementation("xyz.selenus:artemis-tx:2.2.0")
-    implementation("xyz.selenus:artemis-vtx:2.2.0")
-    implementation("xyz.selenus:artemis-programs:2.2.0")
+    implementation("xyz.selenus:artemis-core:2.3.0")
+    implementation("xyz.selenus:artemis-rpc:2.3.0")
+    implementation("xyz.selenus:artemis-ws:2.3.0")
+    implementation("xyz.selenus:artemis-tx:2.3.0")
+    implementation("xyz.selenus:artemis-vtx:2.3.0")
+    implementation("xyz.selenus:artemis-programs:2.3.0")
 
     // Mobile
-    implementation("xyz.selenus:artemis-wallet:2.2.0")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.2.0")
-    implementation("xyz.selenus:artemis-seed-vault:2.2.0") // Saga only
+    implementation("xyz.selenus:artemis-wallet:2.3.0")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
+    implementation("xyz.selenus:artemis-seed-vault:2.3.0") // Saga only
 
     // NFT, DAS, marketplace
-    implementation("xyz.selenus:artemis-cnft:2.2.0")
+    implementation("xyz.selenus:artemis-cnft:2.3.0")
 }
 ```
 

@@ -12,7 +12,7 @@ Every call hits the Jupiter v6 endpoints (`quote-api.jup.ag/v6` and `token.jup.a
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-jupiter:2.2.0")
+    implementation("xyz.selenus:artemis-jupiter:2.3.0")
 }
 ```
 

@@ -248,32 +248,32 @@ Most Android Solana apps need exactly this:
 
 ```kotlin
 // Foundation
-implementation("xyz.selenus:artemis-core:2.2.0")
-implementation("xyz.selenus:artemis-rpc:2.2.0")
-implementation("xyz.selenus:artemis-ws:2.2.0")
-implementation("xyz.selenus:artemis-tx:2.2.0")
-implementation("xyz.selenus:artemis-vtx:2.2.0")
-implementation("xyz.selenus:artemis-programs:2.2.0")
+implementation("xyz.selenus:artemis-core:2.3.0")
+implementation("xyz.selenus:artemis-rpc:2.3.0")
+implementation("xyz.selenus:artemis-ws:2.3.0")
+implementation("xyz.selenus:artemis-tx:2.3.0")
+implementation("xyz.selenus:artemis-vtx:2.3.0")
+implementation("xyz.selenus:artemis-programs:2.3.0")
 
 // Mobile
-implementation("xyz.selenus:artemis-wallet:2.2.0")
-implementation("xyz.selenus:artemis-wallet-mwa-android:2.2.0")
+implementation("xyz.selenus:artemis-wallet:2.3.0")
+implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
 ```
 
 Add ecosystem modules based on what the app does:
 
 ```kotlin
 // Token-2022
-implementation("xyz.selenus:artemis-token2022:2.2.0")
+implementation("xyz.selenus:artemis-token2022:2.3.0")
 
 // Jupiter swaps
-implementation("xyz.selenus:artemis-jupiter:2.2.0")
+implementation("xyz.selenus:artemis-jupiter:2.3.0")
 
 // NFTs, DAS, marketplace
-implementation("xyz.selenus:artemis-metaplex:2.2.0")
-implementation("xyz.selenus:artemis-cnft:2.2.0")
+implementation("xyz.selenus:artemis-metaplex:2.3.0")
+implementation("xyz.selenus:artemis-cnft:2.3.0")
 ```
 
-The current published version is `2.2.0`. The `version` field in [../gradle.properties](../gradle.properties) is the source of truth.
+The current published version is `2.3.0`. The `version` field in [../gradle.properties](../gradle.properties) is the source of truth.
 
 Everything else is optional. You pull it in when you need it.

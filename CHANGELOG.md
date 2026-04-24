@@ -1,5 +1,88 @@
 # Changelog
 
+## 2.3.0 (2026-04-24)
+
+Major React Native bridge rewrite, full upstream Mobile Wallet Adapter 2.0
+parity, and a superset of the official Solana Mobile RN surface.
+
+### Added
+
+- **Android RN bridge full MWA surface.** Every MWA 2.0 verb exposed as a
+  native method with structured `WritableMap` / `WritableArray` results.
+  No JSON stringification across the bridge. Methods: `connect`,
+  `connectWithFeatures`, `connectWithSignIn`, `reauthorize`, `deauthorize`,
+  `getCapabilities`, `cloneAuthorization`, `signTransaction(s)`,
+  `signAndSendTransaction(s)` with per-slot batch results,
+  `signMessage(s)`, `signMessagesDetached`.
+- **RN realtime.** `Realtime.onAccountChanged`, `Realtime.onSignatureConfirmed`,
+  and `Realtime.onState` stream `ConnectionState` transitions with epoch
+  counters, endpoint, attempt, and reason fields. Backed by
+  `RealtimeEngine` with deterministic resubscribe and endpoint rotation.
+- **RN RPC expansion.** `getAccountInfo`, `getMultipleAccounts`,
+  `getTokenAccountsByOwner`, `simulateTransaction`, `sendRawTransaction`,
+  `getSignatureStatuses`, `getSlot`, `getBlockHeight`,
+  `getMinimumBalanceForRentExemption` wired to `RpcApi`.
+- **RN DAS.** `dasAssetsByOwner`, `dasAsset`, `dasAssetsByCollection`.
+  Helius primary with RPC fallback via `CompositeDas` + `RpcFallbackDas`
+  when no DAS URL is configured.
+- **RN compute budget.** `computeBudgetSetUnitLimit(units)` and
+  `computeBudgetSetUnitPrice(microLamports)` return structured
+  `InstructionShape` objects ready to fold into `@solana/web3.js`
+  transactions.
+- **RN PDA + ATA.** `findProgramAddress(seedsBase64, programId)` returns
+  `{ address, bump }` through `Pda.findProgramAddress`;
+  `getAssociatedTokenAddress(owner, mint, tokenProgram?)` matches the
+  `@solana/spl-token` shape.
+- **RN cross-platform crypto.** `base64ToBase58`, `base58ToBase64`,
+  `isValidBase58`, `isValidSolanaPubkey`, `isValidSolanaSignature`,
+  `base58EncodeCheck`, `base58DecodeCheck`, `sha256`,
+  `cryptoGenerateKeypair`, `cryptoSign`, `cryptoVerify` on both Android
+  and iOS. Previous revision had these on iOS only.
+- **`transact(wallet, block)` helper** matching
+  `@solana-mobile/mobile-wallet-adapter-protocol-mobile` shape. Opens a
+  session, runs the block, and disconnects even if the block throws.
+- **iOS Swift module rewrite** from broken static methods to proper RN
+  instance methods with promise resolvers. `.m` bridge file realigned.
+- **RN smoke harness** at `tests/RnSmokeApp.tsx` that drives every MWA
+  verb against a live wallet with no mocks.
+
+### Changed
+
+- RN npm package `@selenus/artemis-solana-sdk` and its Android native
+  dependencies now pin to the same version through a single
+  `artemisVersion` Gradle ext property. No more drift between the npm
+  version and the native Maven coordinates.
+- Seed Vault auth tokens flow as `string` end to end across TS
+  declarations, JS wrapper, Android bridge, and upstream contract.
+- `signTransaction` on the bridge routes through
+  `MwaWalletAdapter.signMessages` which maps to the wallet's
+  `sign_transactions` RPC. Previous revision used `signArbitraryMessage`
+  which produced detached signatures and broke deserialize() calls.
+- Low-level `MobileWalletAdapterClient` bridge=null path now throws a
+  typed `SessionNotReadyException` with actionable remediation text.
+- Every compat `AuthorizationResult` and nested `AuthorizedAccount` /
+  `SignInResult` type carries full structural equality and hashing
+  covering every MWA 2.0 field. Legacy flat `publicKey` / `accountLabel`
+  fields marked `@Deprecated`.
+- `TransactionBatchResult` + `TransactionItemResult` with init-time
+  invariants: `results.size == input.size`, `results[i].index == i`,
+  `success XOR error`.
+- Scenario ownership inverted. Keypair, transport, and client all flow
+  through `SessionEngine` / `SecureTransport` / constructor injection.
+  `MwaAssociationKeys` moved behind `SessionEngine` and unreachable from
+  Scenario.
+
+### Fixed
+
+- RN package version (`2.3.0`) aligned with Android dependency version.
+- Podspec renamed to `ArtemisSolanaSDK`, iOS marketed as utility layer.
+- `ArtemisModule.kt` duplicated / malformed `SolanaPayUri.Request` block
+  removed; file structure cleaned and sorted.
+- Readiness state on non-Android platforms returns
+  `WalletReadyState.Unsupported` instead of always-`Installed`.
+- Every em-dash purged from repo source and docs; "v0-project",
+  "LunaSDK", and stale versions scrubbed.
+
 ## Unreleased
 
 Production hardening pass. Closes the remaining reliability gaps from the v68 stack: explicit websocket state machine, DAS failover, standalone ATA handling, and a single framework event surface across every subsystem.

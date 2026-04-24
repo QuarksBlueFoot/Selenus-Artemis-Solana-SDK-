@@ -1,9 +1,33 @@
 # Artemis Solana SDK
 
-One Kotlin Multiplatform dependency for everything a Solana mobile app needs: RPC, WebSocket subscriptions, transactions, wallet signing, MWA 2.0, Seed Vault, NFTs, DAS, and a real reliability layer wrapped around all of it.
+One Kotlin Multiplatform dependency for every Solana feature a real mobile or
+backend app actually ships: JSON-RPC, WebSocket subscriptions with reconnect
+and replay, legacy + v0 transactions, Mobile Wallet Adapter 2.0, Seed Vault,
+Token-2022, compressed NFTs with DAS failover, Solana Pay, Jupiter, Anchor,
+Actions, and a reliability layer wrapped around all of it.
 
 [![Maven Central](https://img.shields.io/maven-central/v/xyz.selenus/artemis-core?style=flat-square)](https://central.sonatype.com/search?q=xyz.selenus)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
+
+## Why Artemis
+
+The Kotlin/Android Solana story is fragmented. You ship
+`mobile-wallet-adapter-clientlib-ktx` for MWA, `seedvault-wallet-sdk` for
+custody on Saga and Seeker, `solana-kmp` or Sol4k for RPC and transactions,
+Metaplex KMM for NFT metadata, and still hand-roll a WebSocket layer, a
+retry pipeline, and a DAS client. Five dependencies, five opinions about
+coroutines, five version matrices, and no shared reliability story.
+
+Artemis is one dependency graph, one coroutine-first surface, and one
+`ArtemisMobile.create()` call for the full stack. Every module pulls its
+weight: `artemis-rpc` ships 110 typed JSON-RPC methods with a batch DSL
+and a circuit breaker, `artemis-ws` runs a real WebSocket with
+deterministic resubscribe on reconnect, `artemis-vtx` drives a
+simulate + retry + priority-fee transaction pipeline, and
+`artemis-wallet-mwa-android` speaks MWA 2.0 end to end with P-256
+association, AES-128-GCM session crypto, HKDF-SHA256 key derivation, and
+Sign-In With Solana. The drop-in `interop/artemis-*-compat` shims let
+existing apps swap the Maven coordinates without rewriting call sites.
 
 ## What you get
 
@@ -28,28 +52,28 @@ repositories {
 
 dependencies {
     // Foundation (KMP)
-    implementation("xyz.selenus:artemis-core:2.2.0")
-    implementation("xyz.selenus:artemis-rpc:2.2.0")
-    implementation("xyz.selenus:artemis-ws:2.2.0")
-    implementation("xyz.selenus:artemis-tx:2.2.0")
-    implementation("xyz.selenus:artemis-vtx:2.2.0")
-    implementation("xyz.selenus:artemis-programs:2.2.0")
+    implementation("xyz.selenus:artemis-core:2.3.0")
+    implementation("xyz.selenus:artemis-rpc:2.3.0")
+    implementation("xyz.selenus:artemis-ws:2.3.0")
+    implementation("xyz.selenus:artemis-tx:2.3.0")
+    implementation("xyz.selenus:artemis-vtx:2.3.0")
+    implementation("xyz.selenus:artemis-programs:2.3.0")
 
     // Mobile
-    implementation("xyz.selenus:artemis-wallet:2.2.0")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.2.0")
-    implementation("xyz.selenus:artemis-seed-vault:2.2.0")
+    implementation("xyz.selenus:artemis-wallet:2.3.0")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
+    implementation("xyz.selenus:artemis-seed-vault:2.3.0")
 
     // NFT, DAS, marketplace
-    implementation("xyz.selenus:artemis-cnft:2.2.0")
+    implementation("xyz.selenus:artemis-cnft:2.3.0")
 
     // Optional ecosystem modules
-    implementation("xyz.selenus:artemis-token2022:2.2.0")
-    implementation("xyz.selenus:artemis-jupiter:2.2.0")
+    implementation("xyz.selenus:artemis-token2022:2.3.0")
+    implementation("xyz.selenus:artemis-jupiter:2.3.0")
 }
 ```
 
-The current published version is `2.2.0`. The `version` field in [gradle.properties](gradle.properties) is the source of truth.
+The current published version is `2.3.0`. The `version` field in [gradle.properties](gradle.properties) is the source of truth.
 
 ## Quick start
 

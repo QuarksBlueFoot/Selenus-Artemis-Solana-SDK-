@@ -8,15 +8,15 @@ Everything a basic Solana app needs. No mobile wallet, no NFTs, no DeFi.
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-core:2.2.0")
-    implementation("xyz.selenus:artemis-rpc:2.2.0")
-    implementation("xyz.selenus:artemis-ws:2.2.0")
-    implementation("xyz.selenus:artemis-tx:2.2.0")
-    implementation("xyz.selenus:artemis-vtx:2.2.0")
-    implementation("xyz.selenus:artemis-programs:2.2.0")
-    implementation("xyz.selenus:artemis-errors:2.2.0")
-    implementation("xyz.selenus:artemis-logging:2.2.0")
-    implementation("xyz.selenus:artemis-compute:2.2.0")
+    implementation("xyz.selenus:artemis-core:2.3.0")
+    implementation("xyz.selenus:artemis-rpc:2.3.0")
+    implementation("xyz.selenus:artemis-ws:2.3.0")
+    implementation("xyz.selenus:artemis-tx:2.3.0")
+    implementation("xyz.selenus:artemis-vtx:2.3.0")
+    implementation("xyz.selenus:artemis-programs:2.3.0")
+    implementation("xyz.selenus:artemis-errors:2.3.0")
+    implementation("xyz.selenus:artemis-logging:2.3.0")
+    implementation("xyz.selenus:artemis-compute:2.3.0")
 }
 ```
 
@@ -31,19 +31,19 @@ Foundation plus wallet integration. This is the Solana Mobile Stack replacement 
 ```kotlin
 dependencies {
     // Foundation
-    implementation("xyz.selenus:artemis-core:2.2.0")
-    implementation("xyz.selenus:artemis-rpc:2.2.0")
-    implementation("xyz.selenus:artemis-ws:2.2.0")
-    implementation("xyz.selenus:artemis-tx:2.2.0")
-    implementation("xyz.selenus:artemis-vtx:2.2.0")
-    implementation("xyz.selenus:artemis-programs:2.2.0")
-    implementation("xyz.selenus:artemis-errors:2.2.0")
-    implementation("xyz.selenus:artemis-compute:2.2.0")
+    implementation("xyz.selenus:artemis-core:2.3.0")
+    implementation("xyz.selenus:artemis-rpc:2.3.0")
+    implementation("xyz.selenus:artemis-ws:2.3.0")
+    implementation("xyz.selenus:artemis-tx:2.3.0")
+    implementation("xyz.selenus:artemis-vtx:2.3.0")
+    implementation("xyz.selenus:artemis-programs:2.3.0")
+    implementation("xyz.selenus:artemis-errors:2.3.0")
+    implementation("xyz.selenus:artemis-compute:2.3.0")
 
     // Mobile
-    implementation("xyz.selenus:artemis-wallet:2.2.0")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.2.0")
-    implementation("xyz.selenus:artemis-seed-vault:2.2.0")
+    implementation("xyz.selenus:artemis-wallet:2.3.0")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
+    implementation("xyz.selenus:artemis-seed-vault:2.3.0")
 }
 ```
 
@@ -61,11 +61,11 @@ dependencies {
     // ...
 
     // NFT / Tokens
-    implementation("xyz.selenus:artemis-token2022:2.2.0")
-    implementation("xyz.selenus:artemis-metaplex:2.2.0")
-    implementation("xyz.selenus:artemis-mplcore:2.2.0")
-    implementation("xyz.selenus:artemis-cnft:2.2.0")
-    implementation("xyz.selenus:artemis-candy-machine:2.2.0")
+    implementation("xyz.selenus:artemis-token2022:2.3.0")
+    implementation("xyz.selenus:artemis-metaplex:2.3.0")
+    implementation("xyz.selenus:artemis-mplcore:2.3.0")
+    implementation("xyz.selenus:artemis-cnft:2.3.0")
+    implementation("xyz.selenus:artemis-candy-machine:2.3.0")
 }
 ```
 
@@ -83,11 +83,11 @@ dependencies {
     // ...
 
     // DeFi / Ecosystem
-    implementation("xyz.selenus:artemis-jupiter:2.2.0")
-    implementation("xyz.selenus:artemis-actions:2.2.0")
-    implementation("xyz.selenus:artemis-solana-pay:2.2.0")
-    implementation("xyz.selenus:artemis-anchor:2.2.0")
-    implementation("xyz.selenus:artemis-simulation:2.2.0")
+    implementation("xyz.selenus:artemis-jupiter:2.3.0")
+    implementation("xyz.selenus:artemis-actions:2.3.0")
+    implementation("xyz.selenus:artemis-solana-pay:2.3.0")
+    implementation("xyz.selenus:artemis-anchor:2.3.0")
+    implementation("xyz.selenus:artemis-simulation:2.3.0")
 }
 ```
 
