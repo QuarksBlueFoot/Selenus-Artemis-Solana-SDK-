@@ -12,58 +12,6 @@
   L20  const val REMOTE_PARAMETER_REFLECTOR_HOST_AUTHORITY: String = "reflector"
   L21  const val REMOTE_PARAMETER_REFLECTOR_ID: String = "id"
 
-## main/kotlin/com/solana/mobilewalletadapter/common/protocol/Protocol.kt (package com.solana.mobilewalletadapter.common.protocol)
-  L25  interface MessageReceiver {
-  L26  fun receiverConnected(messageSender: MessageSender)
-  L27  fun receiverMessageReceived(payload: ByteArray)
-  L28  fun receiverDisconnected()
-  L36  interface MessageSender {
-  L38  fun send(payload: ByteArray)
-  L49  abstract class MobileWalletAdapterSessionCommon(
-  L69  val sender = mMessageSender ?: throw IOException("Session not connected")
-  L94  class SessionEncryptionException(message: String, cause: Throwable? = null) : Exception(message, cause)
-  L97  class SessionMessageException(message: String, cause: Throwable? = null) : Exception(message, cause)
-  L105  class JsonRpc20Client {
-  L106  abstract class JsonRpc20Exception(message: String, cause: Throwable? = null) : Exception(message, cause)
-  L108  class JsonRpc20InvalidResponseException(message: String) : JsonRpc20Exception(message)
-  L110  open class JsonRpc20RemoteException(
-  L111  val code: Int,
-  L113  val data: String? = null
-  L116  fun isReservedError(): Boolean = code in SERVER_RESERVED_ERROR_MIN..SERVER_RESERVED_ERROR_MAX
-  L122  const val SERVER_RESERVED_ERROR_MIN: Int = -32099
-  L123  const val SERVER_RESERVED_ERROR_MAX: Int = -32000
-  L127  const val ERROR_PARSE: Int = -32700
-  L128  const val ERROR_INVALID_REQUEST: Int = -32600
-  L129  const val ERROR_METHOD_NOT_FOUND: Int = -32601
-  L130  const val ERROR_INVALID_PARAMS: Int = -32602
-  L131  const val ERROR_INTERNAL: Int = -32603
-
-## main/kotlin/com/solana/mobilewalletadapter/common/protocol/SignInWithSolana.kt (package com.solana.mobilewalletadapter.common.protocol)
-  L20  class SignInWithSolana {
-  L23  class Payload(
-  L96  fun prepareMessage(): String = buildMessageString(address ?: "")
-  L102  fun prepareMessage(signerAddress: String): String = buildMessageString(signerAddress)
-  L105  fun toJson(): JSONObject {
-  L106  val json = JSONObject()
-  L123  val sb = StringBuilder()
-  L156  var result = domain?.hashCode() ?: 0
-  L167  const val HEADER_TYPE: String = "sip-99"
-  L174  fun fromMessage(message: String): Payload {
-  L176  val lines = message.split("\n").toMutableList()
-  L177  val domainLine = lines.removeAt(0)
-  L178  val domain = domainLine.substringBefore(" wants you to sign in").ifBlank { null }
-  L179  val address = if (lines.isNotEmpty()) lines.removeAt(0).trim() else null
-  L180  val remaining = lines.joinToString("\n")
-  L181  fun field(prefix: String): String? =
-  L183  val statement = remaining
-  L195  val resourcesBlock = Regex(
-  L199  val resources = resourcesBlock?.split('\n')
-  L223  fun fromJson(json: JSONObject): Payload {
-  L224  fun opt(key: String): String? =
-  L226  val resources = if (json.has("resources") && !json.isNull("resources")) {
-  L227  val arr = json.getJSONArray("resources")
-  L248  fun fromJson(json: String): Payload = fromJson(JSONObject(json))
-
 ## main/kotlin/com/solana/mobilewalletadapter/common/ProtocolContract.kt (package com.solana.mobilewalletadapter.common)
   L12  object ProtocolContract {
   L14  const val METHOD_AUTHORIZE: String = "authorize"
@@ -145,6 +93,58 @@
   L11  data class SessionProperties(val protocolVersion: ProtocolVersion) {
   L13  enum class ProtocolVersion(val wireValue: String) {
   L25  fun fromWireValue(value: String): ProtocolVersion =
+
+## main/kotlin/com/solana/mobilewalletadapter/common/protocol/Protocol.kt (package com.solana.mobilewalletadapter.common.protocol)
+  L25  interface MessageReceiver {
+  L26  fun receiverConnected(messageSender: MessageSender)
+  L27  fun receiverMessageReceived(payload: ByteArray)
+  L28  fun receiverDisconnected()
+  L36  interface MessageSender {
+  L38  fun send(payload: ByteArray)
+  L49  abstract class MobileWalletAdapterSessionCommon(
+  L69  val sender = mMessageSender ?: throw IOException("Session not connected")
+  L94  class SessionEncryptionException(message: String, cause: Throwable? = null) : Exception(message, cause)
+  L97  class SessionMessageException(message: String, cause: Throwable? = null) : Exception(message, cause)
+  L105  class JsonRpc20Client {
+  L106  abstract class JsonRpc20Exception(message: String, cause: Throwable? = null) : Exception(message, cause)
+  L108  class JsonRpc20InvalidResponseException(message: String) : JsonRpc20Exception(message)
+  L110  open class JsonRpc20RemoteException(
+  L111  val code: Int,
+  L113  val data: String? = null
+  L116  fun isReservedError(): Boolean = code in SERVER_RESERVED_ERROR_MIN..SERVER_RESERVED_ERROR_MAX
+  L122  const val SERVER_RESERVED_ERROR_MIN: Int = -32099
+  L123  const val SERVER_RESERVED_ERROR_MAX: Int = -32000
+  L127  const val ERROR_PARSE: Int = -32700
+  L128  const val ERROR_INVALID_REQUEST: Int = -32600
+  L129  const val ERROR_METHOD_NOT_FOUND: Int = -32601
+  L130  const val ERROR_INVALID_PARAMS: Int = -32602
+  L131  const val ERROR_INTERNAL: Int = -32603
+
+## main/kotlin/com/solana/mobilewalletadapter/common/protocol/SignInWithSolana.kt (package com.solana.mobilewalletadapter.common.protocol)
+  L20  class SignInWithSolana {
+  L23  class Payload(
+  L96  fun prepareMessage(): String = buildMessageString(address ?: "")
+  L102  fun prepareMessage(signerAddress: String): String = buildMessageString(signerAddress)
+  L105  fun toJson(): JSONObject {
+  L106  val json = JSONObject()
+  L123  val sb = StringBuilder()
+  L156  var result = domain?.hashCode() ?: 0
+  L167  const val HEADER_TYPE: String = "sip-99"
+  L174  fun fromMessage(message: String): Payload {
+  L176  val lines = message.split("\n").toMutableList()
+  L177  val domainLine = lines.removeAt(0)
+  L178  val domain = domainLine.substringBefore(" wants you to sign in").ifBlank { null }
+  L179  val address = if (lines.isNotEmpty()) lines.removeAt(0).trim() else null
+  L180  val remaining = lines.joinToString("\n")
+  L181  fun field(prefix: String): String? =
+  L183  val statement = remaining
+  L195  val resourcesBlock = Regex(
+  L199  val resources = resourcesBlock?.split('\n')
+  L223  fun fromJson(json: JSONObject): Payload {
+  L224  fun opt(key: String): String? =
+  L226  val resources = if (json.has("resources") && !json.isNull("resources")) {
+  L227  val arr = json.getJSONArray("resources")
+  L248  fun fromJson(json: String): Payload = fromJson(JSONObject(json))
 
 ## main/kotlin/com/solana/mobilewalletadapter/common/util/NotifyOnCompleteFuture.kt (package com.solana.mobilewalletadapter.common.util)
   L24  fun interface OnCompleteCallback<T : Future<*>> {

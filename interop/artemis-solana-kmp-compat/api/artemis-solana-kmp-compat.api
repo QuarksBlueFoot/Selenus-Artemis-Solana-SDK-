@@ -10,11 +10,65 @@
   L25  var divisor = 1.0
   L37  fun Lamports(value: Long): Amount = Amount(
   L46  fun SOL(value: Long): Amount = Amount(
+  L58  fun lamports(value: Long): Amount = Lamports(value)
+  L61  fun lamports(value: Int): Amount = Lamports(value.toLong())
+  L64  fun sol(value: Int): Amount = SOL(value.toLong())
+  L67  fun sol(value: Double): Amount = Amount(
+  L77  fun createAmount(basisPoints: Long, identifier: String, decimals: Int): Amount =
+  L81  fun createAmount(basisPoints: Int, identifier: String, decimals: Int): Amount =
+  L88  fun createAmountFromDecimals(decimalAmount: Double, identifier: String, decimals: Int): Amount {
+  L89  var multiplier = 1.0
+  L98  fun percentAmount(percent: Double, decimals: Int = 2): Amount {
+  L99  var multiplier = 1.0
+  L108  fun tokenAmount(tokens: Double, identifier: String = "Token", decimals: Int = 0): Amount =
+  L112  fun tokenAmount(tokens: Int, identifier: String = "Token", decimals: Int = 0): Amount =
+  L120  var v = 1L
+  L132  fun addAmounts(left: Amount, right: Amount): Amount {
+  L138  fun subtractAmounts(left: Amount, right: Amount): Amount {
+  L144  fun multiplyAmount(left: Amount, multiplier: Number): Amount =
+  L148  fun divideAmount(left: Amount, divisor: Number): Amount {
+  L154  fun absoluteAmount(value: Amount): Amount =
+  L163  fun compareAmounts(left: Amount, right: Amount): Int {
+  L169  fun isEqualToAmount(left: Amount, right: Amount, tolerance: Amount? = null): Boolean {
+  L171  val delta = left.basisPoints - right.basisPoints
+  L179  fun isLessThanAmount(left: Amount, right: Amount): Boolean = compareAmounts(left, right) < 0
+  L180  fun isLessThanOrEqualToAmount(left: Amount, right: Amount): Boolean = compareAmounts(left, right) <= 0
+  L181  fun isGreaterThanAmount(left: Amount, right: Amount): Boolean = compareAmounts(left, right) > 0
+  L182  fun isGreaterThanOrEqualToAmount(left: Amount, right: Amount): Boolean = compareAmounts(left, right) >= 0
+  L184  fun isZeroAmount(value: Amount): Boolean = value.basisPoints == 0L
+  L185  fun isPositiveAmount(value: Amount): Boolean = value.basisPoints > 0L
+  L186  fun isNegativeAmount(value: Amount): Boolean = value.basisPoints < 0L
+  L189  fun sameAmounts(left: Amount, right: Amount): Boolean =
+  L193  fun isAmount(amount: Amount, identifier: String, decimals: Int): Boolean =
+  L201  fun assertAmount(amount: Amount, identifier: String, decimals: Int) {
+  L207  fun assertSolAmount(amount: Amount) = assertAmount(amount, "SOL", 9)
+  L209  fun assertSameAmounts(left: Amount, right: Amount, operation: String? = null) {
+  L211  val op = operation?.let { " during $it" } ?: ""
+  L220  fun amountToString(value: Amount, maxDecimals: Int? = null): String {
+  L221  val d = value.toDecimal()
+  L225  var scale = 1.0
+  L227  val rounded = kotlin.math.round(d * scale) / scale
+  L228  val s = rounded.toString()
+  L229  val dot = s.indexOf('.')
+  L233  val fractional = s.substring(dot + 1)
+  L234  val padded = if (fractional.length < maxDecimals) fractional + "0".repeat(maxDecimals - fractional.length)
+  L241  fun amountToNumber(value: Amount): Double = value.toDecimal()
+  L243  fun displayAmount(value: Amount, maxDecimals: Int? = null): String =
 
 ## commonMain/kotlin/foundation/metaplex/base58/Base58.kt (package foundation.metaplex.base58)
   L13  object Base58 {
   L16  fun encode(bytes: ByteArray): String = ArtemisBase58.encode(bytes)
   L20  fun decode(string: String): ByteArray = ArtemisBase58.decode(string)
+  L30  fun ByteArray.encodeToBase58String(): String = ArtemisBase58.encode(this)
+  L36  fun String.decodeBase58(): ByteArray = try {
+  L48  suspend fun ByteArray.encodeToBase58WithChecksum(): String {
+  L49  val checksum = doubleSha256(this).copyOfRange(0, 4)
+  L50  val payload = this + checksum
+  L58  suspend fun String.decodeBase58WithChecksum(): ByteArray {
+  L59  val full = this.decodeBase58()
+  L61  val payload = full.copyOfRange(0, full.size - 4)
+  L62  val expected = full.copyOfRange(full.size - 4, full.size)
+  L63  val actual = doubleSha256(payload).copyOfRange(0, 4)
 
 ## commonMain/kotlin/foundation/metaplex/readapi/ReadApi.kt (package foundation.metaplex.readapi)
   L24  interface ReadApiInterface {
@@ -98,34 +152,114 @@
   L216  typealias JsonMetadata = ReadApiAssetMetadata
   L221  enum class ReadApiAssetInterface(val value: String) {
 
+## commonMain/kotlin/foundation/metaplex/rpc/Cluster.kt (package foundation.metaplex.rpc)
+  L11  sealed class Cluster {
+  L12  object MainnetBeta : Cluster()
+  L13  object Devnet : Cluster()
+  L14  object Testnet : Cluster()
+  L15  object Localnet : Cluster()
+  L16  object Custom : Cluster()
+  L20  fun fromString(clusterName: String): Cluster = when (clusterName.lowercase()) {
+  L31  val MAINNET_BETA_DOMAINS: List<String> = listOf(
+  L36  val DEVNET_DOMAINS: List<String> = listOf(
+  L40  val TESTNET_DOMAINS: List<String> = listOf(
+  L44  val LOCALNET_DOMAINS: List<String> = listOf(
+  L53  fun resolveClusterFromEndpoint(endpoint: String): Cluster {
+  L54  val host = extractHost(endpoint)?.lowercase() ?: return Cluster.Custom
+  L67  val schemeIdx = url.indexOf("://")
+  L68  val afterScheme = if (schemeIdx >= 0) url.substring(schemeIdx + 3) else url
+  L69  val pathIdx = afterScheme.indexOf('/').let { if (it < 0) afterScheme.length else it }
+  L70  val authority = afterScheme.substring(0, pathIdx)
+  L72  val atIdx = authority.indexOf('@')
+  L73  val hostAndPort = if (atIdx >= 0) authority.substring(atIdx + 1) else authority
+  L74  val colonIdx = hostAndPort.indexOf(':')
+
+## commonMain/kotlin/foundation/metaplex/rpc/Configurations.kt (package foundation.metaplex.rpc)
+  L21  enum class Encoding(val value: String) {
+  L34  sealed interface RpcBaseOptions {
+  L35  val encoding: Encoding?
+  L36  val commitment: Commitment?
+  L37  val minContextSlot: Long?
+  L41  data class RpcDataSlice(val offset: Long, val length: Long)
+  L47  sealed class RpcDataFilter {
+  L48  data class Size(val dataSize: Long) : RpcDataFilter()
+  L49  data class Memcmp(val memcmp: MemcmpFilter) : RpcDataFilter()
+  L56  data class MemcmpFilter(val offset: Long, val bytes: ByteArray) {
+  L67  fun RpcDataFilterSize(dataSize: Long): RpcDataFilter.Size = RpcDataFilter.Size(dataSize)
+  L71  fun RpcDataFilterMemcmp(memcmp: MemcmpFilter): RpcDataFilter.Memcmp = RpcDataFilter.Memcmp(memcmp)
+  L77  data class RpcGetAccountInfoConfiguration(
+  L81  val dataSlice: RpcDataSlice? = null,
+  L84  data class RpcGetMultipleAccountsConfiguration(
+  L88  val dataSlice: RpcDataSlice? = null,
+  L91  data class RpcGetProgramAccountsConfiguration(
+  L95  val dataSlice: RpcDataSlice? = null,
+  L96  val filters: List<RpcDataFilter>? = null,
+  L99  data class RpcGetLatestBlockhashConfiguration(
+  L105  data class RpcGetSlotConfiguration(
+  L111  data class RpcGetBalanceConfiguration(
+  L117  data class RpcRequestAirdropConfiguration(
+  L118  val publicKey: PublicKey,
+  L119  val lamports: foundation.metaplex.amount.Amount,
+  L120  val commitment: Commitment? = null,
+  L123  data class RpcSendTransactionConfiguration(
+  L127  val skipPreflight: Boolean? = null,
+  L128  val preflightCommitment: Commitment? = null,
+  L129  val maxRetries: UInt? = null,
+  L136  data class BlockhashWithExpiryBlockHeight(
+  L137  val blockhash: String,
+  L138  val lastValidBlockHeight: ULong,
+
 ## commonMain/kotlin/foundation/metaplex/rpc/RPC.kt (package foundation.metaplex.rpc)
-  L24  enum class Commitment(val value: String) {
-  L35  data class RpcRequestConfiguration @JvmOverloads constructor(
-  L36  val commitment: Commitment = Commitment.CONFIRMED,
-  L37  val encoding: String = "base64",
-  L38  val minContextSlot: Long? = null
-  L50  interface RpcInterface {
-  L51  suspend fun getBalance(
-  L56  suspend fun getLatestBlockhash(
-  L60  suspend fun getMinimumBalanceForRentExemption(
-  L65  suspend fun getSlot(
-  L69  suspend fun requestAirdrop(
-  L75  suspend fun getAccountInfo(
-  L80  suspend fun getMultipleAccounts(
-  L85  suspend fun sendTransaction(
-  L99  data class AccountInfo(
-  L100  val owner: PublicKey,
-  L101  val lamports: Long,
-  L102  val data: ByteArray,
-  L103  val executable: Boolean,
-  L104  val rentEpoch: Long
-  L117  var result = owner.hashCode()
-  L134  class RPC(rpcUrl: String) : RpcInterface {
-  L139  fun asArtemis(): ArtemisRpcApi = rpc
-  L145  val lamports = rpc.getBalance(publicKey.toBase58(), configuration.commitment.value).lamports
-  L168  val parsed = rpc.getAccountInfoParsed(publicKey.toBase58(), configuration.commitment.value) ?: return null
-  L182  val base64List = rpc.getMultipleAccountsBase64(
-  L218  fun getBalanceBlocking(publicKey: PublicKey): Amount = runBlocking {
+  L36  enum class Commitment(val value: String) {
+  L47  data class RpcRequestConfiguration @JvmOverloads constructor(
+  L48  val commitment: Commitment = Commitment.CONFIRMED,
+  L49  val encoding: String = "base64",
+  L50  val minContextSlot: Long? = null
+  L62  interface RpcInterface {
+  L63  suspend fun getBalance(
+  L68  suspend fun getLatestBlockhash(
+  L72  suspend fun getMinimumBalanceForRentExemption(
+  L77  suspend fun getSlot(
+  L81  suspend fun requestAirdrop(
+  L87  suspend fun getAccountInfo(
+  L92  suspend fun getMultipleAccounts(
+  L97  suspend fun sendTransaction(
+  L107  suspend fun getProgramAccounts(
+  L116  suspend fun getLatestBlockhashExtended(
+  L124  data class AccountInfoWithPublicKey(
+  L125  val publicKey: PublicKey,
+  L126  val account: AccountInfo,
+  L137  data class AccountInfo(
+  L138  val owner: PublicKey,
+  L139  val lamports: Long,
+  L140  val data: ByteArray,
+  L141  val executable: Boolean,
+  L142  val rentEpoch: Long
+  L155  var result = owner.hashCode()
+  L172  class RPC(rpcUrl: String) : RpcInterface {
+  L177  fun asArtemis(): ArtemisRpcApi = rpc
+  L183  val lamports = rpc.getBalance(publicKey.toBase58(), configuration.commitment.value).lamports
+  L206  val parsed = rpc.getAccountInfoParsed(publicKey.toBase58(), configuration.commitment.value) ?: return null
+  L220  val base64List = rpc.getMultipleAccountsBase64(
+  L256  fun getBalanceBlocking(publicKey: PublicKey): Amount = runBlocking {
+  L265  val rpcFilters = configuration.filters?.map { f ->
+  L284  val commitment = configuration.commitment?.value ?: Commitment.CONFIRMED.value
+  L285  val encoding = configuration.encoding?.value ?: Encoding.base64.value
+  L287  val result = rpc.callRaw(
+  L312  val array = result["result"]?.let { it as? kotlinx.serialization.json.JsonArray }
+  L317  val pubkeyStr = elem["pubkey"]?.let { it as? kotlinx.serialization.json.JsonPrimitive }?.content
+  L319  val accountObj = elem["account"]?.let { it as? kotlinx.serialization.json.JsonObject }
+  L321  val info = parseAccountInfo(accountObj) ?: return@mapNotNull null
+  L329  val commitment = configuration.commitment?.value ?: Commitment.CONFIRMED.value
+  L330  val response = rpc.getLatestBlockhash(commitment)
+  L342  suspend fun sendTransaction(
+  L355  val lamports = (obj["lamports"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toLongOrNull()
+  L357  val ownerStr = (obj["owner"] as? kotlinx.serialization.json.JsonPrimitive)?.content ?: return null
+  L358  val executable = (obj["executable"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toBoolean() ?: false
+  L359  val rentEpoch = (obj["rentEpoch"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toLongOrNull() ?: 0L
+  L360  val dataArray = obj["data"] as? kotlinx.serialization.json.JsonArray
+  L361  val data = if (dataArray != null && dataArray.isNotEmpty()) {
+  L362  val enc = (dataArray[0] as? kotlinx.serialization.json.JsonPrimitive)?.content ?: return null
 
 ## commonMain/kotlin/foundation/metaplex/signer/Signer.kt (package foundation.metaplex.signer)
   L15  interface Signer {
@@ -143,17 +277,136 @@
   L31  val keys: List<AccountMeta>,
   L32  val data: ByteArray
   L43  var result = programId.hashCode()
-  L58  class Transaction internal constructor(internal val artemis: ArtemisTransaction) {
-  L59  fun serialize(): SerializedTransaction = SerializedTransaction(artemis.serialize())
-  L84  class SolanaTransactionBuilder {
-  L89  fun addInstruction(instruction: TransactionInstruction): SolanaTransactionBuilder {
-  L90  val ix = ArtemisInstruction(
-  L105  fun setRecentBlockHash(blockhash: String): SolanaTransactionBuilder {
-  L110  fun setSigners(signers: List<Signer>): SolanaTransactionBuilder {
-  L125  suspend fun build(): Transaction {
-  L129  val msg = artemis.compileMessage()
-  L130  val msgBytes = msg.serialize()
-  L132  val signature = signer.sign(msgBytes)
+  L59  class Transaction internal constructor(internal val artemis: ArtemisTransaction) {
+  L72  fun from(buffer: ByteArray): Transaction = Transaction(ArtemisTransaction.from(buffer))
+  L92  fun populate(
+  L96  val msgBytes = message.serialize()
+  L98  val sigCountBytes = shortVecEncode(signatures.size)
+  L100  val sigSection = ByteArray(signatures.size * 64)
+  L103  val decoded = com.selenus.artemis.runtime.Base58.decode(sigB58)
+  L110  val wire = sigCountBytes + sigSection + msgBytes
+  L121  val out = ArrayList<Byte>(4)
+  L122  var v = n
+  L124  var b = v and 0x7F
+  L138  fun addInstruction(vararg instruction: TransactionInstruction): Transaction {
+  L144  fun add(vararg instruction: TransactionInstruction): Transaction = addInstruction(*instruction)
+  L147  fun setRecentBlockHash(recentBlockhash: String) {
+  L152  suspend fun sign(vararg signer: foundation.metaplex.signer.Signer): Unit = sign(signer.toList())
+  L155  suspend fun sign(signers: List<foundation.metaplex.signer.Signer>) {
+  L160  val msg = artemis.compileMessage()
+  L161  val msgBytes = msg.serialize()
+  L163  val sig = s.sign(msgBytes)
+  L169  suspend fun partialSign(vararg signers: foundation.metaplex.signer.Signer) {
+  L171  val msg = artemis.compileMessage()
+  L172  val msgBytes = msg.serialize()
+  L174  val sig = s.sign(msgBytes)
+  L180  fun addSignature(pubkey: PublicKey, signature: ByteArray) {
+  L190  suspend fun verifySignatures(): Boolean {
+  L192  val msg = artemis.compileMessage().serialize()
+  L199  fun compileMessage(): foundation.metaplex.solana.transactions.SolanaMessage =
+  L203  fun serializeMessage(): ByteArray = artemis.compileMessage().serialize()
+  L206  fun serialize(config: foundation.metaplex.solana.transactions.SerializeConfig = foundation.metaplex.solana.transactions.SerializeConfig()): SerializedTransaction {
+  L213  val compiled = artemis.compileMessage()
+  L214  val requiredSigners = compiled.accountKeys.take(compiled.header.numRequiredSignatures)
+  L215  val present = artemis.signatures.keys
+  L216  val missing = requiredSigners.filterNot { it in present }
+  L260  class SolanaTransactionBuilder {
+  L265  fun addInstruction(instruction: TransactionInstruction): SolanaTransactionBuilder {
+  L266  val ix = ArtemisInstruction(
+  L281  fun setRecentBlockHash(blockhash: String): SolanaTransactionBuilder {
+  L286  fun setSigners(signers: List<Signer>): SolanaTransactionBuilder {
+  L301  suspend fun build(): Transaction {
+  L305  val msg = artemis.compileMessage()
+  L306  val msgBytes = msg.serialize()
+  L308  val signature = signer.sign(msgBytes)
+
+## commonMain/kotlin/foundation/metaplex/solana/programs/Programs.kt (package foundation.metaplex.solana.programs)
+  L30  abstract class Program {
+  L37  fun createTransactionInstruction(
+  L49  object SystemProgram : Program() {
+  L50  val PROGRAM_ID: PublicKey = PublicKey(ArtemisSystemProgram.PROGRAM_ID.bytes)
+  L52  const val PROGRAM_INDEX_CREATE_ACCOUNT: Int = 0
+  L53  const val PROGRAM_INDEX_TRANSFER: Int = 2
+  L56  fun transfer(fromPublicKey: PublicKey, toPublickKey: PublicKey, lamports: Long): TransactionInstruction {
+  L57  val ix = ArtemisSystemProgram.transfer(
+  L66  fun createAccount(
+  L73  val ix = ArtemisSystemProgram.createAccount(
+  L88  object MemoProgram : Program() {
+  L89  val PROGRAM_ID: PublicKey = PublicKey(ArtemisMemoProgram.PROGRAM_ID.bytes)
+  L95  fun writeUtf8(account: PublicKey, memo: String): TransactionInstruction {
+  L96  val ix = ArtemisMemoProgram.memo(
+
+## commonMain/kotlin/foundation/metaplex/solana/transactions/SolanaMessage.kt (package foundation.metaplex.solana.transactions)
+  L18  interface Message {
+  L19  val header: MessageHeader
+  L20  val accountKeys: List<PublicKey>
+  L21  val recentBlockhash: String
+  L22  val instructions: List<CompiledInstruction>
+  L24  fun isAccountSigner(index: Int): Boolean
+  L25  fun isAccountWritable(index: Int): Boolean
+  L26  fun isProgramId(index: Int): Boolean
+  L27  fun programIds(): List<PublicKey>
+  L28  fun nonProgramIds(): List<PublicKey>
+  L29  fun serialize(): ByteArray
+  L35  fun setFeePayer(publicKey: PublicKey)
+  L45  class SolanaMessage internal constructor(
+  L81  val h = artemis.header
+  L82  val numSignersWritable = h.numRequiredSignatures - h.numReadonlySigned
+  L83  val numTotal = artemis.accountKeys.size
+  L84  val numUnsignedWritable = numTotal - h.numRequiredSignatures - h.numReadonlyUnsigned
+  L97  val indices = artemis.instructions.map { it.programIdIndex }.toSet()
+  L104  val programIdIndices = artemis.instructions.map { it.programIdIndex }.toSet()
+  L118  val payer = com.selenus.artemis.runtime.Pubkey(publicKey.toByteArray())
+  L119  val oldKeys = artemis.accountKeys
+  L122  val oldPayerIndex = oldKeys.indexOf(payer)
+  L123  val numRequiredSignatures = artemis.header.numRequiredSignatures
+  L133  val newKeys = oldKeys.toMutableList().apply {
+  L134  val tmp = this[0]
+  L138  val indexMap = buildMap<Int, Int> {
+  L143  val remappedIxs = artemis.instructions.map { ci ->
+
+## commonMain/kotlin/foundation/metaplex/solana/transactions/TransactionTypes.kt (package foundation.metaplex.solana.transactions)
+  L19  typealias TransactionSignature = ByteArray
+  L22  typealias SerializedTransactionMessage = ByteArray
+  L25  typealias SerializedTransaction = ByteArray
+  L28  typealias TransactionError = String
+  L31  const val TRANSACTION_SIZE_LIMIT: Int = 1232
+  L34  const val SIGNATURE_LENGTH: Int = 64
+  L42  data class MessageHeader(
+  L43  var numRequiredSignatures: Byte = 0,
+  L44  var numReadonlySignedAccounts: Byte = 0,
+  L45  var numReadonlyUnsignedAccounts: Byte = 0,
+  L47  fun toByteArray(): ByteArray = byteArrayOf(
+  L55  const val HEADER_LENGTH: Int = 3
+  L64  data class CompiledInstruction(
+  L65  val programIdIndex: Int,
+  L66  val accounts: List<Int>,
+  L67  val data: String,
+  L75  data class SignaturePubkeyPair(
+  L76  var signature: TransactionSignature?,
+  L77  val publicKey: PublicKey,
+  L85  data class NonceInformation(
+  L86  val nonce: String,
+  L87  val nonceInstruction: TransactionInstruction,
+  L94  data class SerializeConfig(
+  L95  val requireAllSignatures: Boolean = true,
+  L96  val verifySignatures: Boolean = true,
+  L104  object Shortvec {
+  L110  fun encodeLength(len: Int): ByteArray {
+  L113  val out = ArrayList<Byte>(4)
+  L114  var value = len
+  L116  var b = value and 0x7F
+  L134  fun decodeLength(bytes: ByteArray): Pair<Int, ByteArray> {
+  L135  var value = 0
+  L136  var shift = 0
+  L137  var consumed = 0
+  L139  val b = bytes[consumed].toInt() and 0xFF
+
+## commonMain/kotlin/foundation/metaplex/solana/transactions/TransactionsAliases.kt (package foundation.metaplex.solana.transactions)
+  L13  typealias AccountMeta = foundation.metaplex.solana.AccountMeta
+  L14  typealias TransactionInstruction = foundation.metaplex.solana.TransactionInstruction
+  L15  typealias Transaction = foundation.metaplex.solana.Transaction
+  L16  typealias SolanaTransactionBuilder = foundation.metaplex.solana.SolanaTransactionBuilder
 
 ## commonMain/kotlin/foundation/metaplex/solanaeddsa/SolanaEddsa.kt (package foundation.metaplex.solanaeddsa)
   L20  class Keypair internal constructor(private val artemis: ArtemisKeypair) {
@@ -177,6 +430,10 @@
   L60  data class ProgramDerivedAddress(
   L61  val publicKey: PublicKey,
   L62  val nonce: Int
+  L66  const val PUBLIC_KEY_LENGTH: Int = 32
+  L73  fun defaultPublicKey(): PublicKey = PublicKey(ByteArray(PUBLIC_KEY_LENGTH))
+  L79  interface HasPublicKey {
+  L80  val publicKey: PublicKey
 
 ## jvmTest/kotlin/foundation/metaplex/SolanaKmpCompatTest.kt (package foundation.metaplex)
   L26  class SolanaKmpCompatTest {
