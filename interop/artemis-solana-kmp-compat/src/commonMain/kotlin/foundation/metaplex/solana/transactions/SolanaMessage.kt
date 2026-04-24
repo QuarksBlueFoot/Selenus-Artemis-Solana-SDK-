@@ -110,23 +110,40 @@ class SolanaMessage internal constructor(
     override fun serialize(): ByteArray = artemis.serialize()
 
     override fun setFeePayer(publicKey: PublicKey) {
-        // Moving the fee payer to slot 0 on a compiled message is not a safe
-        // operation: it breaks every instruction's account index. Upstream
-        // effectively recompiles; we do the same by rebuilding the account
-        // key list with the new payer at index 0 and re-mapping instruction
-        // indices.
+        // Moving the fee payer on a compiled message is a mostly-cosmetic op
+        // in upstream; the real fix is to recompile from the raw transaction.
+        // We honour the contract for the common case (new payer is already in
+        // the required-signer prefix of the account list) and refuse the hard
+        // case rather than silently produce an invalid message.
         val payer = com.selenus.artemis.runtime.Pubkey(publicKey.toByteArray())
         val oldKeys = artemis.accountKeys
         if (oldKeys.isNotEmpty() && oldKeys[0] == payer) return
-        val withoutPayer = oldKeys.filter { it != payer }
-        val newKeys = listOf(payer) + withoutPayer
-        val oldToNew = oldKeys.mapIndexed { idx, key ->
-            idx to newKeys.indexOf(key)
-        }.toMap()
+
+        val oldPayerIndex = oldKeys.indexOf(payer)
+        val numRequiredSignatures = artemis.header.numRequiredSignatures
+        check(oldPayerIndex in 0 until numRequiredSignatures) {
+            "setFeePayer: the new payer ($publicKey) must already be in the compiled " +
+                "message's required-signer prefix. Call Transaction.setRecentBlockHash " +
+                "+ sign(...) from scratch instead so the compiler can place the payer correctly."
+        }
+
+        // Safe path: swap slot 0 with `oldPayerIndex`. Both are already signers,
+        // so the header counts stay consistent. Remap any instruction that
+        // references either position.
+        val newKeys = oldKeys.toMutableList().apply {
+            val tmp = this[0]
+            this[0] = this[oldPayerIndex]
+            this[oldPayerIndex] = tmp
+        }
+        val indexMap = buildMap<Int, Int> {
+            for (i in oldKeys.indices) put(i, i)
+            put(0, oldPayerIndex)
+            put(oldPayerIndex, 0)
+        }
         val remappedIxs = artemis.instructions.map { ci ->
             com.selenus.artemis.tx.CompiledInstruction(
-                programIdIndex = oldToNew[ci.programIdIndex]!!,
-                accountIndexes = ci.accountIndexes.map { (oldToNew[it.toInt() and 0xFF]!!).toByte() }.toByteArray(),
+                programIdIndex = indexMap[ci.programIdIndex]!!,
+                accountIndexes = ci.accountIndexes.map { (indexMap[it.toInt() and 0xFF]!!).toByte() }.toByteArray(),
                 data = ci.data,
             )
         }

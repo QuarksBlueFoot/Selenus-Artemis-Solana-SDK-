@@ -60,6 +60,80 @@ class Transaction internal constructor(internal val artemis: ArtemisTransaction)
 
     constructor() : this(ArtemisTransaction())
 
+    companion object {
+        /**
+         * Reconstruct a [Transaction] from a serialized buffer. Matches upstream
+         * `Transaction.from(buffer)`. Callers typically use this when they
+         * receive a base64 transaction over the wire (SIWS responses, MWA
+         * sign-and-send fallbacks, saved QR payloads) and need to inspect it
+         * before re-signing or re-broadcasting.
+         */
+        @JvmStatic
+        fun from(buffer: ByteArray): Transaction = Transaction(ArtemisTransaction.from(buffer))
+
+        /**
+         * Build a fully-signed [Transaction] from a compiled message and a
+         * list of pre-computed signatures. Upstream exposes this as
+         * `Transaction.populate(message, signatures)` for relay services and
+         * cosigner flows; Artemis honours the same shape.
+         *
+         * Signature strings are base58-encoded. An empty or blank string at
+         * index [i] leaves that signer slot unsigned (the upstream convention
+         * for partial-sign scenarios).
+         *
+         * Implementation: we reconstruct the full wire-format transaction by
+         * prefixing a short-vec signature count, each 64-byte signature slot
+         * (zeroed when absent), and the serialized message - then feed the
+         * whole thing into the core `Transaction.from(bytes)` parser so the
+         * resulting object goes back through the same validation path the
+         * wire bytes would.
+         */
+        @JvmStatic
+        fun populate(
+            message: foundation.metaplex.solana.transactions.SolanaMessage,
+            signatures: List<String>,
+        ): Transaction {
+            val msgBytes = message.serialize()
+            // Short-vec prefix for the signature count.
+            val sigCountBytes = shortVecEncode(signatures.size)
+            // 64 zero bytes per absent signature, real bytes for present ones.
+            val sigSection = ByteArray(signatures.size * 64)
+            signatures.forEachIndexed { i, sigB58 ->
+                if (sigB58.isNotBlank()) {
+                    val decoded = com.selenus.artemis.runtime.Base58.decode(sigB58)
+                    require(decoded.size == 64) {
+                        "populate: signature $i must be 64 bytes, got ${decoded.size}"
+                    }
+                    decoded.copyInto(sigSection, destinationOffset = i * 64)
+                }
+            }
+            val wire = sigCountBytes + sigSection + msgBytes
+            return Transaction(ArtemisTransaction.from(wire))
+        }
+
+        /**
+         * Encode [n] as Solana's compact short-vec length prefix. Kept
+         * private to the companion; callers that need the public helper
+         * should import [foundation.metaplex.solana.transactions.Shortvec].
+         */
+        private fun shortVecEncode(n: Int): ByteArray {
+            if (n == 0) return byteArrayOf(0)
+            val out = ArrayList<Byte>(4)
+            var v = n
+            while (true) {
+                var b = v and 0x7F
+                v = v ushr 7
+                if (v == 0) {
+                    out.add(b.toByte()); break
+                } else {
+                    b = b or 0x80
+                    out.add(b.toByte())
+                }
+            }
+            return out.toByteArray()
+        }
+    }
+
     /** Append one or more instructions. */
     fun addInstruction(vararg instruction: TransactionInstruction): Transaction {
         instruction.forEach { artemis.addInstruction(it.toArtemis()) }

@@ -257,3 +257,8 @@ These are features no other Kotlin Solana SDK provides; none are required for th
 | NLP transactions | `artemis-nlp` | Experimental |
 | Intent decoding | `artemis-intent` | Verified |
 | Universal program client | `artemis-universal` | Experimental |
+| MWA wallet conformance detector (normalizes known Phantom/Solflare/Seeker quirks from upstream #958, #1146, #1331, #1458) | `artemis-wallet-mwa-android` (`MwaWalletConformance`, `KnownWallet`, `ConformanceReport`) | Verified |
+| Spec-first MWA error taxonomy with typed recovery hints (closes upstream #314) | `artemis-wallet-mwa-android` (`MwaError`, `Recovery`) | Verified |
+| SIWS validator with canonical message rendering + ed25519 verification + replay check (closes upstream #193, #1331) | `artemis-wallet-mwa-android` (`MwaSiwsValidator`, `SiwsVerification`) | Verified |
+| First-class multi-account session wrapper (closes upstream #438, open 2+ years) | `artemis-wallet-mwa-android` (`MwaMultiAccountSession`, `ResolvedAccount`) | Verified |
+| WebView / PWA / TWA environment detector with routing hints (closes upstream #1082, #1323, #1364) | `artemis-wallet-mwa-android` (`MwaEnvironmentDetector`) | Verified |
