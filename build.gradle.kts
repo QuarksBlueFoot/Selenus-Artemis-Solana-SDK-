@@ -239,9 +239,33 @@ subprojects {
         apply(plugin = "maven-publish")
         apply(plugin = "signing")
 
+        // Maven Central rejects components that don't ship a javadoc jar. KMP
+        // target publications (common metadata, jvm, native) don't get one by
+        // default, so Central Portal drops the deployment with:
+        //   "Javadocs must be provided but not found in entries"
+        // Attach an empty `-javadoc.jar` — signed, valid, empty content — to
+        // every publication that doesn't already have one. The Android
+        // release variant ships its own via LibraryExtension#singleVariant;
+        // skipping it here avoids a duplicate-classifier conflict. A
+        // Dokka-generated jar would be strictly better but adds weight on
+        // every KMP module for no real signal beyond the sources jar.
+        val javadocJar = tasks.register<Jar>("emptyJavadocJar") {
+            archiveClassifier.set("javadoc")
+        }
+
         configure<PublishingExtension> {
+            // Attach the empty javadoc jar to non-Android KMP publications.
+            // KMP publication names follow a stable convention: the root
+            // metadata publication is "kotlinMultiplatform", targets are
+            // named after the target (jvm, iosArm64, etc.). The Android
+            // release variant publication ("androidRelease") already ships a
+            // javadoc jar via LibraryExtension#singleVariant, so skip it to
+            // avoid a duplicate-classifier error at sign time.
             publications.withType<MavenPublication>().configureEach {
                 pomConfig()
+                if (!name.startsWith("android", ignoreCase = true)) {
+                    artifact(javadocJar)
+                }
             }
             publishingConfig()
         }
