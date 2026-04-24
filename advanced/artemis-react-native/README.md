@@ -1,20 +1,26 @@
 # @selenus/artemis-solana-sdk (React Native bindings)
 
-React Native bindings for the Artemis Solana SDK. Ships Android-first
-Mobile Wallet Adapter 2.0 + Seed Vault integration plus cross-platform
-crypto utilities (Base58, Ed25519, SHA-256).
+React Native bindings for the Artemis Solana SDK. Android-first Mobile
+Wallet Adapter 2.0 + Seed Vault, realtime WebSocket subscriptions,
+expanded JSON-RPC, compressed-NFT DAS queries, compute-budget and
+PDA/ATA helpers, and cross-platform Base58 + Ed25519 + SHA-256
+primitives that work on both Android and iOS.
 
 ## Platform support
 
 | Capability | Android | iOS |
 | --- | --- | --- |
-| Mobile Wallet Adapter 2.0 (connect, Sign-In With Solana, sign + send) | yes | not available on iOS (platform restriction) |
+| Mobile Wallet Adapter 2.0 (connect, SIWS, sign + send, batch) | yes | not available on iOS (platform restriction) |
 | Seed Vault (Saga / Seeker wallet apps) | yes | not applicable |
+| Realtime WebSocket (`subscribeAccount`, `subscribeSignature`, state events) | yes | via `@solana/web3.js` Connection |
+| JSON-RPC helpers (`getAccountInfo`, `getTokenAccountsByOwner`, `simulateTransaction`, ...) | yes | via `@solana/web3.js` |
+| DAS queries (`dasAssetsByOwner`, `dasAsset`, `dasAssetsByCollection`) | yes | via REST |
+| Compute budget instructions (`SetUnitLimit`, `SetUnitPrice`) | yes | via `@solana/web3.js` |
+| PDA (`findProgramAddress`) / ATA (`getAssociatedTokenAddress`) | yes | via `@solana/web3.js` |
 | Base58 / Base58Check utilities | yes | yes |
 | Ed25519 keygen / sign / verify | yes | yes |
 | SHA-256 | yes | yes |
 | Solana Pay URI parse and build | yes (native) | via JS |
-| RPC helpers (`getBalance`, `getLatestBlockhash`) | yes | via `@solana/web3.js` |
 
 Mobile Wallet Adapter is an Android-only contract defined by Solana
 Mobile. On iOS, `MobileWalletAdapter.readyState` is
@@ -161,6 +167,89 @@ const signatures = await Artemis.seedVaultSignTransactions(
 Seed Vault is available only on devices that ship the system service
 (Saga, Seeker, and some emulator images). Calls on devices without
 Seed Vault fail fast with a typed error.
+
+### Realtime WebSocket subscriptions
+
+```typescript
+import Artemis, { Realtime } from '@selenus/artemis-solana-sdk';
+
+Artemis.setWsUrl('wss://mainnet.helius-rpc.com/?api-key=YOUR_KEY');
+await Realtime.connect();
+
+const stateSub = Realtime.onState((event) => {
+  // event.kind is 'Idle' | 'Connecting' | 'Connected' | 'Reconnecting' | 'Closed'
+  console.log(event.kind, 'epoch=', event.epoch, 'endpoint=', event.endpoint);
+});
+
+const acctSub = await Realtime.onAccountChanged(
+  'Vote111111111111111111111111111111111111111',
+  (n) => console.log('lamports=', n.lamports, 'slot=', n.slot),
+  'confirmed',
+);
+
+const sigSub = await Realtime.onSignatureConfirmed(txSignature, (n) =>
+  console.log('confirmed=', n.confirmed),
+);
+
+// ...later
+sigSub.remove();
+acctSub.remove();
+stateSub.remove();
+await Realtime.close();
+```
+
+Every state transition carries a monotonic `epoch` counter so
+collectors can distinguish a fresh connect from a reconnect that
+landed back on `Connected`.
+
+### Expanded JSON-RPC
+
+```typescript
+const accountInfo = await Artemis.getAccountInfo(pubkey, 'confirmed', 'base64');
+const multi       = await Artemis.getMultipleAccounts([pk1, pk2, pk3], 'confirmed');
+const tokens      = await Artemis.getTokenAccountsByOwner(owner, null, null, 'confirmed');
+const sim         = await Artemis.simulateTransaction(base64Tx, false, true, 'processed');
+const statuses    = await Artemis.getSignatureStatuses([sig1, sig2], true);
+const slot        = await Artemis.getSlot('confirmed');
+const rent        = await Artemis.getMinimumBalanceForRentExemption(165, 'confirmed');
+```
+
+Every method delegates to `artemis-rpc` on the native side; the JS
+layer gets a plain object back, no JSON string to reparse.
+
+### DAS queries for compressed NFTs
+
+```typescript
+Artemis.setDasUrl('https://mainnet.helius-rpc.com/?api-key=YOUR_KEY');
+
+const page  = await Artemis.dasAssetsByOwner(ownerPubkey, 1, 100);
+const one   = await Artemis.dasAsset('GdR7...');
+const coll  = await Artemis.dasAssetsByCollection(collectionMint);
+```
+
+Backed by `CompositeDas` → `HeliusDas` with `RpcFallbackDas`. When the
+DAS URL is not set, the fallback synthesizes the same `DigitalAsset`
+view from `getTokenAccountsByOwner` + Metaplex metadata.
+
+### Compute budget, PDA, and ATA helpers
+
+```typescript
+const limitIx = await Artemis.computeBudgetSetUnitLimit(200_000);
+const priceIx = await Artemis.computeBudgetSetUnitPrice(5_000n);
+
+const { address, bump } = await Artemis.findProgramAddress(
+  [Buffer.from('vault').toString('base64'), Buffer.from(owner).toString('base64')],
+  programId,
+);
+
+const ata = await Artemis.getAssociatedTokenAddress(owner, mint);
+```
+
+Instruction shape is `{ programId, accounts: [{ pubkey, isSigner, isWritable }], data }`
+with `data` as base64. Fold into a `@solana/web3.js`
+`TransactionInstruction` by mapping `accounts` to `keys` and
+base64-decoding `data` into a `Buffer`. ATA returns a base58 string
+directly.
 
 ### Platform detection
 
