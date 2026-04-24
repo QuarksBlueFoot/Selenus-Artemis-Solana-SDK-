@@ -254,18 +254,17 @@ subprojects {
         }
 
         configure<PublishingExtension> {
-            // Attach the empty javadoc jar to non-Android KMP publications.
-            // KMP publication names follow a stable convention: the root
-            // metadata publication is "kotlinMultiplatform", targets are
-            // named after the target (jvm, iosArm64, etc.). The Android
-            // release variant publication ("androidRelease") already ships a
-            // javadoc jar via LibraryExtension#singleVariant, so skip it to
-            // avoid a duplicate-classifier error at sign time.
+            // Attach the empty javadoc jar to every KMP publication — the
+            // root metadata ("kotlinMultiplatform"), target publications
+            // ("jvm", "androidRelease", native variants). None of them
+            // generate a javadoc jar on their own in a KMP build, including
+            // the Android release variant (LibraryExtension#singleVariant's
+            // withJavadocJar() only wires through when the publication is
+            // created via components["release"], not via KMP's own
+            // publishLibraryVariants hook).
             publications.withType<MavenPublication>().configureEach {
                 pomConfig()
-                if (!name.startsWith("android", ignoreCase = true)) {
-                    artifact(javadocJar)
-                }
+                artifact(javadocJar)
             }
             publishingConfig()
         }
