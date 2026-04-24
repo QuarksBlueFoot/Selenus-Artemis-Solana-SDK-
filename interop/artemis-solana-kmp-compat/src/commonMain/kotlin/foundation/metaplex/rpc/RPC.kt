@@ -19,6 +19,18 @@ import com.selenus.artemis.runtime.PlatformBase64
 import foundation.metaplex.amount.Amount
 import foundation.metaplex.solanapublickeys.PublicKey
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.addJsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
+import kotlinx.serialization.json.putJsonObject
 
 /** Commitment level matching upstream solana-kmp. */
 enum class Commitment(val value: String) {
@@ -86,7 +98,33 @@ interface RpcInterface {
         serializedTransaction: ByteArray,
         configuration: RpcRequestConfiguration = RpcRequestConfiguration()
     ): String
+
+    /**
+     * Fetch every account owned by [programId]. Upstream solana-kmp exposes
+     * this as part of `RpcInterface`, so apps migrating straight across expect
+     * it on the same contract.
+     */
+    suspend fun getProgramAccounts(
+        programId: PublicKey,
+        configuration: RpcGetProgramAccountsConfiguration = RpcGetProgramAccountsConfiguration()
+    ): List<AccountInfoWithPublicKey>
+
+    /**
+     * Latest blockhash with its expiry height. Upstream type name:
+     * `BlockhashWithExpiryBlockHeight`.
+     */
+    suspend fun getLatestBlockhashExtended(
+        configuration: RpcGetLatestBlockhashConfiguration = RpcGetLatestBlockhashConfiguration()
+    ): BlockhashWithExpiryBlockHeight
 }
+
+/**
+ * Account pair returned by `getProgramAccounts`.
+ */
+data class AccountInfoWithPublicKey(
+    val publicKey: PublicKey,
+    val account: AccountInfo,
+)
 
 /**
  * solana-kmp compatible `AccountInfo`.
@@ -217,5 +255,121 @@ class RPC(rpcUrl: String) : RpcInterface {
      */
     fun getBalanceBlocking(publicKey: PublicKey): Amount = runBlocking {
         getBalance(publicKey)
+    }
+
+    override suspend fun getProgramAccounts(
+        programId: PublicKey,
+        configuration: RpcGetProgramAccountsConfiguration
+    ): List<AccountInfoWithPublicKey> {
+        // Build the `filters` array out of the typed sealed-class filter list.
+        val rpcFilters = configuration.filters?.map { f ->
+            when (f) {
+                is RpcDataFilter.Size ->
+                    kotlinx.serialization.json.buildJsonObject {
+                        put("dataSize", kotlinx.serialization.json.JsonPrimitive(f.dataSize))
+                    }
+                is RpcDataFilter.Memcmp ->
+                    kotlinx.serialization.json.buildJsonObject {
+                        putJsonObject("memcmp") {
+                            put("offset", kotlinx.serialization.json.JsonPrimitive(f.memcmp.offset))
+                            put("bytes", kotlinx.serialization.json.JsonPrimitive(
+                                PlatformBase64.encode(f.memcmp.bytes)
+                            ))
+                            put("encoding", kotlinx.serialization.json.JsonPrimitive("base64"))
+                        }
+                    }
+            }
+        }
+
+        val commitment = configuration.commitment?.value ?: Commitment.CONFIRMED.value
+        val encoding = configuration.encoding?.value ?: Encoding.base64.value
+
+        val result = rpc.callRaw(
+            "getProgramAccounts",
+            kotlinx.serialization.json.buildJsonArray {
+                add(kotlinx.serialization.json.JsonPrimitive(programId.toBase58()))
+                addJsonObject {
+                    put("encoding", kotlinx.serialization.json.JsonPrimitive(encoding))
+                    put("commitment", kotlinx.serialization.json.JsonPrimitive(commitment))
+                    configuration.minContextSlot?.let {
+                        put("minContextSlot", kotlinx.serialization.json.JsonPrimitive(it))
+                    }
+                    configuration.dataSlice?.let { slice ->
+                        putJsonObject("dataSlice") {
+                            put("offset", kotlinx.serialization.json.JsonPrimitive(slice.offset))
+                            put("length", kotlinx.serialization.json.JsonPrimitive(slice.length))
+                        }
+                    }
+                    if (!rpcFilters.isNullOrEmpty()) {
+                        put("filters", kotlinx.serialization.json.buildJsonArray {
+                            rpcFilters.forEach { add(it) }
+                        })
+                    }
+                }
+            }
+        )
+
+        val array = result["result"]?.let { it as? kotlinx.serialization.json.JsonArray }
+            ?: return emptyList()
+
+        return array.mapNotNull { elem ->
+            if (elem !is kotlinx.serialization.json.JsonObject) return@mapNotNull null
+            val pubkeyStr = elem["pubkey"]?.let { it as? kotlinx.serialization.json.JsonPrimitive }?.content
+                ?: return@mapNotNull null
+            val accountObj = elem["account"]?.let { it as? kotlinx.serialization.json.JsonObject }
+                ?: return@mapNotNull null
+            val info = parseAccountInfo(accountObj) ?: return@mapNotNull null
+            AccountInfoWithPublicKey(PublicKey(pubkeyStr), info)
+        }
+    }
+
+    override suspend fun getLatestBlockhashExtended(
+        configuration: RpcGetLatestBlockhashConfiguration
+    ): BlockhashWithExpiryBlockHeight {
+        val commitment = configuration.commitment?.value ?: Commitment.CONFIRMED.value
+        val response = rpc.getLatestBlockhash(commitment)
+        return BlockhashWithExpiryBlockHeight(
+            blockhash = response.blockhash,
+            lastValidBlockHeight = response.lastValidBlockHeight.toULong(),
+        )
+    }
+
+    /**
+     * Overload that accepts the typed [RpcSendTransactionConfiguration].
+     * Upstream surfaces both the flat `RpcRequestConfiguration` path and this
+     * typed one; the implementation routes both through Artemis's sender.
+     */
+    suspend fun sendTransaction(
+        serializedTransaction: ByteArray,
+        configuration: RpcSendTransactionConfiguration,
+    ): String = rpc.sendRawTransaction(
+        serializedTransaction,
+        skipPreflight = configuration.skipPreflight ?: false,
+        maxRetries = configuration.maxRetries?.toInt(),
+        preflightCommitment = (configuration.preflightCommitment ?: configuration.commitment
+            ?: Commitment.CONFIRMED).value,
+    )
+
+    /** Parses a JSON `account` object into the shim's [AccountInfo]. */
+    private fun parseAccountInfo(obj: kotlinx.serialization.json.JsonObject): AccountInfo? {
+        val lamports = (obj["lamports"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toLongOrNull()
+            ?: return null
+        val ownerStr = (obj["owner"] as? kotlinx.serialization.json.JsonPrimitive)?.content ?: return null
+        val executable = (obj["executable"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toBoolean() ?: false
+        val rentEpoch = (obj["rentEpoch"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toLongOrNull() ?: 0L
+        val dataArray = obj["data"] as? kotlinx.serialization.json.JsonArray
+        val data = if (dataArray != null && dataArray.isNotEmpty()) {
+            val enc = (dataArray[0] as? kotlinx.serialization.json.JsonPrimitive)?.content ?: return null
+            PlatformBase64.decode(enc)
+        } else {
+            ByteArray(0)
+        }
+        return AccountInfo(
+            owner = PublicKey(ownerStr),
+            lamports = lamports,
+            data = data,
+            executable = executable,
+            rentEpoch = rentEpoch,
+        )
     }
 }

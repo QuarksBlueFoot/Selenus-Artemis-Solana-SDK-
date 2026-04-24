@@ -369,6 +369,21 @@ class VersionedTransaction private constructor(
         return sigCountBytes + sigsBytes + messageBytes
     }
 
+    /**
+     * Approximate the network fee the validator will charge for this
+     * transaction at [lamportsPerSignature]. Matches the sol4k upstream shape;
+     * returns the product of the signature slot count (bounded to at least 1)
+     * and the per-signature price.
+     *
+     * This is a client-side hint only: actual fees depend on compute-budget
+     * instructions, priority fees, and network conditions. For a precise
+     * number, call `Connection.getFeeForMessage(message)` instead.
+     */
+    fun calculateFee(lamportsPerSignature: Int): java.math.BigDecimal {
+        val sigs = _signatures.size.coerceAtLeast(1)
+        return java.math.BigDecimal.valueOf(sigs.toLong() * lamportsPerSignature.toLong())
+    }
+
     companion object {
         @JvmStatic
         fun from(encodedTransaction: String): VersionedTransaction {

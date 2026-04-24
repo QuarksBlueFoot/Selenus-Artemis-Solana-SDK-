@@ -61,3 +61,21 @@ data class ProgramDerivedAddress(
     val publicKey: PublicKey,
     val nonce: Int
 )
+
+/** Canonical Solana public-key length in bytes. Matches upstream top-level `PUBLIC_KEY_LENGTH`. */
+const val PUBLIC_KEY_LENGTH: Int = 32
+
+/**
+ * The all-zero public key ("11111111111111111111111111111111"), used as the default
+ * [PublicKey] value in places where one is structurally required. Matches upstream
+ * `defaultPublicKey()`.
+ */
+fun defaultPublicKey(): PublicKey = PublicKey(ByteArray(PUBLIC_KEY_LENGTH))
+
+/**
+ * `HasPublicKey` - upstream interface for anything that carries an associated pubkey.
+ * Signers, accounts, and wallet records implement it.
+ */
+interface HasPublicKey {
+    val publicKey: PublicKey
+}

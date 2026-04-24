@@ -51,13 +51,115 @@ data class TransactionInstruction(
  * solana-kmp compatible `Transaction`.
  *
  * Holds an Artemis [ArtemisTransaction] internally and delegates compilation
- * and signing to it. The only thing this class adds is the solana-kmp-named
- * properties and the `serialize` that returns the upstream `SerializedTransaction`
- * wrapper type.
+ * and signing to it. Mirrors the upstream method surface end-to-end so call
+ * sites using any of `addInstruction`, `add`, `setRecentBlockHash`, `sign`,
+ * `partialSign`, `addSignature`, `verifySignatures`, `compileMessage`,
+ * `serializeMessage`, and `serialize` keep compiling without changes.
  */
 class Transaction internal constructor(internal val artemis: ArtemisTransaction) {
-    fun serialize(): SerializedTransaction = SerializedTransaction(artemis.serialize())
+
+    constructor() : this(ArtemisTransaction())
+
+    /** Append one or more instructions. */
+    fun addInstruction(vararg instruction: TransactionInstruction): Transaction {
+        instruction.forEach { artemis.addInstruction(it.toArtemis()) }
+        return this
+    }
+
+    /** Alias for [addInstruction] to match upstream's shorter name. */
+    fun add(vararg instruction: TransactionInstruction): Transaction = addInstruction(*instruction)
+
+    /** Set the recent blockhash the message will commit to. */
+    fun setRecentBlockHash(recentBlockhash: String) {
+        artemis.recentBlockhash = recentBlockhash
+    }
+
+    /** Sign with every supplied signer, replacing any prior signatures. */
+    suspend fun sign(vararg signer: foundation.metaplex.signer.Signer): Unit = sign(signer.toList())
+
+    /** List overload of [sign]. */
+    suspend fun sign(signers: List<foundation.metaplex.signer.Signer>) {
+        require(signers.isNotEmpty()) { "at least one signer required" }
+        if (artemis.feePayer == null) {
+            artemis.feePayer = com.selenus.artemis.runtime.Pubkey(signers.first().publicKey.toByteArray())
+        }
+        val msg = artemis.compileMessage()
+        val msgBytes = msg.serialize()
+        signers.forEach { s ->
+            val sig = s.sign(msgBytes)
+            artemis.addSignature(com.selenus.artemis.runtime.Pubkey(s.publicKey.toByteArray()), sig)
+        }
+    }
+
+    /** Sign with a subset of signers without resetting others. Matches upstream. */
+    suspend fun partialSign(vararg signers: foundation.metaplex.signer.Signer) {
+        require(signers.isNotEmpty()) { "at least one signer required for partialSign" }
+        val msg = artemis.compileMessage()
+        val msgBytes = msg.serialize()
+        signers.forEach { s ->
+            val sig = s.sign(msgBytes)
+            artemis.addSignature(com.selenus.artemis.runtime.Pubkey(s.publicKey.toByteArray()), sig)
+        }
+    }
+
+    /** Manually attach a pre-computed signature. */
+    fun addSignature(pubkey: PublicKey, signature: ByteArray) {
+        artemis.addSignature(com.selenus.artemis.runtime.Pubkey(pubkey.toByteArray()), signature)
+    }
+
+    /**
+     * Verify every signature on this transaction against the compiled message.
+     * Returns `true` when every attached signature passes ed25519 verification.
+     * Matches upstream `verifySignatures()` semantics: empty maps return true,
+     * a single failed verification short-circuits to false.
+     */
+    suspend fun verifySignatures(): Boolean {
+        if (artemis.signatures.isEmpty()) return true
+        val msg = artemis.compileMessage().serialize()
+        return artemis.signatures.all { (pubkey, signature) ->
+            pubkey.verify(signature, msg)
+        }
+    }
+
+    /** Compile the current transaction to a solana-kmp-shaped message wrapper. */
+    fun compileMessage(): foundation.metaplex.solana.transactions.SolanaMessage =
+        foundation.metaplex.solana.transactions.SolanaMessage.wrap(artemis.compileMessage())
+
+    /** Serialize just the compiled message (without signatures). */
+    fun serializeMessage(): ByteArray = artemis.compileMessage().serialize()
+
+    /** Serialize the complete signed transaction. */
+    fun serialize(config: foundation.metaplex.solana.transactions.SerializeConfig = foundation.metaplex.solana.transactions.SerializeConfig()): SerializedTransaction {
+        // SerializeConfig mirrors upstream: when `requireAllSignatures` is set,
+        // every required-signer account in the compiled message must have a
+        // signature attached. The Artemis signatures map stores pubkey -> bytes
+        // so a missing slot shows up as a pubkey that is in the message's
+        // signer list but not in the signatures map.
+        if (config.requireAllSignatures) {
+            val compiled = artemis.compileMessage()
+            val requiredSigners = compiled.accountKeys.take(compiled.header.numRequiredSignatures)
+            val present = artemis.signatures.keys
+            val missing = requiredSigners.filterNot { it in present }
+            require(missing.isEmpty()) {
+                "requireAllSignatures=true but missing signatures for: ${missing.joinToString { it.toBase58() }}"
+            }
+        }
+        return SerializedTransaction(artemis.serialize())
+    }
 }
+
+/** Internal conversion from the solana-kmp shape back to Artemis instructions. */
+internal fun TransactionInstruction.toArtemis(): ArtemisInstruction = ArtemisInstruction(
+    programId = com.selenus.artemis.runtime.Pubkey(programId.toByteArray()),
+    accounts = keys.map { meta ->
+        ArtemisAccountMeta(
+            pubkey = com.selenus.artemis.runtime.Pubkey(meta.publicKey.toByteArray()),
+            isSigner = meta.isSigner,
+            isWritable = meta.isWritable,
+        )
+    },
+    data = data,
+)
 
 /**
  * solana-kmp compatible `SerializedTransaction`.

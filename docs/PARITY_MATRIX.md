@@ -118,6 +118,62 @@ Two orthogonal labels appear throughout the docs:
 | `SeedVault.isAvailable` / `AccessType` | `interop/artemis-seedvault-compat` | Verified |
 | AIDL `ISeedVaultService` 9-method shape | `mobile/artemis-seed-vault/src/main/aidl` | Verified (reconciled with internal Kotlin proxy) |
 
+## solana-kmp compat (drop-in path)
+
+| Capability | Artemis module | Status |
+|---|---|---|
+| `foundation.metaplex.solanapublickeys.PublicKey` (both ctors + findProgramAddress / createProgramAddress) | `interop/artemis-solana-kmp-compat` | Verified |
+| `PUBLIC_KEY_LENGTH`, `defaultPublicKey()`, `HasPublicKey` | `interop/artemis-solana-kmp-compat` | Verified |
+| `foundation.metaplex.base58.Base58` object + `encodeToBase58String` / `decodeBase58` / checksum variants | `interop/artemis-solana-kmp-compat` | Verified |
+| `foundation.metaplex.amount.Amount` data class + `Lamports` / `SOL` factories | `interop/artemis-solana-kmp-compat` | Verified |
+| `lamports` / `sol` / `createAmount` / `createAmountFromDecimals` / `percentAmount` / `tokenAmount` | `interop/artemis-solana-kmp-compat` | Verified |
+| Amount arithmetic (`addAmounts`, `subtractAmounts`, `multiplyAmount`, `divideAmount`, `absoluteAmount`) | `interop/artemis-solana-kmp-compat` | Verified |
+| Amount comparison + predicates (`compareAmounts`, `isEqualToAmount`, `isZero/Positive/NegativeAmount`, `sameAmounts`, `isAmount`) | `interop/artemis-solana-kmp-compat` | Verified |
+| Amount assertions + formatting (`assertAmount`, `assertSolAmount`, `amountToString`, `amountToNumber`, `displayAmount`) | `interop/artemis-solana-kmp-compat` | Verified |
+| `Commitment` enum, `Encoding` enum | `interop/artemis-solana-kmp-compat` | Verified |
+| `Cluster` sealed class (`MainnetBeta`, `Devnet`, `Testnet`, `Localnet`, `Custom`) + `resolveClusterFromEndpoint` | `interop/artemis-solana-kmp-compat` | Verified |
+| `RpcGetAccountInfoConfiguration`, `RpcGetMultipleAccountsConfiguration`, `RpcGetProgramAccountsConfiguration`, `RpcGetLatestBlockhashConfiguration`, `RpcGetSlotConfiguration`, `RpcGetBalanceConfiguration`, `RpcRequestAirdropConfiguration`, `RpcSendTransactionConfiguration` | `interop/artemis-solana-kmp-compat` | Verified |
+| `RpcDataFilter` sealed (`Size`, `Memcmp`), `MemcmpFilter`, `RpcDataSlice` | `interop/artemis-solana-kmp-compat` | Verified |
+| `BlockhashWithExpiryBlockHeight(blockhash, lastValidBlockHeight)` | `interop/artemis-solana-kmp-compat` | Verified |
+| `RpcInterface.getProgramAccounts` + `AccountInfoWithPublicKey` | `interop/artemis-solana-kmp-compat` | Verified |
+| `Transaction` surface (addInstruction / add / setRecentBlockHash / sign / partialSign / addSignature / verifySignatures / compileMessage / serializeMessage / serialize(SerializeConfig)) | `interop/artemis-solana-kmp-compat` | Verified |
+| `SerializeConfig(requireAllSignatures, verifySignatures)` | `interop/artemis-solana-kmp-compat` | Verified |
+| `Message` interface + `SolanaMessage` (isAccountSigner / isAccountWritable / isProgramId / programIds / nonProgramIds / serialize / setFeePayer) | `interop/artemis-solana-kmp-compat` | Verified |
+| `MessageHeader(numRequiredSignatures, numReadonlySignedAccounts, numReadonlyUnsignedAccounts)` with `toByteArray` | `interop/artemis-solana-kmp-compat` | Verified |
+| `CompiledInstruction`, `SignaturePubkeyPair`, `NonceInformation`, `Shortvec.encodeLength/decodeLength` | `interop/artemis-solana-kmp-compat` | Verified |
+| `foundation.metaplex.solana.programs.SystemProgram` (`transfer`, `createAccount`, `PROGRAM_ID`) | `interop/artemis-solana-kmp-compat` | Verified |
+| `foundation.metaplex.solana.programs.MemoProgram.writeUtf8` | `interop/artemis-solana-kmp-compat` | Verified |
+| `Keypair` (generate / publicKey / secretKey / sign), `SolanaEddsa.sign/verify/publicKeyFromSeed` | `interop/artemis-solana-kmp-compat` | Verified |
+| `RPC(rpcUrl)` with `asArtemis()` escape hatch | `interop/artemis-solana-kmp-compat` | Verified |
+| `ReadApiInterface` + `ReadApiDecorator` (getAsset, getAssetsByOwner, getAssetsByGroup, getAssetProof) | `interop/artemis-solana-kmp-compat` | Verified |
+
+## Sol4k compat (drop-in path)
+
+| Capability | Artemis module | Status |
+|---|---|---|
+| `org.sol4k.Connection` (22+ methods: getBalance, getLatestBlockhash, getAccountInfo, getMultipleAccounts, sendTransaction, simulateTransaction, getFeeForMessage, getSignaturesForAddress, getRecentPrioritizationFees, getEpochInfo, getVersion, getIdentity, getHealth, getTransactionCount, requestAirdrop, getMinimumBalanceForRentExemption, getTokenAccountBalance, getTokenSupply, isBlockhashValid) | `interop/artemis-sol4k-compat` | Verified |
+| `org.sol4k.PublicKey` with `findProgramAddress` + `findProgramDerivedAddress` (ATA helper) | `interop/artemis-sol4k-compat` | Verified |
+| `org.sol4k.Keypair` (generate, fromSecretKey, sign, publicKey, secret) | `interop/artemis-sol4k-compat` | Verified |
+| `Transaction` (sign, addSignature, serialize, `from(String)`) | `interop/artemis-sol4k-compat` | Verified |
+| `VersionedTransaction` (sign, addSignature, serialize, `calculateFee(lamportsPerSignature)`, `from(String)`) | `interop/artemis-sol4k-compat` | Verified |
+| `TransactionMessage` (newMessage, deserialize, withNewBlockhash, serialize) | `interop/artemis-sol4k-compat` | Verified |
+| Instruction builders (`TransferInstruction`, `SplTransferInstruction`, `Token2022TransferInstruction`, `CreateAssociatedTokenAccountInstruction`, `CreateAssociatedToken2022AccountInstruction`, `SetComputeUnitLimitInstruction`, `SetComputeUnitPriceInstruction`) | `interop/artemis-sol4k-compat` | Verified |
+| `Constants` (SYSTEM_PROGRAM, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, COMPUTE_BUDGET_PROGRAM_ID, SYSVAR_RENT_ADDRESS, PUBLIC_KEY_LENGTH, SIGNATURE_LENGTH) | `interop/artemis-sol4k-compat` | Verified |
+| `Base58`, `Binary` (uint32/int64/uint16/encodeLength/decodeLength), `Convert` (lamport/sol/micro-lamport) | `interop/artemis-sol4k-compat` | Verified |
+| `Commitment` enum, `RpcUrl` enum, `Health` enum, API types (`AccountInfo`, `Blockhash`, `TokenAccountBalance`, `TokenAmount`, `TransactionSignature`, `TransactionSimulation`, `PrioritizationFee`, `Version`, `EpochInfo`) | `interop/artemis-sol4k-compat` | Verified |
+| `RpcException`, `SerializationException` | `interop/artemis-sol4k-compat` | Verified |
+
+## Metaplex Android compat (drop-in path)
+
+| Capability | Artemis module | Status |
+|---|---|---|
+| `com.metaplex.lib.Metaplex` entry point with `connection`, `identityDriver`, `nft`, `tokens`, `das`, `candyMachinesV2`, `candyMachines` modules | `interop/artemis-metaplex-android-compat` | Verified |
+| `NftModule` (findByMint, findAllByOwner, findAllByMintList; findAllByCreator and findAllByUpdateAuthority degrade to empty when no DAS is available) | `interop/artemis-metaplex-android-compat` | Partial |
+| `TokensModule.findByMint` | `interop/artemis-metaplex-android-compat` | Verified |
+| `DasModule` (assetsByOwner, asset) | `interop/artemis-metaplex-android-compat` | Verified |
+| Token Metadata instruction builders (createMetadataAccountV3, createMasterEditionV3, updateMetadataAccountV2, signMetadata, verifyCollection, unverifyCollection, setAndVerifyCollection, verifySizedCollectionItem, approveCollectionAuthority, revokeCollectionAuthority) | `compatibility/artemis-nft-compat` | Verified |
+| pNFT support (token record PDA, TokenRecordParser, collection authority record PDA, CollectionAuthorityRecordParser) | `compatibility/artemis-nft-compat` | Verified |
+
 ## Common programs
 
 | Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
