@@ -56,7 +56,7 @@ val artemisModuleDescriptions: Map<String, String> = mapOf(
     "artemis-batch" to "Batch transaction orchestration with per-transaction result tracking (success, failure, signed-but-not-broadcast) and XOR invariants.",
     "artemis-scheduler" to "Predictive transaction scheduler that picks submission slots based on recent block production and fee pressure.",
     "artemis-offline" to "Offline transaction queue with pluggable storage and a TransactionSubmitter that drains the queue when connectivity returns.",
-    "artemis-portfolio" to "Live wallet portfolio tracker: SOL and SPL balances refreshed via WebSocket account subscriptions, with debounced updates and initial-state hydration.",
+    "artemis-portfolio" to "Wallet portfolio tracking: RPC-based balance fetcher, in-memory portfolio state, asset model, and a WebSocket-driven live tracker with debounced updates.",
     "artemis-replay" to "Deterministic replay recorder and player: capture game frames and instructions, then replay for bug reproduction, desync debugging, and anti-cheat telemetry.",
     "artemis-gaming" to "Gaming primitives: session keys, adaptive priority-fee optimizer, address lookup table session builder and executor, Merkle reward distribution, verifiable randomness, and game state proofs.",
     "artemis-depin" to "DePIN helpers: device attestation, device identity, and batched telemetry submission for decentralized physical infrastructure workloads.",
