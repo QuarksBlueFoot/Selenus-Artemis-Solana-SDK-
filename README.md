@@ -20,7 +20,7 @@ coroutines, five version matrices, and no shared reliability story.
 
 Artemis is one dependency graph, one coroutine-first surface, and one
 `ArtemisMobile.create()` call for the full stack. Every module pulls its
-weight: `artemis-rpc` ships 110 typed JSON-RPC methods with a batch DSL
+weight: `artemis-rpc` ships 90+ typed JSON-RPC methods with a batch DSL
 and a circuit breaker, `artemis-ws` runs a real WebSocket with
 deterministic resubscribe on reconnect, `artemis-vtx` drives a
 simulate + retry + priority-fee transaction pipeline, and

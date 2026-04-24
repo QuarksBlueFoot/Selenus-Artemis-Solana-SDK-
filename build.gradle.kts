@@ -14,6 +14,75 @@ allprojects{
     } 
 }
 
+// Per-module POM descriptions. Maven Central requires a non-empty, meaningful
+// description on every artifact. Keep entries short (one sentence) and code
+// accurate: each string should describe what the module actually ships, not
+// what the roadmap promises. When a new publishable module is added, add an
+// entry here. The fallback prints the project name so a missing entry is
+// noisy in the staging repo rather than silent in Central.
+val artemisModuleDescriptions: Map<String, String> = mapOf(
+    // Foundation
+    "artemis-core" to "Core Solana primitives: PublicKey, Keypair, base58, Ed25519, commitment levels, and shared types used by every Artemis module.",
+    "artemis-rpc" to "Solana JSON-RPC client over Ktor with full method coverage, retry and backoff, rate-limit handling, and structured error mapping.",
+    "artemis-ws" to "Solana WebSocket subscriptions (accountSubscribe, signatureSubscribe, programLogsSubscribe) with deterministic reconnect, replay, and epoch counters.",
+    "artemis-tx" to "Legacy transaction builder, signer, and serializer for classic Solana message format.",
+    "artemis-vtx" to "Versioned transaction (v0) builder with address lookup table support, compiled instructions, and deterministic wire encoding.",
+    "artemis-programs" to "Typed instruction builders for System, SPL Token, Stake, Vote, Memo, BPF Loader, and Address Lookup Table programs.",
+    "artemis-errors" to "Structured Solana error taxonomy: program errors, RPC errors, simulation errors, and user-actionable error messages.",
+    "artemis-logging" to "Pluggable logging facade with sinks for console, file, Logcat, and OSLog, plus redaction for secrets and pubkeys.",
+    "artemis-compute" to "Compute budget instruction builders: SetComputeUnitLimit, SetComputeUnitPrice, RequestHeapFrame, and priority-fee helpers.",
+
+    // Mobile
+    "artemis-wallet" to "Wallet abstraction with local in-memory signers and injectable WalletAdapter/Signer backends. Platform agnostic entry point for mobile wallet flows.",
+    "artemis-wallet-mwa-android" to "Mobile Wallet Adapter 2.0 client for Android: connect, reauthorize, sign-in with Solana, sign transactions, sign messages, and batch send.",
+    "artemis-seed-vault" to "Solana Mobile Seed Vault integration: authorization, key discovery, transaction signing, and permission lifecycle management.",
+
+    // Ecosystem
+    "artemis-token2022" to "SPL Token-2022 client with extensions: transfer fee, interest bearing, default account state, metadata pointer, and confidential transfer scaffolding.",
+    "artemis-metaplex" to "Metaplex Token Metadata client: create and update metadata accounts, verify collections, master-edition instructions, and fetch on-chain + off-chain JSON metadata.",
+    "artemis-mplcore" to "Metaplex MPL-Core asset client: create, update, transfer, burn, and plugin management for the new core NFT standard.",
+    "artemis-cnft" to "Compressed NFT support: DAS (Digital Asset Standard) API client, Merkle proof verification, and transfer instruction builders.",
+    "artemis-candy-machine" to "Candy Machine v3 client: initialize, mint, update guards, and fetch state for Metaplex candy machines.",
+    "artemis-solana-pay" to "Solana Pay URL builder and parser: transfer requests, transaction requests, reference tracking, and validation.",
+    "artemis-anchor" to "Anchor-compatible client: IDL parsing, account deserialization, instruction encoding with 8-byte discriminators, and event decoding.",
+    "artemis-jupiter" to "Jupiter aggregator client (v6): quote, swap, streaming quote updates, route visualization, and price-impact analysis.",
+    "artemis-actions" to "Solana Actions and Blinks client: parse action URLs, fetch and execute action endpoints, actions.json manifest lookup, QR code rendering, and deep-link helpers.",
+
+    // Advanced
+    "artemis-privacy" to "Privacy primitives: stealth addresses, ring signatures, encrypted memos, X25519 key exchange, Shamir secret sharing, and mixing-pool helpers.",
+    "artemis-streaming" to "Zero-copy account streaming: direct-buffer field reads, delta detection, ring-buffered history, and backpressure-aware Flows for real-time account updates on mobile without GC pressure.",
+    "artemis-universal" to "Universal program client that calls any Solana program without an IDL via runtime discriminator discovery, account pattern recognition, and schema caching.",
+    "artemis-simulation" to "Predictive transaction analysis: simulation, compute-unit estimation, success-probability scoring, confirmation-time prediction, MEV vulnerability detection, and optimal submission timing.",
+    "artemis-batch" to "Batch transaction orchestration with per-transaction result tracking (success, failure, signed-but-not-broadcast) and XOR invariants.",
+    "artemis-scheduler" to "Predictive transaction scheduler that picks submission slots based on recent block production and fee pressure.",
+    "artemis-offline" to "Offline transaction queue with pluggable storage and a TransactionSubmitter that drains the queue when connectivity returns.",
+    "artemis-portfolio" to "Live wallet portfolio tracker: SOL and SPL balances refreshed via WebSocket account subscriptions, with debounced updates and initial-state hydration.",
+    "artemis-replay" to "Deterministic replay recorder and player: capture game frames and instructions, then replay for bug reproduction, desync debugging, and anti-cheat telemetry.",
+    "artemis-gaming" to "Gaming primitives: session keys, adaptive priority-fee optimizer, address lookup table session builder and executor, Merkle reward distribution, verifiable randomness, and game state proofs.",
+    "artemis-depin" to "DePIN helpers: device attestation, device identity, and batched telemetry submission for decentralized physical infrastructure workloads.",
+    "artemis-nlp" to "Natural-language transaction builder: parse instructions like 'send 1 SOL to X' into executable transactions, with on-chain entity resolution for symbols and names.",
+    "artemis-intent" to "Transaction intent decoder: parses SystemProgram, SPL Token, Token-2022, Stake, Memo, ATA, and Compute Budget instructions back into typed `TransactionIntent` records via a pluggable `ProgramRegistry`.",
+    "artemis-preview" to "Human-readable transaction preview driven by on-chain simulation: decodes instructions and summarizes expected effects.",
+
+    // Compatibility / Presets
+    "artemis-discriminators" to "Shared Anchor discriminator catalog: precomputed 8-byte tags for common Anchor instructions and account types.",
+    "artemis-nft-compat" to "Token Metadata Borsh parsers: decode on-chain Metadata, MasterEdition, and CollectionAuthorityRecord accounts into typed models.",
+    "artemis-tx-presets" to "Curated transaction presets: common SOL and SPL flows preassembled with sane defaults for quick integration.",
+    "artemis-candy-machine-presets" to "Candy Machine configuration presets covering the common mint flows (public sale, allowlist, gated).",
+    "artemis-presets" to "Top-level preset bundle that pulls in transaction and candy-machine presets under one import.",
+
+    // Interop / compat shims
+    "artemis-seedvault-compat" to "Drop-in replacement for com.solanamobile:seedvault-wallet-sdk: same package and class names, routed to Artemis Seed Vault.",
+    "artemis-mwa-compat" to "Drop-in replacement for com.solanamobile:mobile-wallet-adapter-clientlib: mirrors the upstream client API backed by Artemis MWA.",
+    "artemis-mwa-clientlib-compat" to "Legacy package alias for the MWA clientlib shim. Pulled in automatically for apps that reference the older Gradle coordinate.",
+    "artemis-mwa-common-compat" to "Shared MWA protocol types (Account, AuthorizationResult, SignInPayload) exposed under the upstream package for source compatibility.",
+    "artemis-sol4k-compat" to "Sol4k source-compat shim: exposes sol4k API shapes (Connection, Keypair, PublicKey, Transaction) backed by Artemis.",
+    "artemis-solana-kmp-compat" to "solana-kmp source-compat shim for projects migrating from the Solana KMP fork.",
+    "artemis-metaplex-android-compat" to "metaplex-android source-compat shim: routes Metaplex calls through artemis-metaplex.",
+    "artemis-web3-solana-compat" to "web3-solana source-compat shim that mirrors the small web3-solana Android surface on top of Artemis.",
+    "artemis-rpc-core-compat" to "rpc-core source-compat shim that exposes the upstream rpc-core API backed by artemis-rpc."
+)
+
 subprojects {
     if (project.name == "artemis-react-native") return@subprojects
     if (project.name == "artemis-integration-tests") return@subprojects
@@ -22,7 +91,9 @@ subprojects {
     val pomConfig: MavenPublication.() -> Unit = {
         pom {
             name.set(project.name)
-            description.set("Artemis Solana SDK module: ${project.name}")
+            val moduleDescription = artemisModuleDescriptions[project.name]
+                ?: "Artemis Solana SDK module: ${project.name}"
+            description.set(moduleDescription)
             url.set("https://github.com/QuarksBlueFoot/Selenus-Artemis-Solana-SDK-")
             licenses {
                 license {
@@ -47,9 +118,35 @@ subprojects {
 
     val publishingConfig: PublishingExtension.() -> Unit = {
         repositories {
+            // Local staging mirror — always written. Useful for inspecting the
+            // artifacts that WILL be uploaded (`build/staging-deploy/...`)
+            // before trusting a remote publish.
             maven {
-                name = "Staging"
-                url = uri(layout.buildDirectory.dir("../../build/staging-deploy"))
+                name = "LocalStaging"
+                url = uri(rootProject.layout.buildDirectory.dir("staging-deploy"))
+            }
+
+            // Sonatype OSSRH staging endpoint exposed by the new Central
+            // Portal. Publishing here drops the artifacts into the namespace
+            // `xyz.selenus` staging bucket; the publish workflow then POSTs
+            // to `/manual/upload/defaultRepository/xyz.selenus` to promote
+            // from staging to Central. Credentials match the ones on
+            // https://central.sonatype.com/account (CENTRAL_USERNAME /
+            // CENTRAL_PASSWORD). Skipped when creds aren't set so local
+            // `./gradlew publish` still works offline.
+            val centralUser = findProperty("CENTRAL_USERNAME") as String?
+                ?: System.getenv("CENTRAL_USERNAME")
+            val centralPass = findProperty("CENTRAL_PASSWORD") as String?
+                ?: System.getenv("CENTRAL_PASSWORD")
+            if (!centralUser.isNullOrBlank() && !centralPass.isNullOrBlank()) {
+                maven {
+                    name = "CentralPortalStaging"
+                    url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
+                    credentials {
+                        username = centralUser
+                        password = centralPass
+                    }
+                }
             }
         }
     }
