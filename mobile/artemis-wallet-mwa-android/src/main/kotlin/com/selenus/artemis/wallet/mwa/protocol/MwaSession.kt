@@ -131,7 +131,12 @@ class MwaSession internal constructor(
       return MwaSession(transport = transport, cipher = Aes128Gcm(ByteArray(16)))
     }
 
-    internal suspend fun connectLocal(
+    /**
+     * Public so the wallet-side walletlib's round-trip integration test
+     * can drive the dApp end without going through Activity/Intent
+     * machinery. Production dApp callers still go through [MwaClient].
+     */
+    suspend fun connectLocal(
       server: MwaWebSocketServer,
       associationKeypair: java.security.KeyPair,
       protocolVersionMajor: Int = 2,

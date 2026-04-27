@@ -3,7 +3,12 @@ package com.selenus.artemis.wallet.mwa.protocol
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-internal object HkdfSha256 {
+/**
+ * Public so the wallet-side walletlib (a separate Gradle module) can
+ * reuse the same HKDF-SHA256 implementation rather than carrying a
+ * second copy that could drift on the test vectors.
+ */
+object HkdfSha256 {
   /**
    * RFC 5869 HKDF-SHA256 `Extract-then-Expand`.
    *

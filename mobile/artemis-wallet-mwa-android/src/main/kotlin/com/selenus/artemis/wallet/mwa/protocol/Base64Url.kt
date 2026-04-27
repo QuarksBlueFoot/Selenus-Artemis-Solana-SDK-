@@ -2,7 +2,11 @@ package com.selenus.artemis.wallet.mwa.protocol
 
 import java.util.Base64
 
-internal object Base64Url {
+/**
+ * Public so the wallet-side walletlib (a separate Gradle module) can
+ * decode the `association` URI parameter against the same encoder.
+ */
+object Base64Url {
   private val enc = Base64.getUrlEncoder().withoutPadding()
   private val dec = Base64.getUrlDecoder()
 

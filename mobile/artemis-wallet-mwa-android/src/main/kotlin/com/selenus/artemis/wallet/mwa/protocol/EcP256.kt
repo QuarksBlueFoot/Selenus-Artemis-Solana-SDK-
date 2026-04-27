@@ -20,7 +20,13 @@ import javax.crypto.KeyAgreement
  * - HELLO_REQ uses an ECDSA-SHA256 signature over the X9.62 public key bytes.
  * - Signatures are P1363 encoded (r||s), 32 bytes each.
  */
-internal object EcP256 {
+/**
+ * Public so the wallet-side walletlib (a separate Gradle module) can
+ * reuse the curve / signing primitives. Re-exported with the same
+ * shape as the dApp-side helpers so behavior stays bit-identical
+ * across the two roles.
+ */
+object EcP256 {
   private val curve = ECGenParameterSpec("secp256r1")
 
   fun generateKeypair(): KeyPair {

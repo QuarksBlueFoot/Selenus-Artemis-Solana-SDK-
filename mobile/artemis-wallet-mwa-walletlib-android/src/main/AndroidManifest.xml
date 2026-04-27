@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Wallet-role MWA library manifest.
+
+  Apps that integrate this module to act as a wallet must declare an
+  Activity (typically subclassing MwaWalletActivity, or wrapping an
+  AssociationUri.parse call themselves) with an intent-filter for the
+  `solana-wallet:` scheme. See MwaWalletActivity KDoc for the exact
+  snippet.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" />

@@ -12,7 +12,12 @@ import java.security.MessageDigest
 import java.util.Base64
 import java.util.Scanner
 
-internal interface MwaTransport {
+/**
+ * Public so the wallet-side walletlib (a separate Gradle module)
+ * round-trip test can drive the dApp end. Production callers go
+ * through [MwaSession] which hides this seam.
+ */
+interface MwaTransport {
     fun send(data: ByteArray)
     fun close(code: Int, reason: String)
     val incoming: Channel<ByteArray>
@@ -30,7 +35,7 @@ internal interface MwaTransport {
  * - Sends periodic ping frames and enforces a pong timeout so idle stale
  *   sockets tear down instead of hanging the dapp indefinitely.
  */
-internal class MwaWebSocketServer {
+class MwaWebSocketServer {
     private var serverSocket: ServerSocket? = null
 
     fun bind(port: Int = 0): Int {

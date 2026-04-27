@@ -39,11 +39,13 @@ project(":artemis-compute").projectDir    = file("foundation/artemis-compute")
 include(":artemis-wallet")
 include(":artemis-wallet-mwa-android")
 include(":artemis-seed-vault")
+include(":artemis-wallet-mwa-walletlib-android")
 // include(":artemis-compose")
 
-project(":artemis-wallet").projectDir             = file("mobile/artemis-wallet")
-project(":artemis-wallet-mwa-android").projectDir = file("mobile/artemis-wallet-mwa-android")
-project(":artemis-seed-vault").projectDir         = file("mobile/artemis-seed-vault")
+project(":artemis-wallet").projectDir                       = file("mobile/artemis-wallet")
+project(":artemis-wallet-mwa-android").projectDir           = file("mobile/artemis-wallet-mwa-android")
+project(":artemis-seed-vault").projectDir                   = file("mobile/artemis-seed-vault")
+project(":artemis-wallet-mwa-walletlib-android").projectDir = file("mobile/artemis-wallet-mwa-walletlib-android")
 // project(":artemis-compose").projectDir          = file("mobile/artemis-compose")
 
 // =============================================================================
@@ -131,6 +133,7 @@ include(":artemis-web3-solana-compat")
 include(":artemis-rpc-core-compat")
 include(":artemis-mwa-common-compat")
 include(":artemis-mwa-clientlib-compat")
+include(":artemis-mwa-walletlib-compat")
 
 project(":artemis-seedvault-compat").projectDir         = file("interop/artemis-seedvault-compat")
 project(":artemis-mwa-compat").projectDir               = file("interop/artemis-mwa-compat")
@@ -141,6 +144,7 @@ project(":artemis-web3-solana-compat").projectDir        = file("interop/artemis
 project(":artemis-rpc-core-compat").projectDir           = file("interop/artemis-rpc-core-compat")
 project(":artemis-mwa-common-compat").projectDir         = file("interop/artemis-mwa-common-compat")
 project(":artemis-mwa-clientlib-compat").projectDir      = file("interop/artemis-mwa-clientlib-compat")
+project(":artemis-mwa-walletlib-compat").projectDir      = file("interop/artemis-mwa-walletlib-compat")
 
 // =============================================================================
 // Testing

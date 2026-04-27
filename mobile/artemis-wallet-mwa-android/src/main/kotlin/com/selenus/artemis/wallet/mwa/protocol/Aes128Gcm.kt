@@ -5,7 +5,16 @@ import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-internal class Aes128Gcm(private val key16: ByteArray) {
+/**
+ * AES-128-GCM cipher primitive used by the MWA wire format.
+ *
+ * Public so the wallet-side walletlib (a separate Gradle module) can
+ * reuse the exact same encryption layer instead of reimplementing it
+ * with subtly different IV / AAD handling. Marked open: do not pass
+ * keys with side channels or tweak the seq encoding without updating
+ * the inverse responder in the walletlib at the same time.
+ */
+class Aes128Gcm(private val key16: ByteArray) {
   private val rng = SecureRandom()
 
   fun encrypt(seq: Int, plaintext: ByteArray): ByteArray {
