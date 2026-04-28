@@ -15,7 +15,9 @@ package org.sol4k
 import com.selenus.artemis.programs.AssociatedToken as ArtemisAta
 import com.selenus.artemis.programs.ProgramIds
 import com.selenus.artemis.programs.SystemProgram as ArtemisSystemProgram
+import com.selenus.artemis.programs.Token2022Program as ArtemisToken2022Program
 import com.selenus.artemis.programs.TokenProgram as ArtemisTokenProgram
+import com.selenus.artemis.runtime.Pda
 import com.selenus.artemis.runtime.Pubkey as ArtemisPubkey
 import com.selenus.artemis.tx.AccountMeta as ArtemisAccountMeta
 import com.selenus.artemis.tx.Instruction as ArtemisInstruction
@@ -44,6 +46,30 @@ data class AccountMeta @JvmOverloads constructor(
             signer = meta.isSigner,
             writable = meta.isWritable
         )
+
+        /**
+         * Convenience factory for an account that signs but is not
+         * writable. Mirrors upstream sol4k's
+         * `AccountMeta.signerAndWritable` companion factory naming.
+         */
+        @JvmStatic
+        fun signerAndWritable(publicKey: PublicKey): AccountMeta =
+            AccountMeta(publicKey, signer = true, writable = true)
+
+        /** Convenience factory for a writable, non-signing account. */
+        @JvmStatic
+        fun writable(publicKey: PublicKey): AccountMeta =
+            AccountMeta(publicKey, signer = false, writable = true)
+
+        /** Convenience factory for a read-only signer (multisig co-signer). */
+        @JvmStatic
+        fun signer(publicKey: PublicKey): AccountMeta =
+            AccountMeta(publicKey, signer = true, writable = false)
+
+        /** Convenience factory for a plain read-only account. */
+        @JvmStatic
+        fun readonly(publicKey: PublicKey): AccountMeta =
+            AccountMeta(publicKey, signer = false, writable = false)
     }
 }
 
@@ -217,6 +243,128 @@ class CreateAssociatedTokenAccountInstruction(
     }
     override val data: ByteArray get() = compiled.data
     override fun toArtemis(): ArtemisInstruction = compiled
+}
+
+/**
+ * Open base class for SPL Token / Token-2022 transfer instructions.
+ * Mirrors upstream sol4k's `TokenTransferInstruction` so callers that
+ * type their parameters as the open base keep compiling even when the
+ * concrete subclass swaps between standard SPL and Token-2022.
+ */
+abstract class TokenTransferInstruction(
+    @JvmField val from: PublicKey,
+    @JvmField val to: PublicKey,
+    @JvmField val mint: PublicKey,
+    @JvmField val owner: PublicKey,
+    @JvmField val amount: Long,
+    @JvmField val decimals: Int,
+    @JvmField val signers: List<PublicKey> = emptyList()
+) : Instruction
+
+/**
+ * sol4k compatible `Token2022TransferInstruction` for a Token-2022
+ * `transferChecked` (always; Token-2022 enforces decimals checking).
+ *
+ * Matches upstream signature:
+ *   `(from, to, mint, owner, amount, decimals, signers)`.
+ */
+class Token2022TransferInstruction @JvmOverloads constructor(
+    from: PublicKey,
+    to: PublicKey,
+    mint: PublicKey,
+    owner: PublicKey,
+    amount: Long,
+    decimals: Int,
+    signers: List<PublicKey> = emptyList()
+) : TokenTransferInstruction(from, to, mint, owner, amount, decimals, signers) {
+
+    private val compiled: ArtemisInstruction = run {
+        val base = ArtemisToken2022Program.transferChecked(
+            source = from.toArtemis(),
+            mint = mint.toArtemis(),
+            destination = to.toArtemis(),
+            owner = owner.toArtemis(),
+            amount = amount,
+            decimals = decimals
+        )
+        if (signers.isEmpty()) base
+        else {
+            val extraSigners = signers.map { pk ->
+                ArtemisAccountMeta(pk.toArtemis(), isSigner = true, isWritable = false)
+            }
+            ArtemisInstruction(
+                programId = base.programId,
+                accounts = base.accounts + extraSigners,
+                data = base.data
+            )
+        }
+    }
+
+    override val programId: PublicKey by lazy { PublicKey(compiled.programId.bytes) }
+    override val keys: List<AccountMeta> by lazy {
+        compiled.accounts.map { AccountMeta.fromArtemis(it) }
+    }
+    override val data: ByteArray get() = compiled.data
+    override fun toArtemis(): ArtemisInstruction = compiled
+}
+
+/**
+ * sol4k compatible `CreateAssociatedToken2022AccountInstruction`.
+ *
+ * Matches upstream 4-arg constructor: (payer, associatedToken, owner,
+ * mint), but pins the inner token program to TOKEN_2022 so the ATA
+ * is created under the Token-2022 program. Account derivation also
+ * uses TOKEN_2022 as a seed so the ATA address matches what
+ * Token-2022's transferChecked expects.
+ */
+class CreateAssociatedToken2022AccountInstruction(
+    val payer: PublicKey,
+    val associatedToken: PublicKey,
+    val owner: PublicKey,
+    val mint: PublicKey
+) : Instruction {
+
+    private val compiled: ArtemisInstruction = run {
+        val accounts = listOf(
+            ArtemisAccountMeta(payer.toArtemis(), isSigner = true, isWritable = true),
+            ArtemisAccountMeta(associatedToken.toArtemis(), isSigner = false, isWritable = true),
+            ArtemisAccountMeta(owner.toArtemis(), isSigner = false, isWritable = false),
+            ArtemisAccountMeta(mint.toArtemis(), isSigner = false, isWritable = false),
+            ArtemisAccountMeta(ProgramIds.SYSTEM_PROGRAM, isSigner = false, isWritable = false),
+            ArtemisAccountMeta(ProgramIds.TOKEN_2022_PROGRAM, isSigner = false, isWritable = false)
+        )
+        ArtemisInstruction(
+            programId = ProgramIds.ASSOCIATED_TOKEN_PROGRAM,
+            accounts = accounts,
+            data = ByteArray(0)
+        )
+    }
+
+    override val programId: PublicKey by lazy { PublicKey(compiled.programId.bytes) }
+    override val keys: List<AccountMeta> by lazy {
+        compiled.accounts.map { AccountMeta.fromArtemis(it) }
+    }
+    override val data: ByteArray get() = compiled.data
+    override fun toArtemis(): ArtemisInstruction = compiled
+
+    companion object {
+        /**
+         * Derive the Token-2022 ATA for `(owner, mint)`. Returns the
+         * `(address, bump)` pair upstream callers use. The Token-2022
+         * ATA seed differs from standard SPL only by the token program
+         * id used in the seed; everything else is identical.
+         */
+        @JvmStatic
+        fun deriveAddress(owner: PublicKey, mint: PublicKey): PublicKey {
+            val seeds = listOf(
+                owner.toArtemis().bytes,
+                ProgramIds.TOKEN_2022_PROGRAM.bytes,
+                mint.toArtemis().bytes
+            )
+            val pda = Pda.findProgramAddress(seeds, ProgramIds.ASSOCIATED_TOKEN_PROGRAM)
+            return PublicKey(pda.address.bytes)
+        }
+    }
 }
 
 /**

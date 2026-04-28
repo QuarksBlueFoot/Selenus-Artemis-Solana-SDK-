@@ -66,7 +66,7 @@ class PublicKey private constructor(internal val inner: ArtemisPubkey) {
                 programId = programId.inner
             )
             return ProgramDerivedAddress(
-                publicKey = PublicKey(artemisResult.address),
+                address = PublicKey(artemisResult.address),
                 nonce = artemisResult.bump.toInt()
             )
         }
@@ -93,10 +93,36 @@ class PublicKey private constructor(internal val inner: ArtemisPubkey) {
                 programId = ASSOCIATED_TOKEN_PROGRAM_ID.inner
             )
             return ProgramDerivedAddress(
-                publicKey = PublicKey(result.address),
+                address = PublicKey(result.address),
                 nonce = result.bump.toInt()
             )
         }
+
+        /**
+         * Read 32 bytes of public key starting at [offset] from
+         * [bytes]. Mirrors upstream sol4k `PublicKey.readPubkey` /
+         * `solana-kmp` static helper of the same name. Returns the
+         * decoded [PublicKey] without copying when the input is exactly
+         * 32 bytes long; otherwise allocates a 32-byte slice.
+         */
+        @JvmStatic
+        @JvmOverloads
+        fun readPubkey(bytes: ByteArray, offset: Int = 0): PublicKey {
+            require(offset >= 0 && offset + 32 <= bytes.size) {
+                "readPubkey($offset, ${bytes.size}): out of range"
+            }
+            val slice = if (offset == 0 && bytes.size == 32) bytes
+            else bytes.copyOfRange(offset, offset + 32)
+            return PublicKey(slice)
+        }
+
+        /**
+         * Decode a base58-encoded public key. Equivalent to
+         * `PublicKey(string)`; matches upstream sol4k's `valueOf`
+         * companion factory naming.
+         */
+        @JvmStatic
+        fun valueOf(base58: String): PublicKey = PublicKey(base58)
 
         /** The standard SPL Token program ID. */
         @JvmField

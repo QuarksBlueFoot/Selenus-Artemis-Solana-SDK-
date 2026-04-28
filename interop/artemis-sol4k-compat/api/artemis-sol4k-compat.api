@@ -166,37 +166,54 @@
   L122  val confirmationStatus: String?
 
 ## commonMain/kotlin/org/sol4k/Instructions.kt (package org.sol4k)
-  L30  data class AccountMeta @JvmOverloads constructor(
-  L31  val publicKey: PublicKey,
-  L32  val signer: Boolean = false,
-  L33  val writable: Boolean = false
-  L51  interface Instruction {
-  L52  val programId: PublicKey
-  L53  val keys: List<AccountMeta>
-  L54  val data: ByteArray
-  L55  fun toArtemis(): ArtemisInstruction
-  L64  data class BaseInstruction(
-  L79  var result = programId.hashCode()
-  L103  class TransferInstruction(
-  L104  val from: PublicKey,
-  L105  val to: PublicKey,
-  L106  val lamports: Long
-  L135  class SplTransferInstruction @JvmOverloads constructor(
-  L136  val from: PublicKey,
-  L137  val to: PublicKey,
-  L138  val mint: PublicKey,
-  L139  val owner: PublicKey,
-  L140  val amount: Long,
-  L141  val decimals: Int,
-  L142  val signers: List<PublicKey> = emptyList()
-  L146  val base = if (decimals >= 0) {
-  L168  val extraSigners = signers.map { pk ->
-  L196  class CreateAssociatedTokenAccountInstruction(
-  L197  val payer: PublicKey,
-  L198  val associatedToken: PublicKey,
-  L199  val owner: PublicKey,
-  L200  val mint: PublicKey
-  L225  object ProgramIdsCompat {
+  L32  data class AccountMeta @JvmOverloads constructor(
+  L33  val publicKey: PublicKey,
+  L34  val signer: Boolean = false,
+  L35  val writable: Boolean = false
+  L56  fun signerAndWritable(publicKey: PublicKey): AccountMeta =
+  L61  fun writable(publicKey: PublicKey): AccountMeta =
+  L66  fun signer(publicKey: PublicKey): AccountMeta =
+  L71  fun readonly(publicKey: PublicKey): AccountMeta =
+  L77  interface Instruction {
+  L78  val programId: PublicKey
+  L79  val keys: List<AccountMeta>
+  L80  val data: ByteArray
+  L81  fun toArtemis(): ArtemisInstruction
+  L90  data class BaseInstruction(
+  L105  var result = programId.hashCode()
+  L129  class TransferInstruction(
+  L130  val from: PublicKey,
+  L131  val to: PublicKey,
+  L132  val lamports: Long
+  L161  class SplTransferInstruction @JvmOverloads constructor(
+  L162  val from: PublicKey,
+  L163  val to: PublicKey,
+  L164  val mint: PublicKey,
+  L165  val owner: PublicKey,
+  L166  val amount: Long,
+  L167  val decimals: Int,
+  L168  val signers: List<PublicKey> = emptyList()
+  L172  val base = if (decimals >= 0) {
+  L194  val extraSigners = signers.map { pk ->
+  L222  class CreateAssociatedTokenAccountInstruction(
+  L223  val payer: PublicKey,
+  L224  val associatedToken: PublicKey,
+  L225  val owner: PublicKey,
+  L226  val mint: PublicKey
+  L254  abstract class TokenTransferInstruction(
+  L271  class Token2022TransferInstruction @JvmOverloads constructor(
+  L282  val base = ArtemisToken2022Program.transferChecked(
+  L292  val extraSigners = signers.map { pk ->
+  L320  class CreateAssociatedToken2022AccountInstruction(
+  L321  val payer: PublicKey,
+  L322  val associatedToken: PublicKey,
+  L323  val owner: PublicKey,
+  L324  val mint: PublicKey
+  L328  val accounts = listOf(
+  L358  fun deriveAddress(owner: PublicKey, mint: PublicKey): PublicKey {
+  L359  val seeds = listOf(
+  L364  val pda = Pda.findProgramAddress(seeds, ProgramIds.ASSOCIATED_TOKEN_PROGRAM)
+  L373  object ProgramIdsCompat {
 
 ## commonMain/kotlin/org/sol4k/Keypair.kt (package org.sol4k)
   L19  class Keypair private constructor(
@@ -209,9 +226,11 @@
   L52  fun fromSeed(seed: ByteArray): Keypair =
 
 ## commonMain/kotlin/org/sol4k/ProgramDerivedAddress.kt (package org.sol4k)
-  L10  data class ProgramDerivedAddress(
-  L11  val publicKey: PublicKey,
-  L12  val nonce: Int
+  L12  data class ProgramDerivedAddress(
+  L13  val address: PublicKey,
+  L14  val nonce: Int
+  L22  val publicKey: PublicKey get() = address
+  L33  fun of(publicKey: PublicKey, nonce: Int): ProgramDerivedAddress =
 
 ## commonMain/kotlin/org/sol4k/PublicKey.kt (package org.sol4k)
   L23  class PublicKey private constructor(internal val inner: ArtemisPubkey) {
@@ -224,11 +243,14 @@
   L81  fun findProgramDerivedAddress(
   L86  val seeds = listOf(
   L91  val result = com.selenus.artemis.runtime.Pda.findProgramAddress(
-  L103  val TOKEN_PROGRAM_ID: PublicKey = PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
-  L107  val ASSOCIATED_TOKEN_PROGRAM_ID: PublicKey = PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")
-  L111  val SYSTEM_PROGRAM_ID: PublicKey = PublicKey("11111111111111111111111111111111")
-  L116  fun ArtemisPubkey.asSol4kPublicKey(): PublicKey = PublicKey(this.bytes)
-  L119  fun PublicKey.toArtemis(): ArtemisPubkey = inner
+  L110  fun readPubkey(bytes: ByteArray, offset: Int = 0): PublicKey {
+  L114  val slice = if (offset == 0 && bytes.size == 32) bytes
+  L125  fun valueOf(base58: String): PublicKey = PublicKey(base58)
+  L129  val TOKEN_PROGRAM_ID: PublicKey = PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
+  L133  val ASSOCIATED_TOKEN_PROGRAM_ID: PublicKey = PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")
+  L137  val SYSTEM_PROGRAM_ID: PublicKey = PublicKey("11111111111111111111111111111111")
+  L142  fun ArtemisPubkey.asSol4kPublicKey(): PublicKey = PublicKey(this.bytes)
+  L145  fun PublicKey.toArtemis(): ArtemisPubkey = inner
 
 ## commonMain/kotlin/org/sol4k/Raced.kt (package org.sol4k)
   L27  fun <T> raceConnections(
@@ -398,18 +420,70 @@
   L66  typealias Version = TopVersion
 
 ## commonMain/kotlin/org/sol4k/exception/Exceptions.kt (package org.sol4k.exception)
-  L15  class RpcException(
-  L16  val code: Int? = null,
-  L25  class SerializationException(
+  L25  data class RpcException(
+  L26  val code: Int,
+  L28  val rawResponse: String
+  L56  data class SerializationException(
 
 ## commonMain/kotlin/org/sol4k/instruction/Aliases.kt (package org.sol4k.instruction)
   L10  typealias BaseInstruction = org.sol4k.BaseInstruction
   L11  typealias TransferInstruction = org.sol4k.TransferInstruction
   L12  typealias SplTransferInstruction = org.sol4k.SplTransferInstruction
-  L13  typealias CreateAssociatedTokenAccountInstruction =
-  L15  typealias SetComputeUnitLimitInstruction = org.sol4k.SetComputeUnitLimitInstruction
-  L16  typealias SetComputeUnitPriceInstruction = org.sol4k.SetComputeUnitPriceInstruction
-  L17  typealias Instruction = org.sol4k.Instruction
+  L13  typealias TokenTransferInstruction = org.sol4k.TokenTransferInstruction
+  L14  typealias Token2022TransferInstruction = org.sol4k.Token2022TransferInstruction
+  L15  typealias CreateAssociatedTokenAccountInstruction =
+  L17  typealias CreateAssociatedToken2022AccountInstruction =
+  L19  typealias SetComputeUnitLimitInstruction = org.sol4k.SetComputeUnitLimitInstruction
+  L20  typealias SetComputeUnitPriceInstruction = org.sol4k.SetComputeUnitPriceInstruction
+  L21  typealias Instruction = org.sol4k.Instruction
+
+## jvmTest/kotlin/org/sol4k/Sol4kCompatExtraTest.kt (package org.sol4k)
+  L26  class Sol4kCompatExtraTest {
+  L35  fun `Token2022TransferInstruction targets TOKEN_2022 program`() {
+  L36  val ix = Token2022TransferInstruction(
+  L55  fun `Token2022TransferInstruction is reachable through the open base class`() {
+  L56  val ix: TokenTransferInstruction = Token2022TransferInstruction(
+  L71  fun `Token2022TransferInstruction includes multisig co-signers`() {
+  L72  val coSigner = PublicKey("4Nd1mWdWaTKuKWqJzBpzRxqi3qg8e8szqnGqkqGgYs5N")
+  L73  val ix = Token2022TransferInstruction(
+  L89  fun `CreateAssociatedToken2022AccountInstruction wires the Token-2022 program`() {
+  L90  val ata = CreateAssociatedToken2022AccountInstruction.deriveAddress(owner, mint)
+  L91  val ix = CreateAssociatedToken2022AccountInstruction(
+  L107  fun `Token-2022 ATA address differs from standard SPL ATA`() {
+  L108  val splAta = PublicKey.findProgramDerivedAddress(owner, mint).address
+  L109  val t22Ata = CreateAssociatedToken2022AccountInstruction.deriveAddress(owner, mint)
+  L116  fun `findProgramDerivedAddress accepts an explicit token program id`() {
+  L117  val splAta = PublicKey.findProgramDerivedAddress(owner, mint).address
+  L118  val t22Ata = PublicKey.findProgramDerivedAddress(
+  L131  fun `org sol4k instruction aliases resolve`() {
+  L132  val viaAlias: AliasedTokenTransfer = AliasedT22(owner, recipient, mint, owner, 1L, 0)
+  L133  val viaCanonical: TokenTransferInstruction = viaAlias
+  L136  val ataIx: AliasedAta22 = AliasedAta22(
+  L148  fun `AccountMeta companion factories match upstream shape`() {
+  L149  val sw = AccountMeta.signerAndWritable(owner)
+  L151  val w = AccountMeta.writable(owner)
+  L153  val s = AccountMeta.signer(owner)
+  L155  val r = AccountMeta.readonly(owner)
+  L162  fun `PublicKey readPubkey decodes a 32-byte slice`() {
+  L163  val source = ByteArray(40) { it.toByte() }
+  L164  val pk = PublicKey.readPubkey(source, offset = 4)
+  L171  fun `PublicKey valueOf is equivalent to the constructor`() {
+  L172  val a = PublicKey.valueOf("GdRNeX9mbzrhm5tKWGP3mN1p6ZqoDMCK7BmLbsjc23Jv")
+  L173  val b = PublicKey("GdRNeX9mbzrhm5tKWGP3mN1p6ZqoDMCK7BmLbsjc23Jv")
+  L180  fun `ProgramDerivedAddress exposes the address field`() {
+  L181  val pda = PublicKey.findProgramAddress(listOf(owner), Constants.TOKEN_PROGRAM_ID)
+  L193  fun `RpcException is a data class with code message rawResponse`() {
+  L194  val raw = """{"error":{"code":-32603,"message":"oops"}}"""
+  L195  val e = RpcException(code = -32603, message = "oops", rawResponse = raw)
+  L200  val (c, m, r) = e
+  L202  val mutated = e.copy(message = "different")
+  L207  fun `RpcException backwards-compat ctor still chains a cause`() {
+  L208  val cause = IllegalStateException("downstream")
+  L209  val e = RpcException(code = null, message = "wrap", cause = cause)
+  L215  fun `SerializationException is a data class with message`() {
+  L216  val e = SerializationException("bad bytes")
+  L218  val (m) = e
+  L220  val mutated = e.copy(message = "different")
 
 ## jvmTest/kotlin/org/sol4k/Sol4kCompatTest.kt (package org.sol4k)
   L16  class Sol4kCompatTest {

@@ -1,7 +1,14 @@
+// Drop-in source compatibility for `com.solana.mobilewalletadapter:clientlib`.
+// Pinned upstream surface: 1.4.3 (github.com/solana-mobile/mobile-wallet-adapter
+// tag `v1.4.3`).
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
 }
+
+extra["upstream.version"] = "1.4.3"
+extra["upstream.repo"] = "https://github.com/solana-mobile/mobile-wallet-adapter"
+extra["upstream.artifact"] = "com.solana.mobilewalletadapter:clientlib"
 
 android {
     namespace = "com.selenus.artemis.interop.mwaclientlib"

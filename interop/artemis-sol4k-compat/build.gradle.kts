@@ -1,7 +1,16 @@
+// Drop-in source compatibility for `org.sol4k:sol4k`.
+// Pinned upstream surface: sol4k 0.7.0 (tag `0.7.0`, commit on the
+// `main` branch of github.com/sol4k/sol4k as of the audit date).
+// Update both this comment and the API snapshot at
+// `api/artemis-sol4k-compat.api` whenever upstream cuts a new release;
+// CI's `dumpApi` drift check will fail the build until they agree.
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
 }
+
+extra["upstream.version"] = "0.7.0"
+extra["upstream.repo"] = "https://github.com/sol4k/sol4k"
 
 kotlin {
     jvm()

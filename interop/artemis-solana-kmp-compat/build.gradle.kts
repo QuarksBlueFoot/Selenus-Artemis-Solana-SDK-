@@ -1,7 +1,17 @@
+// Drop-in source compatibility for `foundation.metaplex.solana-kmp`.
+// Pinned upstream surface: snapshot of github.com/metaplex-foundation/solana-kmp
+// `main` as of 2024-06-05 (the upstream repo went dormant after that
+// commit). Field-level surface: PublicKey, Base58, Amount, Cluster,
+// Commitment, Encoding, Rpc*Configuration, Transaction, SolanaMessage,
+// SolanaEddsa, SystemProgram, MemoProgram, ReadApiInterface.
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
 }
+
+extra["upstream.version"] = "main@2024-06-05"
+extra["upstream.repo"] = "https://github.com/metaplex-foundation/solana-kmp"
+extra["upstream.artifact"] = "foundation.metaplex:solana-kmp"
 
 kotlin {
     jvm()

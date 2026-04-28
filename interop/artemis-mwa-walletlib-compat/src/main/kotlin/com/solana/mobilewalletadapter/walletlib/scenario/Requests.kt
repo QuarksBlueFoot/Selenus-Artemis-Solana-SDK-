@@ -101,6 +101,16 @@ class AuthorizeRequest internal constructor(
             )
         }
 
+    /**
+     * Legacy `cluster` field for MWA 1.x callers. Derived from [chain]
+     * via the chain → cluster table; new code reads [chain] directly.
+     */
+    @Deprecated("Use chain.", ReplaceWith("chain"))
+    @JvmField
+    val cluster: String? = chain?.let {
+        com.selenus.artemis.wallet.mwa.walletlib.ProtocolContract.clusterForChain(it) ?: it
+    }
+
     @JvmOverloads
     fun completeWithAuthorize(
         accounts: Array<AuthorizedAccount>,
@@ -114,8 +124,50 @@ class AuthorizeRequest internal constructor(
         signInResult = signInResult?.toArtemis()
     )
 
+    /**
+     * Single-account legacy overload. MWA 1.x walletlib accepted the
+     * raw byte[] publicKey + accountLabel directly; new code passes a
+     * full [AuthorizedAccount].
+     */
+    @Deprecated(
+        "Use the AuthorizedAccount[] overload.",
+        ReplaceWith("completeWithAuthorize(arrayOf(AuthorizedAccount(publicKey, accountLabel, null, null, null, null, null)), walletUriBase, scope)")
+    )
+    @JvmOverloads
+    fun completeWithAuthorize(
+        publicKey: ByteArray,
+        accountLabel: String? = null,
+        walletUriBase: Uri? = null,
+        scope: ByteArray = byteArrayOf()
+    ) = completeWithAuthorize(
+        accounts = arrayOf(
+            AuthorizedAccount(
+                publicKey = publicKey,
+                accountLabel = accountLabel,
+                displayAddress = null,
+                displayAddressFormat = null,
+                accountIcon = null,
+                chains = null,
+                features = null
+            )
+        ),
+        walletUriBase = walletUriBase,
+        scope = scope,
+        signInResult = null
+    )
+
     fun completeWithDecline() = artemis.completeWithDecline()
     fun completeWithChainNotSupported() = artemis.completeWithChainNotSupported()
+
+    /**
+     * Legacy alias kept for MWA 1.x callers that catch / call by the
+     * old name. Routes to [completeWithChainNotSupported].
+     */
+    @Deprecated(
+        "Use completeWithChainNotSupported().",
+        ReplaceWith("completeWithChainNotSupported()")
+    )
+    fun completeWithClusterNotSupported() = completeWithChainNotSupported()
 }
 
 class ReauthorizeRequest internal constructor(
@@ -125,6 +177,19 @@ class ReauthorizeRequest internal constructor(
     @JvmField val identityUri: Uri? = artemis.identityUri
     @JvmField val iconRelativeUri: Uri? = artemis.iconRelativeUri
     @JvmField val authToken: String = artemis.authToken
+    /** CAIP-2 chain identifier the dApp asked to reauthorize against. */
+    @JvmField val chain: String = artemis.chain
+    /** Wallet-private scope bytes bound to this auth_token at issuance. */
+    @JvmField val authorizationScope: ByteArray = artemis.authorizationScope
+
+    /**
+     * Legacy `cluster` string for MWA 1.x callers. Derived from [chain]
+     * via the chain → cluster table; new code reads [chain] directly.
+     */
+    @Deprecated("Use chain.", ReplaceWith("chain"))
+    @JvmField
+    val cluster: String =
+        com.selenus.artemis.wallet.mwa.walletlib.ProtocolContract.clusterForChain(chain) ?: chain
 
     fun completeWithReauthorize() = artemis.completeWithReauthorize()
     fun completeWithDecline() = artemis.completeWithDecline()
@@ -139,6 +204,12 @@ class SignTransactionsRequest internal constructor(
     @JvmField val identityName: String? = artemis.identityName
     @JvmField val identityUri: Uri? = artemis.identityUri
     @JvmField val iconRelativeUri: Uri? = artemis.iconRelativeUri
+    @Deprecated(
+        "Use authorizedAccounts[0].publicKey.",
+        ReplaceWith("authorizedAccounts[0].publicKey")
+    )
+    @JvmField
+    val publicKey: ByteArray = authorizedAccounts.firstOrNull()?.publicKey ?: ByteArray(0)
 
     fun completeWithSignedPayloads(signedPayloads: Array<ByteArray>) =
         artemis.completeWithSignedPayloads(signedPayloads.toList())
@@ -162,6 +233,12 @@ class SignMessagesRequest internal constructor(
     @JvmField val identityName: String? = artemis.identityName
     @JvmField val identityUri: Uri? = artemis.identityUri
     @JvmField val iconRelativeUri: Uri? = artemis.iconRelativeUri
+    @Deprecated(
+        "Use authorizedAccounts[0].publicKey.",
+        ReplaceWith("authorizedAccounts[0].publicKey")
+    )
+    @JvmField
+    val publicKey: ByteArray = authorizedAccounts.firstOrNull()?.publicKey ?: ByteArray(0)
 
     fun completeWithSignedPayloads(signedPayloads: Array<ByteArray>) =
         artemis.completeWithSignedPayloads(signedPayloads.toList())
@@ -190,6 +267,18 @@ class SignAndSendTransactionsRequest internal constructor(
     @JvmField val maxRetries: Int? = artemis.maxRetries
     @JvmField val waitForCommitmentToSendNextTransaction: Boolean? =
         artemis.waitForCommitmentToSendNextTransaction
+
+    /**
+     * Legacy `publicKey` accessor: the first authorized account's
+     * `publicKey`. MWA 1.x walletlib exposed this on every signing
+     * request; new code iterates [authorizedAccounts] directly.
+     */
+    @Deprecated(
+        "Use authorizedAccounts[0].publicKey or iterate authorizedAccounts.",
+        ReplaceWith("authorizedAccounts[0].publicKey")
+    )
+    @JvmField
+    val publicKey: ByteArray = authorizedAccounts.firstOrNull()?.publicKey ?: ByteArray(0)
 
     fun completeWithSignatures(signatures: Array<ByteArray>) =
         artemis.completeWithSignatures(signatures.toList())

@@ -187,6 +187,27 @@ jobs:
             git --no-pager diff -- 'interop/*/api/*.api'
             exit 1
           fi
+      - name: Sanity-check the snapshot rebuild matches via verifyApiSnapshots
+        # Belt-and-braces: verifyApiSnapshots rebuilds in-memory and
+        # compares to the committed snapshot. Catches the (rare) case
+        # where dumpApi succeeded but the rebuild from source disagrees.
+        run: ./gradlew --no-daemon verifyApiSnapshots
+      - name: Print upstream-version pins
+        # Surfaces the upstream version each compat module targets so PR
+        # reviewers can see whether the snapshot bump matches a declared
+        # upstream release. The grep is best-effort — modules pin via
+        # `extra["upstream.version"] = "..."` per PARITY_MATRIX policy.
+        run: |
+          echo "## Upstream pins per compat module" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          for f in interop/*/build.gradle.kts; do
+            module=$(basename "$(dirname "$f")")
+            version=$(grep -E '^extra\["upstream.version"\]' "$f" | sed -E 's/.*= *"([^"]+)".*/\1/' || true)
+            artifact=$(grep -E '^extra\["upstream.artifact"\]' "$f" | sed -E 's/.*= *"([^"]+)".*/\1/' || true)
+            if [ -n "$version" ]; then
+              echo "- **$module** → \`$artifact:$version\`" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
 
   lint:
     name: Lint + compile check
