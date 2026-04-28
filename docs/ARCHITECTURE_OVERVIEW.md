@@ -84,13 +84,14 @@ This is the base layer. Every Solana app built with Artemis uses some or all of 
 
 This is the Solana Mobile Stack replacement layer. If you are building an Android Solana app, this ring plus Foundation is your core dependency set.
 
-**Modules:** `artemis-wallet`, `artemis-wallet-mwa-android`, `artemis-seed-vault`
+**Modules:** `artemis-wallet`, `artemis-wallet-mwa-android`, `artemis-wallet-mwa-walletlib-android`, `artemis-seed-vault`
 
 **What it covers:**
 
 - `WalletAdapter` interface and `WalletSession` with pluggable signing strategies (Local keypair, Adapter, Raw signer)
 - `WalletSessionManager` with lazy connect, auth token caching, retry on session expiration, and `onDisconnect / onAccountChanged / onSessionExpired` callbacks
-- Mobile Wallet Adapter 2.0 client: P-256 association, AES-128-GCM session cipher, HKDF-SHA256, MWA RPC, websocket transport, Sign-In With Solana
+- Mobile Wallet Adapter 2.0 **client** (dApp side): P-256 association, AES-128-GCM session cipher, HKDF-SHA256, MWA RPC, websocket transport, Sign-In With Solana
+- Mobile Wallet Adapter 2.0 **wallet-side** runtime (`artemis-wallet-mwa-walletlib-android`): `Scenario` / `LocalScenario`, JSON-RPC dispatcher, chain-gated reauthorize, wallet-driven `DeauthorizedEvent.complete()`, sign-messages address-set check, `AuthRepository.start/stop` lifecycle hooks
 - `ArtemisMobile.create()` for one-call setup
 - Saga Seed Vault integration for hardware-backed key custody
 - Convenience methods: `sendSol()`, `sendToken()`
@@ -171,13 +172,24 @@ Artemis-native convenience helpers and bundled patterns. These improve ergonomic
 
 Explicit source-compat or migration-compat surface for teams migrating from other SDKs. Thin wrappers only. Nothing in the core path depends on this ring.
 
-**Modules:** `artemis-mwa-compat`, `artemis-seedvault-compat`
+**Modules:**
+
+- `artemis-mwa-compat` (replaces `com.solana.mobilewalletadapter:clientlib-ktx` 1.4.3)
+- `artemis-mwa-clientlib-compat` (replaces `com.solana.mobilewalletadapter:clientlib` 1.4.3)
+- `artemis-mwa-walletlib-compat` (replaces `com.solana.mobilewalletadapter:walletlib` 1.4.3)
+- `artemis-mwa-common-compat` (replaces `com.solana.mobilewalletadapter:common` 1.4.3)
+- `artemis-seedvault-compat` (replaces `com.solanamobile:seedvault-wallet-sdk` 0.4.0)
+- `artemis-sol4k-compat` (replaces `org.sol4k:sol4k` 0.7.0; includes Token-2022 instructions and the upstream `RpcException` data-class shape)
+- `artemis-solana-kmp-compat` (replaces `foundation.metaplex:solana-kmp`, snapshot of upstream `main`@2024-06-05; upstream dormant)
+- `artemis-metaplex-android-compat` (replaces `com.metaplex.lib:lib`, snapshot of upstream `main`@2024-04-06; upstream dormant; Partial coverage)
+- `artemis-rpc-core-compat` (replaces `com.solana:rpc-core`, snapshot @2026-01-09)
+- `artemis-web3-solana-compat` (replaces `com.solana:web3-solana` (Funkatronics), snapshot @2025-08)
 
 **What it covers:**
 
-- Source compatibility wrappers for selected Solana Mobile SDK APIs
-- Source compatibility wrappers for selected Seed Vault APIs
-- Migration helpers with documented version and scope coverage
+- Source compatibility wrappers for the upstream MWA clientlib + walletlib + common packages, sol4k, solana-kmp, Metaplex Android, rpc-core, and web3-solana
+- Source compatibility wrappers for the Seed Vault static surface (`com.solanamobile.seedvault.Wallet.*` + `WalletContractV1`)
+- Migration helpers with documented upstream version pins (`extra["upstream.version"]`) and scope coverage in `docs/PARITY_MATRIX.md`
 
 **Rules:**
 
@@ -186,7 +198,7 @@ Explicit source-compat or migration-compat surface for teams migrating from othe
 - Nothing else depends on Interop modules
 - Shims wrap public APIs only. No copied internals.
 - Every shimmed class and method has a compile-proof test
-- Compatibility targets documented by version and scope
+- Compatibility targets pinned in `build.gradle.kts` (`extra["upstream.version"]`) and gated by CI's `verifyApiSnapshots` task — `dumpApi` must produce the same output the committed `interop/<module>/api/<module>.api` snapshot carries, otherwise the build fails
 
 ## Directory layout
 

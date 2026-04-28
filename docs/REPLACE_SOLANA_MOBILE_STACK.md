@@ -226,7 +226,7 @@ Status vocabulary is defined in [PARITY_MATRIX.md](PARITY_MATRIX.md). Only claim
 | Pubkey, Keypair, Base58, PDA, Bip32 derivation | Verified | [runtime/](../foundation/artemis-core/src/commonMain/kotlin/com/selenus/artemis/runtime/) |
 | Legacy transactions | Verified | [artemis-tx/](../foundation/artemis-tx/) |
 | v0 versioned transactions + ALT parse/serialize | Verified | [artemis-vtx/](../foundation/artemis-vtx/) |
-| JSON-RPC client (110 methods, typed batch results, classified retry) | Verified | [RpcApi.kt](../foundation/artemis-rpc/src/commonMain/kotlin/com/selenus/artemis/rpc/RpcApi.kt), [RpcClient.kt](../foundation/artemis-rpc/src/commonMain/kotlin/com/selenus/artemis/rpc/RpcClient.kt) |
+| JSON-RPC client (92 typed `suspend fun` methods on `RpcApi`, typed batch results, classified retry, three-state `CircuitBreaker`) | Verified | [RpcApi.kt](../foundation/artemis-rpc/src/commonMain/kotlin/com/selenus/artemis/rpc/RpcApi.kt), [RpcClient.kt](../foundation/artemis-rpc/src/commonMain/kotlin/com/selenus/artemis/rpc/RpcClient.kt), [CircuitBreaker.kt](../foundation/artemis-rpc/src/jvmMain/kotlin/com/selenus/artemis/rpc/CircuitBreaker.kt) |
 | WebSocket transport with real ping frames + reconnect-waits-for-onOpen | Verified | [SolanaWsClient.kt](../foundation/artemis-ws/src/jvmMain/kotlin/com/selenus/artemis/ws/SolanaWsClient.kt) |
 | Polling fallback (account/signature/program keys; typed logs-unavailable event) | Partial | [HttpPollingFallback.kt](../foundation/artemis-ws/src/jvmMain/kotlin/com/selenus/artemis/ws/HttpPollingFallback.kt) |
 | Typed `ConnectionState` StateFlow | Verified | [ConnectionState.kt](../foundation/artemis-ws/src/commonMain/kotlin/com/selenus/artemis/ws/ConnectionState.kt) |

@@ -49,13 +49,13 @@ Two orthogonal labels appear throughout the docs:
 
 | Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
 |---|---|---|---|---|---|---|
-| JSON-RPC methods | ~20 | ~15 | via solana-kmp | via solana-kmp | 110 methods declared on `RpcApi` | Verified |
+| JSON-RPC methods (typed `suspend fun`) | ~20 | ~15 | via solana-kmp | via solana-kmp | 92 typed methods declared on `RpcApi` (113 funs total including helpers / overloads) | Verified |
 | Typed response wrappers | Some | Minimal | N/A | N/A | `*Typed` helpers | Verified |
 | Batch requests | No | No | N/A | N/A | `callBatch` + `callBatchTyped` | Verified |
 | Per-item batch error surface | No | No | N/A | N/A | `BatchItemResult.Ok` / `.Err(code,message,data)` | Verified |
 | Commitment config | Yes | Yes | N/A | N/A | Yes | Verified |
 | Endpoint failover | No | No | N/A | N/A | `RpcEndpointPool` | Verified |
-| Circuit breaker | No | No | N/A | N/A | Yes | Verified |
+| Circuit breaker (three-state, `Closed` / `Open` / `HalfOpen`, observable `StateFlow`, configurable threshold + cooldown + half-open success threshold) | No | No | N/A | N/A | `CircuitBreaker` (standalone, wrappable around any suspend block) | Verified |
 | Blockhash cache | No | No | N/A | N/A | `BlockhashCache` | Verified |
 | Retry classification (sockets, TLS, EOF, timeouts) | No | No | N/A | N/A | `shouldRetry` typed branches | Verified |
 
@@ -90,13 +90,26 @@ Two orthogonal labels appear throughout the docs:
 | Keystore-backed auth token (AES-256-GCM, fail-closed) | No | No | Partial | No | `KeystoreEncryptedAuthTokenStore` | Verified |
 | HMAC session secret persisted for reauthorize after process death | No | No | No | No | `SessionManager.installPersistedSecret` | In Progress (requires caller-side Keystore wiring) |
 | MWA session sequencing (atomic counters, fail-on-close) | No | No | Yes | No | `MwaSession` | Verified |
-| Local WebSocket server hardened (loopback, origin, ping/pong, frame cap, fragmentation) | N/A | N/A | Yes | N/A | `MwaWebSocketServer` | Verified |
+| Local WebSocket server hardened (loopback bind, origin allow-list, ping/pong, oversized-frame reject, fragmentation) | N/A | N/A | Yes | N/A | `MwaWebSocketServer` | Verified (loopback + origin reject + oversized frame reject + ping/pong covered by `MwaWebSocketServerTest`) |
+| Chain-gated reauthorize (token issued for `solana:mainnet` rejected against `solana:devnet`) | N/A | N/A | Yes (`BaseScenario.doReauthorize`) | N/A | `WalletMwaServer.handleAuthorizeAsReauthorize` + `handleReauthorize` enforce `record.chain == requestedChain` | Verified (covered by `WalletCorrectnessTest`) |
+| Wallet-driven `DeauthorizedEvent.complete()` (server awaits the wallet's UI cleanup before replying success; bounded 30s timeout) | N/A | N/A | Yes | N/A | `WalletMwaServer.handleDeauthorize` | Verified |
+| `sign_messages` address-set check (every requested address must be in the active authorization's account list) | N/A | N/A | Yes | N/A | `WalletMwaServer.handleSignMessages` | Verified |
+| `AuthRepository.start()` / `stop()` lifecycle hooks called by `LocalScenario` on session establish/close (SQLite-backed impls open the DB here) | N/A | N/A | Yes | N/A | `AuthRepository` interface + `LocalScenario` wiring | Verified |
+| `get_capabilities` emits the spec-correct unified `max_payloads_per_request` field alongside the legacy `max_transactions_per_request` / `max_messages_per_request` for MWA 1.x compat | N/A | N/A | Yes | N/A | `WalletMwaServer.handleGetCapabilities` | Verified |
+| HELLO_RSP frame shape gated on negotiated protocol version (LEGACY frame is `Qw` only; V1 frame is `Qw` followed by an encrypted SessionProperties envelope) | N/A | N/A | Yes | N/A | `WalletSideHandshake.perform` | Verified |
+| Low-power-mode gate on `noConnectionWarningTimeoutMs` (warning only fires when `PowerManager.isPowerSaveMode()` returns true) | N/A | N/A | Yes | N/A | `LocalScenario` + `DevicePowerConfigProvider` | Verified |
+| MWA wallet conformance detector (normalizes Phantom/Solflare/Seeker quirks from upstream #958, #1146, #1331, #1458) | No | No | No | No | `MwaWalletConformance` + `KnownWallet` + `ConformanceReport` | Verified (covered by `MwaWalletConformanceTest`) |
+| Spec-first MWA error taxonomy with typed recovery hints (closes upstream #314) | No | No | No | No | `MwaError` (sealed) + `Recovery` enum | Verified (covered by `MwaErrorTest`) |
+| SIWS validator with canonical message rendering + ed25519 verification + replay check (closes upstream #193, #1331) | No | No | Partial | No | `MwaSiwsValidator` + `SiwsVerification` | Verified (covered by `MwaSiwsValidatorTest`) |
+| First-class multi-account session wrapper (closes upstream #438, open 2+ years) | No | No | No | No | `MwaMultiAccountSession` + `ResolvedAccount` | Verified (covered by `MwaMultiAccountSessionTest`) |
+| WebView / PWA / TWA environment detector with routing hints (closes upstream #1082, #1323, #1364) | No | No | No | No | `MwaEnvironmentDetector` | Verified (covered by `MwaEnvironmentDetectorTest`) |
+| Keystore-backed auth-token store with AES-256-GCM `[12-byte IV][ciphertext+tag]` wire format and fail-closed on tamper | No | No | Partial | No | `KeystoreEncryptedAuthTokenStore` + `InMemoryAuthTokenStore` | Verified (covered by `AuthTokenStoreTest`; AES round-trip + tamper-reject + IV uniqueness) |
 | Seed Vault (system-service custody; secure EE) | No | No | Separate SDK | No | `artemis-seed-vault` | Partial (device required for full behaviour; wrapper Verified, service is upstream) |
 | Seed Vault strict contract/provider split | N/A | N/A | N/A | N/A | `SeedVaultContractClient` + `*Provider` | Verified |
 | Seed Vault provider trust checks (platform signature / allowlist) | N/A | N/A | N/A | N/A | `SeedVaultCheck.isTrustedProvider` | Verified |
 | Seed Vault IPC timeouts + strict auth-token parsing | N/A | N/A | N/A | N/A | `parseAuthTokenStrict` + `withTimeout(30s)` | Verified |
 | Local keypair signing | Yes | Yes | N/A | N/A | `WalletSession.Local` | Verified |
-| React Native MWA wrapper | No | No | Yes | No | `advanced/artemis-react-native` | Partial (Android-only; RN platform/ready-state detection Verified) |
+| React Native MWA wrapper | No | No | Yes | No | `advanced/artemis-react-native` (TypeScript + Android bridge; ships outside the Gradle build, distributed via npm) | Partial (Android-only; RN platform / `readyState` detection Verified by the TS test runner under `advanced/artemis-react-native/`) |
 
 ## MWA compat (drop-in path)
 
@@ -107,7 +120,22 @@ Two orthogonal labels appear throughout the docs:
 | `LocalAssociationScenario` with real P-256 keypair, loopback port reservation, base64url association token | `interop/artemis-mwa-clientlib-compat` | Verified |
 | Nested result types (`AuthorizationResult`, `SignPayloadsResult`, `SignMessagesResult`, `SignAndSendTransactionsResult`) | `interop/artemis-mwa-clientlib-compat` | Verified |
 | `LocalAdapterOperations` routes through live `MwaSessionBridge` | `interop/artemis-mwa-compat` | Verified |
-| API-diff snapshot (`dumpApi` Gradle task) | `interop/artemis-mwa-*/api/*.api` | Verified |
+| API-diff snapshot (`dumpApi` + `verifyApiSnapshots` Gradle tasks) | `interop/artemis-mwa-*/api/*.api` | Verified |
+
+## MWA walletlib compat (drop-in, wallet side)
+
+| Capability | Artemis module | Status |
+|---|---|---|
+| `com.solana.mobilewalletadapter.walletlib.association.AssociationUri.parse` (+ `parseOrNull`, `createScenario(Context, ...)` factory) | `interop/artemis-mwa-walletlib-compat` | Verified |
+| `LocalAssociationScenario` with `startAsync(): CompletableFuture<String>` and lifecycle callbacks | `interop/artemis-mwa-walletlib-compat` | Verified |
+| `RemoteWebSocketServerScenario` FQN reachable; runtime stub completes exceptionally with `UnsupportedOperationException` until reflector lands | `interop/artemis-mwa-walletlib-compat` | Partial |
+| `MobileWalletAdapterServer` typed exceptions: `RequestDeclinedException`, `InvalidPayloadsException`, `NotSubmittedException`, `TooManyPayloadsException`, `AuthorizationNotValidException`, `ChainNotSupportedException`, deprecated `ClusterNotSupportedException` alias | `interop/artemis-mwa-walletlib-compat` | Verified |
+| `MobileWalletAdapterSession` FQN exposed | `interop/artemis-mwa-walletlib-compat` | Verified |
+| `JsonRpc20Server` with canonical error codes + envelope helpers | `interop/artemis-mwa-walletlib-compat` | Verified |
+| `walletlib.authorization.AuthRepository` interface (start/stop/issue/fromAuthToken/toAuthToken/reissue/revoke/getAuthorizedIdentities/getAuthorizations) + `InMemoryAuthRepository` + `AuthRecord` + `IdentityRecord` + `AccountRecord` | `interop/artemis-mwa-walletlib-compat` | Verified |
+| `BaseScenarioRequest` / `VerifiableIdentityRequest` / `SignPayloadsRequest` marker interfaces | `interop/artemis-mwa-walletlib-compat` | Verified |
+| `WalletIconProvider` + `DefaultWalletIconProvider` | `interop/artemis-mwa-walletlib-compat` | Verified |
+| Deprecated MWA-1.x request aliases: `cluster` getter on `AuthorizeRequest` / `ReauthorizeRequest`, `completeWithClusterNotSupported`, `completeWithAuthorize(ByteArray, …)` overload, `publicKey` getter on Sign* requests | `interop/artemis-mwa-walletlib-compat` | Verified |
 
 ## Seed Vault compat
 
@@ -157,11 +185,15 @@ Two orthogonal labels appear throughout the docs:
 | `Transaction` (sign, addSignature, serialize, `from(String)`) | `interop/artemis-sol4k-compat` | Verified |
 | `VersionedTransaction` (sign, addSignature, serialize, `calculateFee(lamportsPerSignature)`, `from(String)`) | `interop/artemis-sol4k-compat` | Verified |
 | `TransactionMessage` (newMessage, deserialize, withNewBlockhash, serialize) | `interop/artemis-sol4k-compat` | Verified |
-| Instruction builders (`TransferInstruction`, `SplTransferInstruction`, `Token2022TransferInstruction`, `CreateAssociatedTokenAccountInstruction`, `CreateAssociatedToken2022AccountInstruction`, `SetComputeUnitLimitInstruction`, `SetComputeUnitPriceInstruction`) | `interop/artemis-sol4k-compat` | Verified |
+| Instruction builders (`TransferInstruction`, `SplTransferInstruction`, open `TokenTransferInstruction` base, `Token2022TransferInstruction`, `CreateAssociatedTokenAccountInstruction`, `CreateAssociatedToken2022AccountInstruction`, `SetComputeUnitLimitInstruction`, `SetComputeUnitPriceInstruction`) | `interop/artemis-sol4k-compat` | Verified |
+| `AccountMeta` companion factories (`signerAndWritable`, `writable`, `signer`, `readonly`) | `interop/artemis-sol4k-compat` | Verified |
+| `PublicKey.findProgramAddress` + `findProgramDerivedAddress(holder, mint, programId = TOKEN_PROGRAM_ID)` (Token-2022 ATA derivation supported) | `interop/artemis-sol4k-compat` | Verified |
+| `PublicKey.readPubkey(bytes, offset)` + `PublicKey.valueOf(base58)` | `interop/artemis-sol4k-compat` | Verified |
+| `ProgramDerivedAddress(address, nonce)` (matches upstream field name; deprecated `publicKey` alias preserved) | `interop/artemis-sol4k-compat` | Verified |
 | `Constants` (SYSTEM_PROGRAM, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, COMPUTE_BUDGET_PROGRAM_ID, SYSVAR_RENT_ADDRESS, PUBLIC_KEY_LENGTH, SIGNATURE_LENGTH) | `interop/artemis-sol4k-compat` | Verified |
 | `Base58`, `Binary` (uint32/int64/uint16/encodeLength/decodeLength), `Convert` (lamport/sol/micro-lamport) | `interop/artemis-sol4k-compat` | Verified |
 | `Commitment` enum, `RpcUrl` enum, `Health` enum, API types (`AccountInfo`, `Blockhash`, `TokenAccountBalance`, `TokenAmount`, `TransactionSignature`, `TransactionSimulation`, `PrioritizationFee`, `Version`, `EpochInfo`) | `interop/artemis-sol4k-compat` | Verified |
-| `RpcException`, `SerializationException` | `interop/artemis-sol4k-compat` | Verified |
+| `RpcException` as `data class RpcException(code: Int, message: String, rawResponse: String)` with destructuring + `.copy()`; `SerializationException` as `data class SerializationException(message: String)`. Matches upstream sol4k 0.7.0 shape exactly. | `interop/artemis-sol4k-compat` | Verified |
 
 ## Metaplex Android compat (drop-in path)
 
@@ -257,8 +289,9 @@ These are features no other Kotlin Solana SDK provides; none are required for th
 | NLP transactions | `artemis-nlp` | Experimental |
 | Intent decoding | `artemis-intent` | Verified |
 | Universal program client | `artemis-universal` | Experimental |
-| MWA wallet conformance detector (normalizes known Phantom/Solflare/Seeker quirks from upstream #958, #1146, #1331, #1458) | `artemis-wallet-mwa-android` (`MwaWalletConformance`, `KnownWallet`, `ConformanceReport`) | Verified |
-| Spec-first MWA error taxonomy with typed recovery hints (closes upstream #314) | `artemis-wallet-mwa-android` (`MwaError`, `Recovery`) | Verified |
-| SIWS validator with canonical message rendering + ed25519 verification + replay check (closes upstream #193, #1331) | `artemis-wallet-mwa-android` (`MwaSiwsValidator`, `SiwsVerification`) | Verified |
-| First-class multi-account session wrapper (closes upstream #438, open 2+ years) | `artemis-wallet-mwa-android` (`MwaMultiAccountSession`, `ResolvedAccount`) | Verified |
-| WebView / PWA / TWA environment detector with routing hints (closes upstream #1082, #1323, #1364) | `artemis-wallet-mwa-android` (`MwaEnvironmentDetector`) | Verified |
+| MWA wallet conformance detector (normalizes known Phantom/Solflare/Seeker quirks from upstream #958, #1146, #1331, #1458) | `artemis-wallet-mwa-android` (`MwaWalletConformance`, `KnownWallet`, `ConformanceReport`); test: `MwaWalletConformanceTest` | Verified |
+| Spec-first MWA error taxonomy with typed recovery hints (closes upstream #314) | `artemis-wallet-mwa-android` (`MwaError`, `Recovery`); test: `MwaErrorTest` | Verified |
+| SIWS validator with canonical message rendering + ed25519 verification + replay check (closes upstream #193, #1331) | `artemis-wallet-mwa-android` (`MwaSiwsValidator`, `SiwsVerification`); test: `MwaSiwsValidatorTest` | Verified |
+| First-class multi-account session wrapper (closes upstream #438, open 2+ years) | `artemis-wallet-mwa-android` (`MwaMultiAccountSession`, `ResolvedAccount`); test: `MwaMultiAccountSessionTest` | Verified |
+| WebView / PWA / TWA environment detector with routing hints (closes upstream #1082, #1323, #1364) | `artemis-wallet-mwa-android` (`MwaEnvironmentDetector`); test: `MwaEnvironmentDetectorTest` | Verified |
+| Three-state circuit breaker (`CircuitBreaker`) wrappable around any suspend block, observable via `StateFlow`, configurable threshold/cooldown/half-open success threshold | `artemis-rpc` (`CircuitBreaker`, `CircuitBreakerOpenException`); test: `CircuitBreakerTest` | Verified |

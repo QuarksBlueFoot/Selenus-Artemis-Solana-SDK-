@@ -20,8 +20,8 @@ coroutines, five version matrices, and no shared reliability story.
 
 Artemis is one dependency graph, one coroutine-first surface, and one
 `ArtemisMobile.create()` call for the full stack. Every module pulls its
-weight: `artemis-rpc` ships 90+ typed JSON-RPC methods with a batch DSL
-and a circuit breaker, `artemis-ws` runs a real WebSocket with
+weight: `artemis-rpc` ships 92 typed JSON-RPC methods with a batch DSL
+and a real circuit breaker, `artemis-ws` runs a real WebSocket with
 deterministic resubscribe on reconnect, `artemis-vtx` drives a
 simulate + retry + priority-fee transaction pipeline, and
 `artemis-wallet-mwa-android` speaks MWA 2.0 end to end with P-256
@@ -31,7 +31,7 @@ existing apps swap the Maven coordinates without rewriting call sites.
 
 ## What you get
 
-* JSON-RPC client with 80+ Solana methods, typed wrappers, batch DSL, blockhash cache, endpoint pool, and a circuit breaker. See [foundation/artemis-rpc/src/commonMain/kotlin/com/selenus/artemis/rpc/RpcApi.kt](foundation/artemis-rpc/src/commonMain/kotlin/com/selenus/artemis/rpc/RpcApi.kt).
+* JSON-RPC client with 92 typed Solana methods, batch DSL, blockhash cache, endpoint pool, and a real three-state circuit breaker (`Closed`/`Open`/`HalfOpen`) at [foundation/artemis-rpc/src/jvmMain/kotlin/com/selenus/artemis/rpc/CircuitBreaker.kt](foundation/artemis-rpc/src/jvmMain/kotlin/com/selenus/artemis/rpc/CircuitBreaker.kt). Method surface lives at [foundation/artemis-rpc/src/commonMain/kotlin/com/selenus/artemis/rpc/RpcApi.kt](foundation/artemis-rpc/src/commonMain/kotlin/com/selenus/artemis/rpc/RpcApi.kt).
 * WebSocket realtime layer with auto-reconnect, deterministic resubscribe, heartbeat, polling fallback, and a typed `ConnectionState` StateFlow at [foundation/artemis-ws/src/commonMain/kotlin/com/selenus/artemis/ws/ConnectionState.kt](foundation/artemis-ws/src/commonMain/kotlin/com/selenus/artemis/ws/ConnectionState.kt).
 * Transaction engine with blockhash management, simulation, retry pipeline, durable nonce, priority fees, address lookup tables, and v0 transactions. Single entry point at [foundation/artemis-vtx/src/commonMain/kotlin/com/selenus/artemis/vtx/TxEngine.kt](foundation/artemis-vtx/src/commonMain/kotlin/com/selenus/artemis/vtx/TxEngine.kt).
 * Wallet abstraction that normalizes local keypair, raw signer, and adapter signing into one `WalletSession`. Lifecycle handled by `WalletSessionManager` at [mobile/artemis-wallet/src/commonMain/kotlin/com/selenus/artemis/wallet/WalletSessionManager.kt](mobile/artemis-wallet/src/commonMain/kotlin/com/selenus/artemis/wallet/WalletSessionManager.kt).
@@ -238,13 +238,18 @@ Strict downward-only dependencies. Foundation never depends on anything above it
 
 ```text
 Ring 1  Foundation   core, rpc, ws, tx, vtx, programs, errors, logging, compute       [KMP]
-Ring 2  Mobile       wallet [KMP], wallet-mwa-android [Android], seed-vault [Android]
+Ring 2  Mobile       wallet [KMP], wallet-mwa-android [Android], wallet-mwa-walletlib-android,
+                     seed-vault [Android]
 Ring 3  Ecosystem    token2022, metaplex, mplcore, cnft, candy-machine,
                      solana-pay, anchor, jupiter, actions                              [KMP]
 Ring 4  Advanced     privacy, streaming, simulation, batch, scheduler, offline,
                      portfolio, replay, gaming, depin, nlp, intent, universal, preview
-Ring 5  Compat       discriminators, nft-compat, tx-presets,
+Ring 5  Presets      discriminators, nft-compat, tx-presets,
                      candy-machine-presets, presets
+Ring 6  Interop      mwa-compat, mwa-clientlib-compat, mwa-walletlib-compat,
+                     mwa-common-compat, seedvault-compat, sol4k-compat,
+                     solana-kmp-compat, metaplex-android-compat,
+                     rpc-core-compat, web3-solana-compat
 ```
 
 The full ring map and dependency rules are in [docs/ARCHITECTURE_OVERVIEW.md](docs/ARCHITECTURE_OVERVIEW.md) and [docs/DEPENDENCY_RULES.md](docs/DEPENDENCY_RULES.md).
@@ -254,7 +259,7 @@ The full ring map and dependency rules are in [docs/ARCHITECTURE_OVERVIEW.md](do
 | Module | What it does |
 |--------|--------------|
 | `artemis-core` | Pubkey, Keypair, Base58, PDA derivation, Ed25519, SHA-256, Base64. `EventBus`, `ArtemisEvent`, `StateManager`. |
-| `artemis-rpc` | 80+ Solana JSON-RPC methods, typed result wrappers, batch DSL via `BatchRequestBuilder`, `BlockhashCache`, endpoint pool, circuit breaker. |
+| `artemis-rpc` | 92 Solana JSON-RPC methods, typed result wrappers, batch DSL via `BatchRequestBuilder`, `BlockhashCache`, endpoint pool, three-state `CircuitBreaker`. |
 | `artemis-ws` | `SolanaWsClient` (auto-reconnect, deterministic resubscribe, heartbeat, polling fallback), `RealtimeEngine` (typed account/signature/program subscriptions), `ConnectionState` StateFlow. |
 | `artemis-tx` | Legacy transaction construction, serialization, signing, durable nonce. |
 | `artemis-vtx` | v0 versioned transactions, address lookup tables, `TxEngine` pipeline, retry policy, dynamic priority fee, ALT planner. |
@@ -268,7 +273,8 @@ The full ring map and dependency rules are in [docs/ARCHITECTURE_OVERVIEW.md](do
 | Module | What it does |
 |--------|--------------|
 | `artemis-wallet` | `WalletAdapter` interface, `WalletSession` (Local / Adapter / Raw signing), `WalletSessionManager` with lazy connect, retry, and lifecycle callbacks. |
-| `artemis-wallet-mwa-android` | Mobile Wallet Adapter 2.0 client. P-256 association, AES-128-GCM session cipher, HKDF-SHA256 key derivation, MWA RPC, websocket transport, Sign-In With Solana. `ArtemisMobile.create()` for one-call setup. |
+| `artemis-wallet-mwa-android` | Mobile Wallet Adapter 2.0 **client**. P-256 association, AES-128-GCM session cipher, HKDF-SHA256 key derivation, MWA RPC, websocket transport, Sign-In With Solana. `ArtemisMobile.create()` for one-call setup. |
+| `artemis-wallet-mwa-walletlib-android` | Mobile Wallet Adapter 2.0 **wallet-side** runtime (the inverse direction). Drives the wallet's `Scenario`, dispatches inbound JSON-RPC, gates reauthorize by chain, awaits wallet-driven `DeauthorizedEvent.complete()`, enforces sign-messages address-set check. For wallet authors building MWA support; dApps use `artemis-wallet-mwa-android`. |
 | `artemis-seed-vault` | Saga Seed Vault integration for hardware-backed key custody. |
 
 ### Ecosystem
@@ -308,6 +314,23 @@ These ship in the repo but vary in maturity. `gaming`, `intent`, `privacy`, `por
 
 If a module is marked "Helpers", that module exists for app teams that want a starting point and intend to extend. Foundation, Mobile, and Ecosystem modules are the production surface.
 
+### Interop (drop-in shims)
+
+Source-compatible shims that publish the upstream package + class FQNs. Swap your Maven coordinates and existing import lines keep compiling. Each module pins the upstream version it targets (see `extra["upstream.version"]` in the module's `build.gradle.kts`); CI's `verifyApiSnapshots` task fails the build when the public surface drifts from the committed snapshot.
+
+| Module | Replaces (artifact) | Upstream pin |
+|--------|---------------------|--------------|
+| `artemis-mwa-compat` | `com.solana.mobilewalletadapter:clientlib-ktx` | 1.4.3 |
+| `artemis-mwa-clientlib-compat` | `com.solana.mobilewalletadapter:clientlib` | 1.4.3 |
+| `artemis-mwa-walletlib-compat` | `com.solana.mobilewalletadapter:walletlib` | 1.4.3 |
+| `artemis-mwa-common-compat` | `com.solana.mobilewalletadapter:common` | 1.4.3 |
+| `artemis-seedvault-compat` | `com.solanamobile:seedvault-wallet-sdk` | 0.4.0 |
+| `artemis-sol4k-compat` | `org.sol4k:sol4k` | 0.7.0 |
+| `artemis-solana-kmp-compat` | `foundation.metaplex:solana-kmp` | main@2024-06-05 (upstream dormant) |
+| `artemis-metaplex-android-compat` | `com.metaplex.lib:lib` | main@2024-04-06 (upstream dormant) |
+| `artemis-rpc-core-compat` | `com.solana:rpc-core` | main@2026-01-09 |
+| `artemis-web3-solana-compat` | `com.solana:web3-solana` (Funkatronics) | main@2025-08 |
+
 ## What this replaces
 
 Two adoption modes, pick one up front:
@@ -318,15 +341,22 @@ The native surface (`ArtemisMobile.create`, `WalletSession`, `TxEngine`, `RpcApi
 
 ### SMS-drop-in ready
 
-Keep your existing imports and swap the Maven coordinates to the Artemis compat artifacts under `interop/artemis-*-compat`. This track is **Verified** for the MWA client (ktx + non-ktx), Seed Vault static surface, and typed result classes; other compat modules are **Partial** or **In Progress**. The matrix in [PARITY_MATRIX.md](docs/PARITY_MATRIX.md) is the source of truth per capability.
+Keep your existing imports and swap the Maven coordinates to the Artemis compat artifacts under `interop/artemis-*-compat`. This track is **Verified** for the MWA client (ktx + non-ktx), MWA walletlib drop-in (chain-gated reauthorize, wallet-driven deauthorize, sign-messages address check, typed exceptions), Seed Vault static surface, sol4k 0.7.0 surface (incl. Token-2022 instructions and the upstream `RpcException` data-class shape), and typed result classes; the rest is **Partial** or **In Progress**. The matrix in [PARITY_MATRIX.md](docs/PARITY_MATRIX.md) is the source of truth per capability.
 
 Replaces:
 
-* `solana-kmp` (Funkatronics / Metaplex): RPC, public keys, transactions
-* `sol4k`: JVM Solana primitives
-* `mobile-wallet-adapter-clientlib-ktx`: MWA 2.0 protocol
-* `seedvault-wallet-sdk`: Seed Vault integration
-* `Metaplex KMM`: token metadata and NFT operations (where Verified)
+* `org.sol4k:sol4k` (0.7.0): JVM Solana primitives, Connection, transactions, instruction builders incl. Token-2022 → `artemis-sol4k-compat`
+* `foundation.metaplex:solana-kmp` (dormant 2024-06): RPC, public keys, transactions, ReadApi → `artemis-solana-kmp-compat`
+* `com.solana.mobilewalletadapter:clientlib-ktx` (1.4.3): MWA 2.0 dApp surface → `artemis-mwa-compat`
+* `com.solana.mobilewalletadapter:clientlib` (1.4.3): low-level MWA client → `artemis-mwa-clientlib-compat`
+* `com.solana.mobilewalletadapter:walletlib` (1.4.3): wallet-side MWA scenario, authorization, protocol → `artemis-mwa-walletlib-compat`
+* `com.solana.mobilewalletadapter:common` (1.4.3): protocol contract, SIWS, NotifyOnComplete → `artemis-mwa-common-compat`
+* `com.solanamobile:seedvault-wallet-sdk` (0.4.0): Seed Vault static surface → `artemis-seedvault-compat`
+* `com.metaplex.lib:lib` (Metaplex Android, dormant 2024-04): partial parity for the most-used 60% (NFT read, DAS, identity drivers; auctions and full mutation surface still pending) → `artemis-metaplex-android-compat`
+* `com.solana:rpc-core` (2026-01-09): JSON-RPC envelope types, SolanaRpcClient → `artemis-rpc-core-compat`
+* `com.solana:web3-solana` (Funkatronics): SolanaPublicKey, Transaction, Builder, instruction primitives → `artemis-web3-solana-compat`
+
+Each compat module pins the exact upstream version it targets in its `build.gradle.kts` (`extra["upstream.version"]`). CI's `verifyApiSnapshots` job runs `./gradlew dumpApi` and fails when the public surface drifts; intentional changes update both the snapshot under `interop/<module>/api/<module>.api` and the upstream pin together.
 
 Status vocabulary (`Verified` / `In Progress` / `Partial` / `Experimental` / `Planned`) is defined at the top of [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md). Migration walkthrough with both tracks: [docs/REPLACE_SOLANA_MOBILE_STACK.md](docs/REPLACE_SOLANA_MOBILE_STACK.md).
 
@@ -345,7 +375,7 @@ The pieces below are why this SDK is meant for production mobile work, not just 
 | Marketplace preflight | [MarketplacePreflight.kt](ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/MarketplacePreflight.kt) | Validates ownership, frozen state, DAS record, destination ATA, and returns prepend instructions for missing ATAs |
 | ATA ensurer | [AtaEnsurer.kt](ecosystem/artemis-cnft/src/commonMain/kotlin/com/selenus/artemis/cnft/AtaEnsurer.kt) | Single + batched ATA resolution with positive / negative cache and Token-2022 support |
 | Framework event bus | [ArtemisEvent.kt](foundation/artemis-core/src/commonMain/kotlin/com/selenus/artemis/core/ArtemisEvent.kt) | Unified `ArtemisEvent` stream from wallet, tx, realtime, and DAS |
-| Endpoint pool + circuit breaker | [foundation/artemis-rpc/src/commonMain/kotlin/com/selenus/artemis/rpc/](foundation/artemis-rpc/src/commonMain/kotlin/com/selenus/artemis/rpc/) | RPC endpoint rotation with health tracking |
+| Endpoint pool + circuit breaker | [RpcEndpointPool.kt](foundation/artemis-rpc/src/jvmMain/kotlin/com/selenus/artemis/rpc/RpcEndpointPool.kt), [CircuitBreaker.kt](foundation/artemis-rpc/src/jvmMain/kotlin/com/selenus/artemis/rpc/CircuitBreaker.kt) | RPC endpoint rotation with health tracking; standalone three-state `CircuitBreaker` (`Closed`/`Open`/`HalfOpen`) wrappable around any call |
 
 ## Build and test
 
