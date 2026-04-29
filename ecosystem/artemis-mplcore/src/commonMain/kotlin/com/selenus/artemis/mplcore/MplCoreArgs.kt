@@ -36,12 +36,7 @@ object MplCoreArgs {
     val isMutable: Boolean = true
   ) {
     fun serialize(): ByteArray {
-      val hasCollection = collection != null
-      val colBytes = if (!hasCollection) {
-        MplCoreCodec.u8(0)
-      } else {
-        MplCoreCodec.u8(1) + collection!!.bytes
-      }
+      val colBytes = collection?.let { MplCoreCodec.u8(1) + it.bytes } ?: MplCoreCodec.u8(0)
       return MplCoreCodec.concat(
         listOf(
           MplCoreCodec.borshString(name),

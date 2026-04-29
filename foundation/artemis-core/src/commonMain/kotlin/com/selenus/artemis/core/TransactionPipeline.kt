@@ -219,6 +219,8 @@ class RetryInterceptor(
             delayMs = minOf(delayMs * 2, maxDelayMs)
         }
         
+        // Safe invariant: `repeat(maxRetries + 1)` runs at least once (maxRetries >= 0 by contract),
+        // so `chain.proceed()` is invoked at least once and `lastResult` is assigned.
         return lastResult!!
     }
 }
@@ -242,7 +244,7 @@ class RateLimitInterceptor(
                 requestTimestamps.removeFirst()
             }
             
-            // Wait if we've exceeded the rate limit
+            // Wait when the rate limit is exceeded
             if (requestTimestamps.size >= maxRequestsPerSecond) {
                 val waitTime = 1000 - (now - requestTimestamps.first())
                 if (waitTime > 0) {

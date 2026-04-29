@@ -425,6 +425,8 @@ object IdlTypeSerializer : KSerializer<IdlType> {
                 }
             }
             element is JsonObject -> {
+                // Safe invariants below: each branch is gated on `"<key>" in element` which guarantees
+                // `element["<key>"]` is non-null in JsonObject's contract.
                 when {
                     "vec" in element -> IdlType.Vec(parseIdlType(element["vec"]!!))
                     "array" in element -> {

@@ -32,8 +32,8 @@ object HkdfSha256 {
     }
     // RFC 5869 §2.2: when salt is not provided, it is set to a string of
     // HashLen zeros. The JVM HMAC implementation rejects an empty key with
-    // IllegalArgumentException, so we substitute the canonical fallback up
-    // front. This matches every official RFC 5869 test vector exactly.
+    // IllegalArgumentException, so the canonical fallback is substituted
+    // up front. This matches every official RFC 5869 test vector exactly.
     val effectiveSalt = if (salt.isEmpty()) ByteArray(32) else salt
     val prk = hmac(effectiveSalt, ikm)
     var t = ByteArray(0)

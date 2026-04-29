@@ -191,7 +191,7 @@ object SecureMnemonic {
             val sample = ByteArray(32)
             random.nextBytes(sample)
             
-            // Simple entropy estimation - check for obviously poor randomness
+            // Cheap entropy check for grossly poor randomness
             val uniqueBytes = sample.toSet().size
             when {
                 uniqueBytes >= 28 -> EntropyQuality.EXCELLENT

@@ -141,9 +141,19 @@ class SolanaMessage internal constructor(
             put(oldPayerIndex, 0)
         }
         val remappedIxs = artemis.instructions.map { ci ->
+            // Safe invariant: `indexMap` is built above with one entry per index in `oldKeys.indices`,
+            // and `programIdIndex` / `accountIndexes` always reference indices into that same key list
+            // by construction in the on-the-wire compiled message format.
+            val programIdx = indexMap[ci.programIdIndex]
+                ?: error("Internal: programIdIndex ${ci.programIdIndex} not in remap; account-key set diverged")
             com.selenus.artemis.tx.CompiledInstruction(
-                programIdIndex = indexMap[ci.programIdIndex]!!,
-                accountIndexes = ci.accountIndexes.map { (indexMap[it.toInt() and 0xFF]!!).toByte() }.toByteArray(),
+                programIdIndex = programIdx,
+                accountIndexes = ci.accountIndexes.map { byteIdx ->
+                    val key = byteIdx.toInt() and 0xFF
+                    val mapped = indexMap[key]
+                        ?: error("Internal: accountIndex $key not in remap; account-key set diverged")
+                    mapped.toByte()
+                }.toByteArray(),
                 data = ci.data,
             )
         }

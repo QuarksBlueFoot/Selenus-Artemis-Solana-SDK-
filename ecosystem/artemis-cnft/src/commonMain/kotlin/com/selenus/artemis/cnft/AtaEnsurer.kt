@@ -170,7 +170,12 @@ class AtaEnsurer(
             }
         }
 
-        return cachedResults.map { it!! }
+        // Safe invariant: every index in `cachedResults` is filled either by the cached-path branch
+        // (lines 141-146) or the fetch-path branch (lines 162-169). The slot list above the union of
+        // both index sets covers `targets.indices` exactly.
+        return cachedResults.map {
+            it ?: error("AtaEnsurer.resolveBatch: internal index gap; this indicates a programmer error")
+        }
     }
 
     /**

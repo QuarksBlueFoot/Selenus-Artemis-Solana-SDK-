@@ -200,7 +200,7 @@ class MwaSiwsValidatorTest {
             nowEpochSeconds = now,
             allowedClockSkewSeconds = 60
         )
-        assertNull("within 60s of issuedAt — no replay flag expected", reason)
+        assertNull("within 60s of issuedAt. no replay flag expected", reason)
     }
 
     @Test
@@ -234,7 +234,7 @@ class MwaSiwsValidatorTest {
             issuedAt = "2026-04-27T12:00:00Z",
             expirationTime = "2026-04-27T11:55:00Z"
         )
-        // Now is 30 seconds after issuedAt — within the 60-second drift —
+        // Now is 30 seconds after issuedAt. within the 60-second drift.
         // but five+ minutes after expirationTime + 60s skew.
         val reason = MwaSiwsValidator.checkReplay(
             payload = expiringPayload,
@@ -249,7 +249,7 @@ class MwaSiwsValidatorTest {
         )
     }
 
-    /** Tiny helper used only inside this test — relies on java.time. */
+    /** Tiny helper used only inside this test. relies on java.time. */
     private fun parseEpoch(iso: String): Long =
         java.time.Instant.parse(iso).epochSecond
 }

@@ -13,8 +13,8 @@ import kotlinx.coroutines.sync.withLock
  * Routes every query to [primary] first. If the primary throws or returns a
  * "not useful" result, automatically re-issues the same call against [fallback].
  * A short-lived failure memo keeps the primary "cooled off" so a burst of calls
- * doesn't pay the primary timeout on every request - once the primary fails, we
- * skip straight to the fallback for [cooldownMs] milliseconds.
+ * does not pay the primary timeout on every request - once the primary fails,
+ * subsequent calls go straight to the fallback for [cooldownMs] milliseconds.
  *
  * This is the recommended way to wire a DAS client in production:
  *

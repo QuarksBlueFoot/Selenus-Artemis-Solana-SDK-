@@ -111,7 +111,7 @@ class HttpPollingFallback(
         if (activeKeys.isEmpty()) return
         // Honour pollIntervalMs so back-to-back poll cycles do not hammer
         // the RPC. SolanaWsClient drives this method at its own cadence,
-        // but we still enforce our own floor for safety.
+        // and an internal floor is still enforced for safety.
         val now = System.currentTimeMillis()
         val waitMs = config.pollIntervalMs - (now - lastPollAt)
         if (waitMs > 0 && lastPollAt != 0L) sleep(waitMs)
@@ -214,8 +214,8 @@ class HttpPollingFallback(
         emit: suspend (WsEvent) -> Unit
     ) {
         // Program-account polling: fetch all accounts owned by the program
-        // and diff against last-seen. Per-program rather than per-key so
-        // we don't issue one RPC per subscriber for the same program.
+        // and diff against last-seen. Per-program rather than per-key to
+        // avoid issuing one RPC per subscriber for the same program.
         keys.distinctBy { it.programId to it.commitment to it.encoding }.forEach { key ->
             val params = buildJsonArray {
                 add(JsonPrimitive(key.programId))
@@ -254,8 +254,8 @@ class HttpPollingFallback(
         // logsSubscribe is genuinely push-only on upstream Solana RPC; no
         // pull equivalent exists. Emit a one-shot heartbeat per subscriber
         // so the caller knows polling is live but no log stream is
-        // available until the WS reconnects. This is honest: we do not
-        // invent data we cannot fetch.
+        // available until the WS reconnects. No data is fabricated when
+        // a real fetch is impossible.
         for (key in keys) {
             emit(
                 WsEvent.Notification(

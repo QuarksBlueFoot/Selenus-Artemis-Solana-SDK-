@@ -583,11 +583,11 @@ class SwapRequestBuilder {
     }
     
     fun build(): SwapRequest {
-        requireNotNull(quoteResponse) { "Quote response is required" }
+        val q = requireNotNull(quoteResponse) { "Quote response is required" }
         require(userPublicKey.isNotEmpty()) { "User public key is required" }
-        
+
         return SwapRequest(
-            quoteResponse = quoteResponse!!,
+            quoteResponse = q,
             userPublicKey = userPublicKey,
             wrapAndUnwrapSol = wrapAndUnwrapSol,
             useSharedAccounts = useSharedAccounts,

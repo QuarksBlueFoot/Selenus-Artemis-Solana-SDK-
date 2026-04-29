@@ -12,11 +12,10 @@ import com.selenus.artemis.tx.Instruction
 import kotlinx.coroutines.delay
 
 /**
- * TxEngine - production-grade transaction execution pipeline.
+ * Staged transaction execution pipeline: prepare, simulate, sign, send, confirm.
  *
- * This is Artemis's core differentiator. Transactions are processed through
- * a staged pipeline: prepare → simulate → sign → send → confirm, with automatic
- * blockhash management, simulation safety, and retry logic.
+ * Manages blockhash refresh, simulation safety, and retry logic so callers do
+ * not have to drive each stage manually.
  *
  * ```kotlin
  * val engine = TxEngine(rpc)
@@ -32,8 +31,6 @@ import kotlinx.coroutines.delay
  * // Direct execution
  * val result = engine.execute(listOf(ix), signer, feePayer.publicKey)
  * ```
- *
- * Design goal: "Devs should never think about blockhash manually again."
  */
 class TxEngine(
     val rpc: RpcApi,
@@ -258,7 +255,18 @@ internal data class TxContext(
     var logs: List<String>? = null,
     var confirmed: Boolean = false,
     var attempts: Int = 0
-)
+) {
+    /** Pipeline-stage accessors that throw a descriptive error if invoked
+     *  out of order, rather than producing an opaque NPE from `!!`. */
+    fun requireBlockhash(): String = blockhash
+        ?: throw IllegalStateException("TxContext.blockhash not set; prepare() must run before sign()")
+    fun requireTransaction(): VersionedTransaction = transaction
+        ?: throw IllegalStateException("TxContext.transaction not built; prepare() must run before sign()/send()")
+    fun requireTxBase64(): String = txBase64
+        ?: throw IllegalStateException("TxContext.txBase64 not set; sign() must run before send()")
+    fun requireSignature(): String = signature
+        ?: throw IllegalStateException("TxContext.signature not set; send() must run before confirm()")
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TxResult - Sealed result hierarchy
@@ -341,13 +349,13 @@ internal class TxPipeline(private val engine: TxEngine) {
                 }
                 sign(ctx)
                 send(ctx)
-                ArtemisEventBus.emit(ArtemisEvent.Tx.Sent(signature = ctx.signature!!))
+                ArtemisEventBus.emit(ArtemisEvent.Tx.Sent(signature = ctx.requireSignature()))
                 if (ctx.config.awaitConfirmation) {
                     confirm(ctx)
-                    ArtemisEventBus.emit(ArtemisEvent.Tx.Confirmed(signature = ctx.signature!!))
+                    ArtemisEventBus.emit(ArtemisEvent.Tx.Confirmed(signature = ctx.requireSignature()))
                 }
                 return TxResult.Success(
-                    signature = ctx.signature!!,
+                    signature = ctx.requireSignature(),
                     attempts = attempt,
                     simulationLogs = ctx.logs
                 )
@@ -414,7 +422,7 @@ internal class TxPipeline(private val engine: TxEngine) {
             }
         }
 
-        val builder = VersionedTransactionBuilder(buildSigner, ctx.blockhash!!)
+        val builder = VersionedTransactionBuilder(buildSigner, ctx.requireBlockhash())
             .addInstructions(allInstructions)
 
         if (ctx.lookupTables.isNotEmpty()) {
@@ -425,7 +433,7 @@ internal class TxPipeline(private val engine: TxEngine) {
     }
 
     private suspend fun simulate(ctx: TxContext): TxResult? {
-        val tx = ctx.transaction!!
+        val tx = ctx.requireTransaction()
         // Serialize for simulation (may have zero signatures, use replaceRecentBlockhash)
         val base64 = tx.toBase64()
         val result = engine.simulate(base64)
@@ -450,10 +458,10 @@ internal class TxPipeline(private val engine: TxEngine) {
             //   [compact-u16 signature_count] [zero-filled 64-byte slots]* [message_bytes]
             // Upstream has a known bug (solana-mobile/mobile-wallet-adapter #1371)
             // where callers accidentally serialize with `requireAllSignatures=true`
-            // and fail before the wallet UI even opens. We always emit the
+            // and fail before the wallet UI even opens. Always emit the
             // zero-filled layout so the wallet can apply the signatures and
             // re-serialize the blob without any extra preconditions.
-            val tx = ctx.transaction!!
+            val tx = ctx.requireTransaction()
             val numRequired = tx.message.header.numRequiredSignatures
             val msgBytes = tx.message.serialize()
             val buf = com.selenus.artemis.tx.ByteArrayBuilder(
@@ -471,24 +479,25 @@ internal class TxPipeline(private val engine: TxEngine) {
             ctx.transaction = VersionedTransaction.deserialize(signedBytes)
         } else {
             // Standard sync signing path
-            ctx.transaction!!.sign(ctx.signers)
+            ctx.requireTransaction().sign(ctx.signers)
         }
-        ctx.txBase64 = ctx.transaction!!.toBase64()
+        ctx.txBase64 = ctx.requireTransaction().toBase64()
     }
 
     private suspend fun send(ctx: TxContext) {
-        ctx.signature = engine.send(ctx.txBase64!!, ctx.config.skipPreflight)
+        ctx.signature = engine.send(ctx.requireTxBase64(), ctx.config.skipPreflight)
     }
 
     private suspend fun confirm(ctx: TxContext) {
+        val sig = ctx.requireSignature()
         val ok = engine.confirm(
-            ctx.signature!!,
+            sig,
             ctx.config.confirmMaxAttempts,
             ctx.config.confirmSleepMs
         )
         ctx.confirmed = ok
         if (!ok) {
-            throw ConfirmationTimeoutException(ctx.signature!!)
+            throw ConfirmationTimeoutException(sig)
         }
     }
 

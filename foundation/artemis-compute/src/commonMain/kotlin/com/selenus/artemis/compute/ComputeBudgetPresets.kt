@@ -3,14 +3,13 @@ package com.selenus.artemis.compute
 import com.selenus.artemis.tx.Instruction
 
 /**
- * ComputeBudgetPresets
- * 
- * Provides preset tiers for compute budget configuration.
- * Use these for common transaction types without manually calculating
- * compute units and priority fees.
- * 
- * Note: Gaming-specific presets are in artemis-gaming ComputeBudgetPresets
- * This module provides general-purpose presets for all apps.
+ * Preset tiers for compute budget configuration.
+ *
+ * Use for common transaction types without manually calculating compute
+ * units and priority fees.
+ *
+ * Note: gaming-specific presets live in artemis-gaming ComputeBudgetPresets;
+ * this module covers general-purpose presets.
  */
 object ComputeBudgetPresets {
     

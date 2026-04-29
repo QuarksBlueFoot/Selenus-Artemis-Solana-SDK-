@@ -10,8 +10,8 @@ import com.selenus.artemis.candymachine.internal.BorshReader
  *
  * This reader focuses on mobile UX-critical fields: itemsAvailable and itemsRedeemed.
  *
- * Note: mpl-candy-machine-core is an Anchor program. We skip the 8-byte discriminator and parse
- * a stable prefix of the account.
+ * Note: mpl-candy-machine-core is an Anchor program. The 8-byte discriminator is skipped and a
+ * stable prefix of the account is parsed.
  */
 object CandyMachineStateReader {
 
@@ -37,7 +37,7 @@ object CandyMachineStateReader {
     val collectionMint = r.pubkey32()
     val itemsRedeemed = r.u64()
 
-    // CandyMachineData begins. We only need itemsAvailable.
+    // CandyMachineData begins. Only itemsAvailable is needed.
     val itemsAvailable = r.u64()
 
     return CoreFields(authority, collectionMint, itemsRedeemed, itemsAvailable)

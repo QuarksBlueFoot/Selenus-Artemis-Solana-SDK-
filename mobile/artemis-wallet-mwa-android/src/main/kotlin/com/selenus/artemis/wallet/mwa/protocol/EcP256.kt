@@ -47,9 +47,9 @@ object EcP256 {
 
   fun publicKeyFromX962(x962: ByteArray): PublicKey {
     // Reconstruct as X509 SubjectPublicKeyInfo for P-256.
-    // We build an ASN.1 wrapper using the JCA encoded format by round-tripping via KeyFactory.
-    // To keep deps minimal, we rely on the platform provider's ability to parse a synthetic SPKI.
-    // If this ever fails on a specific device, we can add a tiny ASN.1 writer.
+    // Builds an ASN.1 wrapper using the JCA encoded format by round-tripping via KeyFactory.
+    // To keep deps minimal, this relies on the platform provider's ability to parse a synthetic SPKI.
+    // If this ever fails on a specific device, swap in a small ASN.1 writer.
     val spki = SpkiP256.wrapUncompressedPoint(x962)
     val kf = KeyFactory.getInstance("EC")
     return kf.generatePublic(X509EncodedKeySpec(spki))

@@ -108,7 +108,7 @@ class LocalScenario internal constructor(
             // Upstream gate: only show the "battery optimisation may be
             // blocking us" hint when the device is actually in low-power
             // mode. On a charged device the connect just hasn't landed
-            // yet — firing the warning would mislead the user.
+            // yet, firing the warning would mislead the user.
             if (_state.value is ScenarioState.Starting && powerConfigProvider.isLowPowerMode()) {
                 callbacks.onLowPowerAndNoConnection()
             }

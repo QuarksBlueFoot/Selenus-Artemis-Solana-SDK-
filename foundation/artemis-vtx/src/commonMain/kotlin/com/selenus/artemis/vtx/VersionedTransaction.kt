@@ -44,20 +44,25 @@ data class VersionedTransaction(
    */
   fun addSignature(publicKey: Pubkey, signature: ByteArray) {
     require(signature.size == 64) { "Signature must be 64 bytes" }
-    // Find the index of this public key in the message account keys
-    val index = message.staticAccountKeys.indexOfFirst { it.bytes.contentEquals(publicKey.bytes) }
-    if (index == -1) {
-      // Append if not found (external signer scenario)
-      signatures.add(signature)
-    } else {
-      // Ensure signatures list is large enough
-      while (signatures.size <= index) signatures.add(ByteArray(64))
-      signatures[index] = signature
+    val numRequired = message.header.numRequiredSignatures
+    val requiredKeys = message.staticAccountKeys.take(numRequired)
+    val index = requiredKeys.indexOfFirst { it.bytes.contentEquals(publicKey.bytes) }
+    require(index >= 0) {
+      "Public key ${publicKey.toBase58()} is not a required signer for this message. " +
+        "v0 signatures are positional in staticAccountKeys[0..numRequiredSignatures); " +
+        "external signers must be in the static account list before signing."
     }
+    while (signatures.size <= index) signatures.add(ByteArray(64))
+    signatures[index] = signature
   }
 
   fun serialize(): ByteArray {
     require(signatures.isNotEmpty()) { "No signatures present. Call sign() first." }
+    val numRequired = message.header.numRequiredSignatures
+    require(signatures.size == numRequired) {
+      "Expected $numRequired signatures (from header), got ${signatures.size}. " +
+        "Either sign with all required signers or pad with zero-byte placeholders."
+    }
     val out = ByteArrayBuilder()
     out.write(ShortVec.encodeLen(signatures.size))
     signatures.forEach { sig ->

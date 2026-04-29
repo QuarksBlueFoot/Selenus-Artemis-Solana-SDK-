@@ -200,9 +200,10 @@ class SolanaWsClient(
   suspend fun unsubscribe(handle: SubscriptionHandle) {
     subMutex.withLock {
       val sub = activeSubs[handle.key] ?: return
-      if (sub.serverSubId != null) {
+      val serverSubId = sub.serverSubId
+      if (serverSubId != null) {
         val reqId = idGen.getAndIncrement()
-        val msg = buildRequest(reqId, sub.unsubscribeMethod, listOf(sub.serverSubId!!))
+        val msg = buildRequest(reqId, sub.unsubscribeMethod, listOf(serverSubId))
         send(msg)
       }
       activeSubs.remove(handle.key)

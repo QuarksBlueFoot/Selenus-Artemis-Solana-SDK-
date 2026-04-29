@@ -245,7 +245,12 @@ class PortfolioTracker(
             val prices = priceFeed.getPrices(mints)
             for ((mint, price) in prices) {
                 if (price != null) {
-                    assets[mint] = assets[mint]!!.copy(priceUsd = price)
+                    // The mint key was just iterated out of `assets.keys` above into the priceFeed
+                    // request, so a non-null entry must exist here unless `assets` was concurrently
+                    // mutated. Use `?.let` to skip silently on the impossible case rather than NPE.
+                    assets[mint]?.let { existing ->
+                        assets[mint] = existing.copy(priceUsd = price)
+                    }
                 }
             }
         }

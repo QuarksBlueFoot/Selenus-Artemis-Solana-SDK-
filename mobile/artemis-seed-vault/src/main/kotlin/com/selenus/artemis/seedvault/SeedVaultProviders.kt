@@ -55,8 +55,8 @@ class SeedVaultAccountProviderImpl(
             )
         }
         // Multiple paths map to a single binder call: the AIDL only has one
-        // resolveDerivationPath / signMessages verb, so we batch through
-        // the same path used by the manager. The contract client owns the
+        // resolveDerivationPath / signMessages verb, so requests are batched
+        // through the same path the manager uses. The contract client owns the
         // IPC; the provider validates.
         val response = contract.resolveDerivationPath(params)
         val keys = response.getParcelableArrayList<Bundle>(SeedVaultConstants.EXTRA_PUBLIC_KEY)

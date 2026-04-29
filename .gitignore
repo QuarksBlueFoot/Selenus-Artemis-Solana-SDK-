@@ -1,0 +1,51 @@
+# Secrets
+secret.asc
+.env
+.env.local
+*.env
+
+# Build artifacts
+build/
+.gradle/
+.kotlin/
+bin/
+**/bin/
+test-results/
+*.iml
+publish_output.log
+
+# IDE / editor / OS local state
+.idea/
+.vscode/
+.cursor/
+.fleet/
+*.swp
+*~
+.DS_Store
+
+# AI tooling local state (never commit)
+.claude/
+.cursor/
+.aider/
+.windsurf/
+.continue/
+.codeium/
+**/.cline/
+**/MEMORY.md
+**/CLAUDE.md
+**/AGENTS.md
+**/.ai/
+**/scratch/
+**/notes/
+**/.scratch/
+
+# Local-only dev docs (kept out of the public tree)
+*.local.md
+**/_local_/
+local.properties
+README.old.md
+
+# Node
+node_modules/
+**/node_modules/
+npm-debug.log

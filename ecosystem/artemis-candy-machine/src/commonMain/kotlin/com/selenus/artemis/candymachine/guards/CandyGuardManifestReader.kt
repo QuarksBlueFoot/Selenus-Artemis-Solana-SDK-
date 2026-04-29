@@ -32,11 +32,12 @@ object CandyGuardManifestReader {
 
     // CandyGuard fields (Anchor/Borsh):
     // authority: Pubkey
-    // (optional) base / bump fields may exist across versions; we keep this resilient by skipping pubkeys/bump-like bytes
+    // (optional) base / bump fields may exist across versions; the parser stays resilient by skipping
+    //   pubkeys/bump-like bytes
     // default: GuardSet
     // groups: Vec<Group>
     //
-    // We do not need group parsing for mobile deterministic planning.
+    // Group parsing is not required for mobile deterministic planning.
 
     // Attempt to skip 32-byte authority.
     if (r.remaining() < 32) {
@@ -52,8 +53,8 @@ object CandyGuardManifestReader {
     r.pubkey32()
 
     // Some versions include a base pubkey and bump before guardSet. If present, skip conservatively:
-    // - if next bytes look like an option tag (0/1) for the first guard, we stop.
-    // - otherwise, we try skipping a pubkey and a u8 bump.
+    // - if next bytes look like an option tag (0/1) for the first guard, stop.
+    // - otherwise, skip a pubkey and a u8 bump.
     //
     // This heuristic keeps the parser tolerant across minor account revisions.
     val peek = runCatching { accountData[ANCHOR_DISCRIMINATOR_LEN + 32].toInt() and 0xFF }.getOrNull()
@@ -64,8 +65,8 @@ object CandyGuardManifestReader {
 
     val guardSetResult = parseGuardSet(r)
 
-    // Groups vector exists after default guard set. We don't parse it yet; we just ensure we didn't underflow.
-    // If the account has groups, the remaining bytes should still be valid Borsh. We ignore.
+    // Groups vector exists after default guard set. Parsing is skipped; only underflow is checked.
+    // If the account has groups, the remaining bytes should still be valid Borsh and are ignored here.
 
     return guardSetResult
   }
@@ -89,7 +90,7 @@ object CandyGuardManifestReader {
 
   private fun parseGuardSet(r: BorshReader): CandyGuardManifest {
     // Candy Guard's GuardSet is a Borsh struct of many Option<Guard> fields.
-    // We parse known guards in a stable order used by mpl-candy-guard v3+.
+    // Known guards are parsed in the stable order used by mpl-candy-guard v3+.
     val s = GuardSetParse()
 
     fun optGuard(type: GuardType, parse: (BorshReader) -> Unit) {
@@ -105,7 +106,7 @@ object CandyGuardManifestReader {
       }
     }
 
-    // Guard structs (sizes based on public IDL for mpl-candy-guard; we only read what we need and skip the rest).
+    // Guard structs (sizes based on public IDL for mpl-candy-guard; only relevant fields are read, the rest is skipped).
     optGuard(GuardType.botTax) {
       // BotTax { lamports: u64, lastInstruction: bool }
       it.u64(); it.bool()

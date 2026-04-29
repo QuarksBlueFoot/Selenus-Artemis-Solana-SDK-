@@ -199,7 +199,14 @@ fun TransactionBatchResult.toUpstreamSignaturesOrThrow(): Array<ByteArray> {
         )
     }
     return results.map { item ->
-        val sig = item.signature!!
+        // Safe invariant: anyFailure was checked above. Each item's success-state contract is
+        // `success == (error == null && signature != null)` (see TransactionItemResult.of and
+        // toTransactionBatchResult), so `signature` is non-null on every reachable element.
+        val sig = item.signature
+            ?: throw IllegalStateException(
+                "Inconsistent TransactionItemResult at index ${item.index}: success=${item.success} " +
+                "but signature is null. This indicates a bug in the result builder."
+            )
         // Solana signatures are base58 strings on the wire; the upstream
         // Array<ByteArray> shape wants raw 64-byte signatures.
         com.selenus.artemis.runtime.Base58.decode(sig)

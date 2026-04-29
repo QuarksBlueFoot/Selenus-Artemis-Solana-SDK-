@@ -11,9 +11,9 @@
  * - ECDH shared secret derivation
  * - Message authentication
  * 
- * Note: This works alongside the Seed Vault, not as a replacement.
- * The actual key material stays in the Seed Vault; we derive application
- * keys for encryption operations.
+ * Note: works alongside the Seed Vault, not as a replacement.
+ * Key material stays in the Seed Vault; application-level encryption keys
+ * are derived from it for crypto operations.
  */
 package com.selenus.artemis.seedvault
 

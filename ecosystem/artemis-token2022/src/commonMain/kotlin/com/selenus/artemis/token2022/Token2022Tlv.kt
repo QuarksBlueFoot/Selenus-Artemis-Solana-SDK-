@@ -81,7 +81,7 @@ object Token2022Tlv {
         var i = 0
         
         while (i < tlvData.size) {
-            // If we can't read the next type, we're done
+            // Stop when there are not enough bytes for the next type tag
             if (tlvData.size - i < 2) break
             if (tlvData.size - i < HEADER_LEN) {
                 throw IllegalArgumentException("Malformed TLV: truncated header at offset=$i")

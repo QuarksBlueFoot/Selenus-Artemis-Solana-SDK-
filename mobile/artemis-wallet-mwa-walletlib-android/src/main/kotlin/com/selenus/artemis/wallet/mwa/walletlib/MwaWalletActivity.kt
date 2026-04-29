@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
  * The Activity reads the inbound URI in [onCreate], parses it through
  * [AssociationUri.parse], and exposes a [MwaUiRequest] flow the
  * wallet's UI layer collects to render confirmation prompts. The
- * Activity does not start the [LocalScenario] itself — that's left to
+ * Activity does not start the [LocalScenario] itself, that's left to
  * the subclass so wallets that need to gate behind an unlock screen
  * can do so before the scenario opens the transport.
  */
@@ -111,7 +111,7 @@ abstract class MwaWalletActivity : ComponentActivity() {
      * also surface synthetic events for unit tests.
      */
     protected fun emitRequest(event: MwaUiRequest) {
-        // tryEmit drops on a buffered miss instead of suspending —
+        // tryEmit drops on a buffered miss instead of suspending.
         // acceptable here because the SharedFlow's bounded buffer is
         // sized for normal request rates and a dropped event would
         // leak as a hung dApp future. We log on overflow so the

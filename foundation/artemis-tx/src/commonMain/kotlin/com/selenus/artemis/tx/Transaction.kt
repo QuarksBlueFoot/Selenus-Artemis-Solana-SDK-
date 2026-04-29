@@ -56,8 +56,16 @@ class Transaction(
       // Writable before read-only
       if (a.isWritable != b.isWritable) return@Comparator if (a.isWritable) -1 else 1
 
-      // Tie-break with pubkey bytes for deterministic ordering (optional but good practice)
-      // For now, just keep stable sort or insertion order if equal
+      // Lexicographic tiebreak on pubkey bytes. Matches solana-web3.js's
+      // stable account ordering so transactions built in Artemis hash
+      // to the same bytes as ones built in JS for the same instructions.
+      // Without this, two clients can produce wire-different but
+      // semantically equivalent messages, which busts tx caches.
+      for (i in 0 until 32) {
+        val ai = a.pubkey.bytes[i].toInt() and 0xFF
+        val bi = b.pubkey.bytes[i].toInt() and 0xFF
+        if (ai != bi) return@Comparator ai - bi
+      }
       0
     })
 
@@ -146,7 +154,17 @@ class Transaction(
         offset += 64
       }
 
-      val numRequiredSignatures = bytes[offset].toInt() and 0xFF
+      // The high bit of the first message byte signals a versioned tx
+      // (v0 sets 0x80). Reject so callers route to VersionedTransaction.from.
+      // Without this guard, a v0 tx parses with numRequiredSignatures=128
+      // and produces nonsense.
+      val firstMsgByte = bytes[offset].toInt() and 0xFF
+      if (firstMsgByte and 0x80 != 0) {
+        throw IllegalArgumentException(
+          "Versioned transaction (v${firstMsgByte and 0x7F}); use VersionedTransaction.from(bytes)"
+        )
+      }
+      val numRequiredSignatures = firstMsgByte
       val numReadonlySigned = bytes[offset + 1].toInt() and 0xFF
       val numReadonlyUnsigned = bytes[offset + 2].toInt() and 0xFF
       offset += 3

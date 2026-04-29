@@ -54,6 +54,10 @@ object CandyGuardAccountPlanner {
     val collectionMetaBytes = fetchAccountBase64(rpc, collectionMetaPda) ?: throw IllegalArgumentException("Collection metadata account not found")
     val collectionMeta = MetadataParser.parse(collectionMint, collectionMetaBytes)
     val collectionUpdateAuthority = collectionMeta.updateAuthority
+      ?: throw IllegalArgumentException(
+        "Collection metadata for ${collectionMint.toBase58()} has no updateAuthority; " +
+          "the collection NFT is not in a Candy Guard mint-eligible state"
+      )
 
     val nftMetadata = Pdas.metadataPda(mint)
     val nftMasterEdition = Pdas.masterEditionPda(mint)
@@ -61,10 +65,11 @@ object CandyGuardAccountPlanner {
 
     val collectionDelegateRecord = Pdas.collectionAuthorityRecordPda(collectionMint, candyMachineAuthorityPda)
 
-    // pNFT support: not all Candy Machines are pNFT. We only inject token/tokenRecord if caller opts in
-    // by setting manifest.isPnft (future) or by providing guardArgs.gatekeeperToken etc. For now, we detect
-    // pNFT via the presence of sysvar instructions + slot hashes required by mint_v2 and allow caller override.
-    // If you know your machine enforces pNFT, set `forcePnft = true` by passing a token arg in guardArgs.
+    // pNFT support: not all Candy Machines are pNFT. token/tokenRecord are only injected when the caller
+    // opts in by setting manifest.isPnft (future) or by providing guardArgs.gatekeeperToken etc. pNFT is
+    // currently detected via the presence of sysvar instructions + slot hashes required by mint_v2, with
+    // a caller override available. If the machine is known to enforce pNFT, set `forcePnft = true` by
+    // passing a token arg in guardArgs.
     val token = if (forcePnft) AssociatedTokenAddresses.ata(wallet, mint) else null
     val tokenRecord = if (forcePnft && token != null) Pdas.tokenRecordPda(mint, token) else null
 
@@ -105,7 +110,7 @@ object CandyGuardAccountPlanner {
       collectionMint = collectionMint,
       collectionMetadata = collectionMetaPda,
       collectionMasterEdition = collectionMasterEdition,
-      collectionUpdateAuthority = collectionUpdateAuthority!!,
+      collectionUpdateAuthority = collectionUpdateAuthority,
       candyMachineAuthorityPda = candyMachineAuthorityPda,
       remainingAccounts = emptyList(),
       nftMintIsSigner = mintIsSigner,

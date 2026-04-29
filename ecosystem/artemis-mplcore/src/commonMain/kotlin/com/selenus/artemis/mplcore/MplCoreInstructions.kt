@@ -82,14 +82,12 @@ object MplCoreInstructions {
     programId: Pubkey = MplCorePrograms.DEFAULT_PROGRAM_ID,
     methodName: String = "update_metadata"
   ): Instruction {
-    val hasName = name != null
-    val hasUri = uri != null
     val payload = MplCoreCodec.concat(
       listOf(
-        MplCoreCodec.u8(if (hasName) 1 else 0),
-        if (hasName) MplCoreCodec.borshString(name!!) else byteArrayOf(),
-        MplCoreCodec.u8(if (hasUri) 1 else 0),
-        if (hasUri) MplCoreCodec.borshString(uri!!) else byteArrayOf()
+        MplCoreCodec.u8(if (name != null) 1 else 0),
+        name?.let { MplCoreCodec.borshString(it) } ?: byteArrayOf(),
+        MplCoreCodec.u8(if (uri != null) 1 else 0),
+        uri?.let { MplCoreCodec.borshString(it) } ?: byteArrayOf()
       )
     )
     val data = MplCoreCodec.disc(methodName) + payload

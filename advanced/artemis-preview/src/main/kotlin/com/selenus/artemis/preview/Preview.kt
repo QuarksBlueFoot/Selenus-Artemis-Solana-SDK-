@@ -201,9 +201,11 @@ suspend fun main() = kotlinx.coroutines.coroutineScope {
           
           // Verify ATA Balance
           val balanceResponse = rpc.getTokenAccountBalance(ata.toString())
-          val balanceValue = balanceResponse["value"]!!.jsonObject
-          val amount = balanceValue["amount"]!!.jsonPrimitive.content
-          val uiAmountString = balanceValue["uiAmountString"]!!.jsonPrimitive.content
+          val balanceValue = balanceResponse["value"]?.jsonObject
+              ?: error("getTokenAccountBalance: missing 'value' field")
+          val amount = balanceValue["amount"]?.jsonPrimitive?.content
+              ?: error("getTokenAccountBalance: missing 'value.amount'")
+          val uiAmountString = balanceValue["uiAmountString"]?.jsonPrimitive?.content ?: amount
           println("ATA Balance: $uiAmountString (Amount: $amount)")
 
           // 6. Test Metaplex (Create Metadata)
@@ -379,8 +381,11 @@ suspend fun main() = kotlinx.coroutines.coroutineScope {
       // Wait and confirm
       delay(5000)
       val balanceResponse = rpc.getTokenAccountBalance(ata2022.toBase58())
-      val balanceVal = balanceResponse["value"]!!.jsonObject
-      println("Token 2022 ATA Balance: ${balanceVal["amount"]!!.jsonPrimitive.content}")
+      val balanceVal = balanceResponse["value"]?.jsonObject
+          ?: error("getTokenAccountBalance: missing 'value' field")
+      val amount = balanceVal["amount"]?.jsonPrimitive?.content
+          ?: error("getTokenAccountBalance: missing 'value.amount'")
+      println("Token 2022 ATA Balance: $amount")
 
   } catch (e: Exception) {
       println("Token 2022 Test Failed: ${e.message}")
@@ -472,22 +477,15 @@ suspend fun main() = kotlinx.coroutines.coroutineScope {
   // 14. Test NFT Compat (using the mint from step 7)
   println("Attempting NFT Compat Test...")
   try {
-      // We need a mint that definitely has metadata. 
-      // Since step 7 creates one, we can try to use that if we can access 'mint' variable.
-      // However, 'mint' is local to the try-catch block in step 7.
-      // For this test, we will just try to fetch metadata for a known mint or the one we just created if we can refactor.
-      // Let's just create a NEW mint and metadata quickly, or better yet, just try to fetch the one from step 7 by moving the variable out?
-      // Refactoring is risky. Let's just use the 'mint' from step 7 if we can... wait, we can't easily.
-      // Let's just use a hardcoded known mint on devnet if possible, OR just skip the fetch if we don't have a mint.
-      // Actually, let's just re-use the logic from step 7 but use NftClient to fetch it.
-      
-      // Re-create a mint for this test to be self-contained
+      // The mint created in step 7 is local to that try-catch block, so it cannot be reused here.
+      // To keep this test self-contained, a fresh mint is created below and a random pubkey is
+      // used to confirm the client correctly returns null for non-existent metadata.
       val nftClient = NftClient(rpc)
       val testMint = Keypair.generate()
       println("Creating new mint for NFT Compat test: ${testMint.publicKey.toBase58()}")
       
-      // ... (We would need to fund/mint/create metadata again, which is slow)
-      // Instead, let's just try to fetch a random mint and expect null, just to test the client doesn't crash.
+      // Funding/minting/creating metadata again would be slow.
+      // Instead, fetch a random mint and expect null to verify the client handles misses gracefully.
       val randomMint = Keypair.generate().publicKey
       val nft = nftClient.findByMint(randomMint)
       if (nft == null) {
@@ -505,8 +503,8 @@ suspend fun main() = kotlinx.coroutines.coroutineScope {
   println("Attempting Tx Composer Presets Test...")
   try {
       // Check if the ATA for the Token2022 mint (from step 10) exists.
-      // We need to reconstruct the intent.
-      // Since we don't have the variables from step 10 in scope, we'll just use a random one and expect it to NOT exist.
+      // The intent must be reconstructed here.
+      // Variables from step 10 are out of scope, so a random mint is used and expected to NOT exist.
       val randomMint = Keypair.generate().publicKey
       val intent = TxComposerPresets.AtaIntent(
           owner = keypair.publicKey,
@@ -516,8 +514,8 @@ suspend fun main() = kotlinx.coroutines.coroutineScope {
       val ataAddr = intent.ataAddress()
       println("Checking ATA for random mint: ${ataAddr.toBase58()}")
       
-      // We can't easily call the internal logic of TxComposerPresets without a full pipeline, 
-      // but we can verify the helper method `ataAddress` works.
+      // The internal TxComposerPresets logic requires a full pipeline, so this test only
+      // verifies that the `ataAddress` helper resolves an address.
       if (ataAddr.toBase58().isNotEmpty()) {
           println("TxComposerPresets: ATA address derivation works.")
       }

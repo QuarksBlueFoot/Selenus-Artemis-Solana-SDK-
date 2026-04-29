@@ -612,12 +612,15 @@ class AllAccountsFetcher(
         
         for (item in accountsArray) {
             val obj = item.jsonObject
-            val pubkey = Pubkey.fromBase58(obj["pubkey"]!!.jsonPrimitive.content)
-            val accountObj = obj["account"]!!.jsonObject
-            val dataArray = accountObj["data"]!!.jsonArray
+            // Skip malformed entries rather than fail the whole programAccounts call.
+            val pubkeyStr = obj["pubkey"]?.jsonPrimitive?.contentOrNull ?: continue
+            val pubkey = Pubkey.fromBase58(pubkeyStr)
+            val accountObj = obj["account"]?.jsonObject ?: continue
+            val dataArray = accountObj["data"]?.jsonArray ?: continue
+            if (dataArray.isEmpty()) continue
             val base64Data = dataArray[0].jsonPrimitive.content
             val data = PlatformBase64.decode(base64Data)
-            
+
             fetcher.decode(data, pubkey)?.let { result.add(it) }
         }
         

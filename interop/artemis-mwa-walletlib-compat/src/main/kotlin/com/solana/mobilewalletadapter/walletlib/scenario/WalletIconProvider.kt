@@ -37,7 +37,7 @@ interface WalletIconProvider {
 class DefaultWalletIconProvider : WalletIconProvider {
     override fun resolve(identityUri: Uri?, iconRelativeUri: Uri?): Uri? {
         if (identityUri == null || iconRelativeUri == null) return null
-        // Already absolute — pass through.
+        // Already absolute. pass through.
         if (iconRelativeUri.isAbsolute) return iconRelativeUri
         return identityUri.buildUpon()
             .encodedPath(iconRelativeUri.encodedPath)

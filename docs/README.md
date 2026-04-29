@@ -1,6 +1,6 @@
 # Artemis SDK documentation
 
-Top-level index for everything under `docs/`. Start at the root [README.md](../README.md) for installation and quick start.
+top-level index for everything under `docs/`. if you just want to install and run code, start at the root [README.md](../README.md).
 
 ## Architecture and design
 
@@ -28,7 +28,7 @@ Top-level index for everything under `docs/`. Start at the root [README.md](../R
 
 ## Module guides
 
-These are deep dives for individual ecosystem and advanced modules. Each guide includes a working code example and links back to the source files in the repo.
+deep dives for individual ecosystem and advanced modules. each guide ships a working code example and links straight to source.
 
 | Guide | Module |
 | --- | --- |

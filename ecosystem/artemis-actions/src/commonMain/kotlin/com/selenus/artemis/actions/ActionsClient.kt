@@ -2,15 +2,13 @@
  * Copyright (c) 2024-2025 Selenus Technologies. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  * 
- * ORIGINAL IMPLEMENTATION - First complete Solana Actions/Blinks SDK for Kotlin/Android.
- * 
- * ActionsClient - Full implementation of the Solana Actions specification.
- * 
+ * ActionsClient - Implementation of the Solana Actions specification.
+ *
  * Solana Actions are REST APIs that return signable Solana transactions.
  * Blinks (blockchain links) are URLs that can be shared and unfurled into
  * interactive components for signing transactions.
- * 
- * This implementation provides:
+ *
+ * Provides:
  * - GET/POST action lifecycle handling
  * - Action chaining for multi-step flows
  * - Identity verification with signature headers
@@ -19,8 +17,8 @@
  * - Mobile-optimized blink rendering helpers
  * - Deep link integration for Android
  * - QR code generation for action URLs
- * 
- * Unlike web-based solutions, this is designed for native mobile:
+ *
+ * Mobile-native design points:
  * - Battery-efficient polling for action state
  * - Native form field rendering
  * - Wallet adapter integration

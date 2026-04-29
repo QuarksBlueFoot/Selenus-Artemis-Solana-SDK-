@@ -133,7 +133,7 @@ class MwaWalletConformanceTest {
     @Test
     fun `seeker stock gets tight connect timeout for silent TWA dismiss`() {
         // Seeker stock: sign-and-send + sign-transactions + legacy, no clone-auth.
-        // Importantly, maxTx is not 5, 7, 8, 10, or >=20 so prior buckets don't claim it.
+        // maxTx is deliberately not 5, 7, 8, 10, or >=20 so prior buckets don't claim it.
         val caps = MwaCapabilities(
             maxTransactionsPerRequest = 3,
             features = listOf(

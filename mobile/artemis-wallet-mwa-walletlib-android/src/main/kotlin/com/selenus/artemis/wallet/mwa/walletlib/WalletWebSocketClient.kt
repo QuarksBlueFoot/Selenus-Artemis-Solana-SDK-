@@ -51,7 +51,7 @@ internal class WalletWebSocketClient {
         withContext(Dispatchers.IO) {
             require(port in 1..65535) { "port out of range: $port" }
             val socket = Socket()
-            // Bind to loopback only — defence in depth against an
+            // Bind to loopback only. defence in depth against an
             // attacker who somehow steered the resolver to a non-loopback
             // address. The MWA local-association port is by spec a
             // loopback bind, so refusing other targets here cannot

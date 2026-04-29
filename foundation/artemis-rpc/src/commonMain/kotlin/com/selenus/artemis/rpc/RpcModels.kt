@@ -57,11 +57,11 @@ data class EpochInfo(
   companion object {
     fun fromJson(json: JsonObject): EpochInfo {
       return EpochInfo(
-        absoluteSlot = json["absoluteSlot"]!!.asLong(),
-        blockHeight = json["blockHeight"]!!.asLong(),
-        epoch = json["epoch"]!!.asLong(),
-        slotIndex = json["slotIndex"]!!.asLong(),
-        slotsInEpoch = json["slotsInEpoch"]!!.asLong(),
+        absoluteSlot = json.reqLong("absoluteSlot"),
+        blockHeight = json.reqLong("blockHeight"),
+        epoch = json.reqLong("epoch"),
+        slotIndex = json.reqLong("slotIndex"),
+        slotsInEpoch = json.reqLong("slotsInEpoch"),
         transactionCount = json["transactionCount"]?.asLongOrNull()
       )
     }
@@ -129,7 +129,7 @@ data class VersionInfo(
   companion object {
     fun fromJson(json: JsonObject): VersionInfo {
       return VersionInfo(
-        solanaCore = json["solana-core"]!!.asString(),
+        solanaCore = json.reqString("solana-core"),
         featureSet = json["feature-set"]?.asLongOrNull()
       )
     }
@@ -154,11 +154,11 @@ data class EpochSchedule(
 ) {
   companion object {
     fun fromJson(json: JsonObject): EpochSchedule = EpochSchedule(
-      slotsPerEpoch = json["slotsPerEpoch"]!!.asLong(),
-      leaderScheduleSlotOffset = json["leaderScheduleSlotOffset"]!!.asLong(),
-      warmup = json["warmup"]!!.jsonPrimitive.boolean,
-      firstNormalEpoch = json["firstNormalEpoch"]!!.asLong(),
-      firstNormalSlot = json["firstNormalSlot"]!!.asLong()
+      slotsPerEpoch = json.reqLong("slotsPerEpoch"),
+      leaderScheduleSlotOffset = json.reqLong("leaderScheduleSlotOffset"),
+      warmup = json.reqBoolean("warmup"),
+      firstNormalEpoch = json.reqLong("firstNormalEpoch"),
+      firstNormalSlot = json.reqLong("firstNormalSlot")
     )
   }
 }
@@ -176,11 +176,11 @@ data class InflationGovernor(
 ) {
   companion object {
     fun fromJson(json: JsonObject): InflationGovernor = InflationGovernor(
-      initial = json["initial"]!!.jsonPrimitive.double,
-      terminal = json["terminal"]!!.jsonPrimitive.double,
-      taper = json["taper"]!!.jsonPrimitive.double,
-      foundation = json["foundation"]!!.jsonPrimitive.double,
-      foundationTerm = json["foundationTerm"]!!.jsonPrimitive.double
+      initial = json.reqDouble("initial"),
+      terminal = json.reqDouble("terminal"),
+      taper = json.reqDouble("taper"),
+      foundation = json.reqDouble("foundation"),
+      foundationTerm = json.reqDouble("foundationTerm")
     )
   }
 }
@@ -197,10 +197,10 @@ data class InflationRate(
 ) {
   companion object {
     fun fromJson(json: JsonObject): InflationRate = InflationRate(
-      total = json["total"]!!.jsonPrimitive.double,
-      validator = json["validator"]!!.jsonPrimitive.double,
-      foundation = json["foundation"]!!.jsonPrimitive.double,
-      epoch = json["epoch"]!!.asLong()
+      total = json.reqDouble("total"),
+      validator = json.reqDouble("validator"),
+      foundation = json.reqDouble("foundation"),
+      epoch = json.reqLong("epoch")
     )
   }
 }
@@ -219,9 +219,9 @@ data class Supply(
     fun fromJson(json: JsonObject): Supply {
       val value = json["value"]?.jsonObject ?: json
       return Supply(
-        total = value["total"]!!.asLong(),
-        circulating = value["circulating"]!!.asLong(),
-        nonCirculating = value["nonCirculating"]!!.asLong(),
+        total = value.reqLong("total"),
+        circulating = value.reqLong("circulating"),
+        nonCirculating = value.reqLong("nonCirculating"),
         nonCirculatingAccounts = value["nonCirculatingAccounts"]?.jsonArray?.map { it.asString() } ?: emptyList()
       )
     }
@@ -239,9 +239,9 @@ data class StakeActivation(
 ) {
   companion object {
     fun fromJson(json: JsonObject): StakeActivation = StakeActivation(
-      state = json["state"]!!.asString(),
-      active = json["active"]!!.asLong(),
-      inactive = json["inactive"]!!.asLong()
+      state = json.reqString("state"),
+      active = json.reqLong("active"),
+      inactive = json.reqLong("inactive")
     )
   }
 }
@@ -262,7 +262,7 @@ data class ClusterNode(
 ) {
   companion object {
     fun fromJson(json: JsonObject): ClusterNode = ClusterNode(
-      pubkey = json["pubkey"]!!.asString(),
+      pubkey = json.reqString("pubkey"),
       gossip = json["gossip"]?.takeUnless { it is JsonNull }?.asString(),
       tpu = json["tpu"]?.takeUnless { it is JsonNull }?.asString(),
       tpuQuic = json["tpuQuic"]?.takeUnless { it is JsonNull }?.asString(),
@@ -287,10 +287,10 @@ data class PerformanceSample(
 ) {
   companion object {
     fun fromJson(json: JsonObject): PerformanceSample = PerformanceSample(
-      slot = json["slot"]!!.asLong(),
-      numTransactions = json["numTransactions"]!!.asLong(),
-      numSlots = json["numSlots"]!!.asLong(),
-      samplePeriodSecs = json["samplePeriodSecs"]!!.jsonPrimitive.int,
+      slot = json.reqLong("slot"),
+      numTransactions = json.reqLong("numTransactions"),
+      numSlots = json.reqLong("numSlots"),
+      samplePeriodSecs = json.reqInt("samplePeriodSecs"),
       numNonVoteTransactions = json["numNonVoteTransactions"]?.asLongOrNull()
     )
   }
@@ -310,8 +310,8 @@ data class TokenAccountBalance(
     fun fromJson(json: JsonObject): TokenAccountBalance {
       val value = json["value"]?.jsonObject ?: json
       return TokenAccountBalance(
-        amount = value["amount"]!!.asString(),
-        decimals = value["decimals"]!!.jsonPrimitive.int,
+        amount = value.reqString("amount"),
+        decimals = value.reqInt("decimals"),
         uiAmount = value["uiAmount"]?.takeUnless { it is JsonNull }?.jsonPrimitive?.doubleOrNull,
         uiAmountString = value["uiAmountString"]?.takeUnless { it is JsonNull }?.asString()
       )
@@ -329,8 +329,8 @@ data class LargestAccount(
 ) {
   companion object {
     fun fromJson(json: JsonObject): LargestAccount = LargestAccount(
-      address = json["address"]!!.asString(),
-      lamports = json["lamports"]!!.asLong()
+      address = json.reqString("address"),
+      lamports = json.reqLong("lamports")
     )
   }
 }
@@ -350,12 +350,12 @@ data class VoteAccountInfo(
 ) {
   companion object {
     fun fromJson(json: JsonObject): VoteAccountInfo = VoteAccountInfo(
-      votePubkey = json["votePubkey"]!!.asString(),
-      nodePubkey = json["nodePubkey"]!!.asString(),
-      activatedStake = json["activatedStake"]!!.asLong(),
-      epochVoteAccount = json["epochVoteAccount"]!!.jsonPrimitive.boolean,
-      commission = json["commission"]!!.jsonPrimitive.int,
-      lastVote = json["lastVote"]!!.asLong(),
+      votePubkey = json.reqString("votePubkey"),
+      nodePubkey = json.reqString("nodePubkey"),
+      activatedStake = json.reqLong("activatedStake"),
+      epochVoteAccount = json.reqBoolean("epochVoteAccount"),
+      commission = json.reqInt("commission"),
+      lastVote = json.reqLong("lastVote"),
       rootSlot = json["rootSlot"]?.asLongOrNull()
     )
   }
@@ -370,8 +370,8 @@ data class VoteAccounts(
 ) {
   companion object {
     fun fromJson(json: JsonObject): VoteAccounts = VoteAccounts(
-      current = json["current"]!!.jsonArray.map { VoteAccountInfo.fromJson(it.jsonObject) },
-      delinquent = json["delinquent"]!!.jsonArray.map { VoteAccountInfo.fromJson(it.jsonObject) }
+      current = json.reqArray("current").map { VoteAccountInfo.fromJson(it.jsonObject) },
+      delinquent = json.reqArray("delinquent").map { VoteAccountInfo.fromJson(it.jsonObject) }
     )
   }
 }
@@ -386,7 +386,7 @@ data class BlockCommitment(
   companion object {
     fun fromJson(json: JsonObject): BlockCommitment = BlockCommitment(
       commitment = json["commitment"]?.takeUnless { it is JsonNull }?.jsonArray?.map { it.asLong() },
-      totalStake = json["totalStake"]!!.asLong()
+      totalStake = json.reqLong("totalStake")
     )
   }
 }
@@ -404,9 +404,9 @@ data class TokenLargestAccount(
 ) {
   companion object {
     fun fromJson(json: JsonObject): TokenLargestAccount = TokenLargestAccount(
-      address = json["address"]!!.asString(),
-      amount = json["amount"]!!.asString(),
-      decimals = json["decimals"]!!.jsonPrimitive.int,
+      address = json.reqString("address"),
+      amount = json.reqString("amount"),
+      decimals = json.reqInt("decimals"),
       uiAmount = json["uiAmount"]?.takeUnless { it is JsonNull }?.jsonPrimitive?.doubleOrNull,
       uiAmountString = json["uiAmountString"]?.takeUnless { it is JsonNull }?.asString()
     )
@@ -428,7 +428,7 @@ data class SignatureStatusInfo(
 
   companion object {
     fun fromJson(json: JsonObject): SignatureStatusInfo = SignatureStatusInfo(
-      slot = json["slot"]!!.asLong(),
+      slot = json.reqLong("slot"),
       confirmations = json["confirmations"]?.asLongOrNull(),
       err = json["err"],
       confirmationStatus = json["confirmationStatus"]?.takeUnless { it is JsonNull }?.asString()
@@ -440,11 +440,32 @@ data class SignatureStatusInfo(
 // JSON EXTENSION HELPERS
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-internal fun JsonElement.asLong(): Long = 
+internal fun JsonElement.asLong(): Long =
   jsonPrimitive.long
 
-internal fun JsonElement.asLongOrNull(): Long? = 
+internal fun JsonElement.asLongOrNull(): Long? =
   try { jsonPrimitive.longOrNull } catch (_: Exception) { null }
 
-internal fun JsonElement.asString(): String = 
+internal fun JsonElement.asString(): String =
   jsonPrimitive.content
+
+/**
+ * Strictly require a field on a JSON-RPC response object. Throws a
+ * descriptive [RpcException] when the field is absent or null, instead of
+ * the opaque NullPointerException produced by `obj["x"]!!`.
+ */
+internal fun JsonObject.req(field: String): JsonElement {
+  val v = this[field]
+  if (v == null || v is JsonNull) {
+    throw RpcException("Malformed RPC response: missing required field '$field'")
+  }
+  return v
+}
+
+internal fun JsonObject.reqObject(field: String): JsonObject = req(field).jsonObject
+internal fun JsonObject.reqArray(field: String): JsonArray = req(field).jsonArray
+internal fun JsonObject.reqLong(field: String): Long = req(field).jsonPrimitive.long
+internal fun JsonObject.reqInt(field: String): Int = req(field).jsonPrimitive.int
+internal fun JsonObject.reqDouble(field: String): Double = req(field).jsonPrimitive.double
+internal fun JsonObject.reqBoolean(field: String): Boolean = req(field).jsonPrimitive.boolean
+internal fun JsonObject.reqString(field: String): String = req(field).jsonPrimitive.content

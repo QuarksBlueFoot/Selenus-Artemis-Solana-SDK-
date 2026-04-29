@@ -229,8 +229,8 @@ object MwaSiwsValidator {
      * subset that every SIWS implementation emits today. Returns the Unix
      * timestamp in seconds, or `null` when the string is not parseable.
      *
-     * We avoid pulling in `java.time.*` here so the helper is reusable from
-     * any Artemis module without a JVM dependency gate.
+     * Avoids `java.time.*` so the helper is reusable from any Artemis module
+     * without a JVM dependency gate.
      */
     private fun parseIsoSeconds(iso: String): Long? {
         val re = Regex(

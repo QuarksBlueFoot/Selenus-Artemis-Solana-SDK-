@@ -224,7 +224,7 @@ class MwaWalletAdapter(
     replaceWith = ReplaceWith("signAndSendTransaction(message, SendTransactionOptions())")
   )
   override suspend fun signMessage(message: ByteArray, request: WalletRequest): ByteArray {
-    // For MWA we treat WalletAdapter.signMessage as "sign tx bytes".
+    // For MWA, WalletAdapter.signMessage is treated as "sign tx bytes".
     if (pk == null || session == null) connect()
     val s = session ?: throw IllegalStateException("MWA session not ready")
     val c = ensureMwaCapabilities()
@@ -269,7 +269,7 @@ class MwaWalletAdapter(
     val address = pk?.bytes ?: throw IllegalStateException("Wallet not connected")
     
     // MWA sign_messages takes a list of payloads and a list of addresses.
-    // We are signing one message with one address.
+    // Signs one message with one address.
     val signatures = client.signMessages(s, listOf(message), listOf(address))
     return signatures.first()
   }
@@ -502,7 +502,7 @@ class MwaWalletAdapter(
     return sigs
   }
 
-  // Sign-only fallback (caller can broadcast). We still perform signing in batches here.
+  // Sign-only fallback (caller can broadcast). Signing still runs in batches here.
   for (part in parts) {
     client.signTransactions(s, part)
   }
@@ -647,7 +647,7 @@ private fun <T> chunk(list: List<T>, maxSize: Int): List<List<T>> {
     val currentPk = pk ?: throw IllegalStateException("Wallet not connected")
 
     // MWA expects a list of addresses corresponding to each message.
-    // We assume all messages are signed by the connected wallet.
+    // Assumes all messages are signed by the connected wallet.
     val addresses = List(messages.size) { currentPk.bytes }
 
     return client.signMessages(s, messages, addresses)

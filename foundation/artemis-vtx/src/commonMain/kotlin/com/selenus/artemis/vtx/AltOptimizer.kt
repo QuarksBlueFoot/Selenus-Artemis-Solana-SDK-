@@ -108,7 +108,7 @@ object AltOptimizer {
       val loadedCount = plan.loadedWritable.size + plan.loadedReadonly.size
 
       val units = if (mode == Mode.SIZE_AND_COMPUTE && rpc != null) {
-        // We can simulate with replaceRecentBlockhash, so even a dummy blockhash works.
+        // Simulation uses replaceRecentBlockhash, so a dummy blockhash works.
         val vt = VersionedTransaction(
           signatures = mutableListOf(ByteArray(64)), // dummy sig
           message = compiled.message

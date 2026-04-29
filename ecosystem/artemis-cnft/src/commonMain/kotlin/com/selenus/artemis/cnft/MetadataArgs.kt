@@ -5,8 +5,8 @@ import com.selenus.artemis.runtime.Pubkey
 /**
  * Bubblegum v1 MetadataArgs (borsh-like).
  *
- * This is the payload used by mintV1 and mintToCollectionV1 on Bubblegum v1.
- * We keep it intentionally "wallet-grade": enough to build real mints.
+ * Payload used by mintV1 and mintToCollectionV1 on Bubblegum v1.
+ * Intentionally "wallet-grade": enough to build real mints.
  */
 data class MetadataArgs(
   val name: String,

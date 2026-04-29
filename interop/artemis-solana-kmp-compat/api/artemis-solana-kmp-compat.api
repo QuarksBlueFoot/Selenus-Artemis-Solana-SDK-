@@ -364,6 +364,9 @@
   L134  val tmp = this[0]
   L138  val indexMap = buildMap<Int, Int> {
   L143  val remappedIxs = artemis.instructions.map { ci ->
+  L147  val programIdx = indexMap[ci.programIdIndex]
+  L152  val key = byteIdx.toInt() and 0xFF
+  L153  val mapped = indexMap[key]
 
 ## commonMain/kotlin/foundation/metaplex/solana/transactions/TransactionTypes.kt (package foundation.metaplex.solana.transactions)
   L19  typealias TransactionSignature = ByteArray

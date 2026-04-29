@@ -261,7 +261,7 @@ class WalletCorrectnessTest {
             // The dispatcher should NOT have replied yet.
             val event = withTimeout(2_000) { deauthFired.await() }
             // Sleep a beat, then assert we still have no reply on the
-            // wire — proves the dispatcher is genuinely waiting.
+            // wire. proves the dispatcher is genuinely waiting.
             kotlinx.coroutines.delay(100)
             assertTrue(
                 "dispatcher should not have replied while DeauthorizedEvent.complete() pending",
@@ -333,7 +333,7 @@ class WalletCorrectnessTest {
         val server = newDispatcher(cb)
         try {
             authorizeOnChain(ProtocolContract.CHAIN_SOLANA_MAINNET)
-            // Address that wasn't authorized — distinct byte pattern.
+            // Address that wasn't authorized. distinct byte pattern.
             val rogueAddress = ByteArray(32) { 0xEE.toByte() }
             pushRequest(
                 method = "sign_messages",
@@ -478,7 +478,7 @@ class WalletCorrectnessTest {
         // We can't easily start a full LocalScenario without a real
         // socket here, but we can exercise the dispatcher path which
         // is where issue() is invoked. start()/stop() are exercised
-        // through the dispatcher's owner — for the dispatcher test we
+        // through the dispatcher's owner, for the dispatcher test we
         // just verify the interface defaults are no-ops.
         tracker.start()
         tracker.stop()

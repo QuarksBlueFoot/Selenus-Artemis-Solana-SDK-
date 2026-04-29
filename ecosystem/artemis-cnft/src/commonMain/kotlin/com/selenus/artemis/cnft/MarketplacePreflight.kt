@@ -188,10 +188,10 @@ class MarketplacePreflight(
                 }
             }
 
-            // Best-effort royalty surface: if the caller provided a DAS client we
-            // reuse it, since mints that live in a DAS indexer have the authoritative
-            // royalty data. For non-DAS mints we skip the royalty block rather than
-            // guess, so the UI never renders fabricated numbers.
+            // Best-effort royalty surface: when the caller provides a DAS client it
+            // is reused, since mints indexed by DAS carry authoritative royalty data.
+            // Non-DAS mints skip the royalty block rather than guess, so the UI never
+            // renders fabricated numbers.
             val royalty: RoyaltyInfo? = das?.let { dasClient ->
                 runCatching { dasClient.asset(mint.toBase58()) }.getOrNull()?.let { asset ->
                     val info = RoyaltyInfo(

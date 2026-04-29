@@ -73,8 +73,8 @@ class MwaWebSocketServer {
          * when the peer fragments). The MWA wire message is an AES-GCM-wrapped
          * JSON-RPC envelope: real messages stay well under 64 KiB. 1 MiB is a
          * generous upper bound that still prevents a malicious peer from
-         * claiming a 64-bit length and exhausting heap before we even read
-         * any bytes.
+         * claiming a 64-bit length and exhausting heap before any bytes are
+         * actually read.
          */
         const val MAX_FRAME_SIZE_BYTES: Int = 1 shl 20
     }
@@ -284,8 +284,8 @@ class MwaWebSocketServer {
                         // Start of a fragmented message. Reset any partial
                         // state from a malformed prior fragment and begin
                         // accumulating. RFC 6455 forbids interleaving
-                        // data frames from different messages so we do not
-                        // need to track more than one in-flight stream.
+                        // data frames from different messages, so only one
+                        // in-flight stream needs to be tracked.
                         if (fragmentOpcode != 0) {
                             close(1002, "interleaved fragments")
                             throw IllegalStateException("interleaved fragmented messages")

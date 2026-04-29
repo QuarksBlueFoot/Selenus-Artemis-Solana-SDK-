@@ -226,7 +226,7 @@ interface AuthRepository {
 /**
  * Default in-memory implementation. Wraps the Artemis
  * [com.selenus.artemis.wallet.mwa.walletlib.InMemoryAuthRepository] so
- * upstream-shaped calls (`fromAuthToken`, `revoke(AuthRecord)`, ...)
+ * upstream-shaped calls (`fromAuthToken`, `revoke(AuthRecord)`, ..)
  * read and write the same store the dispatcher uses.
  */
 class InMemoryAuthRepository(
@@ -293,7 +293,7 @@ class InMemoryAuthRepository(
  * Adapter that lets a Java-shaped [AuthRepository] participate in the
  * Artemis dispatcher's `suspend` interface. Used for custom Java
  * repository implementations that don't already wrap an Artemis
- * backing — calls bridge through the blocking compat methods on the
+ * backing. calls bridge through the blocking compat methods on the
  * dispatcher's IO context so they don't strand a coroutine.
  */
 internal class AuthIssuerToArtemisRepositoryAdapter(

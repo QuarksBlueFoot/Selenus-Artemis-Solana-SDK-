@@ -95,7 +95,7 @@ data class PrioritizationFee(
  * Simulation result returned by `Connection.simulateTransaction`.
  *
  * Upstream sol4k models this as a sealed hierarchy so callers can write
- * `when (sim) { is Success -> ... is Error -> ... }` and have the compiler
+ * `when (sim) { is Success -> .., is Error -> ... }` and have the compiler
  * enforce exhaustiveness. Matching that shape here.
  */
 sealed class TransactionSimulation {

@@ -72,7 +72,7 @@ abstract class Scenario protected constructor(
 
     /**
      * Wallet-side callback set. Mirrors the upstream Java interface
-     * exactly — every method is non-suspending so existing wallet
+     * exactly. every method is non-suspending so existing wallet
      * subclasses that implement `Callbacks` keep compiling without
      * touching coroutines.
      */

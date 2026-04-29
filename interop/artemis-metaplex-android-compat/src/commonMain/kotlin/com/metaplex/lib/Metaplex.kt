@@ -76,14 +76,17 @@ class Metaplex(
     /**
      * Upstream Metaplex exposed an Auction House client here. Artemis does not
      * ship a complete Auction House client because most mobile dApps use Tensor,
-     * Magic Eden, or custom programs instead. Callers that need raw Auction House
-     * support can fall back to [com.selenus.artemis.cnft.MarketplaceEngine.executeInstructions]
-     * with protocol-specific instructions they build themselves.
+     * Magic Eden, or custom programs instead.
+     *
+     * Rather than throwing on access (which made source-compat with upstream's
+     * `metaplex.auctions` references compile but break at runtime), we now return
+     * a stub module whose query methods all return empty results and whose action
+     * methods return a typed [AuctionsModule.NotImplementedResult]. Callers that
+     * need real Auction House support should use
+     * [com.selenus.artemis.cnft.MarketplaceEngine.executeInstructions] with
+     * protocol-specific instructions they build themselves.
      */
-    val auctions: AuctionsModule get() = throw UnsupportedOperationException(
-        "Auction House is not covered by the Artemis drop-in. Use MarketplaceEngine.executeInstructions " +
-        "to submit protocol-specific instructions instead."
-    )
+    val auctions: AuctionsModule by lazy { AuctionsModule() }
 }
 
 /**
@@ -222,16 +225,98 @@ interface StorageDriver
 /** Default in-process storage driver placeholder. */
 object DefaultStorageDriver : StorageDriver
 
-/** Marker type for the unimplemented auctions module. */
-class AuctionsModule
+/**
+ * Stub Auction House module.
+ *
+ * Upstream metaplex-android exposed [findAllByCreator], [findAllBySeller],
+ * [findByAddress], etc. on this module. Artemis does not ship a full Auction
+ * House client (see [Metaplex.auctions] KDoc), so all queries here return
+ * empty lists / null and all actions return [NotImplementedResult].
+ *
+ * Code that just iterates `metaplex.auctions.findAllByCreator(...)` for a
+ * "no listings" empty UI state continues to work. Code that actually needs
+ * to bid/list/cancel should pattern-match on [NotImplementedResult] and
+ * route to a protocol-specific path.
+ */
+class AuctionsModule {
+    /** Sentinel returned by every action method on this stub. */
+    data class NotImplementedResult(
+        val message: String = "Auction House actions are not implemented in artemis-metaplex-android-compat. " +
+            "Use MarketplaceEngine.executeInstructions with protocol-specific bid/list/cancel " +
+            "instructions, or migrate to artemis-cnft for compressed-NFT marketplace flows."
+    )
+
+    /** Always returns empty: no auction houses are tracked locally. */
+    fun findAllByCreator(@Suppress("UNUSED_PARAMETER") creator: String): List<Nothing> = emptyList()
+
+    /** Always returns empty: no auction houses are tracked locally. */
+    fun findAllBySeller(@Suppress("UNUSED_PARAMETER") seller: String): List<Nothing> = emptyList()
+
+    /** Always returns null: no auction houses are tracked locally. */
+    fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
+
+    /** Action stub: returns the [NotImplementedResult] sentinel rather than throwing. */
+    fun bid(@Suppress("UNUSED_PARAMETER") auctionAddress: String, @Suppress("UNUSED_PARAMETER") price: Long): NotImplementedResult =
+        NotImplementedResult()
+
+    /** Action stub: returns the [NotImplementedResult] sentinel rather than throwing. */
+    fun list(@Suppress("UNUSED_PARAMETER") mint: String, @Suppress("UNUSED_PARAMETER") price: Long): NotImplementedResult =
+        NotImplementedResult()
+
+    /** Action stub: returns the [NotImplementedResult] sentinel rather than throwing. */
+    fun cancel(@Suppress("UNUSED_PARAMETER") auctionAddress: String): NotImplementedResult =
+        NotImplementedResult()
+}
 
 /**
- * Upstream Candy Machine v2 module. The shim is intentionally empty: Artemis
- * delegates CMv2 to a dedicated module (see `artemis-candy-machine`).
+ * Stub Candy Machine v2 module.
  *
- * Keep this marker type so source-level imports continue to resolve.
+ * Upstream metaplex-android exposed `findByAddress`, `mint`, `findAllMintedItems`,
+ * and a few others on this module. Artemis routes Candy Machine workflows through
+ * the dedicated `artemis-candy-machine` module, which speaks the more current
+ * Candy Guard / mint_v2 surface. This stub exists so source-level imports
+ * continue to resolve; queries return empty / null, actions return
+ * [NotImplementedResult].
  */
-class CandyMachinesV2Module
+class CandyMachinesV2Module {
+    data class NotImplementedResult(
+        val message: String = "Candy Machine v2 is not implemented in artemis-metaplex-android-compat. " +
+            "Use the artemis-candy-machine module's CandyGuardAccountPlanner / CandyMachineMintV2 " +
+            "instructions for current Candy Guard mint flows."
+    )
 
-/** Upstream Candy Machine v3 module. Same notes as [CandyMachinesV2Module]. */
-class CandyMachinesModule
+    /** No-op query: returns null. */
+    fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
+
+    /** No-op query: returns empty. */
+    fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<Nothing> = emptyList()
+
+    /** No-op query: returns empty. */
+    fun findAllMintedItems(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): List<Nothing> = emptyList()
+
+    /** Action stub: returns the [NotImplementedResult] sentinel. */
+    fun mint(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): NotImplementedResult =
+        NotImplementedResult()
+}
+
+/**
+ * Stub Candy Machine v3 module. Same semantics and routing notes as
+ * [CandyMachinesV2Module]; use the dedicated `artemis-candy-machine` module
+ * for real CMv3 / Candy Guard mint flows.
+ */
+class CandyMachinesModule {
+    data class NotImplementedResult(
+        val message: String = "Candy Machine v3 is not implemented in artemis-metaplex-android-compat. " +
+            "Use the artemis-candy-machine module for current Candy Guard mint flows."
+    )
+
+    /** No-op query: returns null. */
+    fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
+
+    /** No-op query: returns empty. */
+    fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<Nothing> = emptyList()
+
+    /** Action stub: returns the [NotImplementedResult] sentinel. */
+    fun mint(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): NotImplementedResult =
+        NotImplementedResult()
+}

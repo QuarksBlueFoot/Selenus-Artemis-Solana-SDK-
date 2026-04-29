@@ -173,7 +173,7 @@ interface AuthRepository {
  * Default in-memory implementation. Thread-safe through
  * [ConcurrentHashMap] and [AtomicLong]. Suitable for tests; production
  * wallets should swap in a SQLite-backed implementation that survives
- * process death (intentionally out of scope for this module — wire
+ * process death (intentionally out of scope for this module, wire
  * your own).
  */
 class InMemoryAuthRepository(

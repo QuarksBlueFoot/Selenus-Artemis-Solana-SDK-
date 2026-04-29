@@ -34,9 +34,8 @@ object SolanaPayUri {
     }
 
     val refs = ArrayList<Pubkey>()
-    if (params.containsKey("reference")) {
-        refs.add(Pubkey.fromBase58(params["reference"]!!))
-    }
+    // Safe invariant: `containsKey("reference")` guarantees `params["reference"]` is non-null here.
+    params["reference"]?.let { refs.add(Pubkey.fromBase58(it)) }
 
     return Request(
       recipient = recipient,

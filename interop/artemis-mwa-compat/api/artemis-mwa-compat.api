@@ -191,7 +191,7 @@
   L156  val sig = slot.signature.takeIf { it.isNotEmpty() }
   L157  val err: Throwable? = when {
   L190  fun TransactionBatchResult.toUpstreamSignaturesOrThrow(): Array<ByteArray> {
-  L202  val sig = item.signature!!
+  L205  val sig = item.signature
 
 ## test/kotlin/com/solana/mobilewalletadapter/clientlib/MwaCompatResultsTest.kt (package com.solana.mobilewalletadapter.clientlib)
   L28  class MwaCompatResultsTest {

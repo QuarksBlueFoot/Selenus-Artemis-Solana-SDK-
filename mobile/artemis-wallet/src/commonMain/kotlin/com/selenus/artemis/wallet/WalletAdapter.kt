@@ -27,10 +27,20 @@ interface WalletAdapter {
   }
 
   /**
-   * Signs an arbitrary message (off-chain).
-   * This is distinct from signMessage which signs a transaction.
+   * Signs an arbitrary message (off-chain). Distinct from [signMessage] which signs a
+   * transaction wire blob.
+   *
+   * Default behavior throws [UnsupportedOperationException]; concrete adapters override
+   * this when their underlying transport supports off-chain signatures (e.g. MWA's
+   * `sign_messages_detached` or Seed Vault's purpose-tagged signing flows). Callers
+   * that need a portable fallback should `getCapabilities().supportsSignArbitraryMessage`
+   * before calling, and route to a session-key flow on adapters that don't implement it.
    */
   suspend fun signArbitraryMessage(message: ByteArray, request: WalletRequest): ByteArray {
-      throw UnsupportedOperationException("signArbitraryMessage not supported")
+      throw UnsupportedOperationException(
+          "signArbitraryMessage is not implemented by this WalletAdapter. " +
+          "Check getCapabilities().supportsSignArbitraryMessage before invoking, " +
+          "or override this method in your adapter to delegate to the underlying transport."
+      )
   }
 }

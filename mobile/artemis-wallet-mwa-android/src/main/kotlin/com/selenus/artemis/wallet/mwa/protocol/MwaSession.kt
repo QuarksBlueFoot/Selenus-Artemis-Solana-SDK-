@@ -168,6 +168,11 @@ class MwaSession internal constructor(
       // RPC calls can branch on MWA 1.x vs 2.x wallets instead of assuming.
       if (helloRsp.size > 65) {
         val propsPacket = helloRsp.copyOfRange(65, helloRsp.size)
+        // Only advance recvSeq when we successfully consumed the props
+        // frame. Bumping unconditionally desyncs the next real frame
+        // when a malformed props envelope arrives (the wallet sent
+        // junk past Qw, but the seq counter would be incremented
+        // anyway).
         runCatching {
           val plain = cipher.decrypt(expectedSeq = 1, packet = propsPacket)
           val propsJson = session.json.parseToJsonElement(plain.decodeToString()) as? JsonObject
@@ -179,8 +184,9 @@ class MwaSession internal constructor(
             )
             session.sessionProperties = MwaSessionProperties(protocolVersion = parsedVersion)
           }
+        }.onSuccess {
+          session.recvSeq.set(2)
         }
-        session.recvSeq.set(2) // we've consumed one encrypted message
       }
 
       // Wire the receive loop onto the session's own scope so close()

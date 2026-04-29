@@ -115,12 +115,14 @@ fun CoroutineScope.launchTransaction(
             }
             
             if (signature == null) {
-                cfg.onProgress?.invoke(TransactionProgress.Failed(lastError!!))
-                cfg.onError?.invoke(lastError!!)
+                val err = lastError ?: SolanaError.Unknown("Transaction send failed without recorded error", null)
+                cfg.onProgress?.invoke(TransactionProgress.Failed(err))
+                cfg.onError?.invoke(err)
                 return@launch
             }
-            
+
             // Confirming
+            // Safe invariant: just verified `signature != null` above; this branch is unreachable when null.
             val sig = signature!!
             cfg.onProgress?.invoke(TransactionProgress.Confirming(0, 32))
             
@@ -180,18 +182,23 @@ suspend fun <T> withSolanaContext(
                 return SolanaResult.failure(e.error)
             }
         } catch (e: Exception) {
-            lastError = SolanaError.Unknown(e.message ?: "Unknown error", e)
+            val unknown = SolanaError.Unknown(e.message ?: "Unknown error", e)
+            lastError = unknown
             if (!isRetryable(e)) {
-                return SolanaResult.failure(lastError!!)
+                return SolanaResult.failure(unknown)
             }
         }
-        
+
         if (attempt < retries - 1) {
             delay(retryDelayMs * (attempt + 1))
         }
     }
-    
-    return SolanaResult.failure(lastError!!)
+
+    // `retries` is at least 1 (caller default = 3); the loop above always sets lastError on every catch
+    // path before continuing or returning. Fall back to Unknown if `retries == 0` was passed in.
+    return SolanaResult.failure(
+        lastError ?: SolanaError.Unknown("withSolanaContext exhausted retries with no recorded error", null)
+    )
 }
 
 /**

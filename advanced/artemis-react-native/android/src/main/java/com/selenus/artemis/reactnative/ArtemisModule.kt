@@ -1444,12 +1444,17 @@ class ArtemisModule(
     private fun parseSendTransactionOptions(options: ReadableMap?): SendTransactionOptions {
         if (options == null) return SendTransactionOptions()
         fun has(key: String) = options.hasKey(key) && !options.isNull(key)
+        // ReadableMap.getString returns nullable; we treat a present-but-null wire value as absent.
+        fun stringOrDefault(key: String, default: Commitment): Commitment {
+            if (!has(key)) return default
+            return options.getString(key)?.let { parseCommitment(it) } ?: default
+        }
         return SendTransactionOptions(
             minContextSlot = if (has("minContextSlot")) options.getDouble("minContextSlot").toLong() else null,
-            commitment = if (has("commitment")) parseCommitment(options.getString("commitment")!!) else Commitment.CONFIRMED,
+            commitment = stringOrDefault("commitment", Commitment.CONFIRMED),
             skipPreflight = has("skipPreflight") && options.getBoolean("skipPreflight"),
             maxRetries = if (has("maxRetries")) options.getInt("maxRetries") else null,
-            preflightCommitment = if (has("preflightCommitment")) parseCommitment(options.getString("preflightCommitment")!!) else Commitment.PROCESSED,
+            preflightCommitment = stringOrDefault("preflightCommitment", Commitment.PROCESSED),
             waitForConfirmation = !has("waitForConfirmation") || options.getBoolean("waitForConfirmation"),
             confirmationTimeout = if (has("confirmationTimeout")) options.getDouble("confirmationTimeout").toLong() else 60_000L,
             waitForCommitmentToSendNextTransaction = has("waitForCommitmentToSendNextTransaction") &&
@@ -1469,8 +1474,10 @@ class ArtemisModule(
             if (payload.hasKey(key) && !payload.isNull(key)) payload.getString(key) else null
 
         val resources = if (payload.hasKey("resources") && !payload.isNull("resources")) {
-            val list = payload.getArray("resources")!!
-            (0 until list.size()).mapNotNull { list.getString(it) }
+            // hasKey + !isNull guarantees getArray returns non-null per ReadableMap contract.
+            payload.getArray("resources")?.let { list ->
+                (0 until list.size()).mapNotNull { list.getString(it) }
+            }
         } else null
 
         return MwaSignInPayload(

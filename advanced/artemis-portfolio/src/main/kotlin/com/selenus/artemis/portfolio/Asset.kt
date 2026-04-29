@@ -2,10 +2,9 @@
  * Copyright (c) 2024-2025 Selenus Technologies. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Real-Time Portfolio Sync - Asset Representation
- * 
- * This module provides real-time portfolio tracking with instant updates
- * when token balances change on-chain. No competitor SDK offers this.
+ * Real-Time Portfolio Sync - Asset representation.
+ *
+ * Tracks portfolio balances and emits updates as token balances change on-chain.
  */
 
 package com.selenus.artemis.portfolio
@@ -17,11 +16,11 @@ import java.math.RoundingMode
 
 /**
  * Represents a token asset in the portfolio.
- * 
+ *
  * Supports SOL, SPL tokens, and Token-2022 assets with extension metadata.
- * 
- * Note: This class is not @Serializable because it uses BigInteger for precision.
- * If you need to serialize, convert rawAmount to String first.
+ *
+ * Not @Serializable because BigInteger is used for precision; serialize by
+ * converting rawAmount to String first.
  */
 data class Asset(
     /** The mint address (or "native" for SOL) */

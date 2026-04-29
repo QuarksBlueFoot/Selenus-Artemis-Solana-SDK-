@@ -5,7 +5,7 @@ import com.selenus.artemis.candymachine.internal.BorshWriter
 /**
  * Serializes Candy Guard MintArgs for `mint_v2`.
  *
- * We implement the small set of mint args that are commonly required for mobile:
+ * Implements the small set of mint args commonly required for mobile:
  * - allowList proof
  * - mintLimit id
  * - allocation id
@@ -36,8 +36,8 @@ object CandyGuardMintArgsSerializer {
     val w = BorshWriter()
 
     // IMPORTANT: Field order must match mpl-candy-guard MintArgs.
-    // We include option tags for every field in the struct.
-    // For fields we don't support/need, we write None.
+    // Option tags are emitted for every field in the struct.
+    // Unsupported/unneeded fields are written as None.
     //
     // Order used here mirrors the guard-set order in CandyGuardManifestReader.
 

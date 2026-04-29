@@ -25,10 +25,10 @@ open class RpcApi(private val client: RpcClient) {
   suspend fun getLatestBlockhash(commitment: String = "finalized"): BlockhashResult {
     val params = buildJsonArray { add(buildJsonObject { put("commitment", commitment) }) }
     val res = client.call("getLatestBlockhash", params).resultObj()
-    val value = res["value"]!!.jsonObject
+    val value = res.reqObject("value")
     return BlockhashResult(
-      blockhash = value["blockhash"]!!.jsonPrimitive.content,
-      lastValidBlockHeight = value["lastValidBlockHeight"]!!.jsonPrimitive.long
+      blockhash = value.reqString("blockhash"),
+      lastValidBlockHeight = value.reqLong("lastValidBlockHeight")
     )
   }
 
@@ -43,7 +43,7 @@ open class RpcApi(private val client: RpcClient) {
       add(buildJsonObject { put("commitment", commitment) })
     }
     val res = client.call("getBalance", params).resultObj()
-    val v = res["value"]!!.jsonPrimitive.long
+    val v = res.reqLong("value")
     return BalanceResult(v)
   }
 
@@ -266,17 +266,17 @@ open class RpcApi(private val client: RpcClient) {
 
   suspend fun getHealth(): String {
     val res = client.call("getHealth", null)
-    return res["result"]!!.jsonPrimitive.content
+    return res.reqString("result")
   }
 
   suspend fun getSlot(commitment: String = "finalized"): Long {
     val params = buildJsonArray { add(buildJsonObject { put("commitment", commitment) }) }
-    return client.call("getSlot", params)["result"]!!.jsonPrimitive.long
+    return client.call("getSlot", params).reqLong("result")
   }
 
   suspend fun getBlockHeight(commitment: String = "finalized"): Long {
     val params = buildJsonArray { add(buildJsonObject { put("commitment", commitment) }) }
-    return client.call("getBlockHeight", params)["result"]!!.jsonPrimitive.long
+    return client.call("getBlockHeight", params).reqLong("result")
   }
 
   suspend fun getAddressLookupTable(address: String, commitment: String = "finalized"): AddressLookupTableResult {
@@ -368,16 +368,16 @@ suspend fun getConfirmedSignaturesForAddress2(address: String, limit: Int = 1000
 }
 
   suspend fun getFirstAvailableBlock(): Long {
-  return client.call("getFirstAvailableBlock", null)["result"]!!.jsonPrimitive.long
+  return client.call("getFirstAvailableBlock", null).reqLong("result")
 }
 
   suspend fun getGenesisHash(): String {
-  return client.call("getGenesisHash", null)["result"]!!.jsonPrimitive.content
+  return client.call("getGenesisHash", null).reqString("result")
 }
 
   suspend fun getIdentity(): String {
   val r = client.call("getIdentity", null).resultObj()
-  return r["identity"]!!.jsonPrimitive.content
+  return r.reqString("identity")
 }
 
   suspend fun getInflationGovernor(commitment: String = "finalized"): JsonObject {
@@ -410,7 +410,7 @@ suspend fun getConfirmedSignaturesForAddress2(address: String, limit: Int = 1000
     add(JsonPrimitive(dataLength))
     add(buildJsonObject { put("commitment", commitment) })
   }
-  return client.call("getMinimumBalanceForRentExemption", params)["result"]!!.jsonPrimitive.long
+  return client.call("getMinimumBalanceForRentExemption", params).reqLong("result")
 }
 
   suspend fun getSlotLeaders(startSlot: Long, limit: Int): JsonArray {
@@ -449,8 +449,8 @@ suspend fun getConfirmedSignaturesForAddress2(address: String, limit: Int = 1000
     val json = getTokenSupply(mint, commitment)
     val value = json["value"]?.jsonObject ?: throw RpcException("Missing value in getTokenSupply response")
     return TokenSupply(
-      amount = value["amount"]!!.jsonPrimitive.content,
-      decimals = value["decimals"]!!.jsonPrimitive.int,
+      amount = value.reqString("amount"),
+      decimals = value.reqInt("decimals"),
       uiAmount = value["uiAmount"]?.jsonPrimitive?.doubleOrNull,
       uiAmountString = value["uiAmountString"]?.jsonPrimitive?.content
     )
@@ -462,7 +462,7 @@ suspend fun getConfirmedSignaturesForAddress2(address: String, limit: Int = 1000
     add(JsonPrimitive(lamports))
     add(buildJsonObject { put("commitment", commitment) })
   }
-  return client.call("requestAirdrop", params)["result"]!!.jsonPrimitive.content
+  return client.call("requestAirdrop", params).reqString("result")
 }
 
   suspend fun getVersion(): JsonObject {
@@ -620,8 +620,8 @@ suspend fun getVoteAccounts(commitment: String = "confirmed"): JsonObject {
     return json.map { elem ->
       val obj = elem.jsonObject
       SignatureInfo(
-        signature = obj["signature"]!!.jsonPrimitive.content,
-        slot = obj["slot"]!!.jsonPrimitive.long,
+        signature = obj.reqString("signature"),
+        slot = obj.reqLong("slot"),
         err = obj["err"],
         memo = obj["memo"]?.takeIf { it !is JsonNull }?.jsonPrimitive?.content,
         blockTime = obj["blockTime"]?.takeIf { it !is JsonNull }?.jsonPrimitive?.longOrNull,
@@ -638,8 +638,8 @@ suspend fun getVoteAccounts(commitment: String = "confirmed"): JsonObject {
     return json.map { elem ->
       val obj = elem.jsonObject
       PrioritizationFee(
-        slot = obj["slot"]!!.jsonPrimitive.long,
-        prioritizationFee = obj["prioritizationFee"]!!.jsonPrimitive.long
+        slot = obj.reqLong("slot"),
+        prioritizationFee = obj.reqLong("prioritizationFee")
       )
     }
   }
@@ -792,24 +792,19 @@ suspend fun getVoteAccounts(commitment: String = "confirmed"): JsonObject {
 
   suspend fun getTransactionCount(commitment: String = "finalized"): Long {
     val params = buildJsonArray { add(buildJsonObject { put("commitment", commitment) }) }
-    return client.call("getTransactionCount", params)["result"]!!.jsonPrimitive.long
+    return client.call("getTransactionCount", params).reqLong("result")
   }
 
   suspend fun getMinimumLedgerSlot(): Long {
-    return client.call("minimumLedgerSlot", null)["result"]!!.jsonPrimitive.long
+    return client.call("minimumLedgerSlot", null).reqLong("result")
   }
 
   suspend fun getMaxRetransmitSlot(): Long {
-    return client.call("getMaxRetransmitSlot", null)["result"]!!.jsonPrimitive.long
+    return client.call("getMaxRetransmitSlot", null).reqLong("result")
   }
 
   suspend fun getMaxShredInsertSlot(): Long {
-    return client.call("getMaxShredInsertSlot", null)["result"]!!.jsonPrimitive.long
-  }
-
-  suspend fun getSlotCommitment(slot: Long): JsonObject {
-    val params = buildJsonArray { add(JsonPrimitive(slot)) }
-    return client.call("getSlotCommitment", params).resultObj().jsonObject
+    return client.call("getMaxShredInsertSlot", null).reqLong("result")
   }
 
   suspend fun getBlockCommitment(slot: Long): JsonObject {
@@ -827,7 +822,7 @@ suspend fun getVoteAccounts(commitment: String = "confirmed"): JsonObject {
       add(buildJsonObject { put("commitment", commitment) })
     }
     val res = client.call("isBlockhashValid", params).resultObj()
-    return res["value"]!!.jsonPrimitive.boolean
+    return res.reqBoolean("value")
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

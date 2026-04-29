@@ -51,9 +51,18 @@ data class WalletCapabilities(
   // Artemis enhancements
   /** Whether wallet supports offline/background signing */
   val supportsOfflineSigning: Boolean = false,
-  
+
   /** Whether wallet supports transaction simulation before signing */
-  val supportsSimulation: Boolean = false
+  val supportsSimulation: Boolean = false,
+
+  /**
+   * Whether the wallet implements [WalletAdapter.signArbitraryMessage] (off-chain
+   * message signing distinct from transaction signing). Defaults to false because
+   * the canonical [WalletAdapter] base does not implement it. MWA wallets typically
+   * set this to true after detecting the `solana:signMessage` feature on the
+   * authorized account record.
+   */
+  val supportsSignArbitraryMessage: Boolean = false
 ) {
   companion object {
     /** Default capabilities for mobile wallets */

@@ -31,12 +31,10 @@ object MerkleDistributor {
   }
 
   private fun hash(data: ByteArray): ByteArray {
-    // Solana Merkle trees typically use Keccak-256 or SHA-256. 
+    // Solana Merkle trees typically use Keccak-256 or SHA-256.
     // Standard SPL Merkle Distributor uses Keccak-256.
-    // We'll assume SHA-256 for generic usage unless specified, 
-    // but let's check what `Crypto` provides.
-    // If Crypto doesn't have Keccak, we might need to add it or stick to SHA-256.
-    // For now, let's use SHA-256 as it's in the runtime.
+    // SHA-256 is used here for generic usage since it is the hash provided by `Crypto` in the
+    // runtime; if Keccak support is needed, add it to Crypto.
     return Crypto.sha256(data)
   }
 

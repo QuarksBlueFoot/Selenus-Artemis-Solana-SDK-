@@ -1,10 +1,10 @@
 # Replacing the Solana Mobile Stack with Artemis
 
-Step-by-step migration from the standard Solana Mobile Kotlin dependencies to Artemis equivalents. For inline API mappings see [migration-solana-mobile.md](migration-solana-mobile.md).
+step-by-step migration off the standard Solana Mobile Kotlin deps. for inline API mappings see [migration-solana-mobile.md](migration-solana-mobile.md).
 
 ## Two migration tracks, pick one
 
-There are two honest ways to adopt Artemis. Pick one up front.
+there are two honest ways to adopt Artemis. pick one up front.
 
 ### Artemis-native migration (recommended today)
 
@@ -20,7 +20,7 @@ There are two honest ways to adopt Artemis. Pick one up front.
 - Today this track is `Verified` for the MWA client (ktx + non-ktx), the Seed Vault static surface, and the compat typed results. Other compat modules are `Partial`. See PARITY_MATRIX.md.
 - Best for: large apps that do NOT want to update call sites, or apps that depend on a specific upstream class shape that Artemis may not expose as a native type.
 
-The rest of this document shows both forms where they differ.
+both forms are shown below where they differ.
 
 ## Dependency mapping
 
@@ -35,7 +35,7 @@ The rest of this document shows both forms where they differ.
 | No equivalent | `xyz.selenus:artemis-cnft` | `ArtemisDas`, `HeliusDas`, `RpcFallbackDas`, `CompositeDas`, `MarketplaceEngine`, `AtaEnsurer` |
 | No equivalent | `xyz.selenus:artemis-ws` | `RealtimeEngine`, typed `ConnectionState` StateFlow |
 
-The current published version is `2.3.0`. The version field is the source of truth in [../gradle.properties](../gradle.properties).
+current published version is `2.3.0`. version field is the source of truth in [../gradle.properties](../gradle.properties).
 
 ## Gradle migration
 
@@ -77,7 +77,7 @@ dependencies {
 
 ### Wallet connection
 
-Before (MWA clientlib):
+before (MWA clientlib):
 
 ```kotlin
 val sender = ActivityResultSender(activity)
@@ -88,7 +88,7 @@ transact(sender) { authResult ->
 }
 ```
 
-After (Artemis, full stack):
+after (Artemis, full stack):
 
 ```kotlin
 val artemis = ArtemisMobile.create(
@@ -103,7 +103,7 @@ val artemis = ArtemisMobile.create(
 artemis.wallet.connect()
 ```
 
-After (Artemis, manual wiring if you want only the wallet adapter):
+after (Artemis, manual wiring if you want only the wallet adapter):
 
 ```kotlin
 val adapter = MwaWalletAdapter(
@@ -117,11 +117,11 @@ adapter.connect()
 val wallet = WalletSession.fromAdapter(adapter, txEngine)
 ```
 
-The session is reusable across the app lifetime. `WalletSessionManager` at [../mobile/artemis-wallet/src/commonMain/kotlin/com/selenus/artemis/wallet/WalletSessionManager.kt](../mobile/artemis-wallet/src/commonMain/kotlin/com/selenus/artemis/wallet/WalletSessionManager.kt) caches the auth token, retries on session expiration, and exposes `onDisconnect / onAccountChanged / onSessionExpired` callbacks.
+session is reusable across the app lifetime. `WalletSessionManager` at [../mobile/artemis-wallet/src/commonMain/kotlin/com/selenus/artemis/wallet/WalletSessionManager.kt](../mobile/artemis-wallet/src/commonMain/kotlin/com/selenus/artemis/wallet/WalletSessionManager.kt) caches the auth token, retries on session expiration, and exposes `onDisconnect / onAccountChanged / onSessionExpired` callbacks.
 
 ### Signing and sending
 
-Before (MWA clientlib):
+before (MWA clientlib):
 
 ```kotlin
 transact(sender) { authResult ->
@@ -130,7 +130,7 @@ transact(sender) { authResult ->
 }
 ```
 
-After (Artemis):
+after (Artemis):
 
 ```kotlin
 // Single instruction
@@ -144,7 +144,7 @@ val result = wallet.sendSol(to = recipient, lamports = 1_000_000_000L)
 
 ### RPC access
 
-Before (solana-kmp or sol4k):
+before (solana-kmp or sol4k):
 
 ```kotlin
 // solana-kmp
@@ -156,7 +156,7 @@ val connection = Connection(RpcUrl.MAINNET)
 val balance    = connection.getBalance(publicKey)
 ```
 
-After (Artemis, ArtemisClient DSL):
+after (Artemis, ArtemisClient DSL):
 
 ```kotlin
 val client = ArtemisClient {
@@ -166,18 +166,18 @@ val client = ArtemisClient {
 val balance = client.rpc().getBalance(pubkey)
 ```
 
-After (Artemis, plain `RpcApi`):
+after (Artemis, plain `RpcApi`):
 
 ```kotlin
 val rpc     = RpcApi(JsonRpcClient("https://api.mainnet-beta.solana.com"))
 val balance = rpc.getBalance(pubkey)
 ```
 
-`ArtemisClient` is a thin DSL wrapper over `Connection`, `BlockhashCache`, and `TxEngine`. Source at [../mobile/artemis-wallet/src/jvmMain/kotlin/com/selenus/artemis/wallet/ArtemisClient.kt](../mobile/artemis-wallet/src/jvmMain/kotlin/com/selenus/artemis/wallet/ArtemisClient.kt).
+`ArtemisClient` is a thin DSL wrapper over `Connection`, `BlockhashCache`, and `TxEngine`. source at [../mobile/artemis-wallet/src/jvmMain/kotlin/com/selenus/artemis/wallet/ArtemisClient.kt](../mobile/artemis-wallet/src/jvmMain/kotlin/com/selenus/artemis/wallet/ArtemisClient.kt).
 
 ### Transaction building
 
-Before (solana-kmp):
+before (solana-kmp):
 
 ```kotlin
 val tx = Transaction()
@@ -187,7 +187,7 @@ tx.sign(listOf(keypair))
 val serialized = tx.serialize()
 ```
 
-After (Artemis, fluent):
+after (Artemis, fluent):
 
 ```kotlin
 val result = client.tx()
@@ -195,7 +195,7 @@ val result = client.tx()
     .send(signer)
 ```
 
-After (Artemis, direct engine):
+after (Artemis, direct engine):
 
 ```kotlin
 val engine = TxEngine(rpc)
@@ -206,11 +206,11 @@ val result = engine.execute(
 )
 ```
 
-The engine handles blockhash caching, simulation, signing, sending, confirmation, and retry. Source at [../foundation/artemis-vtx/src/commonMain/kotlin/com/selenus/artemis/vtx/TxEngine.kt](../foundation/artemis-vtx/src/commonMain/kotlin/com/selenus/artemis/vtx/TxEngine.kt).
+engine handles blockhash caching, simulation, signing, sending, confirmation, and retry. source at [../foundation/artemis-vtx/src/commonMain/kotlin/com/selenus/artemis/vtx/TxEngine.kt](../foundation/artemis-vtx/src/commonMain/kotlin/com/selenus/artemis/vtx/TxEngine.kt).
 
 ## Status by capability
 
-Status vocabulary is defined in [PARITY_MATRIX.md](PARITY_MATRIX.md). Only claims backed by shipped code are listed here.
+status vocabulary is defined in [PARITY_MATRIX.md](PARITY_MATRIX.md). only claims backed by shipped code are listed here.
 
 | Capability | Status | Source |
 | --- | --- | --- |
@@ -261,4 +261,4 @@ Status vocabulary is defined in [PARITY_MATRIX.md](PARITY_MATRIX.md). Only claim
 5. Replace manual transaction build, sign, and send with `wallet.send(ix)` or `TxEngine.execute(...)`.
 6. Add `RealtimeEngine` for any account, signature, or program subscriptions you used to poll.
 7. Add `ArtemisEventBus` collectors anywhere you used to wire per-module listeners.
-8. Run the test suite. The semantics are similar to the official stack but not identical, and the integration test module at [../testing/artemis-devnet-tests/](../testing/artemis-devnet-tests/) is a good reference for the new shape.
+8. Run the test suite. semantics are similar to the official stack but not identical, and the integration test module at [../testing/artemis-devnet-tests/](../testing/artemis-devnet-tests/) is a good reference for the new shape.

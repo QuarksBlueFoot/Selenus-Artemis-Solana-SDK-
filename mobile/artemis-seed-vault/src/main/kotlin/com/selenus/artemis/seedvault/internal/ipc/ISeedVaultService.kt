@@ -44,8 +44,8 @@ interface ISeedVaultService : IInterface {
 
         override fun asBinder(): IBinder = this
         
-        // We only implement Proxy as we consume this service, we don't host it.
-        // But Stub is needed for asInterface.
+        // Only the Proxy side is implemented since this module consumes the
+        // service rather than hosting it. Stub is still required for asInterface.
         
         private class Proxy(private val mRemote: IBinder) : ISeedVaultService {
             override fun asBinder(): IBinder = mRemote

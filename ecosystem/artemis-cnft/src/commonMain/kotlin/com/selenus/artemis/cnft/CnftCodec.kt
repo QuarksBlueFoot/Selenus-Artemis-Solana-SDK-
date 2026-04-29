@@ -3,8 +3,8 @@ package com.selenus.artemis.cnft
 /**
  * Small binary codec helpers for Bubblegum/cNFT payloads.
  *
- * Bubblegum args are generally serialized using Borsh in common clients.
- * This codec implements just what we need:
+ * Bubblegum args are typically serialized using Borsh in common clients.
+ * This codec covers the subset Bubblegum needs:
  * - little-endian integers
  * - fixed byte arrays
  * - borsh strings (u32 len + bytes)

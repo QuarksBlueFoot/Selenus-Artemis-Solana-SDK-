@@ -35,61 +35,64 @@
   L70  fun getBalance(walletAddress: PublicKey): BigInteger = runBlocking {
   L76  fun getTokenAccountBalance(accountAddress: PublicKey, commitment: Commitment = this.commitment): TokenAccountBalance = runBlocking {
   L77  val json = rpc.getTokenAccountBalance(accountAddress.toBase58(), commitment.value)
-  L78  val context = json["context"]!!.jsonObject
-  L79  val value = json["value"]!!.jsonObject
-  L88  fun getLatestBlockhash(commitment: Commitment = this.commitment): String = runBlocking {
-  L94  fun getLatestBlockhashExtended(commitment: Commitment = this.commitment): Blockhash = runBlocking {
-  L95  val result = rpc.getLatestBlockhash(commitment.value)
-  L104  fun isBlockhashValid(blockhash: String, commitment: Commitment = this.commitment): Boolean = runBlocking {
-  L109  fun getHealth(): Health = runBlocking {
-  L114  fun getEpochInfo(): EpochInfo = runBlocking {
-  L115  val typed = rpc.getEpochInfoTyped(commitment.value)
-  L127  fun getIdentity(): PublicKey = runBlocking {
-  L132  fun getVersion(): Version = runBlocking {
-  L133  val typed = rpc.getVersionTyped()
-  L138  fun getTransactionCount(): Long = runBlocking {
-  L143  fun getAccountInfo(accountAddress: PublicKey): AccountInfo? = runBlocking {
-  L144  val parsed = rpc.getAccountInfoParsed(accountAddress.toBase58(), commitment.value) ?: return@runBlocking null
-  L155  fun getMultipleAccounts(accountAddresses: List<PublicKey>): List<AccountInfo?> = runBlocking {
-  L156  val json = rpc.getMultipleAccounts(accountAddresses.map { it.toBase58() }, commitment.value)
-  L157  val values = json["value"]?.jsonArray ?: return@runBlocking emptyList<AccountInfo?>()
-  L162  val obj = entry.jsonObject
-  L163  val lamports = obj["lamports"]?.jsonPrimitive?.long ?: 0L
-  L164  val ownerStr = obj["owner"]?.jsonPrimitive?.content ?: return@map null
-  L165  val executable = obj["executable"]?.jsonPrimitive?.content?.toBoolean() ?: false
-  L166  val rentEpoch = obj["rentEpoch"]?.jsonPrimitive?.long ?: 0L
-  L167  val dataArr = obj["data"]?.jsonArray
-  L168  val data = if (dataArr != null && dataArr.isNotEmpty()) {
-  L185  fun getMinimumBalanceForRentExemption(space: Int): Long = runBlocking {
-  L190  fun getTokenSupply(tokenPubkey: String): TokenAmount = runBlocking {
-  L191  val typed = rpc.getTokenSupplyTyped(tokenPubkey, commitment.value)
-  L201  fun requestAirdrop(pubkey: PublicKey, amount: Long): String = runBlocking {
-  L206  fun sendTransaction(rawTransaction: ByteArray): String = runBlocking {
-  L211  fun sendTransaction(transaction: Transaction): String = sendTransaction(transaction.serialize())
-  L214  fun sendTransaction(transaction: VersionedTransaction): String =
-  L218  fun simulateTransaction(rawTransaction: ByteArray): TransactionSimulation = runBlocking {
-  L219  val json = rpc.simulateTransaction(
-  L227  fun simulateTransaction(transaction: Transaction): TransactionSimulation =
-  L231  fun simulateTransaction(transaction: VersionedTransaction): TransactionSimulation =
-  L239  fun getFeeForMessage(message: TransactionMessage): Long? = getFeeForMessage(message.serialize())
-  L241  fun getFeeForMessage(serializedMessage: ByteArray): Long? = runBlocking {
-  L242  val encoded = PlatformBase64.encode(serializedMessage)
-  L243  val fee = rpc.getFeeForMessage(encoded, commitment.value)
-  L249  fun getRecentPrioritizationFees(accountAddresses: List<PublicKey> = emptyList()): List<PrioritizationFee> = runBlocking {
-  L250  val addresses = if (accountAddresses.isEmpty()) null else accountAddresses.map { it.toBase58() }
-  L251  val array = rpc.getRecentPrioritizationFees(addresses)
-  L253  val obj = element.jsonObject
-  L267  fun getSignaturesForAddress(
-  L274  val array = rpc.getSignaturesForAddress(
-  L282  val obj = entry.jsonObject
-  L304  val value = json["value"]?.jsonObject
-  L306  val err = value["err"]?.takeUnless { it is JsonNull }?.toString()
-  L308  val logs = value["logs"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
-  L309  val unitsConsumed = value["unitsConsumed"]?.jsonPrimitive?.long
-  L310  val returnData = value["returnData"]?.takeUnless { it is JsonNull }?.jsonObject?.let { rd ->
-  L311  val programId = rd["programId"]!!.jsonPrimitive.content
-  L312  val dataArr = rd["data"]?.jsonArray
-  L313  val dataStr = dataArr?.firstOrNull()?.jsonPrimitive?.content ?: ""
+  L78  val context = json["context"]?.jsonObject
+  L80  val value = json["value"]?.jsonObject
+  L82  val slot = context["slot"]?.jsonPrimitive?.long
+  L92  fun getLatestBlockhash(commitment: Commitment = this.commitment): String = runBlocking {
+  L98  fun getLatestBlockhashExtended(commitment: Commitment = this.commitment): Blockhash = runBlocking {
+  L99  val result = rpc.getLatestBlockhash(commitment.value)
+  L108  fun isBlockhashValid(blockhash: String, commitment: Commitment = this.commitment): Boolean = runBlocking {
+  L113  fun getHealth(): Health = runBlocking {
+  L118  fun getEpochInfo(): EpochInfo = runBlocking {
+  L119  val typed = rpc.getEpochInfoTyped(commitment.value)
+  L131  fun getIdentity(): PublicKey = runBlocking {
+  L136  fun getVersion(): Version = runBlocking {
+  L137  val typed = rpc.getVersionTyped()
+  L142  fun getTransactionCount(): Long = runBlocking {
+  L147  fun getAccountInfo(accountAddress: PublicKey): AccountInfo? = runBlocking {
+  L148  val parsed = rpc.getAccountInfoParsed(accountAddress.toBase58(), commitment.value) ?: return@runBlocking null
+  L159  fun getMultipleAccounts(accountAddresses: List<PublicKey>): List<AccountInfo?> = runBlocking {
+  L160  val json = rpc.getMultipleAccounts(accountAddresses.map { it.toBase58() }, commitment.value)
+  L161  val values = json["value"]?.jsonArray ?: return@runBlocking emptyList<AccountInfo?>()
+  L166  val obj = entry.jsonObject
+  L167  val lamports = obj["lamports"]?.jsonPrimitive?.long ?: 0L
+  L168  val ownerStr = obj["owner"]?.jsonPrimitive?.content ?: return@map null
+  L169  val executable = obj["executable"]?.jsonPrimitive?.content?.toBoolean() ?: false
+  L170  val rentEpoch = obj["rentEpoch"]?.jsonPrimitive?.long ?: 0L
+  L171  val dataArr = obj["data"]?.jsonArray
+  L172  val data = if (dataArr != null && dataArr.isNotEmpty()) {
+  L189  fun getMinimumBalanceForRentExemption(space: Int): Long = runBlocking {
+  L194  fun getTokenSupply(tokenPubkey: String): TokenAmount = runBlocking {
+  L195  val typed = rpc.getTokenSupplyTyped(tokenPubkey, commitment.value)
+  L205  fun requestAirdrop(pubkey: PublicKey, amount: Long): String = runBlocking {
+  L210  fun sendTransaction(rawTransaction: ByteArray): String = runBlocking {
+  L215  fun sendTransaction(transaction: Transaction): String = sendTransaction(transaction.serialize())
+  L218  fun sendTransaction(transaction: VersionedTransaction): String =
+  L222  fun simulateTransaction(rawTransaction: ByteArray): TransactionSimulation = runBlocking {
+  L223  val json = rpc.simulateTransaction(
+  L231  fun simulateTransaction(transaction: Transaction): TransactionSimulation =
+  L235  fun simulateTransaction(transaction: VersionedTransaction): TransactionSimulation =
+  L243  fun getFeeForMessage(message: TransactionMessage): Long? = getFeeForMessage(message.serialize())
+  L245  fun getFeeForMessage(serializedMessage: ByteArray): Long? = runBlocking {
+  L246  val encoded = PlatformBase64.encode(serializedMessage)
+  L247  val fee = rpc.getFeeForMessage(encoded, commitment.value)
+  L253  fun getRecentPrioritizationFees(accountAddresses: List<PublicKey> = emptyList()): List<PrioritizationFee> = runBlocking {
+  L254  val addresses = if (accountAddresses.isEmpty()) null else accountAddresses.map { it.toBase58() }
+  L255  val array = rpc.getRecentPrioritizationFees(addresses)
+  L257  val obj = element.jsonObject
+  L273  fun getSignaturesForAddress(
+  L280  val array = rpc.getSignaturesForAddress(
+  L288  val obj = entry.jsonObject
+  L305  val amount = obj["amount"]?.jsonPrimitive?.content
+  L307  val decimals = obj["decimals"]?.jsonPrimitive?.content?.toIntOrNull()
+  L318  val value = json["value"]?.jsonObject
+  L320  val err = value["err"]?.takeUnless { it is JsonNull }?.toString()
+  L322  val logs = value["logs"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
+  L323  val unitsConsumed = value["unitsConsumed"]?.jsonPrimitive?.long
+  L324  val returnData = value["returnData"]?.takeUnless { it is JsonNull }?.jsonObject?.let { rd ->
+  L325  val programId = rd["programId"]?.jsonPrimitive?.content
+  L327  val dataArr = rd["data"]?.jsonArray
+  L328  val dataStr = dataArr?.firstOrNull()?.jsonPrimitive?.content ?: ""
 
 ## commonMain/kotlin/org/sol4k/Constants.kt (package org.sol4k)
   L12  object Constants {

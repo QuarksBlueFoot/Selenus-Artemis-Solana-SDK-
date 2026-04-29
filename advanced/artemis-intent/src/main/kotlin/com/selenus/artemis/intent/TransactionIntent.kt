@@ -2,17 +2,13 @@ package com.selenus.artemis.intent
 
 /**
  * Human-readable transaction intent.
- * 
- * Artemis Innovation: First Solana SDK to provide semantic transaction decoding.
- * No other SDK (solana-kmp, Sol4k, Solana Mobile) translates raw instructions
- * into human-understandable summaries.
- * 
- * This enables:
+ *
+ * Translates raw instructions into structured summaries for:
  * - User-friendly transaction approval dialogs
  * - Automated transaction categorization
  * - Risk assessment before signing
  * - Audit trails with semantic meaning
- * 
+ *
  * Example:
  * ```kotlin
  * val intents = TransactionIntentDecoder.decode(transaction)

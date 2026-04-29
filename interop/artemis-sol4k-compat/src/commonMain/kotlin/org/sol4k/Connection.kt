@@ -75,10 +75,14 @@ class Connection @JvmOverloads constructor(
     @JvmOverloads
     fun getTokenAccountBalance(accountAddress: PublicKey, commitment: Commitment = this.commitment): TokenAccountBalance = runBlocking {
         val json = rpc.getTokenAccountBalance(accountAddress.toBase58(), commitment.value)
-        val context = json["context"]!!.jsonObject
-        val value = json["value"]!!.jsonObject
+        val context = json["context"]?.jsonObject
+            ?: error("Malformed getTokenAccountBalance response: missing 'context'")
+        val value = json["value"]?.jsonObject
+            ?: error("Malformed getTokenAccountBalance response: missing 'value'")
+        val slot = context["slot"]?.jsonPrimitive?.long
+            ?: error("Malformed getTokenAccountBalance response: missing 'context.slot'")
         TokenAccountBalance(
-            context = TokenAccountBalance.Context(slot = context["slot"]!!.jsonPrimitive.long),
+            context = TokenAccountBalance.Context(slot = slot),
             value = parseTokenAmount(value)
         )
     }
@@ -252,8 +256,10 @@ class Connection @JvmOverloads constructor(
         array.map { element ->
             val obj = element.jsonObject
             PrioritizationFee(
-                slot = obj["slot"]!!.jsonPrimitive.long,
-                prioritizationFee = obj["prioritizationFee"]!!.jsonPrimitive.long
+                slot = obj["slot"]?.jsonPrimitive?.long
+                    ?: error("Malformed prioritization fee entry: missing 'slot'"),
+                prioritizationFee = obj["prioritizationFee"]?.jsonPrimitive?.long
+                    ?: error("Malformed prioritization fee entry: missing 'prioritizationFee'")
             )
         }
     }
@@ -281,8 +287,10 @@ class Connection @JvmOverloads constructor(
         array.map { entry ->
             val obj = entry.jsonObject
             TransactionSignature(
-                signature = obj["signature"]!!.jsonPrimitive.content,
-                slot = obj["slot"]!!.jsonPrimitive.long,
+                signature = obj["signature"]?.jsonPrimitive?.content
+                    ?: error("Malformed signature entry: missing 'signature'"),
+                slot = obj["slot"]?.jsonPrimitive?.long
+                    ?: error("Malformed signature entry: missing 'slot'"),
                 err = obj["err"]?.takeUnless { it is JsonNull }?.toString(),
                 memo = obj["memo"]?.takeUnless { it is JsonNull }?.jsonPrimitive?.content,
                 blockTime = obj["blockTime"]?.takeUnless { it is JsonNull }?.jsonPrimitive?.long,
@@ -293,12 +301,18 @@ class Connection @JvmOverloads constructor(
 
     // ─── helpers ────────────────────────────────────────────────────────────
 
-    private fun parseTokenAmount(obj: JsonObject): TokenAmount = TokenAmount(
-        amount = obj["amount"]!!.jsonPrimitive.content,
-        decimals = obj["decimals"]!!.jsonPrimitive.content.toInt(),
-        uiAmount = obj["uiAmount"]?.takeUnless { it is JsonNull }?.jsonPrimitive?.content?.toDoubleOrNull(),
-        uiAmountString = obj["uiAmountString"]?.jsonPrimitive?.content ?: obj["amount"]!!.jsonPrimitive.content
-    )
+    private fun parseTokenAmount(obj: JsonObject): TokenAmount {
+        val amount = obj["amount"]?.jsonPrimitive?.content
+            ?: error("Malformed token amount: missing 'amount'")
+        val decimals = obj["decimals"]?.jsonPrimitive?.content?.toIntOrNull()
+            ?: error("Malformed token amount: missing or non-numeric 'decimals'")
+        return TokenAmount(
+            amount = amount,
+            decimals = decimals,
+            uiAmount = obj["uiAmount"]?.takeUnless { it is JsonNull }?.jsonPrimitive?.content?.toDoubleOrNull(),
+            uiAmountString = obj["uiAmountString"]?.jsonPrimitive?.content ?: amount
+        )
+    }
 
     private fun parseSimulation(json: JsonObject): TransactionSimulation {
         val value = json["value"]?.jsonObject
@@ -308,7 +322,8 @@ class Connection @JvmOverloads constructor(
         val logs = value["logs"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
         val unitsConsumed = value["unitsConsumed"]?.jsonPrimitive?.long
         val returnData = value["returnData"]?.takeUnless { it is JsonNull }?.jsonObject?.let { rd ->
-            val programId = rd["programId"]!!.jsonPrimitive.content
+            val programId = rd["programId"]?.jsonPrimitive?.content
+                ?: error("Malformed simulation returnData: missing 'programId'")
             val dataArr = rd["data"]?.jsonArray
             val dataStr = dataArr?.firstOrNull()?.jsonPrimitive?.content ?: ""
             TransactionSimulation.ReturnData(programId = programId, data = dataStr)

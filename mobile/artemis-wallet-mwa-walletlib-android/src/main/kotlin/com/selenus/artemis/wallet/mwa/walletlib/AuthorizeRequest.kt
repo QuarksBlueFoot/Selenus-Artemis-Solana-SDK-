@@ -77,7 +77,7 @@ open class AuthorizeRequest internal constructor(
             // The SIWS result must come from the same identity that the
             // wallet is about to authorize. Cross-check up front so a
             // miswired UI cannot ship a SIWS proof for a different
-            // pubkey than the auth token covers — the dApp would later
+            // pubkey than the auth token covers, the dApp would later
             // fail signature verification, but with a confusing
             // "auth_token issued, but signature does not verify" error
             // pointing nowhere actionable.

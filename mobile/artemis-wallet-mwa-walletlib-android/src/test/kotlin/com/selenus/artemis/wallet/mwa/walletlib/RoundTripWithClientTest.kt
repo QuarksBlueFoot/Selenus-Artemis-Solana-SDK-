@@ -154,7 +154,7 @@ class RoundTripWithClientTest {
         try {
             // Wait for the wallet's start() to finish HELLO and start
             // the dispatcher. Without this, the first sendJsonRpc could
-            // race the dispatcher's recv loop — which actually still
+            // race the dispatcher's recv loop. which actually still
             // works because the inbound channel buffers, but blocking
             // here makes failures point at the right place.
             withTimeout(5_000) { scenarioJob.join() }

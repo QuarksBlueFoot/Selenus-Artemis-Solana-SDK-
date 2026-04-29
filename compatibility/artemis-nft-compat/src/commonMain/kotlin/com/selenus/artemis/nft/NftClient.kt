@@ -162,12 +162,19 @@ class NftClient(private val rpc: RpcApi) {
 
     for (item in value) {
       val obj = item.jsonObject
-      val tokenAccount = Pubkey.fromBase58(obj["pubkey"]!!.jsonPrimitive.content)
-      val parsed = obj["account"]!!.jsonObject["data"]!!.jsonObject["parsed"]!!.jsonObject
-      val info = parsed["info"]!!.jsonObject
-      val mint = Pubkey.fromBase58(info["mint"]!!.jsonPrimitive.content)
-      val amountStr = info["tokenAmount"]!!.jsonObject["amount"]!!.jsonPrimitive.content
-      val amount = amountStr.toLong()
+      // jsonParsed token-account entry layout is fixed by the spec; an entry that fails to match
+      // it is malformed and we skip it rather than abort the whole wallet scan.
+      val pubkeyStr = obj["pubkey"]?.jsonPrimitive?.content ?: continue
+      val tokenAccount = Pubkey.fromBase58(pubkeyStr)
+      val account = obj["account"]?.jsonObject ?: continue
+      val data = account["data"]?.jsonObject ?: continue
+      val parsed = data["parsed"]?.jsonObject ?: continue
+      val info = parsed["info"]?.jsonObject ?: continue
+      val mintStr = info["mint"]?.jsonPrimitive?.content ?: continue
+      val mint = Pubkey.fromBase58(mintStr)
+      val tokenAmount = info["tokenAmount"]?.jsonObject ?: continue
+      val amountStr = tokenAmount["amount"]?.jsonPrimitive?.content ?: continue
+      val amount = amountStr.toLongOrNull() ?: continue
       if (amount == 1L) candidates.add(WalletNft(mint, tokenAccount, amount, null))
     }
 

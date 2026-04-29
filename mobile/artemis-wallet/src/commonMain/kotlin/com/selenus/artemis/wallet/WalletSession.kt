@@ -111,8 +111,9 @@ class WalletSession private constructor(
         instructions: List<Instruction>,
         config: TxConfig
     ): TxResult {
+        val engine = requireEngine()
         return when (strategy) {
-            is SignerStrategy.Adapter -> txEngine!!.execute(
+            is SignerStrategy.Adapter -> engine.execute(
                 instructions,
                 strategy.publicKey,
                 externalSign = { unsignedTx ->
@@ -120,14 +121,12 @@ class WalletSession private constructor(
                 },
                 config
             )
-            else -> txEngine!!.execute(instructions, strategy.asSigner(), config)
+            else -> engine.execute(instructions, strategy.asSigner(), config)
         }
     }
 
-    private fun requireEngine() {
-        requireNotNull(txEngine) {
-            "TxEngine is required for send operations. Create WalletSession with a TxEngine."
-        }
+    private fun requireEngine(): TxEngine = requireNotNull(txEngine) {
+        "TxEngine is required for send operations. Create WalletSession with a TxEngine."
     }
 
     companion object {

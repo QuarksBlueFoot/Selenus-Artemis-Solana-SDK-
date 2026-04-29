@@ -6,16 +6,14 @@ import kotlin.math.min
 import kotlin.random.Random
 
 /**
- * Artemis Transaction Confirmation Strategies
- * 
- * The Solana Mobile SDK provides basic sendAndConfirm, but lacks:
+ * Transaction confirmation strategies.
+ *
+ * Goes beyond basic sendAndConfirm with:
  * - Multiple confirmation strategies (polling, subscription, hybrid)
- * - Smart exponential backoff with jitter
+ * - Exponential backoff with jitter
  * - Blockhash expiry detection
  * - Confirmation level awareness (processed/confirmed/finalized)
  * - Batch confirmation with parallelism
- * 
- * Artemis provides production-grade confirmation with configurable strategies.
  */
 object TransactionConfirmation {
     

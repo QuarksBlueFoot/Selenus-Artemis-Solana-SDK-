@@ -133,11 +133,16 @@ class ArtemisClient private constructor(builder: Builder) {
         }
 
         internal fun buildConnection(): Connection {
+            // Capture each candidate into a local val so the smart-cast carries through.
+            val rpcVal = rpc
+            val clusterVal = cluster
+            val poolVal = pool
+            val routerVal = router
             return when {
-                rpc != null -> Connection(rpc!!, commitment)
-                cluster != null -> Connection(cluster!!, commitment)
-                pool != null -> Connection(pool!!, commitment)
-                router != null -> Connection(router!!, commitment)
+                rpcVal != null -> Connection(rpcVal, commitment)
+                clusterVal != null -> Connection(clusterVal, commitment)
+                poolVal != null -> Connection(poolVal, commitment)
+                routerVal != null -> Connection(routerVal, commitment)
                 else -> throw IllegalStateException(
                     "ArtemisClient requires an RPC endpoint. Set one of: rpc, cluster, pool, or router."
                 )

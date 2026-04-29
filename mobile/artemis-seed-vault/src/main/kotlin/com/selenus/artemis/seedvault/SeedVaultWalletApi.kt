@@ -3,10 +3,10 @@
  * Licensed under the Apache License, Version 2.0.
  * 
  * Wallet - High-level Seed Vault programming interface.
- * 
+ *
  * Full parity with com.solanamobile.seedvault.Wallet from the upstream SDK v0.4.0.
- * 
- * This class provides static helper methods for all Seed Vault interactions:
+ *
+ * Static helpers for Seed Vault interactions:
  * - Seed authorization (authorizeSeed, createSeed, importSeed)
  * - Transaction signing (signTransaction, signTransactions)
  * - Message signing (signMessage, signMessages)
@@ -15,8 +15,8 @@
  * - Derivation path resolution (resolveDerivationPath)
  * - Seed settings display (seedSettings - privileged only)
  * - Account management (updateAccountName, updateAccountIsUserWallet, updateAccountIsValid)
- * 
- * All Intent-based methods return Intents for use with startActivityForResult.
+ *
+ * Intent-based methods return Intents for use with startActivityForResult.
  * Companion onXxxResult methods process the result from onActivityResult.
  */
 package com.selenus.artemis.seedvault

@@ -164,7 +164,7 @@ object MwaWalletConformance {
                 notes += "Backpack: verifying wallet chain before signing (general hardening)."
             }
             KnownWallet.UNKNOWN -> {
-                // Conservative defaults. When we cannot fingerprint, enable
+                // Conservative defaults: when fingerprinting fails, enable
                 // the cheap workarounds that never hurt compliant wallets.
                 minContextSlotFix = true
                 chainVerifyFix = true

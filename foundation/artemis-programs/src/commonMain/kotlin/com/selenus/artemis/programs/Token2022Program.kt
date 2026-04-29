@@ -101,4 +101,45 @@ object Token2022Program {
       data = iData(9)
     )
   }
+
+  /**
+   * Initializes a Token-2022 account in a single instruction. Op 18,
+   * `InitializeAccount3`. Unlike op 1 / 2, this carries the owner in
+   * the data payload instead of as a separate account, which lets
+   * callers create + initialize an account in two instructions instead
+   * of three.
+   */
+  fun initializeAccount3(
+    account: Pubkey,
+    mint: Pubkey,
+    owner: Pubkey
+  ): Instruction {
+    val body = ByteArray(32)
+    owner.bytes.copyInto(body)
+    return Instruction(
+      programId = ProgramIds.TOKEN_2022_PROGRAM,
+      accounts = listOf(
+        AccountMeta(account, isSigner = false, isWritable = true),
+        AccountMeta(mint, isSigner = false, isWritable = false)
+      ),
+      data = iData(18, body)
+    )
+  }
+
+  /**
+   * Marks the account's owner as immutable. Op 22,
+   * `InitializeImmutableOwner`. Always pair with `initializeAccount3`
+   * for ATAs so the owner field cannot be reassigned via
+   * `setAuthority`. The associated token program does this for free
+   * on standard SPL ATAs; Token-2022 ATAs need it explicitly.
+   */
+  fun initializeImmutableOwner(account: Pubkey): Instruction {
+    return Instruction(
+      programId = ProgramIds.TOKEN_2022_PROGRAM,
+      accounts = listOf(
+        AccountMeta(account, isSigner = false, isWritable = true)
+      ),
+      data = iData(22)
+    )
+  }
 }

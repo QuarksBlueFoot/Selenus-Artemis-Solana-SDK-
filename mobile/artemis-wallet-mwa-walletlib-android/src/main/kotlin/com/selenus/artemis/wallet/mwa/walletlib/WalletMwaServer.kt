@@ -44,8 +44,8 @@ import java.util.concurrent.atomic.AtomicReference
  * inbound dispatch loop and any outstanding request handlers
  * deterministically.
  *
- * `GET_CAPABILITIES` is handled inside this class — never surfaced to
- * the callback set — because the response is purely a function of
+ * `GET_CAPABILITIES` is handled inside this class. never surfaced to
+ * the callback set, because the response is purely a function of
  * [config], and forcing every wallet to re-derive the same JSON would
  * just be a chance to drift from the spec.
  */
@@ -131,7 +131,7 @@ internal class WalletMwaServer(
         if (method == null) {
             // Either an RPC reply (no method) or a malformed frame. The
             // wallet doesn't initiate any RPC against the dApp in MWA
-            // 2.0, so any reply-shaped frame is unexpected — but it is
+            // 2.0, so any reply-shaped frame is unexpected, but it is
             // not actionable, so we just ignore it.
             return
         }

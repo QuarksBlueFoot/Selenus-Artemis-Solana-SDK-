@@ -336,14 +336,20 @@ class CachedFeeEstimator(
         val now = currentTimeMillis()
         
         // Refresh cache if stale or if different accounts requested
-        if (cachedData == null || 
+        val data = if (cachedData == null ||
             now - cacheTimestamp > cacheValidityMs ||
             options.accountAddresses != null) {
-            cachedData = provider.getRecentPriorityFees(options.accountAddresses)
+            val fresh = provider.getRecentPriorityFees(options.accountAddresses)
+            cachedData = fresh
             cacheTimestamp = now
+            fresh
+        } else {
+            // Safe invariant: the `cachedData == null` short-circuit above means we only reach this
+            // branch when cachedData is non-null and inside the validity window.
+            cachedData ?: error("PriorityFeeEstimator: cachedData null after validity check (race?)")
         }
-        
-        return PriorityFees.estimate(cachedData!!, options)
+
+        return PriorityFees.estimate(data, options)
     }
     
     /**

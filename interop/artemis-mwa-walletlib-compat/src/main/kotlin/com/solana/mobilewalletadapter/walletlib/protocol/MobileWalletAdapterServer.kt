@@ -5,7 +5,7 @@
  * decrypted MWA frames from a session, dispatches them onto a
  * `MethodHandlers` set, and serializes the wallet's typed completions
  * back onto the wire. The Artemis equivalent is `WalletMwaServer`,
- * which is module-internal — this shim exposes the upstream FQN as a
+ * which is module-internal, this shim exposes the upstream FQN as a
  * thin façade for code that catches the nested exception types.
  *
  * The methods are present for binary parity with upstream Java callers

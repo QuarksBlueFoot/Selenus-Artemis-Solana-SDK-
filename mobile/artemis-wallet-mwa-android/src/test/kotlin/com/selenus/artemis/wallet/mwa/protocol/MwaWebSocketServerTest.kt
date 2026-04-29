@@ -60,7 +60,7 @@ class MwaWebSocketServerTest {
         val server = MwaWebSocketServer().also { openServers.add(it) }
         val port = server.bind(0)
 
-        // Try to connect via the wildcard "0.0.0.0" — on the same host this
+        // Try to connect via the wildcard "0.0.0.0", on the same host this
         // will fall through to 127.0.0.1, but it confirms the port is open
         // for loopback traffic only. The hardening guarantee is that the
         // internal ServerSocket was constructed with the loopback InetAddress.

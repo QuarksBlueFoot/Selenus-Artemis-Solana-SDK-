@@ -130,12 +130,12 @@ object V0MessageCompiler {
     val signerList = mutableListOf<Signer>()
     // fee payer first
     signerList.add(feePayer)
-    // additional signers should be supplied by caller; we cannot magically produce their Signer instances.
-    // For compile(), we only return feePayer; caller can sign separately with VersionedTransaction.sign(signers).
-    // We enforce correctness by requiring compileAndSign when additional signers exist.
+    // Additional signers must be supplied by the caller; their Signer instances cannot be derived here.
+    // compile() returns only feePayer; the caller signs separately via VersionedTransaction.sign(signers).
+    // Correctness is enforced by requiring compileAndSign when additional signers exist.
     if (signerKeys.size > 1) {
       // Caller should use compileMessage only and sign with all signers, or use compileAndSign.
-      // We return list containing feePayer to keep this API safe.
+      // Returns a list containing feePayer to keep this API safe.
     }
 
     return CompileResult(msg, signerList)

@@ -9,7 +9,7 @@ import com.selenus.artemis.runtime.Pubkey
  * - Parses header fields needed for proofs/mints UX (depth, buffer size, authority)
  * - Leaves raw bytes accessible for advanced usage.
  *
- * Layout is stable in practice but versioned; we treat unknown fields as opaque.
+ * Layout is stable in practice but versioned; unknown fields are treated as opaque.
  */
 data class ConcurrentMerkleTreeAccount(
   val merkleTree: Pubkey,

@@ -56,7 +56,7 @@ internal class NotificationRouter(
               emit(WsEvent.Notification(key, n.subscriptionId, n.method, n.result, isSampled = false))
             }
 
-            // If channel buffer is pressured, we will detect via trySend failures upstream.
+            // Channel buffer pressure surfaces via trySend failures upstream.
           }
 
           // periodic flush for sampled keys
@@ -75,7 +75,7 @@ internal class NotificationRouter(
         val bpWindow = p.backpressureWindowMs
         if (bpWindow > 0) {
           delay(0) // allow cooperative
-          // backpressure events are emitted by parent when drops happen, but we also emit a heartbeat summary if needed
+          // backpressure events are emitted by parent when drops happen; a heartbeat summary is also emitted when needed
           if (droppedTotal > 0) {
             // best-effort aggregate, unknown key
             emit(WsEvent.Backpressure(null, droppedTotal, bpWindow))

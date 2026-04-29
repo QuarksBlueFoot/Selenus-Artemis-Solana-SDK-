@@ -26,7 +26,7 @@ class LocalSignerWalletAdapter(
   }
 
   override suspend fun signMessage(message: ByteArray, request: WalletRequest): ByteArray {
-    // For local signing we return a detached signature + original message packed as:
+    // Local signing returns a detached signature + original message packed as:
     // [sigLen(2)][sig][msgLen(4)][msg]
     val sig = keypair.sign(message)
     val out = ByteArray(2 + sig.size + 4 + message.size)

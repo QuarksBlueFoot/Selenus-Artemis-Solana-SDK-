@@ -6,7 +6,7 @@ import com.selenus.artemis.runtime.Pubkey
  * Merkle leaf proof data for a compressed NFT.
  *
  * NOTE: In Bubblegum, the *proof nodes* are passed as remaining accounts, not embedded
- * inside instruction data. We keep [proof] here only as a convenience container.
+ * inside instruction data. [proof] is kept here only as a convenience container.
  */
 data class ProofArgs(
   val root: ByteArray,

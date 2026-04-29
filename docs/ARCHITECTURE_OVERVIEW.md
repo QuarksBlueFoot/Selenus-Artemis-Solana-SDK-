@@ -198,7 +198,7 @@ Explicit source-compat or migration-compat surface for teams migrating from othe
 - Nothing else depends on Interop modules
 - Shims wrap public APIs only. No copied internals.
 - Every shimmed class and method has a compile-proof test
-- Compatibility targets pinned in `build.gradle.kts` (`extra["upstream.version"]`) and gated by CI's `verifyApiSnapshots` task — `dumpApi` must produce the same output the committed `interop/<module>/api/<module>.api` snapshot carries, otherwise the build fails
+- Compatibility targets pinned in `build.gradle.kts` (`extra["upstream.version"]`) and gated by CI's `verifyApiSnapshots` task. `dumpApi` must produce the same output the committed `interop/<module>/api/<module>.api` snapshot carries, otherwise the build fails
 
 ## Directory layout
 

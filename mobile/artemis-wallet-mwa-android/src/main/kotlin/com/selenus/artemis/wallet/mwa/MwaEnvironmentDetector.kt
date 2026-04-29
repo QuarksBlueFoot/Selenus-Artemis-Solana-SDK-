@@ -132,12 +132,12 @@ class MwaEnvironmentDetector(private val context: Context) {
      * Detect the current runtime environment.
      */
     fun detect(): MwaEnvironment {
-        // Check if we're in a wallet's built-in browser (Issue #1323 fix)
+        // Wallet's built-in browser (Issue #1323 fix)
         if (isWalletBrowser()) {
             return MwaEnvironment.PHANTOM_BROWSER
         }
         
-        // Check if we're in a WebView
+        // WebView host
         if (isWebView()) {
             return if (isInAppBrowser()) {
                 MwaEnvironment.IN_APP_BROWSER
@@ -209,7 +209,7 @@ class MwaEnvironmentDetector(private val context: Context) {
     }
     
     /**
-     * Check if we're inside a wallet's built-in browser.
+     * Returns true when running inside a wallet's built-in browser.
      * These browsers support MWA but were incorrectly showing "wallet not found" dialogs.
      */
     private fun isWalletBrowser(): Boolean {

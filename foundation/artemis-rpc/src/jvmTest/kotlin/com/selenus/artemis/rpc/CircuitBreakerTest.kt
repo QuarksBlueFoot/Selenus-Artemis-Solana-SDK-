@@ -82,7 +82,7 @@ class CircuitBreakerTest {
 
         // Advance past cooldown, breaker should auto-flip to HalfOpen on next access.
         clock.set(1_600L)
-        // Probe call succeeds — closes the breaker.
+        // Probe call succeeds, closes the breaker.
         val out = breaker.execute { "probe" }
         assertEquals("probe", out)
         assertTrue(breaker.state is CircuitBreaker.State.Closed)
@@ -94,7 +94,7 @@ class CircuitBreakerTest {
         clock.set(1_000L)
         try { breaker.execute<Unit> { error("boom") } } catch (_: IllegalStateException) {}
         clock.set(1_600L)
-        // Probe call fails — should immediately re-open.
+        // Probe call fails. should immediately re-open.
         try { breaker.execute<Unit> { error("still bad") } } catch (_: IllegalStateException) {}
         assertTrue(breaker.state is CircuitBreaker.State.Open)
     }

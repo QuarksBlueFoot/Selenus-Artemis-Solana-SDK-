@@ -152,7 +152,9 @@ object RewardDistribution {
             val table = payoutTables.entries
                 .filter { it.key >= participants }
                 .minByOrNull { it.key }?.value
-                ?: payoutTables[1000]!!
+                // Safe invariant: `payoutTables` is a literal map declared above with key 1000 always
+                // present; this fallback applies only when participants > 1000.
+                ?: payoutTables.getValue(1000)
             
             val actualPaid = minOf(table.size, participants, paidPlaces)
             

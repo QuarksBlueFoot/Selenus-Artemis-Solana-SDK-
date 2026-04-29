@@ -60,7 +60,7 @@ class AuthTokenStoreTest {
 
     @Test
     fun `InMemoryAuthTokenStore is observable across multiple instances independently`() {
-        // Two stores with separate state — each has its own backing field.
+        // Two stores with separate state. each has its own backing field.
         val a = InMemoryAuthTokenStore()
         val b = InMemoryAuthTokenStore()
         a.set("a-token")

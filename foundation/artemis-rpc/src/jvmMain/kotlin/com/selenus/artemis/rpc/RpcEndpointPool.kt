@@ -81,7 +81,9 @@ class RpcEndpointPool(
                 val factor = config.latencyWeightFactor
                 return when {
                     factor <= 0.0 -> healthy.first().url
+                    // Safe invariant: `healthy.isNotEmpty()` guarantees minByOrNull returns non-null.
                     factor == 1.0 -> healthy.minByOrNull { it.avgLatencyMs.get() }!!.url
+                    // Safe invariant: same as above; `healthy` is non-empty.
                     else -> healthy.minByOrNull { st ->
                         val l = st.avgLatencyMs.get().toDouble().coerceAtLeast(1.0)
                         Math.pow(l, factor)
@@ -89,6 +91,7 @@ class RpcEndpointPool(
                 }
             }
             // All circuits open - pick the one with oldest failure (half-open candidate).
+            // Safe invariant: `states` is non-empty per the init `require(endpoints.isNotEmpty())` block above.
             return states.minByOrNull { it.lastFailureTime.get() }!!.url
         }
     }

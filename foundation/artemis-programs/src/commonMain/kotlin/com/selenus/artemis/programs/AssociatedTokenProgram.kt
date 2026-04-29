@@ -42,9 +42,9 @@ object AssociatedTokenProgram {
     programId: Pubkey = ProgramIds.TOKEN_PROGRAM,
     associatedTokenProgramId: Pubkey = ProgramIds.ASSOCIATED_TOKEN_PROGRAM
   ): Instruction {
-    // Note: solana-kt might have different parameter order or names, but this covers the main use case.
-    // We ignore associatedTokenProgramId if it's the standard one, as our impl hardcodes it or we can check it.
-    // Our impl uses ProgramIds.ASSOCIATED_TOKEN_PROGRAM.
+    // solana-kt may use a different parameter order or naming, but this covers the main use case.
+    // associatedTokenProgramId is ignored when it matches the standard program id.
+    // This impl uses ProgramIds.ASSOCIATED_TOKEN_PROGRAM.
     return createAssociatedTokenAccount(payer, associatedToken, owner, mint, programId)
   }
 }

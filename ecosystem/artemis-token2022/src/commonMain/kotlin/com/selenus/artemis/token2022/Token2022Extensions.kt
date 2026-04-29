@@ -23,7 +23,7 @@ object Token2022Extensions {
    * This uses the Token-2022 "SetTransferFee" instruction used by the TransferFeeConfig extension.
    * Layout: discriminator(u8) + epoch(u64) + transferFeeBasisPoints(u16) + maximumFee(u64)
    *
-   * Discriminator values can evolve; keep these behind a single API so we can update without breaking apps.
+   * Discriminator values can evolve; keep these behind a single API so updates do not break apps.
    */
   fun setTransferFee(
     mint: Pubkey,
