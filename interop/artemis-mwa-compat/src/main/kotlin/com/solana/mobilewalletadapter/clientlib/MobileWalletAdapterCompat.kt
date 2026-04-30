@@ -2,7 +2,7 @@
  * Copyright (c) 2024-2026 Bluefoot Labs. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Drop-in replacement for the Solana Mobile MWA client library.
+ * Source-compatible shim for the Solana Mobile MWA client library.
  * Provides familiar API surface backed by Artemis MWA implementation.
  */
 package com.solana.mobilewalletadapter.clientlib
@@ -17,7 +17,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
 /**
- * Drop-in replacement for `com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter`.
+ * Source-compatible shim for `com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter`.
  *
  * Wraps an Artemis [MwaWalletAdapter] with the upstream constructor pattern.
  * The [transact] method matches the official high-level API, executing an

@@ -87,7 +87,7 @@ Forbidden:
 - `artemis-nft-compat` depends on `artemis-simulation`
 - `artemis-discriminators` depends on `artemis-gaming`
 
-## Rule F: Interop provides drop-in shims
+## Rule F: Interop provides source-compatible shims
 
 Interop modules let existing code that imports SolanaMobile SDK packages (`com.solanamobile.*`, `com.solana.mobilewalletadapter.*`) compile against Artemis without changing imports. They depend on Foundation, Mobile, and Ecosystem. They must not depend on Advanced or Compat.
 

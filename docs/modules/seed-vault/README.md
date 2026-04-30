@@ -1,6 +1,6 @@
 # Artemis Seed Vault
 
-`artemis-seed-vault` is a coroutine-first client for the [Solana Seed Vault](https://github.com/solana-mobile/seed-vault-sdk). Keys stay behind the system service; signing happens on device. The Artemis native path lives in `com.selenus.artemis.seedvault`; the drop-in compat layer at `interop/artemis-seedvault-compat/` re-exposes the upstream `com.solanamobile.seedvault.*` namespace so existing apps keep compiling.
+`artemis-seed-vault` is a coroutine-first client for the [Solana Seed Vault](https://github.com/solana-mobile/seed-vault-sdk). Keys stay behind the system service; signing happens on device. The Artemis native path lives in `com.selenus.artemis.seedvault`; the source-compatible layer at `interop/artemis-seedvault-compat/` re-exposes the upstream `com.solanamobile.seedvault.*` namespace so existing apps keep compiling.
 
 ## What it gives you
 
@@ -53,7 +53,7 @@ lifecycleScope.launch {
 
 The auth-token result is `SeedVaultTokenResult(token: Long, accountId: Long)` defined in [SeedVaultTypes.kt](../../../mobile/artemis-seed-vault/src/main/kotlin/com/selenus/artemis/seedvault/SeedVaultTypes.kt). `SeedVaultManager.signTransactions` takes `authToken: String` and returns `List<ByteArray>`.
 
-## Drop-in for existing `com.solanamobile.seedvault.*` callers
+## Source-compatible path for existing `com.solanamobile.seedvault.*` callers
 
 The `artemis-seedvault-compat` module preserves the upstream FQNs:
 

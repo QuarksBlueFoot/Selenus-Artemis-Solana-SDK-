@@ -553,10 +553,10 @@ val artemisModuleDescriptions: Map<String, String> = mapOf(
     "artemis-presets" to "Top-level preset bundle that pulls in transaction and candy-machine presets under one import.",
 
     // Interop / compat shims
-    "artemis-seedvault-compat" to "Drop-in replacement for com.solanamobile:seedvault-wallet-sdk: same package and class names, routed to Artemis Seed Vault.",
-    "artemis-mwa-compat" to "Drop-in replacement for com.solanamobile:mobile-wallet-adapter-clientlib: mirrors the upstream client API backed by Artemis MWA.",
+    "artemis-seedvault-compat" to "Source-compatible shim for com.solanamobile:seedvault-wallet-sdk: same package and class names, routed through Artemis Seed Vault integration.",
+    "artemis-mwa-compat" to "Source-compatible shim for com.solanamobile:mobile-wallet-adapter-clientlib: mirrors the upstream client API backed by Artemis MWA.",
     "artemis-mwa-clientlib-compat" to "Legacy package alias for the MWA clientlib shim. Pulled in automatically for apps that reference the older Gradle coordinate.",
-    "artemis-mwa-walletlib-compat" to "Drop-in replacement for com.solanamobile:mobile-wallet-adapter-walletlib: mirrors the upstream walletlib Scenario / AssociationUri / request types backed by Artemis.",
+    "artemis-mwa-walletlib-compat" to "Source-compatible shim for com.solanamobile:mobile-wallet-adapter-walletlib: mirrors the upstream walletlib Scenario / AssociationUri / request types backed by Artemis.",
     "artemis-mwa-common-compat" to "Shared MWA protocol types (Account, AuthorizationResult, SignInPayload) exposed under the upstream package for source compatibility.",
     "artemis-sol4k-compat" to "Sol4k source-compat shim: exposes sol4k API shapes (Connection, Keypair, PublicKey, Transaction) backed by Artemis.",
     "artemis-solana-kmp-compat" to "solana-kmp source-compat shim for projects migrating from the Solana KMP fork.",

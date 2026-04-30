@@ -1,6 +1,6 @@
-# Migration guide: Solana Mobile Stack to Artemis
+# Migration guide: Solana Mobile client SDKs to Artemis
 
-API-level migration notes for apps moving off the official Solana Mobile Kotlin SDKs (`mobile-wallet-adapter-clientlib-ktx`, `seedvault`, sol4k, solana-kt) to Artemis. For the dependency mapping table and end-to-end migration walkthrough, see [REPLACE_SOLANA_MOBILE_STACK.md](REPLACE_SOLANA_MOBILE_STACK.md).
+API-level migration notes for apps moving client-side Solana Kotlin code (`mobile-wallet-adapter-clientlib-ktx`, `seedvault`, sol4k, solana-kt) to Artemis. MWA and Seed Vault remain Solana Mobile primitives; Artemis consolidates the client SDK layer above them. For the dependency mapping table and end-to-end migration walkthrough, see [ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md](ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md).
 
 ## Mobile Wallet Adapter
 

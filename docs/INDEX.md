@@ -27,7 +27,7 @@ A flat index of every document in the repo. The structured navigation lives at [
 
 | Document | Audience |
 | --- | --- |
-| [REPLACE_SOLANA_MOBILE_STACK.md](REPLACE_SOLANA_MOBILE_STACK.md) | Apps moving off the Solana Mobile Stack |
+| [ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md](ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md) | Apps adopting Artemis above MWA and Seed Vault |
 | [migration-solana-mobile.md](migration-solana-mobile.md) | API-level migration notes |
 
 ## Mobile integration
@@ -35,6 +35,9 @@ A flat index of every document in the repo. The structured navigation lives at [
 | Document | Audience |
 | --- | --- |
 | [MOBILE_APP_GUIDE.md](MOBILE_APP_GUIDE.md) | Android app developers |
+| [WALLET_COMPATIBILITY_TESTING.md](WALLET_COMPATIBILITY_TESTING.md) | Android and React Native wallet testers |
+| [TRANSACTION_CORRECTNESS.md](TRANSACTION_CORRECTNESS.md) | SDK evaluators and maintainers |
+| [PERFORMANCE_BENCHMARKS.md](PERFORMANCE_BENCHMARKS.md) | Release maintainers and SDK evaluators |
 
 ## Feature guides
 

@@ -724,7 +724,7 @@ Production-ready gaming utilities with cryptographic guarantees:
 
 - **Solana Foundation Standards**: cryptographic implementations verified against official specifications
 - **Modern Android architecture**: Kotlin Coroutines, Flow, StateFlow
-- **Solana Mobile compatibility**: drop-in replacement for the Solana Mobile SDK
+- **Solana Mobile compatibility**: source-compatible client-library migration path for Solana Mobile apps
 - **BIP-39 / SLIP-0010 verified**: cryptographic primitives match `bitcoin/bips` and `satoshilabs/slips`
 - **Zero new dependencies**: built on existing BouncyCastle and the in-repo SecureCrypto module
 - **Mobile-first**: tuned for Android performance and battery use
@@ -761,7 +761,7 @@ Production-ready gaming utilities with cryptographic guarantees:
 ### Changed
 
 - **Module Rename**: `artemis-runtime` → `artemis-core`
-  - Matches Solana Mobile's `web3-core` naming convention for drop-in compatibility
+  - Matches Solana Mobile's `web3-core` naming convention for source compatibility
   - Also absorbed former `artemis-core` (multiplatform) utilities
   - `artemis-core` is now the single foundational module containing:
     - Primitives: Pubkey, Keypair, Base58, Pda, Crypto, Signer
@@ -989,7 +989,7 @@ Metaplex-compatible capabilities (optional module)
 - Metadata fetch + minimal Borsh parse for name/symbol/uri/sellerFee/creators
 
 3) Solana Mobile migration doc
-- Replace Solana Mobile Kotlin clientlib with Artemis native MWA in 15 minutes
+- Adopt Artemis native MWA client layer in 15 minutes
 
 ## 53 highlights
 

@@ -9,8 +9,8 @@ foundation/    Ring 1   Core primitives, RPC, websockets, transactions, programs
 mobile/        Ring 2   Wallet abstraction, MWA Android client, Seed Vault
 ecosystem/     Ring 3   Token-2022, Metaplex, MPL Core, cNFT, Candy Machine, Jupiter, Anchor, Actions, Solana Pay
 advanced/      Ring 4   Opt-in helpers and labs modules
-compatibility/ Ring 5   Drop-in shims for migration off other SDKs
-interop/                Solana Mobile Stack compatibility shims
+compatibility/ Ring 5   Source-compatible shims for migration off other SDKs
+interop/                Solana Mobile client-library compatibility shims
 testing/                Integration and devnet test modules
 samples/                Sample apps (excluded from default build)
 docs/                   All documentation

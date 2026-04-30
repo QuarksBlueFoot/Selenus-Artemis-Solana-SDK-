@@ -34,7 +34,7 @@ project(":artemis-compute").projectDir    = file("foundation/artemis-compute")
 
 // =============================================================================
 // Mobile - wallet abstraction, MWA, Seed Vault, Compose
-// Depends on Foundation only. This is the Solana Mobile Stack replacement layer.
+// Depends on Foundation only. This is the Artemis client layer above SMS primitives.
 // =============================================================================
 include(":artemis-wallet")
 include(":artemis-wallet-mwa-android")
@@ -122,7 +122,7 @@ project(":artemis-candy-machine-presets").projectDir = file("compatibility/artem
 project(":artemis-presets").projectDir               = file("compatibility/artemis-presets")
 
 // =============================================================================
-// Interop - drop-in shims for Solana Mobile official SDK migration
+// Interop - source-compatible shims for Solana Mobile client-library migration
 // =============================================================================
 include(":artemis-seedvault-compat")
 include(":artemis-mwa-compat")

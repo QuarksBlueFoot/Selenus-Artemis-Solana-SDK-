@@ -9,13 +9,13 @@ one Kotlin Multiplatform dependency. JSON-RPC, WebSocket subs with reconnect and
 
 ## Why Artemis
 
-the kotlin/android solana story is fragmented. you ship `mobile-wallet-adapter-clientlib-ktx` for MWA, `seedvault-wallet-sdk` for custody on Saga and Seeker, `solana-kmp` or Sol4k for RPC and transactions, Metaplex KMM for NFT metadata, and you still hand-roll a websocket layer, a retry pipeline, and a DAS client.
+the kotlin/android solana story is fragmented. you ship `mobile-wallet-adapter-clientlib-ktx` for MWA, `seedvault-wallet-sdk` for Seed Vault access on Saga and Seeker, `solana-kmp` or Sol4k for RPC and transactions, Metaplex KMM for NFT metadata, and you still hand-roll a websocket layer, a retry pipeline, and a DAS client.
 
 five dependencies. five opinions about coroutines. five version matrices. zero shared reliability story.
 
 Artemis is one dependency graph, one coroutine-first surface, one `ArtemisMobile.create()` call for the full stack. every module pulls weight. `artemis-rpc` ships 92 typed JSON-RPC methods with a batch DSL and a real circuit breaker. `artemis-ws` runs a real websocket with deterministic resubscribe on reconnect. `artemis-vtx` drives a simulate + retry + priority-fee transaction pipeline. `artemis-wallet-mwa-android` speaks MWA 2.0 end to end with P-256 association, AES-128-GCM session crypto, HKDF-SHA256 key derivation, and Sign-In With Solana.
 
-if you can't rewrite call sites, the drop-in `interop/artemis-*-compat` shims let you swap Maven coordinates and keep your imports. one dep, not five.
+Artemis is the client SDK layer above Solana Mobile Stack primitives. It does not replace MWA, Seed Vault, wallet approval UX, or the Solana Mobile platform. If you can't rewrite call sites, the source-compatible `interop/artemis-*-compat` shims let you swap Maven coordinates and keep your imports. one dep, not five.
 
 ## What you get
 
@@ -302,11 +302,11 @@ these ship in the repo but maturity varies. `gaming`, `intent`, `privacy`, `port
 
 if a module says "Helpers", it exists for app teams that want a starting point and intend to extend it. Foundation, Mobile, and Ecosystem are the production surface.
 
-### Interop (drop-in shims)
+### Interop (source-compatible shims)
 
 source-compatible shims that publish the upstream package + class FQNs. swap your Maven coordinates and existing import lines keep compiling. each module pins the upstream version it targets (see `extra["upstream.version"]` in the module's `build.gradle.kts`). CI's `verifyApiSnapshots` task fails the build when the public surface drifts from the committed snapshot.
 
-| Module | Replaces (artifact) | Upstream pin |
+| Module | Compat target (artifact) | Upstream pin |
 |--------|---------------------|--------------|
 | `artemis-mwa-compat` | `com.solana.mobilewalletadapter:clientlib-ktx` | 1.4.3 |
 | `artemis-mwa-clientlib-compat` | `com.solana.mobilewalletadapter:clientlib` | 1.4.3 |
@@ -319,7 +319,7 @@ source-compatible shims that publish the upstream package + class FQNs. swap you
 | `artemis-rpc-core-compat` | `com.solana:rpc-core` | main@2026-01-09 |
 | `artemis-web3-solana-compat` | `com.solana:web3-solana` (Funkatronics) | main@2025-08 |
 
-## What this replaces
+## Client SDK layers Artemis consolidates
 
 two adoption modes. pick one up front.
 
@@ -327,11 +327,11 @@ two adoption modes. pick one up front.
 
 the native surface (`ArtemisMobile.create`, `WalletSession`, `TxEngine`, `RpcApi`, `RealtimeEngine`, `ArtemisDas`, `MarketplaceEngine`) is ready to use today. every capability marked **Verified** in [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md) is backed by a test that fails if the feature regresses.
 
-### SMS-drop-in ready
+### SMS-client-compat ready
 
-keep your existing imports. swap the Maven coordinates to the Artemis compat artifacts under `interop/artemis-*-compat`. this track is **Verified** for the MWA client (ktx + non-ktx), MWA walletlib drop-in (chain-gated reauthorize, wallet-driven deauthorize, sign-messages address check, typed exceptions), Seed Vault static surface, sol4k 0.7.0 surface (incl. Token-2022 instructions and the upstream `RpcException` data-class shape), and typed result classes. the rest is **Partial** or **In Progress**. matrix in [PARITY_MATRIX.md](docs/PARITY_MATRIX.md) is the source of truth per capability.
+keep your existing imports. swap the Maven coordinates to the Artemis compat artifacts under `interop/artemis-*-compat`. this track is **Verified** for the MWA client (ktx + non-ktx), MWA walletlib source compatibility (chain-gated reauthorize, wallet-driven deauthorize, sign-messages address check, typed exceptions), Seed Vault static surface, sol4k 0.7.0 surface (incl. Token-2022 instructions and the upstream `RpcException` data-class shape), and typed result classes. the rest is **Partial** or **In Progress**. matrix in [PARITY_MATRIX.md](docs/PARITY_MATRIX.md) is the source of truth per capability. MWA and Seed Vault remain the underlying protocol and custody boundaries.
 
-Replaces:
+Client packages covered by compat shims:
 
 * `org.sol4k:sol4k` (0.7.0): JVM Solana primitives, Connection, transactions, instruction builders incl. Token-2022 → `artemis-sol4k-compat`
 * `foundation.metaplex:solana-kmp` (dormant 2024-06): RPC, public keys, transactions, ReadApi → `artemis-solana-kmp-compat`
@@ -346,7 +346,7 @@ Replaces:
 
 each compat module pins the exact upstream version it targets in its `build.gradle.kts` (`extra["upstream.version"]`). CI's `verifyApiSnapshots` job runs `./gradlew dumpApi` and fails when the public surface drifts. intentional changes update both the snapshot under `interop/<module>/api/<module>.api` and the upstream pin together.
 
-status vocabulary (`Verified` / `In Progress` / `Partial` / `Experimental` / `Planned`) is defined at the top of [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md). migration walkthrough with both tracks: [docs/REPLACE_SOLANA_MOBILE_STACK.md](docs/REPLACE_SOLANA_MOBILE_STACK.md).
+status vocabulary (`Verified` / `In Progress` / `Partial` / `Experimental` / `Planned`) is defined at the top of [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md). migration walkthrough with both tracks: [docs/ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md](docs/ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md).
 
 ## Reliability features
 
@@ -397,7 +397,10 @@ devnet test runner is at [run-devnet-tests.sh](run-devnet-tests.sh). it exercise
 | [docs/ARCHITECTURE_OVERVIEW.md](docs/ARCHITECTURE_OVERVIEW.md) | Ring structure, dependency rules, module hierarchy |
 | [docs/MODULE_MAP.md](docs/MODULE_MAP.md) | Every module with purpose and adoption context |
 | [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md) | Side-by-side feature comparison vs solana-kmp, sol4k, Solana Mobile SDK, Metaplex KMM |
-| [docs/REPLACE_SOLANA_MOBILE_STACK.md](docs/REPLACE_SOLANA_MOBILE_STACK.md) | Step-by-step migration from the official Solana Mobile Stack |
+| [docs/ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md](docs/ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md) | Client SDK migration and Solana Mobile compatibility boundaries |
+| [docs/WALLET_COMPATIBILITY_TESTING.md](docs/WALLET_COMPATIBILITY_TESTING.md) | Real-wallet test matrix and MWA edge-case checklist |
+| [docs/TRANSACTION_CORRECTNESS.md](docs/TRANSACTION_CORRECTNESS.md) | Transaction serialization evidence requirements |
+| [docs/PERFORMANCE_BENCHMARKS.md](docs/PERFORMANCE_BENCHMARKS.md) | Reproducible benchmark methodology for performance claims |
 | [docs/RELEASE_READINESS.md](docs/RELEASE_READINESS.md) | Release-label checklist and the CI gates that back each claim |
 | [docs/adr/0001-engine-architecture.md](docs/adr/0001-engine-architecture.md) | Engine / Provider / Adapter / Compat layering rules |
 | [docs/MOBILE_APP_GUIDE.md](docs/MOBILE_APP_GUIDE.md) | Android mobile app integration walkthrough |

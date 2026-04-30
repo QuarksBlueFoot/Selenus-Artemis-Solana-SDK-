@@ -43,7 +43,7 @@ Transaction and instruction layer:
 Predefined transaction presets for common compute/fee scenarios.
 
 
-Pinpointing# artemis-token2022
+### artemis-token2022
 Full Token-2022 support:
 - instruction builders
 - TLV decoding
@@ -84,9 +84,10 @@ Deterministic replay and frame recording utilities.
 ### artemis-wallet / artemis-wallet-mwa-android
 Wallet abstractions and Solana Mobile Wallet Adapter bindings.
 
-## What Artemis Replaces
-- sol4k (partial tx + limited Token-2022)
-- Metaplex KMM SDK (NFT-only scope)
-- Solana Mobile clientlib (core tx/rpc logic)
+## What Artemis consolidates
 
-Artemis is designed to sit *under* MWA and wallet UX layers.
+- sol4k and solana-kmp client primitives
+- Metaplex KMM SDK areas covered by Artemis modules
+- duplicated RPC, transaction, websocket, retry, and wallet-session glue around Solana Mobile apps
+
+Artemis is designed to sit above Solana Mobile primitives. It uses MWA for wallet communication and Seed Vault for secure custody on supported devices; it does not replace either boundary.

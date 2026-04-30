@@ -2,7 +2,7 @@
 
 End-to-end walkthrough for building an Android Solana app on Artemis 2.3.0. The guide assumes you already know Kotlin, Coroutines, and Compose. Every code sample maps to a real API in the repo with a file path you can click into.
 
-For the architectural ring map, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For migration notes from the official Solana Mobile SDK, see [REPLACE_SOLANA_MOBILE_STACK.md](REPLACE_SOLANA_MOBILE_STACK.md).
+For the architectural ring map, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For migration notes from existing Solana Mobile client SDKs, see [ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md](ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md).
 
 ## 1. Add dependencies
 
@@ -65,6 +65,8 @@ class MyActivity : ComponentActivity() {
 The `dasUrl` parameter is optional. Pass `null` and `artemis.das` will be `null`. The marketplace and DAS query helpers degrade gracefully when DAS is unavailable.
 
 The constructor accepts a `chain` parameter that defaults to `"solana:mainnet"`. Pass `"solana:devnet"` for devnet builds.
+
+Keep wallet-return intents outside Compose tree creation. Do not call `setContent { ... }` from `onNewIntent()` while an MWA session is active; emit deep links or wallet-return events into app state instead.
 
 ## 3. Connect a wallet
 

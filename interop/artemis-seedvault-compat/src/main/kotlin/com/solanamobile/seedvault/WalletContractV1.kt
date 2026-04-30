@@ -2,7 +2,7 @@
  * Copyright (c) 2024-2026 Bluefoot Labs. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Drop-in replacement for com.solanamobile.seedvault.WalletContractV1.
+ * Source-compatible shim for com.solanamobile.seedvault.WalletContractV1.
  * Delegates to Artemis SeedVaultConstants for all protocol values.
  */
 package com.solanamobile.seedvault
@@ -15,8 +15,9 @@ import com.selenus.artemis.seedvault.internal.SeedVaultConstants
 /**
  * Compatibility shim for `com.solanamobile.seedvault.WalletContractV1`.
  *
- * Drop-in replacement - use this instead of the Solana Mobile Seed Vault SDK.
- * All constants match the upstream protocol exactly.
+ * Use this when migrating client-library imports to Artemis while keeping
+ * the Seed Vault protocol and device custody boundary intact. All constants
+ * match the upstream protocol exactly.
  */
 object WalletContractV1 {
 

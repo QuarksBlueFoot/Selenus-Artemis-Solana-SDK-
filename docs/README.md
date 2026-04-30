@@ -17,7 +17,7 @@ top-level index for everything under `docs/`. if you just want to install and ru
 
 | Document | Covers |
 | --- | --- |
-| [REPLACE_SOLANA_MOBILE_STACK.md](REPLACE_SOLANA_MOBILE_STACK.md) | Replacing the official Solana Mobile Stack with Artemis |
+| [ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md](ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md) | Adopting Artemis as the client SDK layer above MWA and Seed Vault |
 | [migration-solana-mobile.md](migration-solana-mobile.md) | API-level migration notes for SMS users |
 
 ## Mobile integration
@@ -25,6 +25,9 @@ top-level index for everything under `docs/`. if you just want to install and ru
 | Document | Covers |
 | --- | --- |
 | [MOBILE_APP_GUIDE.md](MOBILE_APP_GUIDE.md) | End-to-end Android integration walkthrough using `ArtemisMobile.create()` |
+| [WALLET_COMPATIBILITY_TESTING.md](WALLET_COMPATIBILITY_TESTING.md) | Real wallet test matrix and MWA edge-case coverage |
+| [TRANSACTION_CORRECTNESS.md](TRANSACTION_CORRECTNESS.md) | Byte-level transaction correctness evidence policy |
+| [PERFORMANCE_BENCHMARKS.md](PERFORMANCE_BENCHMARKS.md) | Reproducible benchmark methodology before performance claims |
 
 ## Module guides
 

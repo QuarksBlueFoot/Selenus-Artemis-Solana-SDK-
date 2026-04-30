@@ -70,9 +70,9 @@ Every module in Artemis, what ring it belongs to, what it does, and when you nee
 
 ## Interop (Ring 6)
 
-Source-compatible drop-in shims that publish the upstream package + class FQNs. Swap your Maven coordinates and existing import lines keep compiling. Each module pins the upstream version it targets in its `build.gradle.kts` (`extra["upstream.version"]`); CI's `verifyApiSnapshots` task fails the build when the public surface drifts.
+Source-compatible shims that publish the upstream package + class FQNs. Swap your Maven coordinates and existing import lines keep compiling. Each module pins the upstream version it targets in its `build.gradle.kts` (`extra["upstream.version"]`); CI's `verifyApiSnapshots` task fails the build when the public surface drifts.
 
-| Module | Replaces | Upstream pin | You need this when... |
+| Module | Compat target | Upstream pin | You need this when... |
 |--------|----------|--------------|----------------------|
 | `artemis-mwa-compat` | `com.solana.mobilewalletadapter:clientlib-ktx` | 1.4.3 | Migrating an MWA-ktx dApp without rewriting `transact { }` blocks |
 | `artemis-mwa-clientlib-compat` | `com.solana.mobilewalletadapter:clientlib` | 1.4.3 | Migrating low-level MWA client / `LocalAssociationScenario` callsites |

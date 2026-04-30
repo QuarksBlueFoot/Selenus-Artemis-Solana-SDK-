@@ -25,13 +25,13 @@ import com.selenus.artemis.wallet.mwa.protocol.MwaAuthorizeResult
  * MwaWalletAdapter
  *
  * Native Mobile Wallet Adapter (MWA 2.x) client implementation with:
- * - Full MWA 2.0 API parity (authorize, reauthorize, deauthorize, cloneAuthorization)
+ * - Full MWA 2.0 client API coverage (authorize, reauthorize, deauthorize, cloneAuthorization)
  * - Feature detection via get_capabilities
  * - Fallback routing between sign-only and sign-and-send
  * - Support for transaction versions (legacy + v0)
  * - Sequential transaction support via waitForCommitmentToSendNextTransaction
  * 
- * Drop-in compatible with Solana Mobile clientlib-ktx.
+ * Source-compatible with Solana Mobile clientlib-ktx flows through the compat shims.
  */
 class MwaWalletAdapter(
   private val activity: Activity,

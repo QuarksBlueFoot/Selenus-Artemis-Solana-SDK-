@@ -2,7 +2,7 @@
  * Copyright (c) 2024-2026 Bluefoot Labs. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Drop-in replacement for com.solanamobile.seedvault.Wallet.
+ * Source-compatible shim for com.solanamobile.seedvault.Wallet.
  * Delegates all calls to Artemis SeedVaultWallet.
  */
 package com.solanamobile.seedvault
@@ -26,9 +26,9 @@ import com.selenus.artemis.seedvault.PublicKeyResponse
 /**
  * Compatibility shim for `com.solanamobile.seedvault.Wallet`.
  *
- * Drop-in replacement - migrate from the Solana Mobile Seed Vault SDK
- * by simply swapping the dependency to `artemis-seedvault-compat`.
- * No code changes required in your app.
+ * Migrate client-library imports by swapping the dependency to
+ * `artemis-seedvault-compat`. Seed Vault remains the device custody and
+ * signing boundary.
  */
 object Wallet {
 

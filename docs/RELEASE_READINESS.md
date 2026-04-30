@@ -11,11 +11,10 @@ blocks the Maven and NPM publish until the suite goes green.
 | --- | --- | --- |
 | **Preview** | Works for early adopters, primitive crypto tests pass, CI coverage incomplete | build + primitive unit tests |
 | **Beta / RC** | Artemis-native is publishable end to end; compat surface is partial but honest | P0 items below |
-| **GA / Replacement-ready** | Artemis-native and drop-in compat both proven by CI | P0 + P1 + P2 items below |
+| **GA / Client-compat-ready** | Artemis-native and source-compatible client-library surfaces both proven by CI | P0 + P1 + P2 items below |
 
 Every public claim (README, PARITY_MATRIX, release notes) maps to one of those
-labels. "Drop-in replacement for Solana Mobile Stack" is a GA claim and
-requires every box below to be ticked.
+labels. "Drop-in client-SDK compatibility for Solana Mobile client libraries" is a GA claim and requires every box below to be ticked. Do not claim Artemis replaces the Solana Mobile Stack platform, MWA protocol, or Seed Vault custody boundary.
 
 ---
 
@@ -44,9 +43,9 @@ P0 items. Must be green in CI before tagging any serious release.
 
 ---
 
-## SMS drop-in ready (GA / Replacement-ready)
+## SMS client-library compatibility ready (GA / Client-compat-ready)
 
-P1 items. Required before claiming "drop-in replacement for Solana Mobile Stack".
+P1 items. Required before claiming source-compatible migration support for the listed Solana Mobile client libraries.
 
 - [x] **No Base58 association-token fallback.**
   `LocalAssociationIntentCreator` and `LocalAssociationScenario` both use
@@ -116,8 +115,8 @@ P2 items. Required for GA.
 
 - [x] **Native MWA E2E behavior suite passes.** Covered by the behavior
   gate above. 15 tests, all green.
-- [x] **Compat runtime parity suite passes.** `MwaCompatParityTest`
-  exercises every behavior the audit flagged as a compat gap. 10 tests,
+- [x] **Compat runtime behavior suite passes.** `MwaCompatParityTest`
+  exercises every behavior previously identified as a compat gap. 10 tests,
   all green.
 - [x] **Release-readiness gate enforced.** This document plus the
   `release-gate` job in the publish workflow.
@@ -133,10 +132,10 @@ The release manager answers in order:
 2. Is every P1 item checked? If not, the release is **Beta / RC**. Publish
    the Artemis-native surface, mark compat modules as partial in the
    changelog.
-3. Is every P2 item checked? If not, do not claim "drop-in". The release is
+3. Is every P2 item checked? If not, do not claim source-compatible release readiness. The release is
    still publishable as **Beta / RC**.
-4. All boxes ticked? **GA / Replacement-ready**. The changelog may claim
-   drop-in compatibility for the scope listed in
+4. All boxes ticked? **GA / Client-compat-ready**. The changelog may claim
+  source-compatible migration support for the scope listed in
    [PARITY_MATRIX.md](PARITY_MATRIX.md).
 
 Every claim in the release notes has to point at an evidence source: a test

@@ -82,7 +82,7 @@ This is the base layer. Every Solana app built with Artemis uses some or all of 
 
 ## Ring 2: Mobile
 
-This is the Solana Mobile Stack replacement layer. If you are building an Android Solana app, this ring plus Foundation is your core dependency set.
+This is the Artemis mobile client layer for apps that use Solana Mobile primitives. If you are building an Android Solana app, this ring plus Foundation is your core dependency set. MWA remains the wallet protocol and Seed Vault remains the custody boundary.
 
 **Modules:** `artemis-wallet`, `artemis-wallet-mwa-android`, `artemis-wallet-mwa-walletlib-android`, `artemis-seed-vault`
 
@@ -174,16 +174,16 @@ Explicit source-compat or migration-compat surface for teams migrating from othe
 
 **Modules:**
 
-- `artemis-mwa-compat` (replaces `com.solana.mobilewalletadapter:clientlib-ktx` 1.4.3)
-- `artemis-mwa-clientlib-compat` (replaces `com.solana.mobilewalletadapter:clientlib` 1.4.3)
-- `artemis-mwa-walletlib-compat` (replaces `com.solana.mobilewalletadapter:walletlib` 1.4.3)
-- `artemis-mwa-common-compat` (replaces `com.solana.mobilewalletadapter:common` 1.4.3)
-- `artemis-seedvault-compat` (replaces `com.solanamobile:seedvault-wallet-sdk` 0.4.0)
-- `artemis-sol4k-compat` (replaces `org.sol4k:sol4k` 0.7.0; includes Token-2022 instructions and the upstream `RpcException` data-class shape)
-- `artemis-solana-kmp-compat` (replaces `foundation.metaplex:solana-kmp`, snapshot of upstream `main`@2024-06-05; upstream dormant)
-- `artemis-metaplex-android-compat` (replaces `com.metaplex.lib:lib`, snapshot of upstream `main`@2024-04-06; upstream dormant; Partial coverage)
-- `artemis-rpc-core-compat` (replaces `com.solana:rpc-core`, snapshot @2026-01-09)
-- `artemis-web3-solana-compat` (replaces `com.solana:web3-solana` (Funkatronics), snapshot @2025-08)
+- `artemis-mwa-compat` (source-compatible shim for `com.solana.mobilewalletadapter:clientlib-ktx` 1.4.3)
+- `artemis-mwa-clientlib-compat` (source-compatible shim for `com.solana.mobilewalletadapter:clientlib` 1.4.3)
+- `artemis-mwa-walletlib-compat` (source-compatible shim for `com.solana.mobilewalletadapter:walletlib` 1.4.3)
+- `artemis-mwa-common-compat` (source-compatible shim for `com.solana.mobilewalletadapter:common` 1.4.3)
+- `artemis-seedvault-compat` (source-compatible shim for `com.solanamobile:seedvault-wallet-sdk` 0.4.0)
+- `artemis-sol4k-compat` (source-compatible shim for `org.sol4k:sol4k` 0.7.0; includes Token-2022 instructions and the upstream `RpcException` data-class shape)
+- `artemis-solana-kmp-compat` (source-compatible shim for `foundation.metaplex:solana-kmp`, snapshot of upstream `main`@2024-06-05; upstream dormant)
+- `artemis-metaplex-android-compat` (source-compatible shim for `com.metaplex.lib:lib`, snapshot of upstream `main`@2024-04-06; upstream dormant; Partial coverage)
+- `artemis-rpc-core-compat` (source-compatible shim for `com.solana:rpc-core`, snapshot @2026-01-09)
+- `artemis-web3-solana-compat` (source-compatible shim for `com.solana:web3-solana` (Funkatronics), snapshot @2025-08)
 
 **What it covers:**
 

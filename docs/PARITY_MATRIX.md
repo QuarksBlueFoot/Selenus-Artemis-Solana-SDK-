@@ -16,7 +16,7 @@ Feature-by-feature honest status of Artemis against the Kotlin/Android Solana SD
 Two orthogonal labels appear throughout the docs:
 
 - `Artemis-native ready`: safe to adopt using Artemis APIs directly (`ArtemisMobile.create()`, `WalletSession`, `TxEngine`, `RpcApi`). Everything `Verified` here qualifies.
-- `SMS-drop-in ready`: safe to use the `interop/artemis-*-compat` shims as a drop-in replacement for the official Solana Mobile clientlib/walletlib/seedvault imports. Requires both the native path and the compat parity tests to pass. Today this label applies to `Verified` items in the Wallet/Mobile and RPC rows below; the rest is `Partial` or `In Progress`.
+- `SMS-client-compat ready`: safe to use the `interop/artemis-*-compat` shims for source-compatible migration from the listed Solana Mobile client libraries. Requires both the native path and the compat behavior tests to pass. Today this label applies to `Verified` items in the Wallet/Mobile and RPC rows below; the rest is `Partial` or `In Progress`. This label does not mean Artemis replaces MWA, Seed Vault, or the Solana Mobile platform.
 
 ## Core primitives
 
@@ -268,7 +268,7 @@ Two orthogonal labels appear throughout the docs:
 
 ## Artemis-only capabilities
 
-These are features no other Kotlin Solana SDK provides; none are required for the SMS-drop-in path.
+These are features no other Kotlin Solana SDK provides; none are required for the SMS-client-compat path.
 
 | Capability | Module | Status |
 |---|---|---|

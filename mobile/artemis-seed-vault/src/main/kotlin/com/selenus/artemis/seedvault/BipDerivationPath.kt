@@ -2,7 +2,7 @@
  * Copyright (c) 2024-2026 Bluefoot Labs. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  * 
- * BIP Derivation Path types - Full parity with Solana Mobile Seed Vault SDK v0.4.0.
+ * BIP Derivation Path types - source-compatible coverage for Solana Mobile Seed Vault SDK v0.4.0.
  * 
  * Provides:
  * - BipLevel: Single level in a derivation path
@@ -14,7 +14,7 @@
  * - bip32:/m/44'/501'/0'/0'
  * - bip44:/0'/0'
  * 
- * Drop-in compatible with the Solana Mobile Seed Vault service IPC protocol.
+ * Compatible with the Solana Mobile Seed Vault service IPC protocol.
  */
 package com.selenus.artemis.seedvault
 

@@ -94,7 +94,7 @@ console.log(wallet.accounts);
 console.log(wallet.capabilities);
 ```
 
-### `transact` block (drop-in parity with `@solana-mobile/mobile-wallet-adapter-protocol-mobile`)
+### `transact` block (source-compatible helper for Mobile Wallet Adapter flows)
 
 ```typescript
 const signature = await transact(wallet, async (w) => {

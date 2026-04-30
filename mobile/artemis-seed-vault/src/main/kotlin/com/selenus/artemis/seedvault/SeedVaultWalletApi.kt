@@ -35,7 +35,7 @@ import com.selenus.artemis.seedvault.internal.SeedVaultConstants.AUTHORITY_WALLE
 /**
  * High-level Seed Vault Wallet programming interface.
  * 
- * Full API parity with Solana Mobile Seed Vault SDK v0.4.0.
+ * Source-compatible API coverage for Solana Mobile Seed Vault SDK v0.4.0.
  * 
  * Usage:
  * ```kotlin

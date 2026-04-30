@@ -22,11 +22,11 @@ dependencies {
 
 Covers: key types, Ed25519, Base58, RPC client, WebSocket subscriptions, legacy and versioned transactions, system/token/ATA/memo programs, compute budget, error decoding, structured logging.
 
-Replaces: solana-kmp core, Sol4k core, solanaKT primitives.
+Consolidates: solana-kmp core, Sol4k core, solanaKT primitives.
 
-## Mobile Stack Bundle
+## Solana Mobile Client Bundle
 
-Foundation plus wallet integration. This is the Solana Mobile Stack replacement set.
+Foundation plus wallet integration. This is the Artemis client layer for apps that use Solana Mobile primitives; MWA and Seed Vault remain the protocol and custody boundaries.
 
 ```kotlin
 dependencies {
@@ -47,17 +47,17 @@ dependencies {
 }
 ```
 
-Covers: everything in Foundation, plus WalletSession abstraction (local/adapter/raw signing), MWA 2.0 protocol, Seed Vault integration, Android lifecycle handling.
+Covers: everything in Foundation, plus WalletSession abstraction (local/adapter/raw signing), MWA 2.0 client integration, Seed Vault integration, Android lifecycle handling.
 
-Replaces: solana-kmp + mobile-wallet-adapter-clientlib-ktx + seedvault-wallet-sdk.
+Consolidates client SDK functionality from solana-kmp, mobile-wallet-adapter-clientlib-ktx, and seedvault-wallet-sdk without replacing MWA or Seed Vault.
 
 ## NFT Stack Bundle
 
-Mobile Stack plus token and NFT modules.
+Solana Mobile Client Bundle plus token and NFT modules.
 
 ```kotlin
 dependencies {
-    // Mobile Stack (above)
+    // Solana Mobile Client Bundle (above)
     // ...
 
     // NFT / Tokens
@@ -75,11 +75,11 @@ Replaces: Metaplex KMM modules for supported areas.
 
 ## DeFi Stack Bundle
 
-Mobile Stack plus DeFi and payment modules.
+Solana Mobile Client Bundle plus DeFi and payment modules.
 
 ```kotlin
 dependencies {
-    // Mobile Stack (above)
+    // Solana Mobile Client Bundle (above)
     // ...
 
     // DeFi / Ecosystem
@@ -98,7 +98,7 @@ Covers: Jupiter swap routing, Solana Actions/Blinks, Solana Pay URI building and
 | Building... | Start with |
 |---|---|
 | Backend/server Solana app | Foundation |
-| Android wallet or dApp | Mobile Stack |
+| Android wallet or dApp | Solana Mobile Client Bundle |
 | NFT marketplace or minting app | NFT Stack |
 | DeFi app or payment integration | DeFi Stack |
 | All of the above | Pick modules from each stack |

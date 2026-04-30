@@ -123,7 +123,7 @@ Specifically:
 ## References
 
 - `docs/PARITY_MATRIX.md`: per-capability status map.
-- `docs/REPLACE_SOLANA_MOBILE_STACK.md`: both migration tracks.
+- `docs/ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md`: both migration tracks and Solana Mobile boundary language.
 - `docs/DEPENDENCY_RULES.md`: ring hierarchy that prevents compat from
   depending on advanced modules.
 - MWA 2.0 migration notes (upstream): authorize-with-auth-token,

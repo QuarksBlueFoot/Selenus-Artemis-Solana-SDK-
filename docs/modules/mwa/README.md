@@ -67,7 +67,7 @@ adapter.disconnect()
 
 The class lives at [MwaWalletAdapter.kt](../../../mobile/artemis-wallet-mwa-android/src/main/kotlin/com/selenus/artemis/wallet/mwa/MwaWalletAdapter.kt).
 
-## Drop-in replacement for upstream clientlib-ktx
+## Source-compatible upstream clientlib-ktx migration
 
 If your dapp already imports `com.solana.mobilewalletadapter.clientlib.*`, the [artemis-mwa-compat](../../../interop/artemis-mwa-compat/) + [artemis-mwa-clientlib-compat](../../../interop/artemis-mwa-clientlib-compat/) + [artemis-mwa-common-compat](../../../interop/artemis-mwa-common-compat/) shims re-expose the upstream types at the same fully qualified names, backed by Artemis internals. `MobileWalletAdapter(connectionIdentity)`, `transact { ... }`, `AdapterOperations`, `LocalAssociationScenario`, `AuthorizationResult`, `SignInResult`, `SignPayloadsResult`, `SignMessagesResult`, and `SignAndSendTransactionsResult` all route through the live Artemis session via `MwaSessionBridge`. See the compat module sources for the mapping details.
 

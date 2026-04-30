@@ -2,7 +2,7 @@
  * Copyright (c) 2024-2026 Bluefoot Labs. All rights reserved.
  * Licensed under the Apache License, Version 2.0.
  *
- * Drop-in replacement for com.solanamobile.seedvault.SeedVault.
+ * Source-compatible shim for com.solanamobile.seedvault.SeedVault.
  * Delegates to Artemis SeedVaultCheck for availability and access checks.
  */
 package com.solanamobile.seedvault

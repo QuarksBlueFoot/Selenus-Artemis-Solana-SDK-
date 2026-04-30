@@ -8,7 +8,7 @@ This module allows your Android application to interact with the system-level Se
 
 - **Coroutine-first API**: No more callbacks. Everything is `suspend` functions.
 - **Internalized Logic**: Does not depend on the legacy `client-lib-ktx`.
-- **Drop-in Compatibility**: Includes `com.solanamobile.seedvault` compatibility classes so you can migrate existing code instantly.
+- **Source Compatibility**: Includes `com.solanamobile.seedvault` compatibility classes so existing client imports can migrate while Seed Vault remains the device custody boundary.
 - **Better Error Handling**: Typed exceptions and structured results.
 
 ## Installation
