@@ -53,6 +53,12 @@ class MwaWalletAdapter(
   private val broadcaster: com.selenus.artemis.wallet.RpcBroadcaster? = null
 ) : WalletAdapter, WalletAdapterSignAndSend {
 
+  init {
+    require(iconPath.startsWith("https://") && iconPath.length > "https://".length) {
+      "MWA identity iconPath must be an absolute HTTPS URI, e.g. https://myapp.example.com/favicon.ico"
+    }
+  }
+
   @Volatile private var pk: Pubkey? = null
   @Volatile private var session: MwaSession? = null
   @Volatile private var caps: MwaCapabilities? = null

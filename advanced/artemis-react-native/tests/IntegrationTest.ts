@@ -17,7 +17,7 @@ export const runIntegrationTests = async () => {
         console.log("1. Initializing Wallet Adapter...");
         const wallet = new MobileWalletAdapter({
             identityUri: 'https://artemis.selenus.com',
-            iconPath: 'favicon.ico',
+            iconPath: 'https://artemis.selenus.com/favicon.ico',
             identityName: 'Artemis Test',
             chain: 'solana:devnet'
         });

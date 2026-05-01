@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
           val a = MwaWalletAdapter(
             activity = this@MainActivity,
             identityUri = Uri.parse("https://canarymessenger.com"),
-            iconPath = "favicon.ico",
+            iconPath = "https://canarymessenger.com/favicon.ico",
             identityName = "Artemis Mint Sample",
             authStore = DataStoreAuthTokenStore.from(this@MainActivity)
           )

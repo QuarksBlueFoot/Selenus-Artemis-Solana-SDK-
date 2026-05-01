@@ -1,7 +1,7 @@
 {
   "name": "@selenus/artemis-solana-sdk",
   "version": "2.3.0",
-  "description": "Artemis Solana SDK bindings for React Native: Mobile Wallet Adapter 2.0, Seed Vault, RPC, realtime subscriptions, transactions, NFT/DAS, Token-2022, Jupiter, Anchor, and Solana Actions from one package.",
+  "description": "Artemis Solana SDK bindings for React Native: Android Mobile Wallet Adapter 2.0 and Seed Vault, plus shared RPC, realtime subscriptions, transactions, NFT/DAS, Token-2022, Jupiter, Anchor, Actions, and cross-platform crypto utilities.",
   "main": "index.js",
   "types": "index.d.ts",
   "repository": {

@@ -57,7 +57,7 @@ class Transaction(
       if (a.isWritable != b.isWritable) return@Comparator if (a.isWritable) -1 else 1
 
       // Lexicographic tiebreak on pubkey bytes. Matches solana-web3.js's
-      // stable account ordering so transactions built in Artemis hash
+      // legacy transaction ordering so transactions built in Artemis hash
       // to the same bytes as ones built in JS for the same instructions.
       // Without this, two clients can produce wire-different but
       // semantically equivalent messages, which busts tx caches.

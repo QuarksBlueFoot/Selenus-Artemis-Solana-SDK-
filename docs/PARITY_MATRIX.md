@@ -42,7 +42,7 @@ Two orthogonal labels appear throughout the docs:
 | Versioned transactions (v0) | Partial | Partial | N/A | N/A | `VersionedTransaction` | Verified |
 | Address lookup tables | Partial | No | N/A | N/A | `VersionedMessage.addressTableLookups` | Verified (parse + serialize round-trip) |
 | Durable nonce support | No | No | N/A | N/A | `DurableNonce` | Partial (build + send covered; rollback edge cases not fuzzed) |
-| Transaction serialization | Yes | Yes | N/A | N/A | Yes | Verified |
+| Transaction serialization | Yes | Yes | N/A | N/A | Yes | Verified (internal round-trip + initial `web3.js` 1.98.4 byte fixtures; named-SDK equivalence remains fixture-scoped) |
 | Multi-signer support | Yes | Yes | N/A | N/A | `SolanaSigner.signTransaction` | Verified (index-by-pubkey lookup) |
 
 ## RPC client

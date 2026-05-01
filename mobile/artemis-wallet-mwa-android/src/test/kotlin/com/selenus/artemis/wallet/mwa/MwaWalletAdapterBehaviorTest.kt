@@ -58,13 +58,34 @@ class MwaWalletAdapterBehaviorTest {
         return MwaWalletAdapter(
             activity = activity,
             identityUri = identityUri,
-            iconPath = "favicon.ico",
+            iconPath = "https://myapp.example.com/favicon.ico",
             identityName = "ArtemisTest",
             chain = "solana:devnet",
             authStore = authStore,
             client = client,
             broadcaster = broadcaster
         )
+    }
+
+    @Test
+    fun `constructor rejects relative iconPath`() {
+        val activity: Activity = mockk(relaxed = true)
+        val identityUri: Uri = mockk(relaxed = true)
+        try {
+            MwaWalletAdapter(
+                activity = activity,
+                identityUri = identityUri,
+                iconPath = "favicon.ico",
+                identityName = "ArtemisTest",
+                chain = "solana:devnet",
+                client = RecordingMwaClient(
+                    authorizeResponse = authResult("TOKEN", "addr1-b64")
+                )
+            )
+            fail("expected IllegalArgumentException")
+        } catch (e: IllegalArgumentException) {
+            assertTrue(e.message!!.contains("absolute HTTPS URI"))
+        }
     }
 
     /**

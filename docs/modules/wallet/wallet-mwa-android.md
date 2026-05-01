@@ -20,11 +20,13 @@ No extra wallet adapter client dependency is required. Artemis includes a native
 val adapter = MwaWalletAdapter(
   activity = this,
   identityUri = Uri.parse("https://yourdapp.com"),
-  iconPath = "favicon.ico",
+  iconPath = "https://yourdapp.com/favicon.ico",
   identityName = "Your dApp",
   authStore = /* DataStore or SharedPreferences backed */
 )
 ```
+
+`iconPath` must be an absolute HTTPS URI. Relative paths such as `favicon.ico` are rejected because wallets cannot reliably resolve them from the MWA identity payload.
 
 ## 3. Connect
 

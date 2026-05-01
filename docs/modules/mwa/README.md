@@ -43,6 +43,10 @@ val sig = artemis.sessionManager.withWallet { session ->
 
 `ArtemisMobile.create(...)` lives at [ArtemisMobile.kt:85](../../../mobile/artemis-wallet-mwa-android/src/main/kotlin/com/selenus/artemis/wallet/mwa/ArtemisMobile.kt#L85).
 
+## Protocol boundaries
+
+Artemis implements the dApp-side MWA client layer. It does not change the Mobile Wallet Adapter protocol, wallet approval UX, wallet custody policy, or Seed Vault security boundary. Wallets still own authorization, signing approval, capabilities, and session lifetime. Keep identity metadata wallet-readable: `identityUri` should identify the app and `iconPath` must be an absolute HTTPS URI.
+
 ## Direct adapter use
 
 If you want to wire everything yourself:

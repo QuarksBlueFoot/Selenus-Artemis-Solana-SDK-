@@ -46,6 +46,9 @@ jobs:
       - name: Core unit tests
         run: |
           ./gradlew --no-daemon \
+            :artemis-tx:jvmTest \
+            :artemis-vtx:jvmTest \
+            :artemis-programs:jvmTest \
             :artemis-rpc:jvmTest \
             :artemis-ws:jvmTest \
             :artemis-wallet:jvmTest \

@@ -10,6 +10,9 @@ echo "==> build + assembleDebug"
 
 echo "==> unit tests (foundation + wallet + MWA + Seed Vault)"
 ./gradlew --no-daemon \
+    :artemis-tx:jvmTest \
+    :artemis-vtx:jvmTest \
+    :artemis-programs:jvmTest \
     :artemis-rpc:jvmTest \
     :artemis-ws:jvmTest \
     :artemis-wallet:jvmTest \

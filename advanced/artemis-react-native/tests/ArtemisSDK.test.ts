@@ -164,7 +164,7 @@ describe('MobileWalletAdapter bridge contract', () => {
 
         wallet = new MobileWalletAdapter({
             identityUri: 'https://myapp.example.com',
-            iconPath: 'favicon.ico',
+            iconPath: 'https://myapp.example.com/favicon.ico',
             identityName: 'MyApp',
             chain: 'solana:mainnet',
         });

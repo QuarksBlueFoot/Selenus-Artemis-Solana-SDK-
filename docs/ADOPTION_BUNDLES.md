@@ -71,7 +71,7 @@ dependencies {
 
 Covers: Token-2022 full extension support, Metaplex Token Metadata, MPL Core assets, compressed NFTs (Bubblegum), Candy Machine v3 minting with guard validation.
 
-Replaces: Metaplex KMM modules for supported areas.
+Consolidates supported Metaplex KMM use cases into Artemis ecosystem modules. Unsupported Metaplex Android surfaces remain marked `Partial` in [PARITY_MATRIX.md](PARITY_MATRIX.md).
 
 ## DeFi Stack Bundle
 

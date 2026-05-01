@@ -22,12 +22,13 @@ The repository already has structural round-trip tests that should stay green:
 - Transaction engine behavior: [../foundation/artemis-vtx/src/commonTest/kotlin/com/selenus/artemis/vtx/TxEngineTest.kt](../foundation/artemis-vtx/src/commonTest/kotlin/com/selenus/artemis/vtx/TxEngineTest.kt)
 - Signature ordering: [../foundation/artemis-vtx/src/commonTest/kotlin/com/selenus/artemis/vtx/SignatureOrderingTest.kt](../foundation/artemis-vtx/src/commonTest/kotlin/com/selenus/artemis/vtx/SignatureOrderingTest.kt)
 - Program instruction builders: [../foundation/artemis-programs/src/commonTest/kotlin/](../foundation/artemis-programs/src/commonTest/kotlin/)
+- Initial `@solana/web3.js` 1.98.4 byte fixtures: [../foundation/artemis-tx/src/commonTest/kotlin/com/selenus/artemis/tx/Web3JsTransactionParityTest.kt](../foundation/artemis-tx/src/commonTest/kotlin/com/selenus/artemis/tx/Web3JsTransactionParityTest.kt) and [../foundation/artemis-vtx/src/commonTest/kotlin/com/selenus/artemis/vtx/Web3JsVersionedTransactionParityTest.kt](../foundation/artemis-vtx/src/commonTest/kotlin/com/selenus/artemis/vtx/Web3JsVersionedTransactionParityTest.kt)
 
 ## Missing proof before stronger claims
 
-The existing tests prove Artemis internal round trips and many builder invariants. They do not, by themselves, prove byte-for-byte equivalence with another SDK release.
+The existing tests prove Artemis internal round trips and many builder invariants. The `web3.js` fixtures prove byte-for-byte equivalence for the covered legacy and v0 account-ordering cases only. They do not, by themselves, prove full byte-for-byte equivalence with every SDK release or every program instruction family.
 
-Before claiming equivalence with `web3.js`, Solana Kit, solana-kmp, Sol4k, or any specific upstream artifact, add a fixture set with:
+Before claiming equivalence for any SDK or fixture category beyond the initial `web3.js` account-ordering cases, add a fixture set with:
 
 1. Reference SDK name and exact version.
 2. Input JSON for accounts, instructions, recent blockhash, fee payer, address lookup tables, and signers.

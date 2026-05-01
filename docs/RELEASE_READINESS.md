@@ -110,6 +110,12 @@ P1 items. Required before claiming source-compatible migration support for the l
   `com.selenus.artemis.wallet.mwa.protocol.MwaSessionCrypto`. The Seed
   Vault module carries only custody-relevant crypto (signature-derived
   keys, AES-256-GCM envelope, HMAC). Enforced by `MwaSessionCryptoTest`.
+- [x] **Initial transaction byte-parity fixtures.** CI runs
+  `:artemis-tx:jvmTest` and `:artemis-vtx:jvmTest`. The fixture tests compare
+  legacy and v0 wire bytes against `@solana/web3.js` 1.98.4 for account-ordering
+  cases that previously produced valid but byte-different messages. Broader
+  SDK equivalence remains scoped to the fixture matrix in
+  [TRANSACTION_CORRECTNESS.md](TRANSACTION_CORRECTNESS.md).
 
 P2 items. Required for GA.
 
