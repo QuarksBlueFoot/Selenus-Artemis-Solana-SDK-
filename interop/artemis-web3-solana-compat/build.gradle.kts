@@ -1,9 +1,9 @@
 // Drop-in source compatibility for `com.solana:web3-solana` (Funkatronics/web3-solana).
 // Pinned upstream surface: snapshot of github.com/Funkatronics/web3-solana `main`
 // as of 2025-08 (last verified). Surfaces SolanaPublicKey, ProgramDerivedAddress,
-// Transaction, Message, Builder, AccountMeta, Instruction, SolanaSigner.
-// TokenProgram beyond `mintTo` (burn/closeAccount/approve/setAuthority) not
-// yet ported.
+// Transaction, Message, Builder, AccountMeta, Instruction, SolanaSigner, and
+// the Artemis-backed program helpers listed in PARITY_MATRIX.md. TokenProgram
+// setAuthority/freeze/thaw remain native gaps and are not claimed by this shim.
 plugins {
     kotlin("multiplatform")
     id("com.android.library")

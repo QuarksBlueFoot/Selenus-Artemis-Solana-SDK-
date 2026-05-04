@@ -13,14 +13,14 @@
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
-    implementation("xyz.selenus:artemis-wallet:2.3.0")
-    implementation("xyz.selenus:artemis-vtx:2.3.0")
-    implementation("xyz.selenus:artemis-rpc:2.3.0")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.1")
+    implementation("xyz.selenus:artemis-wallet:2.3.1")
+    implementation("xyz.selenus:artemis-vtx:2.3.1")
+    implementation("xyz.selenus:artemis-rpc:2.3.1")
 }
 ```
 
-The published version is `2.3.0`. The source of truth is `version` in [gradle.properties](../../../gradle.properties).
+The published version is `2.3.1`. The source of truth is `version` in [gradle.properties](../../../gradle.properties).
 
 ## One-call setup with ArtemisMobile
 

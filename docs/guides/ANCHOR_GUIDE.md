@@ -14,7 +14,7 @@ The runtime IDL path lets you ship one client binary that works against many pro
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-anchor:2.3.0")
+    implementation("xyz.selenus:artemis-anchor:2.3.1")
 }
 ```
 

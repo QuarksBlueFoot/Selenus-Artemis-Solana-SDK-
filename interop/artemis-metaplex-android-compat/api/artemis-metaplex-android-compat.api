@@ -79,20 +79,20 @@
   L320  fun mint(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): NotImplementedResult =
 
 ## jvmTest/kotlin/com/metaplex/lib/MetaplexAndroidCompatTest.kt (package com.metaplex.lib)
-  L16  class MetaplexAndroidCompatTest {
-  L19  fun `Connection wraps an Artemis RpcApi`() {
-  L20  val connection = Connection("https://api.devnet.solana.com")
-  L25  fun `Metaplex facade exposes nft, tokens, and das modules`() {
-  L26  val connection = Connection("https://api.devnet.solana.com")
-  L27  val metaplex = Metaplex(connection)
-  L34  fun `auctions module surfaces a typed error`() {
-  L35  val connection = Connection("https://api.devnet.solana.com")
-  L36  val metaplex = Metaplex(connection)
-  L37  val ex = assertFailsWith<UnsupportedOperationException> { metaplex.auctions }
-  L42  fun `NFT data class preserves field ordering`() {
-  L43  val nft = NFT(
-  L57  fun `Token data class exposes mint authorities`() {
-  L58  val token = Token(
-  L70  fun `KeypairIdentityDriver reports its public key`() {
-  L71  val driver = KeypairIdentityDriver("GdRNeX9mbzrhm5tKWGP3mN1p6ZqoDMCK7BmLbsjc23Jv")
-  L76  fun `Guest driver is unauthenticated`() {
+  L15  class MetaplexAndroidCompatTest {
+  L18  fun `Connection wraps an Artemis RpcApi`() {
+  L19  val connection = Connection("https://api.devnet.solana.com")
+  L24  fun `Metaplex facade exposes nft, tokens, and das modules`() {
+  L25  val connection = Connection("https://api.devnet.solana.com")
+  L26  val metaplex = Metaplex(connection)
+  L33  fun `auctions module surfaces a typed error`() {
+  L34  val connection = Connection("https://api.devnet.solana.com")
+  L35  val metaplex = Metaplex(connection)
+  L36  val result = metaplex.auctions.bid("auction", price = 1L)
+  L41  fun `NFT data class preserves field ordering`() {
+  L42  val nft = NFT(
+  L56  fun `Token data class exposes mint authorities`() {
+  L57  val token = Token(
+  L69  fun `KeypairIdentityDriver reports its public key`() {
+  L70  val driver = KeypairIdentityDriver("GdRNeX9mbzrhm5tKWGP3mN1p6ZqoDMCK7BmLbsjc23Jv")
+  L75  fun `Guest driver is unauthenticated`() {

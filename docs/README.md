@@ -12,6 +12,7 @@ top-level index for everything under `docs/`. if you just want to install and ru
 | [MODULE_MAP.md](MODULE_MAP.md) | Every module with purpose and adoption context |
 | [ADOPTION_BUNDLES.md](ADOPTION_BUNDLES.md) | Recommended dependency sets per use case |
 | [PARITY_MATRIX.md](PARITY_MATRIX.md) | Side-by-side feature comparison vs solana-kmp, sol4k, Solana Mobile SDK, Metaplex KMM |
+| [SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md](SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md) | Final claim boundary and dependency-by-dependency client SDK compatibility audit |
 
 ## Migration
 

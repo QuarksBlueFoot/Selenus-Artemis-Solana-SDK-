@@ -147,11 +147,19 @@ jobs:
       - uses: android-actions/setup-android@v3
       - name: Install Android platforms
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
-      - name: Compat runtime parity tests
+      - name: Client SDK compat runtime parity tests
         run: |
           ./gradlew --no-daemon \
+            :artemis-mwa-common-compat:testDebugUnitTest \
             :artemis-mwa-clientlib-compat:testDebugUnitTest \
-            :artemis-mwa-compat:testDebugUnitTest
+            :artemis-mwa-walletlib-compat:testDebugUnitTest \
+            :artemis-mwa-compat:testDebugUnitTest \
+            :artemis-seedvault-compat:testDebugUnitTest \
+            :artemis-web3-solana-compat:jvmTest \
+            :artemis-rpc-core-compat:jvmTest \
+            :artemis-sol4k-compat:jvmTest \
+            :artemis-solana-kmp-compat:jvmTest \
+            :artemis-metaplex-android-compat:jvmTest
       - name: Upload compat parity report on failure
         if: failure()
         uses: actions/upload-artifact@v4

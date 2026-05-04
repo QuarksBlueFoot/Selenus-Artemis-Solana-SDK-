@@ -38,7 +38,9 @@ protobuf = "4.32.0"
 bouncycastle = "1.79"
 tink = "1.15.0"
 
-# Solana Mobile Stack
+# Solana Mobile Stack catalog aliases. Compat modules pin their audited upstream
+# surfaces in interop/*/build.gradle.kts via extra["upstream.version"]; these
+# catalog values are not the source of truth for source-compatible shims.
 solana-mobile-wallet-adapter = "2.1.3"
 solana-mobile-seed-vault = "1.0.0"
 

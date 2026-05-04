@@ -26,10 +26,18 @@ android {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {
     api(project(":artemis-seed-vault"))
     api(project(":artemis-core"))
     implementation(libs.androidx.annotation)
+
+    testImplementation("junit:junit:4.13.2")
 }

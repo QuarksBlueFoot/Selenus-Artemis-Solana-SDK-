@@ -10,7 +10,6 @@ package com.metaplex.lib
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 class MetaplexAndroidCompatTest {
@@ -34,8 +33,8 @@ class MetaplexAndroidCompatTest {
     fun `auctions module surfaces a typed error`() {
         val connection = Connection("https://api.devnet.solana.com")
         val metaplex = Metaplex(connection)
-        val ex = assertFailsWith<UnsupportedOperationException> { metaplex.auctions }
-        assertEquals(true, ex.message?.contains("Auction House"))
+        val result = metaplex.auctions.bid("auction", price = 1L)
+        assertEquals(true, result.message.contains("Auction House"))
     }
 
     @Test

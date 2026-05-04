@@ -1,7 +1,7 @@
 # Package map
 
 This file lists the actual Gradle modules in this repo and what each one is for.
-All modules are designed to be **optional, drop-in**, and mobile-first.
+All modules are designed to be **optional, composable**, and mobile-first. Source-compatible `drop-in` claims apply only to the interop modules and pinned surfaces listed in [../SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md](../SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md).
 
 ## Core
 

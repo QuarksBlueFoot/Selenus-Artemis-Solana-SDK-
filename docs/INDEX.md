@@ -22,6 +22,7 @@ A flat index of every document in the repo. The structured navigation lives at [
 | [MODULE_MAP.md](MODULE_MAP.md) | All developers |
 | [ADOPTION_BUNDLES.md](ADOPTION_BUNDLES.md) | Mobile app teams |
 | [PARITY_MATRIX.md](PARITY_MATRIX.md) | SDK evaluators |
+| [SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md](SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md) | SDK evaluators and Solana Mobile client-library adopters |
 
 ## Migration
 
@@ -67,31 +68,31 @@ A flat index of every document in the repo. The structured navigation lives at [
 
 ## Quick install snippet
 
-The current published version is `2.3.0`. The source of truth for the version number is the `version` field in [../gradle.properties](../gradle.properties).
+The current published version is `2.3.1`. The source of truth for the version number is the `version` field in [../gradle.properties](../gradle.properties).
 
 ```kotlin
 dependencies {
     // Foundation
-    implementation("xyz.selenus:artemis-core:2.3.0")
-    implementation("xyz.selenus:artemis-rpc:2.3.0")
-    implementation("xyz.selenus:artemis-ws:2.3.0")
-    implementation("xyz.selenus:artemis-tx:2.3.0")
-    implementation("xyz.selenus:artemis-vtx:2.3.0")
-    implementation("xyz.selenus:artemis-programs:2.3.0")
+    implementation("xyz.selenus:artemis-core:2.3.1")
+    implementation("xyz.selenus:artemis-rpc:2.3.1")
+    implementation("xyz.selenus:artemis-ws:2.3.1")
+    implementation("xyz.selenus:artemis-tx:2.3.1")
+    implementation("xyz.selenus:artemis-vtx:2.3.1")
+    implementation("xyz.selenus:artemis-programs:2.3.1")
 
     // Mobile
-    implementation("xyz.selenus:artemis-wallet:2.3.0")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
-    implementation("xyz.selenus:artemis-seed-vault:2.3.0")
+    implementation("xyz.selenus:artemis-wallet:2.3.1")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.1")
+    implementation("xyz.selenus:artemis-seed-vault:2.3.1")
 
     // NFT, DAS, marketplace
-    implementation("xyz.selenus:artemis-cnft:2.3.0")
+    implementation("xyz.selenus:artemis-cnft:2.3.1")
 
     // Optional
-    implementation("xyz.selenus:artemis-token2022:2.3.0")
-    implementation("xyz.selenus:artemis-jupiter:2.3.0")
-    implementation("xyz.selenus:artemis-actions:2.3.0")
-    implementation("xyz.selenus:artemis-anchor:2.3.0")
+    implementation("xyz.selenus:artemis-token2022:2.3.1")
+    implementation("xyz.selenus:artemis-jupiter:2.3.1")
+    implementation("xyz.selenus:artemis-actions:2.3.1")
+    implementation("xyz.selenus:artemis-anchor:2.3.1")
 }
 ```
 

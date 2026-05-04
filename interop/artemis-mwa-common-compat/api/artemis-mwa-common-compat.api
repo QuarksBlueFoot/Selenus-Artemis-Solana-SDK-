@@ -151,3 +151,12 @@
   L25  fun onComplete(future: T)
   L34  interface NotifyOnCompleteFuture<T> : Future<T> {
   L35  fun notifyOnComplete(cb: OnCompleteCallback<in NotifyOnCompleteFuture<T>>)
+
+## test/kotlin/com/solana/mobilewalletadapter/common/MwaCommonCompatTest.kt (package com.solana.mobilewalletadapter.common)
+  L9  class MwaCommonCompatTest {
+  L12  fun `ProtocolContract exposes canonical MWA 2 method names and chains`() {
+  L24  fun `AssociationContract exposes local and remote association wire keys`() {
+  L36  fun `SessionProperties parses wire values and rejects unknown versions`() {
+  L45  fun `SIWS payload round trips resources and rejects newline injection`() {
+  L46  val payload = SignInWithSolana.Payload(
+  L61  val parsed = SignInWithSolana.Payload.fromMessage(payload.prepareMessage())

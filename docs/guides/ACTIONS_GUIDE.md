@@ -8,7 +8,7 @@ Source: [../../ecosystem/artemis-actions/](../../ecosystem/artemis-actions/). Pu
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-actions:2.3.0")
+    implementation("xyz.selenus:artemis-actions:2.3.1")
 }
 ```
 

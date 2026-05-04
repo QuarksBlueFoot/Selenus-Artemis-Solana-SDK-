@@ -12,24 +12,33 @@
   L54  val ix = ArtemisSystemProgram.createAccount(
   L72  object TokenProgram : Program {
   L76  val PROGRAM_ID: SolanaPublicKey = programId
-  L79  val SYSVAR_RENT_PUBKEY: SolanaPublicKey =
-  L82  fun transfer(
-  L88  val ix = ArtemisTokenProgram.transfer(
-  L101  fun mintTo(
-  L107  val ix = ArtemisTokenProgram.mintTo(
-  L124  object AssociatedTokenProgram : Program {
-  L128  val PROGRAM_ID: SolanaPublicKey = programId
-  L130  fun createAssociatedTokenAccount(
-  L135  val ix = ArtemisAssociatedToken.createAssociatedTokenAccount(
-  L155  object ComputeBudgetProgram : Program {
-  L161  val PROGRAM_ID: SolanaPublicKey = programId
-  L164  fun setComputeUnitLimit(units: Int): TransactionInstruction {
-  L166  val data = ByteArray(5)
-  L176  fun setComputeUnitPrice(microLamports: Long): TransactionInstruction {
-  L178  val data = ByteArray(9)
-  L188  object MemoProgram : Program {
-  L192  val PROGRAM_ID: SolanaPublicKey = programId
-  L195  fun writeMemo(memo: String, signers: List<SolanaPublicKey> = emptyList()): TransactionInstruction {
+  L77  val TOKEN_PROGRAM_ID: SolanaPublicKey = programId
+  L80  val SYSVAR_RENT_PUBKEY: SolanaPublicKey =
+  L83  fun initializeMint2(
+  L95  fun initializeMint(
+  L102  fun transfer(
+  L108  val ix = ArtemisTokenProgram.transfer(
+  L121  fun approve(
+  L133  fun revoke(
+  L141  fun mintTo(
+  L147  val ix = ArtemisTokenProgram.mintTo(
+  L160  fun burn(
+  L172  fun closeAccount(
+  L182  fun transferChecked(
+  L198  fun syncNative(account: SolanaPublicKey): TransactionInstruction = ArtemisTokenProgram.syncNative(
+  L206  object AssociatedTokenProgram : Program {
+  L210  val PROGRAM_ID: SolanaPublicKey = programId
+  L212  fun createAssociatedTokenAccount(
+  L217  val ix = ArtemisAssociatedToken.createAssociatedTokenAccount(
+  L237  object ComputeBudgetProgram : Program {
+  L243  val PROGRAM_ID: SolanaPublicKey = programId
+  L246  fun setComputeUnitLimit(units: Int): TransactionInstruction {
+  L248  val data = ByteArray(5)
+  L258  fun setComputeUnitPrice(microLamports: Long): TransactionInstruction {
+  L260  val data = ByteArray(9)
+  L270  object MemoProgram : Program {
+  L274  val PROGRAM_ID: SolanaPublicKey = programId
+  L277  fun writeMemo(memo: String, signers: List<SolanaPublicKey> = emptyList()): TransactionInstruction {
 
 ## commonMain/kotlin/com/solana/publickey/SolanaPublicKey.kt (package com.solana.publickey)
   L20  interface PublicKey {
@@ -175,3 +184,17 @@
   L519  val unsigned = toUnsignedTransaction()
   L520  val msgBytes = serialize()
   L521  val sigs = signers.map { it.sign(msgBytes) }
+
+## jvmTest/kotlin/com/solana/programs/Web3SolanaCompatProgramTest.kt (package com.solana.programs)
+  L11  class Web3SolanaCompatProgramTest {
+  L20  fun `TokenProgram exposes native Artemis SPL Token builders through compat FQNs`() {
+  L23  val initializeMint = TokenProgram.initializeMint2(
+  L34  val approve = TokenProgram.approve(source, delegate, owner, amount = 77L)
+  L41  val revoke = TokenProgram.revoke(source, owner)
+  L45  val burn = TokenProgram.burn(source, mint, owner, amount = 9L)
+  L49  val close = TokenProgram.closeAccount(source, destination, owner)
+  L53  val checked = TokenProgram.transferChecked(source, mint, destination, owner, amount = 1_234L, decimals = 6)
+  L58  val syncNative = TokenProgram.syncNative(source)
+  L64  fun `Message Builder compiles program helpers into a legacy message`() {
+  L65  val blockhash = key(9)
+  L66  val message = Message.Builder()

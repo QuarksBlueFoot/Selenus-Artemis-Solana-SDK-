@@ -14,7 +14,7 @@ If you just want a single-account subscription with automatic reconnect and a ty
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-streaming:2.3.0")
+    implementation("xyz.selenus:artemis-streaming:2.3.1")
 }
 ```
 

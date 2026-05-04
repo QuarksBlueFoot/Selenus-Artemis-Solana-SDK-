@@ -116,14 +116,25 @@ P1 items. Required before claiming source-compatible migration support for the l
   cases that previously produced valid but byte-different messages. Broader
   SDK equivalence remains scoped to the fixture matrix in
   [TRANSACTION_CORRECTNESS.md](TRANSACTION_CORRECTNESS.md).
+- [x] **Client SDK compat surface tests.** The compat parity gate now runs the
+  MWA common / clientlib / walletlib shims, Seed Vault compat, plus
+  `:artemis-web3-solana-compat:jvmTest`, `:artemis-rpc-core-compat:jvmTest`,
+  `:artemis-sol4k-compat:jvmTest`, `:artemis-solana-kmp-compat:jvmTest`, and
+  `:artemis-metaplex-android-compat:jvmTest`. This backs source-compatible
+  migration claims for those exact pinned surfaces, not for MWA protocol,
+  Seed Vault custody, or unsupported Metaplex mutation modules.
 
 P2 items. Required for GA.
 
 - [x] **Native MWA E2E behavior suite passes.** Covered by the behavior
   gate above. 15 tests, all green.
-- [x] **Compat runtime behavior suite passes.** `MwaCompatParityTest`
-  exercises every behavior previously identified as a compat gap. 10 tests,
-  all green.
+- [x] **Compat runtime behavior suite passes.** `MwaCompatParityTest`,
+  `MwaCommonCompatTest`, `MwaWalletlibCompatParityTest`,
+  `SeedVaultCompatTest`, `Web3SolanaCompatProgramTest`, `RpcCoreCompatTest`,
+  `Sol4kCompatTest`, `Sol4kCompatExtraTest`, `SolanaKmpCompatTest`, and
+  `MetaplexAndroidCompatTest` exercise the client
+  SDK migration surfaces that are marked `Verified` in
+  [PARITY_MATRIX.md](PARITY_MATRIX.md).
 - [x] **Release-readiness gate enforced.** This document plus the
   `release-gate` job in the publish workflow.
 

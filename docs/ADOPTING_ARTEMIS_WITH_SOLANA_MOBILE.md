@@ -66,6 +66,7 @@ Use this for apps that need existing imports to keep compiling while moving impl
 - `interop/artemis-*-compat` modules publish upstream package and class names.
 - The shims target client libraries such as MWA clientlib, MWA walletlib, Seed Vault static helpers, sol4k, solana-kmp, rpc-core, and web3-solana.
 - These shims preserve the upstream API shape but route behavior through Artemis engines where implemented.
+- Exact upstream pins, tests, and remaining partials are listed in [SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md](SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md).
 
 This track is still a client-library migration. It does not replace MWA, Seed Vault, or Solana Mobile OS services.
 
@@ -82,7 +83,7 @@ This track is still a client-library migration. It does not replace MWA, Seed Va
 | Custom websocket glue | `xyz.selenus:artemis-ws` | Realtime engine with reconnect and typed connection state |
 | Custom NFT / DAS glue | `xyz.selenus:artemis-cnft` | DAS interface, Helius primary, RPC fallback, marketplace helpers |
 
-The current published Artemis version is `2.3.0`. The source of truth is the `version` field in [../gradle.properties](../gradle.properties).
+The current published Artemis version is `2.3.1`. The source of truth is the `version` field in [../gradle.properties](../gradle.properties).
 
 ## Gradle migration
 
@@ -102,17 +103,17 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-core:2.3.0")
-    implementation("xyz.selenus:artemis-rpc:2.3.0")
-    implementation("xyz.selenus:artemis-ws:2.3.0")
-    implementation("xyz.selenus:artemis-vtx:2.3.0")
-    implementation("xyz.selenus:artemis-programs:2.3.0")
+    implementation("xyz.selenus:artemis-core:2.3.1")
+    implementation("xyz.selenus:artemis-rpc:2.3.1")
+    implementation("xyz.selenus:artemis-ws:2.3.1")
+    implementation("xyz.selenus:artemis-vtx:2.3.1")
+    implementation("xyz.selenus:artemis-programs:2.3.1")
 
-    implementation("xyz.selenus:artemis-wallet:2.3.0")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
-    implementation("xyz.selenus:artemis-seed-vault:2.3.0") // only when Seed Vault is needed
+    implementation("xyz.selenus:artemis-wallet:2.3.1")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.1")
+    implementation("xyz.selenus:artemis-seed-vault:2.3.1") // only when Seed Vault is needed
 
-    implementation("xyz.selenus:artemis-cnft:2.3.0") // optional NFT / DAS helpers
+    implementation("xyz.selenus:artemis-cnft:2.3.1") // optional NFT / DAS helpers
 }
 ```
 

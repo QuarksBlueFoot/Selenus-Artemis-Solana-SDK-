@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.3.1 (2026-05-02)
+
+Final client-SDK compatibility hardening pass before Maven Central / npm publish.
+
+### Added
+
+- Final Solana Mobile client compatibility audit documenting exact upstream pins, tested drop-in client surfaces, and hard platform boundaries.
+- `web3-solana` compat tests for Artemis-backed program helpers and `Message.Builder` compilation.
+- `rpc-core` compat tests for JSON-RPC request serialization, typed result/error decoding, model shapes, and `SolanaRpcClient` constructors.
+- MWA common and Seed Vault compat tests so protocol constants and client shim types are covered by runtime tests plus API snapshots.
+
+### Changed
+
+- Expanded `com.solana.programs.TokenProgram` compat routing for existing native Artemis SPL Token builders: `initializeMint2`, `initializeMint`, `approve`, `revoke`, `burn`, `closeAccount`, `transferChecked`, and `syncNative`.
+- Expanded CI, release, and local verification gates to run MWA common, MWA clientlib, MWA walletlib, Seed Vault compat, web3-solana, rpc-core, Sol4k, solana-kmp, and Metaplex Android compat tests.
+- Regenerated compat API snapshots for the intentional public-surface changes.
+- Tightened React Native MWA wrapper behavior: relative icon paths are rejected before native initialization, and unsupported platforms now fail with clear wallet errors instead of native-module TypeErrors.
+
+### Documentation
+
+- Reframed public claims around client SDK replacement, not Solana Mobile Stack platform replacement.
+- Documented that MWA protocol, wallet apps, Seed Vault custody, Solana Mobile OS services, and on-chain programs remain outside Artemis's replacement scope.
+- Landing copy updated to the same client-layer framing and the 2.3.1 version.
+
 ## 2.3.0 (2026-04-24)
 
 Major React Native bridge rewrite, full upstream Mobile Wallet Adapter 2.0

@@ -74,10 +74,30 @@ object TokenProgram : Program {
         SolanaPublicKey(ArtemisProgramIds.TOKEN_PROGRAM.bytes)
 
     val PROGRAM_ID: SolanaPublicKey = programId
+    val TOKEN_PROGRAM_ID: SolanaPublicKey = programId
 
     /** Rent sysvar used by token account initialization. */
     val SYSVAR_RENT_PUBKEY: SolanaPublicKey =
         SolanaPublicKey(ArtemisProgramIds.RENT_SYSVAR.bytes)
+
+    fun initializeMint2(
+        mint: SolanaPublicKey,
+        decimals: Int,
+        mintAuthority: SolanaPublicKey,
+        freezeAuthority: SolanaPublicKey? = null
+    ): TransactionInstruction = ArtemisTokenProgram.initializeMint2(
+        mint = mint.toArtemisPubkey(),
+        decimals = decimals,
+        mintAuthority = mintAuthority.toArtemisPubkey(),
+        freezeAuthority = freezeAuthority?.toArtemisPubkey()
+    ).toCompatInstruction()
+
+    fun initializeMint(
+        mint: SolanaPublicKey,
+        decimals: Int,
+        mintAuthority: SolanaPublicKey,
+        freezeAuthority: SolanaPublicKey? = null
+    ): TransactionInstruction = initializeMint2(mint, decimals, mintAuthority, freezeAuthority)
 
     fun transfer(
         source: SolanaPublicKey,
@@ -98,6 +118,26 @@ object TokenProgram : Program {
         )
     }
 
+    fun approve(
+        source: SolanaPublicKey,
+        delegate: SolanaPublicKey,
+        owner: SolanaPublicKey,
+        amount: Long
+    ): TransactionInstruction = ArtemisTokenProgram.approve(
+        source = source.toArtemisPubkey(),
+        delegate = delegate.toArtemisPubkey(),
+        owner = owner.toArtemisPubkey(),
+        amount = amount
+    ).toCompatInstruction()
+
+    fun revoke(
+        source: SolanaPublicKey,
+        owner: SolanaPublicKey
+    ): TransactionInstruction = ArtemisTokenProgram.revoke(
+        source = source.toArtemisPubkey(),
+        owner = owner.toArtemisPubkey()
+    ).toCompatInstruction()
+
     fun mintTo(
         mint: SolanaPublicKey,
         destination: SolanaPublicKey,
@@ -116,6 +156,48 @@ object TokenProgram : Program {
             data = ix.data
         )
     }
+
+    fun burn(
+        account: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        owner: SolanaPublicKey,
+        amount: Long
+    ): TransactionInstruction = ArtemisTokenProgram.burn(
+        account = account.toArtemisPubkey(),
+        mint = mint.toArtemisPubkey(),
+        owner = owner.toArtemisPubkey(),
+        amount = amount
+    ).toCompatInstruction()
+
+    fun closeAccount(
+        account: SolanaPublicKey,
+        destination: SolanaPublicKey,
+        owner: SolanaPublicKey
+    ): TransactionInstruction = ArtemisTokenProgram.closeAccount(
+        account = account.toArtemisPubkey(),
+        destination = destination.toArtemisPubkey(),
+        owner = owner.toArtemisPubkey()
+    ).toCompatInstruction()
+
+    fun transferChecked(
+        source: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        destination: SolanaPublicKey,
+        owner: SolanaPublicKey,
+        amount: Long,
+        decimals: Int
+    ): TransactionInstruction = ArtemisTokenProgram.transferChecked(
+        source = source.toArtemisPubkey(),
+        mint = mint.toArtemisPubkey(),
+        destination = destination.toArtemisPubkey(),
+        owner = owner.toArtemisPubkey(),
+        amount = amount,
+        decimals = decimals
+    ).toCompatInstruction()
+
+    fun syncNative(account: SolanaPublicKey): TransactionInstruction = ArtemisTokenProgram.syncNative(
+        account = account.toArtemisPubkey()
+    ).toCompatInstruction()
 }
 
 /**
@@ -200,3 +282,13 @@ object MemoProgram : Program {
         )
     }
 }
+
+private fun SolanaPublicKey.toArtemisPubkey(): com.selenus.artemis.runtime.Pubkey =
+    com.selenus.artemis.runtime.Pubkey(bytes)
+
+private fun com.selenus.artemis.tx.Instruction.toCompatInstruction(): TransactionInstruction =
+    TransactionInstruction(
+        programId = SolanaPublicKey(programId.bytes),
+        accounts = accounts.map { AccountMeta(SolanaPublicKey(it.pubkey.bytes), it.isSigner, it.isWritable) },
+        data = data
+    )

@@ -170,7 +170,7 @@ Artemis-native convenience helpers and bundled patterns. These improve ergonomic
 
 ## Ring 6: Interop / Legacy shims
 
-Explicit source-compat or migration-compat surface for teams migrating from other SDKs. Thin wrappers only. Nothing in the core path depends on this ring.
+Explicit source-compat or migration-compat surface for teams migrating from other SDKs. These are facades over Artemis-native implementations where possible, with partials called out per module. Nothing in the core path depends on this ring.
 
 **Modules:**
 
@@ -182,14 +182,14 @@ Explicit source-compat or migration-compat surface for teams migrating from othe
 - `artemis-sol4k-compat` (source-compatible shim for `org.sol4k:sol4k` 0.7.0; includes Token-2022 instructions and the upstream `RpcException` data-class shape)
 - `artemis-solana-kmp-compat` (source-compatible shim for `foundation.metaplex:solana-kmp`, snapshot of upstream `main`@2024-06-05; upstream dormant)
 - `artemis-metaplex-android-compat` (source-compatible shim for `com.metaplex.lib:lib`, snapshot of upstream `main`@2024-04-06; upstream dormant; Partial coverage)
-- `artemis-rpc-core-compat` (source-compatible shim for `com.solana:rpc-core`, snapshot @2026-01-09)
-- `artemis-web3-solana-compat` (source-compatible shim for `com.solana:web3-solana` (Funkatronics), snapshot @2025-08)
+- `artemis-rpc-core-compat` (source-compatible shim for `com.solana:rpc-core`, snapshot @2026-01-09; `ArtemisHttpNetworkDriver` replaces concrete Ktor/Okio driver FQNs)
+- `artemis-web3-solana-compat` (source-compatible shim for `com.solana:web3-solana` (Funkatronics), snapshot @2025-08; newer web3-core 0.3.x additions remain partial)
 
 **What it covers:**
 
 - Source compatibility wrappers for the upstream MWA clientlib + walletlib + common packages, sol4k, solana-kmp, Metaplex Android, rpc-core, and web3-solana
 - Source compatibility wrappers for the Seed Vault static surface (`com.solanamobile.seedvault.Wallet.*` + `WalletContractV1`)
-- Migration helpers with documented upstream version pins (`extra["upstream.version"]`) and scope coverage in `docs/PARITY_MATRIX.md`
+- Migration helpers with documented upstream version pins (`extra["upstream.version"]`) and scope coverage in `docs/PARITY_MATRIX.md` plus `docs/SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md`
 
 **Rules:**
 
@@ -260,32 +260,32 @@ Most Android Solana apps need exactly this:
 
 ```kotlin
 // Foundation
-implementation("xyz.selenus:artemis-core:2.3.0")
-implementation("xyz.selenus:artemis-rpc:2.3.0")
-implementation("xyz.selenus:artemis-ws:2.3.0")
-implementation("xyz.selenus:artemis-tx:2.3.0")
-implementation("xyz.selenus:artemis-vtx:2.3.0")
-implementation("xyz.selenus:artemis-programs:2.3.0")
+implementation("xyz.selenus:artemis-core:2.3.1")
+implementation("xyz.selenus:artemis-rpc:2.3.1")
+implementation("xyz.selenus:artemis-ws:2.3.1")
+implementation("xyz.selenus:artemis-tx:2.3.1")
+implementation("xyz.selenus:artemis-vtx:2.3.1")
+implementation("xyz.selenus:artemis-programs:2.3.1")
 
 // Mobile
-implementation("xyz.selenus:artemis-wallet:2.3.0")
-implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
+implementation("xyz.selenus:artemis-wallet:2.3.1")
+implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.1")
 ```
 
 Add ecosystem modules based on what the app does:
 
 ```kotlin
 // Token-2022
-implementation("xyz.selenus:artemis-token2022:2.3.0")
+implementation("xyz.selenus:artemis-token2022:2.3.1")
 
 // Jupiter swaps
-implementation("xyz.selenus:artemis-jupiter:2.3.0")
+implementation("xyz.selenus:artemis-jupiter:2.3.1")
 
 // NFTs, DAS, marketplace
-implementation("xyz.selenus:artemis-metaplex:2.3.0")
-implementation("xyz.selenus:artemis-cnft:2.3.0")
+implementation("xyz.selenus:artemis-metaplex:2.3.1")
+implementation("xyz.selenus:artemis-cnft:2.3.1")
 ```
 
-The current published version is `2.3.0`. The `version` field in [../gradle.properties](../gradle.properties) is the source of truth.
+The current published version is `2.3.1`. The `version` field in [../gradle.properties](../gradle.properties) is the source of truth.
 
 Everything else is optional. You pull it in when you need it.

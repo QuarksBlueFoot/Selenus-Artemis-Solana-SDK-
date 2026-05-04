@@ -1,6 +1,6 @@
 # Mobile app guide
 
-End-to-end walkthrough for building an Android Solana app on Artemis 2.3.0. The guide assumes you already know Kotlin, Coroutines, and Compose. Every code sample maps to a real API in the repo with a file path you can click into.
+End-to-end walkthrough for building an Android Solana app on Artemis 2.3.1. The guide assumes you already know Kotlin, Coroutines, and Compose. Every code sample maps to a real API in the repo with a file path you can click into.
 
 For the architectural ring map, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For migration notes from existing Solana Mobile client SDKs, see [ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md](ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md).
 
@@ -10,30 +10,30 @@ For the architectural ring map, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVER
 // build.gradle.kts
 dependencies {
     // Foundation
-    implementation("xyz.selenus:artemis-core:2.3.0")
-    implementation("xyz.selenus:artemis-rpc:2.3.0")
-    implementation("xyz.selenus:artemis-ws:2.3.0")
-    implementation("xyz.selenus:artemis-tx:2.3.0")
-    implementation("xyz.selenus:artemis-vtx:2.3.0")
-    implementation("xyz.selenus:artemis-programs:2.3.0")
+    implementation("xyz.selenus:artemis-core:2.3.1")
+    implementation("xyz.selenus:artemis-rpc:2.3.1")
+    implementation("xyz.selenus:artemis-ws:2.3.1")
+    implementation("xyz.selenus:artemis-tx:2.3.1")
+    implementation("xyz.selenus:artemis-vtx:2.3.1")
+    implementation("xyz.selenus:artemis-programs:2.3.1")
 
     // Mobile
-    implementation("xyz.selenus:artemis-wallet:2.3.0")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
-    implementation("xyz.selenus:artemis-seed-vault:2.3.0") // Saga only
+    implementation("xyz.selenus:artemis-wallet:2.3.1")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.1")
+    implementation("xyz.selenus:artemis-seed-vault:2.3.1") // Saga only
 
     // NFT, DAS, marketplace
-    implementation("xyz.selenus:artemis-cnft:2.3.0")
+    implementation("xyz.selenus:artemis-cnft:2.3.1")
 
     // Optional
-    implementation("xyz.selenus:artemis-jupiter:2.3.0")
-    implementation("xyz.selenus:artemis-actions:2.3.0")
-    implementation("xyz.selenus:artemis-anchor:2.3.0")
-    implementation("xyz.selenus:artemis-metaplex:2.3.0")
+    implementation("xyz.selenus:artemis-jupiter:2.3.1")
+    implementation("xyz.selenus:artemis-actions:2.3.1")
+    implementation("xyz.selenus:artemis-anchor:2.3.1")
+    implementation("xyz.selenus:artemis-metaplex:2.3.1")
 }
 ```
 
-The current published version is `2.3.0`. The `version` field in [../gradle.properties](../gradle.properties) is the source of truth.
+The current published version is `2.3.1`. The `version` field in [../gradle.properties](../gradle.properties) is the source of truth.
 
 ## 2. Initialize the stack with one call
 

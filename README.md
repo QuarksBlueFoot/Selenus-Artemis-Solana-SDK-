@@ -40,28 +40,28 @@ repositories {
 
 dependencies {
     // Foundation (KMP)
-    implementation("xyz.selenus:artemis-core:2.3.0")
-    implementation("xyz.selenus:artemis-rpc:2.3.0")
-    implementation("xyz.selenus:artemis-ws:2.3.0")
-    implementation("xyz.selenus:artemis-tx:2.3.0")
-    implementation("xyz.selenus:artemis-vtx:2.3.0")
-    implementation("xyz.selenus:artemis-programs:2.3.0")
+    implementation("xyz.selenus:artemis-core:2.3.1")
+    implementation("xyz.selenus:artemis-rpc:2.3.1")
+    implementation("xyz.selenus:artemis-ws:2.3.1")
+    implementation("xyz.selenus:artemis-tx:2.3.1")
+    implementation("xyz.selenus:artemis-vtx:2.3.1")
+    implementation("xyz.selenus:artemis-programs:2.3.1")
 
     // Mobile
-    implementation("xyz.selenus:artemis-wallet:2.3.0")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.0")
-    implementation("xyz.selenus:artemis-seed-vault:2.3.0")
+    implementation("xyz.selenus:artemis-wallet:2.3.1")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.1")
+    implementation("xyz.selenus:artemis-seed-vault:2.3.1")
 
     // NFT, DAS, marketplace
-    implementation("xyz.selenus:artemis-cnft:2.3.0")
+    implementation("xyz.selenus:artemis-cnft:2.3.1")
 
     // Optional ecosystem modules
-    implementation("xyz.selenus:artemis-token2022:2.3.0")
-    implementation("xyz.selenus:artemis-jupiter:2.3.0")
+    implementation("xyz.selenus:artemis-token2022:2.3.1")
+    implementation("xyz.selenus:artemis-jupiter:2.3.1")
 }
 ```
 
-current published version is `2.3.0`. the `version` field in [gradle.properties](gradle.properties) is the source of truth.
+current published version is `2.3.1`. the `version` field in [gradle.properties](gradle.properties) is the source of truth.
 
 ## Quick start
 
@@ -397,6 +397,7 @@ devnet test runner is at [run-devnet-tests.sh](run-devnet-tests.sh). it exercise
 | [docs/ARCHITECTURE_OVERVIEW.md](docs/ARCHITECTURE_OVERVIEW.md) | Ring structure, dependency rules, module hierarchy |
 | [docs/MODULE_MAP.md](docs/MODULE_MAP.md) | Every module with purpose and adoption context |
 | [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md) | Side-by-side feature comparison vs solana-kmp, sol4k, Solana Mobile SDK, Metaplex KMM |
+| [docs/SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md](docs/SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md) | Final Solana Mobile client-library compatibility audit and claim boundary |
 | [docs/ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md](docs/ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md) | Client SDK migration and Solana Mobile compatibility boundaries |
 | [docs/WALLET_COMPATIBILITY_TESTING.md](docs/WALLET_COMPATIBILITY_TESTING.md) | Real-wallet test matrix and MWA edge-case checklist |
 | [docs/TRANSACTION_CORRECTNESS.md](docs/TRANSACTION_CORRECTNESS.md) | Transaction serialization evidence requirements |

@@ -178,6 +178,23 @@ describe('MobileWalletAdapter bridge contract', () => {
         expect(wallet.publicKey?.toBase58()).toBe(ADDRESS_BASE58);
     });
 
+    it('constructor rejects relative iconPath before native initialization', () => {
+        expect(
+            () => new MobileWalletAdapter({
+                identityUri: 'https://myapp.example.com',
+                iconPath: 'favicon.ico',
+                identityName: 'MyApp',
+                chain: 'solana:mainnet',
+            }),
+        ).toThrow(/absolute HTTPS URI/);
+        expect(native.initialize).not.toHaveBeenCalledWith(
+            'https://myapp.example.com',
+            'favicon.ico',
+            'MyApp',
+            'solana:mainnet',
+        );
+    });
+
     it('connectWithSignIn returns SIWS result alongside the authorization', async () => {
         const auth = await wallet.connectWithSignIn({ domain: 'myapp.example.com' });
         expect(auth.signInResult?.signatureType).toBe('ed25519');

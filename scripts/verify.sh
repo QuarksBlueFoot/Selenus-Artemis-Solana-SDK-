@@ -22,10 +22,18 @@ echo "==> unit tests (foundation + wallet + MWA + Seed Vault)"
 echo "==> MWA walletlib 2.0 behavior gate"
 ./gradlew --no-daemon :artemis-wallet-mwa-android:testDebugUnitTest --tests '*BehaviorTest*'
 
-echo "==> compat parity gate (ktx + non-ktx)"
+echo "==> client SDK compat parity gate"
 ./gradlew --no-daemon \
+    :artemis-mwa-common-compat:testDebugUnitTest \
     :artemis-mwa-clientlib-compat:testDebugUnitTest \
-    :artemis-mwa-compat:testDebugUnitTest
+    :artemis-mwa-walletlib-compat:testDebugUnitTest \
+    :artemis-mwa-compat:testDebugUnitTest \
+    :artemis-seedvault-compat:testDebugUnitTest \
+    :artemis-web3-solana-compat:jvmTest \
+    :artemis-rpc-core-compat:jvmTest \
+    :artemis-sol4k-compat:jvmTest \
+    :artemis-solana-kmp-compat:jvmTest \
+    :artemis-metaplex-android-compat:jvmTest
 
 echo "==> dependency ring enforcement"
 ./gradlew --no-daemon checkDependencyRings

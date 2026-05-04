@@ -56,11 +56,19 @@ jobs:
             :artemis-seed-vault:testDebugUnitTest
       - name: MWA walletlib 2.0 behavior gate
         run: ./gradlew --no-daemon :artemis-wallet-mwa-android:testDebugUnitTest --tests '*BehaviorTest*'
-      - name: Compat runtime parity gate
+      - name: Client SDK compat runtime parity gate
         run: |
           ./gradlew --no-daemon \
+            :artemis-mwa-common-compat:testDebugUnitTest \
             :artemis-mwa-clientlib-compat:testDebugUnitTest \
-            :artemis-mwa-compat:testDebugUnitTest
+            :artemis-mwa-walletlib-compat:testDebugUnitTest \
+            :artemis-mwa-compat:testDebugUnitTest \
+            :artemis-seedvault-compat:testDebugUnitTest \
+            :artemis-web3-solana-compat:jvmTest \
+            :artemis-rpc-core-compat:jvmTest \
+            :artemis-sol4k-compat:jvmTest \
+            :artemis-solana-kmp-compat:jvmTest \
+            :artemis-metaplex-android-compat:jvmTest
       - name: Compat API surface diff gate
         run: |
           ./gradlew --no-daemon dumpApi

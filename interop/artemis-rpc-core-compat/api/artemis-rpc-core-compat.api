@@ -124,3 +124,26 @@
   L66  open class Rpc20Response<R>(
   L78  interface JsonRpcDriver {
   L79  suspend fun <R> makeRequest(
+
+## jvmTest/kotlin/com/solana/rpccore/RpcCoreCompatTest.kt (package com.solana.rpccore)
+  L23  class RpcCoreCompatTest {
+  L26  fun `Rpc20Driver serializes request and decodes typed result`() = runBlocking {
+  L27  val transport = RecordingNetworkDriver("""{"jsonrpc":"2.0","id":"42","result":"ok"}""")
+  L28  val driver = Rpc20Driver(url = "https://rpc.example", networkDriver = transport)
+  L30  val response = driver.makeRequest(
+  L38  val request = assertNotNull(transport.lastRequest)
+  L42  val requestBody = assertNotNull(request.body)
+  L48  fun `Rpc20Driver preserves JSON-RPC errors`() = runBlocking {
+  L49  val transport = RecordingNetworkDriver(
+  L52  val driver = Rpc20Driver(url = "https://rpc.example", networkDriver = transport)
+  L54  val response = driver.makeRequest(
+  L67  fun `rpc-core model types preserve upstream source-compatible shape`() {
+  L68  val options = TransactionOptions(
+  L84  val account = AccountInfo(
+  L95  val solanaAccount = SolanaAccount(
+  L108  fun `SolanaRpcClient constructors accept rpc-core drivers without network work`() {
+  L109  val transport = RecordingNetworkDriver("""{"jsonrpc":"2.0","id":"1","result":"ok"}""")
+  L110  val driver = Rpc20Driver(url = "https://rpc.example", networkDriver = transport)
+  L112  val fromDriver = SolanaRpcClient(driver)
+  L113  val fromUrl = SolanaRpcClient("https://rpc.example", transport)
+  L121  var lastRequest: HttpRequest? = null

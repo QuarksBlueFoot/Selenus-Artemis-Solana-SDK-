@@ -120,6 +120,7 @@ Two orthogonal labels appear throughout the docs:
 | `LocalAssociationScenario` with real P-256 keypair, loopback port reservation, base64url association token | `interop/artemis-mwa-clientlib-compat` | Verified |
 | Nested result types (`AuthorizationResult`, `SignPayloadsResult`, `SignMessagesResult`, `SignAndSendTransactionsResult`) | `interop/artemis-mwa-clientlib-compat` | Verified |
 | `LocalAdapterOperations` routes through live `MwaSessionBridge` | `interop/artemis-mwa-compat` | Verified |
+| `ProtocolContract`, `AssociationContract`, `SessionProperties`, SIWS payload helpers | `interop/artemis-mwa-common-compat` | Verified (`MwaCommonCompatTest` + API snapshot) |
 | API-diff snapshot (`dumpApi` + `verifyApiSnapshots` Gradle tasks) | `interop/artemis-mwa-*/api/*.api` | Verified |
 
 ## MWA walletlib compat (drop-in, wallet side)
@@ -141,10 +142,30 @@ Two orthogonal labels appear throughout the docs:
 
 | Capability | Artemis module | Status |
 |---|---|---|
-| `com.solanamobile.seedvault.Wallet` static surface | `interop/artemis-seedvault-compat` | Verified (every upstream static; `AuthTokenGuard` for the invalid-token edge) |
-| `WalletContractV1` constants | `interop/artemis-seedvault-compat` | Verified (every public const; IntDef + `@Purpose`) |
-| `SeedVault.isAvailable` / `AccessType` | `interop/artemis-seedvault-compat` | Verified |
+| `com.solanamobile.seedvault.Wallet` static surface | `interop/artemis-seedvault-compat` | Verified (every upstream static; `AuthTokenGuard` for the invalid-token edge; API snapshot) |
+| `WalletContractV1` constants | `interop/artemis-seedvault-compat` | Verified (every public const; IntDef + `@Purpose`; API snapshot) |
+| `SeedVault.isAvailable` / `AccessType` | `interop/artemis-seedvault-compat` | Verified (`SeedVaultCompatTest` + API snapshot) |
 | AIDL `ISeedVaultService` 9-method shape | `mobile/artemis-seed-vault/src/main/aidl` | Verified (reconciled with internal Kotlin proxy) |
+
+## rpc-core compat (drop-in client path)
+
+| Capability | Artemis module | Status |
+|---|---|---|
+| `com.solana.rpccore` JSON-RPC envelope types (`RpcRequest`, `JsonRpc20Request`, `Rpc20Response`, `RpcError`, `JsonRpcDriver`) | `interop/artemis-rpc-core-compat` | Verified (`RpcCoreCompatTest`) |
+| `com.solana.networking.HttpNetworkDriver`, `HttpRequest`, `Rpc20Driver` request serialization + result/error decoding | `interop/artemis-rpc-core-compat` | Verified (`RpcCoreCompatTest`) |
+| `SolanaRpcClient` constructors, `TransactionOptions`, `AccountInfo`, `SolanaResponse`, `SolanaAccount`, `SimulationResult` model shape | `interop/artemis-rpc-core-compat` | Verified (`RpcCoreCompatTest` + API snapshot) |
+| Default Artemis transport | `ArtemisHttpNetworkDriver` | Verified by source/API surface; delegates to `artemis-rpc` `HttpTransport` |
+| Upstream `KtorNetworkDriver` / `OkioNetworkDriver` FQNs | N/A | Partial: not ported. Swap those imports to `ArtemisHttpNetworkDriver` or provide any custom `HttpNetworkDriver`. |
+
+## web3-solana compat (drop-in client path)
+
+| Capability | Artemis module | Status |
+|---|---|---|
+| `SolanaPublicKey`, `PublicKey`, `ProgramDerivedAddress` | `interop/artemis-web3-solana-compat` | Verified (API snapshot; PDA helper routes to Artemis `Pda`) |
+| `Message.Builder`, `LegacyMessage`, `VersionedMessage`, `Transaction`, `SolanaSigner` | `interop/artemis-web3-solana-compat` | Verified (`Web3SolanaCompatProgramTest` + transaction byte fixtures in `artemis-tx` / `artemis-vtx`) |
+| Program helpers: System, SPL Token initialize/transfer/mint/burn/approve/revoke/close/checked-transfer/sync-native, ATA create, Compute Budget, Memo | `interop/artemis-web3-solana-compat` | Verified (`Web3SolanaCompatProgramTest`; all supported SPL Token helpers route through native `artemis-programs`) |
+| SPL Token `setAuthority`, freeze/thaw, and newer web3-core Token-2022 / ATA idempotent helpers | N/A | Partial: not claimed until native Artemis builders and upstream-version fixtures land. |
+| Upstream pin freshness | `main@2025-08` | Partial: source-compatible for the pinned snapshot; do not claim full Funkatronics `web3-core` 0.3.x parity until the pin and snapshot tests are refreshed. |
 
 ## solana-kmp compat (drop-in path)
 

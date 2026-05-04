@@ -182,6 +182,11 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
 
     constructor(config: MobileWalletAdapterConfig) {
         super();
+        if (!config.iconPath.startsWith('https://') || config.iconPath.length <= 'https://'.length) {
+            throw new WalletConnectionError(
+                'MWA identity iconPath must be an absolute HTTPS URI, e.g. https://myapp.example.com/favicon.ico',
+            );
+        }
         this._config = config;
         if (Platform.OS === 'android' && ArtemisModule) {
             ArtemisModule.initialize(
@@ -233,7 +238,7 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
         if (this.connected || this.connecting) return;
         this._connecting = true;
         try {
-            const result: AuthorizationResult = await ArtemisModule.connect();
+            const result: AuthorizationResult = await this.mwaModule().connect();
             this.applyAuthorization(result);
             this.emit('connect', this._publicKey!);
         } catch (error: any) {
@@ -261,7 +266,7 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
         }
         this._connecting = true;
         try {
-            const result: AuthorizationResult = await ArtemisModule.connectWithSignIn(payload);
+            const result: AuthorizationResult = await this.mwaModule().connectWithSignIn(payload);
             this.applyAuthorization(result);
             this.emit('connect', this._publicKey!);
             return result;
@@ -279,7 +284,7 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
      */
     async reauthorize(): Promise<AuthorizationResult> {
         try {
-            const result: AuthorizationResult = await ArtemisModule.reauthorize();
+            const result: AuthorizationResult = await this.mwaModule().reauthorize();
             this.applyAuthorization(result);
             return result;
         } catch (error: any) {
@@ -289,7 +294,9 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
 
     async disconnect(): Promise<void> {
         try {
-            await ArtemisModule.deauthorize();
+            if (Platform.OS === 'android' && ArtemisModule) {
+                await ArtemisModule.deauthorize();
+            }
         } catch {
             // Best effort; the wallet side may have already rotated.
         }
@@ -303,7 +310,7 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
 
     async getCapabilities(): Promise<MwaCapabilities> {
         if (this._capabilities) return this._capabilities;
-        const caps: MwaCapabilities = await ArtemisModule.getCapabilities();
+        const caps: MwaCapabilities = await this.mwaModule().getCapabilities();
         this._capabilities = caps;
         return caps;
     }
@@ -317,14 +324,14 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
         if (!caps.supportsCloneAuthorization) {
             throw new Error('Wallet does not support clone_authorization');
         }
-        return await ArtemisModule.cloneAuthorization();
+        return await this.mwaModule().cloneAuthorization();
     }
 
     async signTransaction<T extends Transaction | VersionedTransaction>(transaction: T): Promise<T> {
         try {
             const serialized = transaction.serialize({ requireAllSignatures: false });
             const base64Tx = Buffer.from(serialized).toString('base64');
-            const signedBase64: string = await ArtemisModule.signTransaction(base64Tx);
+            const signedBase64: string = await this.mwaModule().signTransaction(base64Tx);
             const signedArray = new Uint8Array(Buffer.from(signedBase64, 'base64'));
             if (transaction instanceof VersionedTransaction) {
                 return VersionedTransaction.deserialize(signedArray) as T;
@@ -342,7 +349,7 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
             const base64Array = transactions.map((tx) =>
                 Buffer.from(tx.serialize({ requireAllSignatures: false })).toString('base64'),
             );
-            const signedList: string[] = await ArtemisModule.signTransactions(base64Array);
+            const signedList: string[] = await this.mwaModule().signTransactions(base64Array);
             return signedList.map((signedBase64, i) => {
                 const bytes = new Uint8Array(Buffer.from(signedBase64, 'base64'));
                 const original = transactions[i];
@@ -370,7 +377,7 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
         try {
             const serialized = transaction.serialize({ requireAllSignatures: false });
             const base64Tx = Buffer.from(serialized).toString('base64');
-            const result: TransactionSendResult = await ArtemisModule.signAndSendTransaction(
+            const result: TransactionSendResult = await this.mwaModule().signAndSendTransaction(
                 base64Tx,
                 options ?? null,
             );
@@ -396,7 +403,7 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
             const base64Array = transactions.map((tx) =>
                 Buffer.from(tx.serialize({ requireAllSignatures: false })).toString('base64'),
             );
-            const batch: BatchSendResult = await ArtemisModule.signAndSendTransactions(
+            const batch: BatchSendResult = await this.mwaModule().signAndSendTransactions(
                 base64Array,
                 options ?? null,
             );
@@ -447,7 +454,7 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
     async signMessage(message: Uint8Array): Promise<Uint8Array> {
         try {
             const base64Msg = Buffer.from(message).toString('base64');
-            const signatureBase64: string = await ArtemisModule.signMessage(base64Msg);
+            const signatureBase64: string = await this.mwaModule().signMessage(base64Msg);
             return new Uint8Array(Buffer.from(signatureBase64, 'base64'));
         } catch (error: any) {
             throw new WalletSignTransactionError(error?.message ?? 'signMessage failed', error);
@@ -465,7 +472,7 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
         try {
             const base64Messages = messages.map((m) => Buffer.from(m).toString('base64'));
             const result: { messages: string[]; signatures: string[] } =
-                await ArtemisModule.signMessagesDetached(base64Messages);
+                await this.mwaModule().signMessagesDetached(base64Messages);
             return {
                 messages: result.messages.map((m) => new Uint8Array(Buffer.from(m, 'base64'))),
                 signatures: result.signatures.map((s) => new Uint8Array(Buffer.from(s, 'base64'))),
@@ -479,6 +486,16 @@ export class MobileWalletAdapter extends BaseWalletAdapter {
     }
 
     // ─── internals ─────────────────────────────────────────────────────────
+
+    private mwaModule(): any {
+        if (Platform.OS !== 'android') {
+            throw new WalletConnectionError('Mobile Wallet Adapter is Android-only in React Native. Use an iOS-compatible wallet path on this platform.');
+        }
+        if (!ArtemisModule) {
+            throw new WalletConnectionError('Artemis native module is not linked. Use a custom React Native dev build; Expo Go cannot load this package.');
+        }
+        return ArtemisModule;
+    }
 
     private applyAuthorization(result: AuthorizationResult): void {
         this._authToken = result.authToken;

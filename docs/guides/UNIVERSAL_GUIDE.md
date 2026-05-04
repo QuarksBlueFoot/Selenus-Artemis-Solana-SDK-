@@ -14,7 +14,7 @@ If you do have the IDL, use [artemis-anchor](ANCHOR_GUIDE.md) instead. It is det
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-universal:2.3.0")
+    implementation("xyz.selenus:artemis-universal:2.3.1")
 }
 ```
 
