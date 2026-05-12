@@ -88,10 +88,12 @@ class RealtimeEngine(
     // Parsed event callbacks keyed by pubkey / signature.
     private val accountCallbacks = mutableMapOf<String, (AccountNotification) -> Unit>()
     private val signatureCallbacks = mutableMapOf<String, (confirmed: Boolean) -> Unit>()
+    private var slotCallback: ((SlotNotification) -> Unit)? = null
 
     // Raw subscription handles from SolanaWsClient, kept for clean unsubscribe.
     private val accountHandles = mutableMapOf<String, SubscriptionHandle>()
     private val signatureHandles = mutableMapOf<String, SubscriptionHandle>()
+    private var slotHandle: SubscriptionHandle? = null
 
     // Spec registry - lets reconnect() replay all typed subscriptions on a new client.
     private data class AccountSpec(
@@ -104,8 +106,12 @@ class RealtimeEngine(
         val commitment: String,
         val callback: (Boolean) -> Unit
     )
+    private data class SlotSpec(
+        val callback: (SlotNotification) -> Unit
+    )
     private val accountSpecs = LinkedHashMap<String, AccountSpec>()
     private val signatureSpecs = LinkedHashMap<String, SignatureSpec>()
+    private var slotSpec: SlotSpec? = null
 
     /**
      * Lightweight view of an account notification from the WebSocket subscription.
@@ -116,6 +122,13 @@ class RealtimeEngine(
         val data: String?,
         val owner: String?,
         val slot: Long
+    )
+
+    /** Lightweight view of a `slotSubscribe` notification. */
+    data class SlotNotification(
+        val slot: Long,
+        val parent: Long?,
+        val root: Long?
     )
 
     /**
@@ -180,6 +193,14 @@ class RealtimeEngine(
                     signatureCallbacks[sig] = spec.callback
                 } catch (_: Exception) { /* best-effort */ }
             }
+            val spec = slotSpec
+            if (spec != null) {
+                try {
+                    val rawHandle = wsClient.slotSubscribe()
+                    slotHandle = rawHandle
+                    slotCallback = spec.callback
+                } catch (_: Exception) { /* best-effort */ }
+            }
         }
     }
 
@@ -236,6 +257,30 @@ class RealtimeEngine(
     }
 
     /**
+     * Subscribe to slot updates.
+     *
+     * [callback] is invoked with parsed `slot`, `parent`, and `root` values
+     * from Solana's `slotNotification` stream. The subscription is replayed
+     * automatically on [reconnect].
+     */
+    suspend fun subscribeSlot(
+        callback: (SlotNotification) -> Unit
+    ): SubscriptionHandle {
+        val ws = requireConnected()
+        val spec = SlotSpec(callback)
+        slotSpec = spec
+        slotCallback = callback
+        val rawHandle = ws.slotSubscribe()
+        slotHandle = rawHandle
+        return SubscriptionHandle(rawHandle.key) { _ ->
+            slotSpec = null
+            slotCallback = null
+            slotHandle = null
+            rawHandle.close()
+        }
+    }
+
+    /**
      * Subscribe to all account changes made by [programId].
      * Returns the raw [SubscriptionHandle] - events are delivered via [SolanaWsClient.events].
      */
@@ -259,10 +304,13 @@ class RealtimeEngine(
         client = null
         accountCallbacks.clear()
         signatureCallbacks.clear()
+        slotCallback = null
         accountSpecs.clear()
         signatureSpecs.clear()
+        slotSpec = null
         accountHandles.clear()
         signatureHandles.clear()
+        slotHandle = null
         transitionTo(
             ConnectionState.Closed(
                 reason = "close() called",
@@ -301,7 +349,7 @@ class RealtimeEngine(
             is WsEvent.Connected -> transitionTo(
                 ConnectionState.Connected(
                     endpoint = url,
-                    subscriptions = accountSpecs.size + signatureSpecs.size,
+                    subscriptions = accountSpecs.size + signatureSpecs.size + if (slotSpec != null) 1 else 0,
                     epoch = epochCounter.incrementAndGet(),
                     atMs = now
                 )
@@ -410,6 +458,15 @@ class RealtimeEngine(
                         ArtemisEvent.Realtime.SignatureObserved(signature = sig, confirmed = confirmed)
                     )
                 }
+            }
+            event.method == "slotNotification" -> {
+                val result = event.result?.jsonObject ?: return
+                val notification = SlotNotification(
+                    slot = result["slot"]?.jsonPrimitive?.content?.toLongOrNull() ?: return,
+                    parent = result["parent"]?.jsonPrimitive?.content?.toLongOrNull(),
+                    root = result["root"]?.jsonPrimitive?.content?.toLongOrNull()
+                )
+                slotCallback?.invoke(notification)
             }
         }
     }

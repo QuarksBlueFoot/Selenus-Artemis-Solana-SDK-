@@ -172,7 +172,7 @@ data class IdlTypeDef(
 /**
  * Type definition can be struct, enum, or type alias.
  */
-@Serializable
+@Serializable(with = IdlTypeDefTypeSerializer::class)
 sealed class IdlTypeDefType {
     @Serializable
     @SerialName("struct")
@@ -205,12 +205,128 @@ data class IdlField(
 /**
  * Enum variant.
  */
-@Serializable
+@Serializable(with = IdlEnumVariantSerializer::class)
 data class IdlEnumVariant(
     val name: String,
     val docs: List<String>? = null,
-    val fields: List<IdlField>? = null
+    val fields: List<IdlField>? = null,
+    val tupleFields: List<IdlType>? = null
 )
+
+object IdlTypeDefTypeSerializer : KSerializer<IdlTypeDefType> {
+    override val descriptor = PrimitiveSerialDescriptor("IdlTypeDefType", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: IdlTypeDefType) {
+        val jsonEncoder = encoder as? JsonEncoder
+            ?: throw SerializationException("IdlTypeDefType can only be serialized to JSON")
+        val json = jsonEncoder.json
+        val element = when (value) {
+            is IdlTypeDefType.Struct -> buildJsonObject {
+                put("kind", "struct")
+                put("fields", json.encodeToJsonElement(value.fields))
+            }
+            is IdlTypeDefType.Enum -> buildJsonObject {
+                put("kind", "enum")
+                put("variants", json.encodeToJsonElement(value.variants))
+            }
+            is IdlTypeDefType.Alias -> buildJsonObject {
+                put("kind", "alias")
+                put("value", json.encodeToJsonElement(IdlTypeSerializer, value.value))
+            }
+        }
+        jsonEncoder.encodeJsonElement(element)
+    }
+
+    override fun deserialize(decoder: Decoder): IdlTypeDefType {
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: throw SerializationException("IdlTypeDefType can only be deserialized from JSON")
+        val json = jsonDecoder.json
+        val element = jsonDecoder.decodeJsonElement().jsonObject
+        val kind = element["kind"]?.jsonPrimitive?.contentOrNull
+        return when {
+            kind == "struct" || "struct" in element -> IdlTypeDefType.Struct(
+                fields = decodeFields(json, element["fields"] ?: element["struct"] ?: JsonArray(emptyList()))
+            )
+            kind == "enum" || "enum" in element -> IdlTypeDefType.Enum(
+                variants = decodeVariants(json, element["variants"] ?: element["enum"] ?: JsonArray(emptyList()))
+            )
+            kind == "alias" || "alias" in element -> IdlTypeDefType.Alias(
+                value = json.decodeFromJsonElement(
+                    IdlTypeSerializer,
+                    element["value"] ?: element["alias"] ?: throw SerializationException("Alias type missing value")
+                )
+            )
+            else -> throw SerializationException("Unknown IDL type definition: $element")
+        }
+    }
+
+    private fun decodeFields(json: Json, element: JsonElement): List<IdlField> =
+        element.jsonArray.map { json.decodeFromJsonElement(it) }
+
+    private fun decodeVariants(json: Json, element: JsonElement): List<IdlEnumVariant> =
+        element.jsonArray.map { json.decodeFromJsonElement(it) }
+}
+
+object IdlEnumVariantSerializer : KSerializer<IdlEnumVariant> {
+    override val descriptor = PrimitiveSerialDescriptor("IdlEnumVariant", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: IdlEnumVariant) {
+        val jsonEncoder = encoder as? JsonEncoder
+            ?: throw SerializationException("IdlEnumVariant can only be serialized to JSON")
+        val json = jsonEncoder.json
+        val element = buildJsonObject {
+            put("name", value.name)
+            value.docs?.let { put("docs", json.encodeToJsonElement(it)) }
+            when {
+                value.fields != null -> put("fields", json.encodeToJsonElement(value.fields))
+                value.tupleFields != null -> putJsonArray("fields") {
+                    value.tupleFields.forEach { add(json.encodeToJsonElement(IdlTypeSerializer, it)) }
+                }
+            }
+        }
+        jsonEncoder.encodeJsonElement(element)
+    }
+
+    override fun deserialize(decoder: Decoder): IdlEnumVariant {
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: throw SerializationException("IdlEnumVariant can only be deserialized from JSON")
+        val json = jsonDecoder.json
+        val element = jsonDecoder.decodeJsonElement().jsonObject
+        val name = element["name"]?.jsonPrimitive?.content
+            ?: throw SerializationException("Enum variant missing name")
+        val docs = element["docs"]?.jsonArray?.map { it.jsonPrimitive.content }
+        val fieldsElement = element["fields"]
+        val namedOrTuple = decodeVariantFields(json, fieldsElement)
+        return IdlEnumVariant(
+            name = name,
+            docs = docs,
+            fields = namedOrTuple.first,
+            tupleFields = namedOrTuple.second
+        )
+    }
+
+    private fun decodeVariantFields(json: Json, element: JsonElement?): Pair<List<IdlField>?, List<IdlType>?> {
+        if (element == null || element is JsonNull) return null to null
+        if (element is JsonObject) {
+            element["named"]?.let { named ->
+                return named.jsonArray.map { json.decodeFromJsonElement<IdlField>(it) } to null
+            }
+            element["unnamed"]?.let { unnamed ->
+                return null to unnamed.jsonArray.map { json.decodeFromJsonElement(IdlTypeSerializer, it) }
+            }
+        }
+        val array = element.jsonArray
+        if (array.isEmpty()) return emptyList<IdlField>() to null
+        val isNamed = array.all { item ->
+            item is JsonObject && "name" in item && "type" in item
+        }
+        return if (isNamed) {
+            array.map { json.decodeFromJsonElement<IdlField>(it) } to null
+        } else {
+            null to array.map { json.decodeFromJsonElement(IdlTypeSerializer, it) }
+        }
+    }
+}
 
 /**
  * IDL Type representation.

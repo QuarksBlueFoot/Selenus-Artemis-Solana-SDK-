@@ -5,7 +5,6 @@ import com.selenus.artemis.runtime.Pubkey
 import com.selenus.artemis.tx.ByteArrayBuilder
 import com.selenus.artemis.tx.CompiledInstruction
 import com.selenus.artemis.tx.MessageHeader
-import com.selenus.artemis.tx.ShortVec
 
 data class AddressTableLookup(
   val accountKey: Pubkey,
@@ -93,10 +92,17 @@ data class MessageV0(
   }
 
   companion object {
-    fun deserialize(bytes: ByteArray): MessageV0 {
-      var offset = 0
+    fun deserialize(bytes: ByteArray): MessageV0 = deserialize(bytes, 0, bytes.size)
+
+    fun deserialize(bytes: ByteArray, startOffset: Int, length: Int): MessageV0 {
+      require(startOffset >= 0 && length >= 0 && startOffset + length <= bytes.size) {
+        "MessageV0 range out of bounds"
+      }
+      var offset = startOffset
+      val endOffset = startOffset + length
 
       // Prefix
+      require(offset < endOffset) { "MessageV0 truncated before prefix" }
       val prefix = bytes[offset].toInt() and 0xFF
       val version = prefix and 0x7F
       require(prefix and 0x80 != 0) { "MessageV0 must have high bit set in first byte" }
@@ -104,6 +110,7 @@ data class MessageV0(
       offset += 1
 
       // Header
+      require(offset + 3 <= endOffset) { "MessageV0 truncated in header" }
       val numRequiredSignatures = bytes[offset].toInt() and 0xFF
       val numReadonlySigned = bytes[offset + 1].toInt() and 0xFF
       val numReadonlyUnsigned = bytes[offset + 2].toInt() and 0xFF
@@ -111,33 +118,38 @@ data class MessageV0(
       val header = MessageHeader(numRequiredSignatures, numReadonlySigned, numReadonlyUnsigned)
 
       // Static Account Keys
-      val (numKeys, keysLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+      val (numKeys, keysLenBytes) = decodeShortVec(bytes, offset, endOffset)
       offset += keysLenBytes
       val staticAccountKeys = ArrayList<Pubkey>()
       for (i in 0 until numKeys) {
+        require(offset + 32 <= endOffset) { "MessageV0 truncated in static account keys" }
         staticAccountKeys.add(Pubkey(bytes.copyOfRange(offset, offset + 32)))
         offset += 32
       }
 
       // Recent Blockhash
+      require(offset + 32 <= endOffset) { "MessageV0 truncated in recent blockhash" }
       val recentBlockhash = Base58.encode(bytes.copyOfRange(offset, offset + 32))
       offset += 32
 
       // Instructions
-      val (numIxs, ixsLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+      val (numIxs, ixsLenBytes) = decodeShortVec(bytes, offset, endOffset)
       offset += ixsLenBytes
       val instructions = ArrayList<CompiledInstruction>()
       for (i in 0 until numIxs) {
+        require(offset < endOffset) { "MessageV0 truncated in instruction header" }
         val programIdIndex = bytes[offset].toInt() and 0xFF
         offset += 1
 
-        val (numAccIdx, accIdxLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+        val (numAccIdx, accIdxLenBytes) = decodeShortVec(bytes, offset, endOffset)
         offset += accIdxLenBytes
+        require(offset + numAccIdx <= endOffset) { "MessageV0 truncated in instruction accounts" }
         val accountIndexes = bytes.copyOfRange(offset, offset + numAccIdx)
         offset += numAccIdx
 
-        val (dataLen, dataLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+        val (dataLen, dataLenBytes) = decodeShortVec(bytes, offset, endOffset)
         offset += dataLenBytes
+        require(offset + dataLen <= endOffset) { "MessageV0 truncated in instruction data" }
         val data = bytes.copyOfRange(offset, offset + dataLen)
         offset += dataLen
 
@@ -145,27 +157,47 @@ data class MessageV0(
       }
 
       // Address Table Lookups
-      val (numLookups, lookupsLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+      val (numLookups, lookupsLenBytes) = decodeShortVec(bytes, offset, endOffset)
       offset += lookupsLenBytes
       val addressTableLookups = ArrayList<AddressTableLookup>()
       for (i in 0 until numLookups) {
+        require(offset + 32 <= endOffset) { "MessageV0 truncated in lookup account key" }
         val accountKey = Pubkey(bytes.copyOfRange(offset, offset + 32))
         offset += 32
 
-        val (numWritable, writableLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+        val (numWritable, writableLenBytes) = decodeShortVec(bytes, offset, endOffset)
         offset += writableLenBytes
+        require(offset + numWritable <= endOffset) { "MessageV0 truncated in lookup writable indexes" }
         val writableIndexes = bytes.copyOfRange(offset, offset + numWritable)
         offset += numWritable
 
-        val (numReadonly, readonlyLenBytes) = ShortVec.decodeLen(bytes.copyOfRange(offset, bytes.size))
+        val (numReadonly, readonlyLenBytes) = decodeShortVec(bytes, offset, endOffset)
         offset += readonlyLenBytes
+        require(offset + numReadonly <= endOffset) { "MessageV0 truncated in lookup readonly indexes" }
         val readonlyIndexes = bytes.copyOfRange(offset, offset + numReadonly)
         offset += numReadonly
 
         addressTableLookups.add(AddressTableLookup(accountKey, writableIndexes, readonlyIndexes))
       }
 
+      require(offset == endOffset) { "MessageV0 had trailing bytes: ${endOffset - offset}" }
+
       return MessageV0(header, staticAccountKeys, recentBlockhash, instructions, addressTableLookups)
+    }
+
+    private fun decodeShortVec(bytes: ByteArray, offset: Int, endOffset: Int): Pair<Int, Int> {
+      var value = 0
+      var shift = 0
+      var read = 0
+      while (true) {
+        require(offset + read < endOffset) { "short-vec length truncated at offset ${offset + read}" }
+        val byte = bytes[offset + read].toInt() and 0xFF
+        read++
+        value = value or ((byte and 0x7F) shl shift)
+        if ((byte and 0x80) == 0) return value to read
+        shift += 7
+        require(shift <= 21) { "short-vec length overflow" }
+      }
     }
   }
 }

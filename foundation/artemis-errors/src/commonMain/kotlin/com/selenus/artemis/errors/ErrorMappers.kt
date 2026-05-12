@@ -6,16 +6,25 @@ object ErrorMappers {
 
   private val log = Log.get("ErrorMappers")
 
-  fun mapRpc(t: Throwable): ArtemisError {
-    val msg = (t.message ?: "").lowercase()
-    return when {
-      msg.contains("429") || msg.contains("rate limit") -> ArtemisError.RateLimited(t)
-      msg.contains("timeout") -> ArtemisError.NetworkTimeout(t)
-      msg.contains("unhealthy") || msg.contains("gethealth") -> ArtemisError.NodeUnhealthy(t)
-      msg.contains("blockhash not found") -> ArtemisError.BlockhashNotFound(t)
-      msg.contains("blockhash") && msg.contains("expired") -> ArtemisError.BlockhashExpired(t)
-      msg.contains("insufficient funds") -> ArtemisError.InsufficientFunds(t)
-      msg.contains("transaction was not confirmed") || msg.contains("rejected") -> ArtemisError.TransactionRejected(t)
+  fun mapRpc(
+    t: Throwable,
+    logs: List<String> = emptyList(),
+    rpcCode: Int? = null,
+    data: String? = null
+  ): ArtemisError {
+    val decoded = SolanaErrorDecoder.decodeThrowable(t, logs = logs, rpcCode = rpcCode, data = data)
+    return when (decoded.category) {
+      ArtemisErrorCategory.RATE_LIMIT -> ArtemisError.RateLimited(t)
+      ArtemisErrorCategory.NETWORK -> ArtemisError.NetworkTimeout(t)
+      ArtemisErrorCategory.NODE_HEALTH -> ArtemisError.NodeUnhealthy(t)
+      ArtemisErrorCategory.BLOCKHASH -> {
+        val msg = decoded.message.lowercase()
+        if (msg.contains("not found")) ArtemisError.BlockhashNotFound(t) else ArtemisError.BlockhashExpired(t)
+      }
+      ArtemisErrorCategory.FUNDS -> ArtemisError.InsufficientFunds(t)
+      ArtemisErrorCategory.PROGRAM -> ArtemisError.ProgramError(decoded, t)
+      ArtemisErrorCategory.SIMULATION -> ArtemisError.SimulationFailed(decoded.logs, t, decoded)
+      ArtemisErrorCategory.TRANSACTION -> ArtemisError.TransactionRejected(t)
       else -> {
         log.warn("unmapped rpc error: ${t.message}")
         ArtemisError.Unknown(t)

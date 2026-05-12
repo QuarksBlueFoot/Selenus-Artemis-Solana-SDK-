@@ -172,6 +172,23 @@ class AuthTokenStoreTest {
         assertNull(asInterface.get())
     }
 
+    @Test
+    fun `InMemoryMwaSessionSecretStore installs stable copied secret`() {
+        val initial = ByteArray(32) { 11 }
+        val store = InMemoryMwaSessionSecretStore(initial)
+        val installed = store.installIntoSessionManager()
+
+        assertArrayEquals(initial, installed)
+        initial[0] = 99
+        assertEquals(11, store.getOrCreate()[0].toInt())
+
+        val rotated = store.rotate()
+        assertEquals(32, rotated.size)
+        assertFalse(installed.contentEquals(rotated))
+        store.clear()
+        assertEquals(32, store.getOrCreate().size)
+    }
+
     // ─── Wire format helpers ───────────────────────────────────────────
 
     private fun generateAes256Key(): SecretKey {

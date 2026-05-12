@@ -1,6 +1,7 @@
 package com.selenus.artemis.token2022
 
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -25,6 +26,25 @@ class Token2022TlvTest {
   }
 
   @Test
+  fun `decodeViews reads values from the original buffer without copying`() {
+    val tlv = byteArrayOf(
+      0x01, 0x00, 0x03, 0x00, 0x01, 0x02, 0x03,
+      0x00, 0x00, 0x00, 0x00,
+    )
+    val owned = Token2022Tlv.decode(tlv).single()
+    val view = Token2022Tlv.decodeViews(tlv).single()
+
+    assertEquals(1u, view.type)
+    assertEquals(3, view.length)
+    assertEquals(0x02, view.valueAt(1).toInt() and 0xFF)
+    assertContentEquals(byteArrayOf(0x01, 0x02, 0x03), view.copyValue())
+
+    tlv[5] = 0x7F
+    assertEquals(0x7F, view.valueAt(1).toInt() and 0xFF)
+    assertEquals(0x02, owned.value[1].toInt() and 0xFF)
+  }
+
+  @Test
   fun `extractExtensions enforces mint padding`() {
     val baseLen = Token2022StateLayout.MINT_BASE_LENGTH
     val paddingLen = Token2022StateLayout.BASE_ACCOUNT_LENGTH - baseLen
@@ -46,5 +66,23 @@ class Token2022TlvTest {
     assertFailsWith<IllegalArgumentException> {
       Token2022Extensions.decode(bad, baseLen)
     }
+  }
+
+  @Test
+  fun `decodeView walks the original account buffer`() {
+    val baseLen = Token2022StateLayout.MINT_BASE_LENGTH
+    val paddingLen = Token2022StateLayout.BASE_ACCOUNT_LENGTH - baseLen
+    val tlv = byteArrayOf(0x01, 0x00, 0x02, 0x00, 0x0A, 0x0B)
+    val data = ByteArray(baseLen + paddingLen + 1 + tlv.size)
+    data[Token2022StateLayout.BASE_ACCOUNT_LENGTH] = 0x01
+    tlv.copyInto(data, Token2022StateLayout.BASE_ACCOUNT_LENGTH + 1)
+
+    val decoded = Token2022Extensions.decodeView(data, baseLen)!!
+    val view = decoded.entries.single()
+    assertEquals(Token2022StateLayout.AccountType.Mint, decoded.accountType)
+    assertEquals(0x0B, view.valueAt(1).toInt() and 0xFF)
+
+    data[Token2022StateLayout.BASE_ACCOUNT_LENGTH + 1 + 5] = 0x55
+    assertEquals(0x55, view.valueAt(1).toInt() and 0xFF)
   }
 }

@@ -290,7 +290,7 @@ these ship in the repo but maturity varies. `gaming`, `intent`, `privacy`, `port
 | `artemis-offline` | Working primitives | Offline queue, persistent store, retry |
 | `artemis-gaming` | Working primitives | Session keys, VRF wrappers, state proof helpers (18 files) |
 | `artemis-intent` | Working primitives | Per-program intent decoders (11 files) |
-| `artemis-streaming` | Interface + reference impl | `ZeroCopyAccountStream` exposes a `WebSocketClient` interface that the caller wires to `artemis-ws` |
+| `artemis-streaming` | Interface + reference impl + service | `ZeroCopyAccountStream` exposes a `WebSocketClient` interface; `MwaReflectorServer` provides a runnable MWA remote-association reflector |
 | `artemis-simulation` | Interface + reference impl | `PredictiveSimulator` expects a caller-provided `RpcAdapter` |
 | `artemis-batch` | Helpers | `TransactionBatchEngine` |
 | `artemis-scheduler` | Helpers | `NetworkState`, `TransactionScheduler` |
@@ -340,7 +340,7 @@ Client packages covered by compat shims:
 * `com.solana.mobilewalletadapter:walletlib` (1.4.3): wallet-side MWA scenario, authorization, protocol → `artemis-mwa-walletlib-compat`
 * `com.solana.mobilewalletadapter:common` (1.4.3): protocol contract, SIWS, NotifyOnComplete → `artemis-mwa-common-compat`
 * `com.solanamobile:seedvault-wallet-sdk` (0.4.0): Seed Vault static surface → `artemis-seedvault-compat`
-* `com.metaplex.lib:lib` (Metaplex Android, dormant 2024-04): partial parity for the most-used 60% (NFT read, DAS, identity drivers; auctions and full mutation surface still pending) → `artemis-metaplex-android-compat`
+* `com.metaplex.lib:lib` (Metaplex Android, dormant 2024-04): partial parity for the most-used read surfaces (NFT read, DAS-backed creator / update-authority queries, identity drivers; auctions and full mutation surface still pending) → `artemis-metaplex-android-compat`
 * `com.solana:rpc-core` (2026-01-09): JSON-RPC envelope types, SolanaRpcClient → `artemis-rpc-core-compat`
 * `com.solana:web3-solana` (Funkatronics): SolanaPublicKey, Transaction, Builder, instruction primitives → `artemis-web3-solana-compat`
 

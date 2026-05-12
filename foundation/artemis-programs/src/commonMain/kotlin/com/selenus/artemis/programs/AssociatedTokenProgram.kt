@@ -6,6 +6,12 @@ import com.selenus.artemis.tx.Instruction
 
 object AssociatedTokenProgram {
 
+  fun address(
+    owner: Pubkey,
+    mint: Pubkey,
+    tokenProgram: Pubkey = ProgramIds.TOKEN_PROGRAM
+  ): Pubkey = AssociatedToken.address(owner, mint, tokenProgram)
+
   /**
    * createAssociatedTokenAccount
    *
@@ -33,6 +39,20 @@ object AssociatedTokenProgram {
     )
   }
 
+  fun createAssociatedTokenAccountIdempotent(
+    payer: Pubkey,
+    ata: Pubkey,
+    owner: Pubkey,
+    mint: Pubkey,
+    tokenProgram: Pubkey = ProgramIds.TOKEN_PROGRAM
+  ): Instruction = AssociatedToken.createAssociatedTokenAccountIdempotent(
+    payer = payer,
+    owner = owner,
+    mint = mint,
+    ata = ata,
+    tokenProgram = tokenProgram
+  )
+
   // Compatibility alias
   fun createInstruction(
     payer: Pubkey,
@@ -46,5 +66,16 @@ object AssociatedTokenProgram {
     // associatedTokenProgramId is ignored when it matches the standard program id.
     // This impl uses ProgramIds.ASSOCIATED_TOKEN_PROGRAM.
     return createAssociatedTokenAccount(payer, associatedToken, owner, mint, programId)
+  }
+
+  fun createIdempotentInstruction(
+    payer: Pubkey,
+    associatedToken: Pubkey,
+    owner: Pubkey,
+    mint: Pubkey,
+    programId: Pubkey = ProgramIds.TOKEN_PROGRAM,
+    associatedTokenProgramId: Pubkey = ProgramIds.ASSOCIATED_TOKEN_PROGRAM
+  ): Instruction {
+    return createAssociatedTokenAccountIdempotent(payer, associatedToken, owner, mint, programId)
   }
 }

@@ -96,13 +96,18 @@ class ActionsClient private constructor(
      */
     suspend fun getAction(url: String): ActionGetResponse {
         val actionUrl = resolveActionUrl(url)
+        val getUrl = if (shouldResolveViaActionsJson(actionUrl)) {
+            resolveActionApiUrl(actionUrl) ?: actionUrl
+        } else {
+            actionUrl
+        }
         
         val headers = mapOf(
             "Accept" to "application/json",
             "Content-Type" to "application/json"
         )
         
-        return executeGet(actionUrl, headers) { body ->
+        return executeGet(getUrl, headers) { body ->
             json.decodeFromString<ActionGetResponse>(body)
         }
     }
@@ -180,15 +185,15 @@ class ActionsClient private constructor(
      */
     suspend fun confirmTransaction(
         response: ActionPostResponse,
-        signature: String
+        signature: String,
+        account: String? = null
     ): NextActionResult {
         val links = response.links ?: return NextActionResult.Complete
         val next = links.next
         
         return when (next) {
             is NextAction.PostAction -> {
-                val callback = CallbackRequest(signature = signature)
-                val callbackBody = json.encodeToString(callback)
+                val callbackBody = encodeCallbackRequest(signature, account)
                 
                 val headers = mapOf(
                     "Accept" to "application/json",
@@ -198,9 +203,9 @@ class ActionsClient private constructor(
                 val nextAction = executePost(next.href, callbackBody, headers) { body ->
                     json.decodeFromString<ActionGetResponse>(body)
                 }
-                NextActionResult.Continue(nextAction)
+                nextAction.toNextActionResult()
             }
-            is NextAction.InlineAction -> NextActionResult.Continue(next.action)
+            is NextAction.InlineAction -> next.action.toNextActionResult()
             null -> NextActionResult.Complete
         }
     }
@@ -226,21 +231,28 @@ class ActionsClient private constructor(
      * Check if an action URL is allowed based on actions.json rules.
      */
     suspend fun isActionAllowed(actionUrl: String): Boolean {
-        val host = extractHost(actionUrl) ?: return false
-        val actionsJson = getActionsJson(host) ?: return false
-        
-        val path = extractPath(actionUrl) ?: return false
-        
+        return resolveActionApiUrl(actionUrl) != null
+    }
+
+    /**
+     * Resolve a website URL through the domain's `actions.json` rules.
+     *
+     * Relative `apiPath` values stay on the original origin; absolute `apiPath`
+     * values may delegate to another origin. Wildcard captures from
+     * `pathPattern` are substituted into the mapped API path, and the original
+     * URL query string is preserved as required by the Actions spec.
+     */
+    suspend fun resolveActionApiUrl(actionUrl: String): String? {
+        val target = parseHttpUrl(resolveActionUrl(actionUrl)) ?: return null
+        val host = target.host
+        val actionsJson = getActionsJson(host) ?: return null
+
         for (rule in actionsJson.rules) {
-            val pattern = rule.pathPattern.replace("*", ".*").replace("**", ".*")
-            val regex = Regex(pattern)
-            
-            if (regex.matches(path)) {
-                return true
-            }
+            val match = matchActionRule(rule.pathPattern, target) ?: continue
+            return buildMappedActionUrl(target, rule.apiPath, match.captures)
         }
-        
-        return false
+
+        return null
     }
     
     /**
@@ -351,6 +363,9 @@ class ActionsClient private constructor(
             else -> url
         }
     }
+
+    private fun shouldResolveViaActionsJson(actionUrl: String): Boolean =
+        !actionUrl.contains("/api/actions/") && parseHttpUrl(actionUrl) != null
     
     private fun resolveLinkedActionUrl(
         action: ActionGetResponse,
@@ -413,6 +428,21 @@ class ActionsClient private constructor(
     private fun createIdentityPayload(url: String, timestamp: Long): ByteArray {
         val message = "$url:$timestamp"
         return Crypto.sha256(message.encodeToByteArray())
+    }
+
+    private fun ActionGetResponse.toNextActionResult(): NextActionResult =
+        if (type.equals("completed", ignoreCase = true)) {
+            NextActionResult.Completed(this)
+        } else {
+            NextActionResult.Continue(this)
+        }
+
+    private fun encodeCallbackRequest(signature: String, account: String?): String {
+        val payload = buildJsonObject {
+            put("signature", signature)
+            if (account != null) put("account", account)
+        }
+        return json.encodeToString(JsonObject.serializer(), payload)
     }
     
     private suspend fun <T> executeGet(
@@ -630,7 +660,8 @@ data class PostResponseLinks(
  */
 @Serializable
 data class CallbackRequest(
-    val signature: String
+    val signature: String,
+    val account: String? = null
 )
 
 /**
@@ -638,6 +669,7 @@ data class CallbackRequest(
  */
 sealed class NextActionResult {
     data class Continue(val action: ActionGetResponse) : NextActionResult()
+    data class Completed(val action: ActionGetResponse) : NextActionResult()
     object Complete : NextActionResult()
 }
 
@@ -753,6 +785,118 @@ private fun extractPath(url: String): String? {
     val queryStart = afterScheme.indexOf('?', pathStart)
     return if (queryStart < 0) afterScheme.substring(pathStart)
     else afterScheme.substring(pathStart, queryStart)
+}
+
+private data class ParsedHttpUrl(
+    val scheme: String,
+    val authority: String,
+    val host: String,
+    val path: String,
+    val query: String?
+) {
+    val origin: String get() = "$scheme://$authority"
+    val withoutQuery: String get() = "$origin$path"
+}
+
+private data class ActionRuleMatch(val captures: List<String>)
+
+private fun parseHttpUrl(url: String): ParsedHttpUrl? {
+    val schemeEnd = url.indexOf("://")
+    if (schemeEnd < 0) return null
+    val scheme = url.substring(0, schemeEnd).lowercase()
+    if (scheme != "https" && scheme != "http") return null
+    val afterScheme = url.substring(schemeEnd + 3)
+    val authorityEnd = afterScheme.indexOfFirst { it == '/' || it == '?' || it == '#' }
+    val authority = if (authorityEnd < 0) afterScheme else afterScheme.substring(0, authorityEnd)
+    if (authority.isBlank()) return null
+    val afterAuthority = if (authorityEnd < 0) "" else afterScheme.substring(authorityEnd)
+    val fragmentStart = afterAuthority.indexOf('#')
+    val noFragment = if (fragmentStart >= 0) afterAuthority.substring(0, fragmentStart) else afterAuthority
+    val queryStart = noFragment.indexOf('?')
+    val rawPath = when {
+        noFragment.isBlank() -> "/"
+        queryStart == 0 -> "/"
+        queryStart > 0 -> noFragment.substring(0, queryStart)
+        else -> noFragment
+    }
+    val query = if (queryStart >= 0) noFragment.substring(queryStart + 1).takeIf { it.isNotEmpty() } else null
+    val host = authority.substringBefore(':')
+    return ParsedHttpUrl(scheme, authority, host, rawPath.ifBlank { "/" }, query)
+}
+
+private fun matchActionRule(pattern: String, target: ParsedHttpUrl): ActionRuleMatch? {
+    val candidate = if (pattern.startsWith("http://") || pattern.startsWith("https://")) {
+        target.withoutQuery
+    } else {
+        target.path
+    }
+    val regex = wildcardPatternToRegex(pattern)
+    val match = regex.matchEntire(candidate) ?: return null
+    return ActionRuleMatch(match.groupValues.drop(1))
+}
+
+private fun wildcardPatternToRegex(pattern: String): Regex = buildString {
+    append('^')
+    var index = 0
+    while (index < pattern.length) {
+        val char = pattern[index]
+        if (char == '*') {
+            if (index + 1 < pattern.length && pattern[index + 1] == '*') {
+                append("(.*)")
+                index += 2
+            } else {
+                append("([^/]*)")
+                index += 1
+            }
+        } else {
+            append(Regex.escape(char.toString()))
+            index += 1
+        }
+    }
+    append('$')
+}.toRegex()
+
+private fun buildMappedActionUrl(
+    target: ParsedHttpUrl,
+    apiPath: String?,
+    captures: List<String>
+): String {
+    if (apiPath.isNullOrBlank()) return appendQuery(target.withoutQuery, target.query)
+    val mapped = applyWildcardCaptures(apiPath, captures)
+    val mappedUrl = if (mapped.startsWith("http://") || mapped.startsWith("https://")) {
+        mapped
+    } else {
+        target.origin + if (mapped.startsWith('/')) mapped else "/$mapped"
+    }
+    return appendQuery(mappedUrl, target.query)
+}
+
+private fun applyWildcardCaptures(template: String, captures: List<String>): String = buildString {
+    var captureIndex = 0
+    var index = 0
+    while (index < template.length) {
+        val char = template[index]
+        if (char == '*') {
+            if (index + 1 < template.length && template[index + 1] == '*') {
+                append(captures.getOrElse(captureIndex) { "" })
+                captureIndex += 1
+                index += 2
+            } else {
+                append(captures.getOrElse(captureIndex) { "" })
+                captureIndex += 1
+                index += 1
+            }
+        } else {
+            append(char)
+            index += 1
+        }
+    }
+}
+
+private fun appendQuery(url: String, query: String?): String {
+    if (query.isNullOrBlank()) return url
+    val separator = if (url.contains('?')) "&" else "?"
+    return "$url$separator$query"
 }
 
 internal fun percentEncode(s: String): String {

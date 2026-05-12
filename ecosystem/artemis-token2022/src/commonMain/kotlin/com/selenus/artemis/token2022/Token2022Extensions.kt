@@ -92,6 +92,11 @@ object Token2022Extensions {
     val entries: List<Token2022Tlv.TlvEntry>
   )
 
+  data class DecodedView(
+    val accountType: Token2022StateLayout.AccountType,
+    val entries: List<Token2022Tlv.TlvEntryView>
+  )
+
   /**
    * Decode TLV extensions from raw Token-2022 account data.
    *
@@ -100,8 +105,13 @@ object Token2022Extensions {
    * @return Decoded extensions or null if no extensions present
    */
   fun decode(accountData: ByteArray, baseLen: Int): Decoded? {
-    val ext = Token2022StateLayout.extractExtensions(accountData, baseLen) ?: return null
-    val entries = Token2022Tlv.decode(ext.tlvData)
-    return Decoded(ext.accountType, entries)
+    val decoded = decodeView(accountData, baseLen) ?: return null
+    return Decoded(decoded.accountType, decoded.entries.map { it.toOwnedEntry() })
+  }
+
+  fun decodeView(accountData: ByteArray, baseLen: Int): DecodedView? {
+    val ext = Token2022StateLayout.extractExtensionsView(accountData, baseLen) ?: return null
+    val entries = ext.decodeTlvViews()
+    return DecodedView(ext.accountType, entries)
   }
 }

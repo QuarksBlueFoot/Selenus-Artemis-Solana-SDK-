@@ -43,6 +43,44 @@ object Token2022Tlv {
         
         override fun hashCode(): Int = type.hashCode() + offset
     }
+
+    /** Zero-copy TLV entry view backed by the original account buffer. */
+    class TlvEntryView internal constructor(
+        val type: UShort,
+        val length: Int,
+        private val source: ByteArray,
+        val valueOffset: Int,
+        val offset: Int
+    ) {
+        fun valueAt(index: Int): Byte {
+            require(index in 0 until length) { "value index out of range: $index" }
+            return source[valueOffset + index]
+        }
+
+        fun copyValue(): ByteArray = source.copyOfRange(valueOffset, valueOffset + length)
+
+        fun copyValueInto(destination: ByteArray, destinationOffset: Int = 0) {
+            require(destinationOffset >= 0 && destinationOffset + length <= destination.size) {
+                "destination too small for TLV value"
+            }
+            source.copyInto(destination, destinationOffset, valueOffset, valueOffset + length)
+        }
+
+        fun toOwnedEntry(): TlvEntry = TlvEntry(
+            type = type,
+            length = length,
+            value = copyValue(),
+            offset = offset
+        )
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is TlvEntryView) return false
+            return type == other.type && offset == other.offset
+        }
+
+        override fun hashCode(): Int = type.hashCode() + offset
+    }
     
     /**
      * Extension type constants.
@@ -76,35 +114,45 @@ object Token2022Tlv {
      * @param tlvData Raw bytes from after the base mint/account structure
      * @return List of TLV entries found
      */
-    fun decode(tlvData: ByteArray): List<TlvEntry> {
-        val out = ArrayList<TlvEntry>(8)
-        var i = 0
+    fun decode(tlvData: ByteArray): List<TlvEntry> = decodeViews(tlvData).map { it.toOwnedEntry() }
+
+    /** Decode TLV entries without copying each value payload. */
+    fun decodeViews(tlvData: ByteArray): List<TlvEntryView> = decodeViews(tlvData, 0, tlvData.size)
+
+    fun decodeViews(source: ByteArray, startOffset: Int, length: Int): List<TlvEntryView> {
+        require(startOffset >= 0 && length >= 0 && startOffset + length <= source.size) {
+            "TLV range out of bounds"
+        }
+        val out = ArrayList<TlvEntryView>(8)
+        var i = startOffset
+        val endOffset = startOffset + length
         
-        while (i < tlvData.size) {
+        while (i < endOffset) {
             // Stop when there are not enough bytes for the next type tag
-            if (tlvData.size - i < 2) break
-            if (tlvData.size - i < HEADER_LEN) {
-                throw IllegalArgumentException("Malformed TLV: truncated header at offset=$i")
+            if (endOffset - i < 2) break
+            if (endOffset - i < HEADER_LEN) {
+                throw IllegalArgumentException("Malformed TLV: truncated header at offset=${i - startOffset}")
             }
             
-            val type = readU16LE(tlvData, i)
+            val type = readU16LE(source, i)
             if (type == 0) break // ExtensionType.Uninitialized
             
-            val len = readU16LE(tlvData, i + 2)
+            val len = readU16LE(source, i + 2)
             val valueStart = i + HEADER_LEN
             val valueEnd = valueStart + len
             
-            if (valueEnd > tlvData.size) {
+            if (valueEnd > endOffset) {
                 throw IllegalArgumentException(
-                    "Malformed TLV: value overruns buffer at offset=$i (len=$len, size=${tlvData.size})"
+                    "Malformed TLV: value overruns buffer at offset=${i - startOffset} (len=$len, size=$length)"
                 )
             }
             
-            out += TlvEntry(
+            out += TlvEntryView(
                 type = type.toUShort(),
                 length = len,
-                value = tlvData.copyOfRange(valueStart, valueEnd),
-                offset = i
+                source = source,
+                valueOffset = valueStart,
+                offset = i - startOffset
             )
             i = valueEnd
         }
@@ -115,6 +163,10 @@ object Token2022Tlv {
      * Find entries of a specific type.
      */
     fun findByType(entries: List<TlvEntry>, extensionType: Int): List<TlvEntry> {
+        return entries.filter { it.type.toInt() == extensionType }
+    }
+
+    fun findViewByType(entries: List<TlvEntryView>, extensionType: Int): List<TlvEntryView> {
         return entries.filter { it.type.toInt() == extensionType }
     }
     

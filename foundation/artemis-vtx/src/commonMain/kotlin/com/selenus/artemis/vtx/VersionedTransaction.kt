@@ -94,8 +94,7 @@ data class VersionedTransaction(
       }
 
       // Message
-      val messageBytes = bytes.copyOfRange(offset, bytes.size)
-      val message = MessageV0.deserialize(messageBytes)
+      val message = MessageV0.deserialize(bytes, offset, bytes.size - offset)
 
       return VersionedTransaction(message, signatures)
     }

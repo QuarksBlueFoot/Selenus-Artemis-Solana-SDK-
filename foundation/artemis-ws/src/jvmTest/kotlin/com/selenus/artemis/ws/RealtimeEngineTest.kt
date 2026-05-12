@@ -48,6 +48,19 @@ class RealtimeEngineTest {
         assertEquals(a, b)
     }
 
+    @Test
+    fun `SlotNotification - holds all fields`() {
+        val notif = RealtimeEngine.SlotNotification(
+            slot = 281_000_010L,
+            parent = 281_000_009L,
+            root = 281_000_000L
+        )
+
+        assertEquals(281_000_010L, notif.slot)
+        assertEquals(281_000_009L, notif.parent)
+        assertEquals(281_000_000L, notif.root)
+    }
+
     // ─── WsEvent.Notification schema helpers ─────────────────────────────────
 
     private fun buildAccountNotificationEvent(
@@ -93,6 +106,24 @@ class RealtimeEngineTest {
             key = "sig:$signature:confirmed",
             subscriptionId = 2L,
             method = "signatureNotification",
+            result = result
+        )
+    }
+
+    private fun buildSlotNotificationEvent(
+        slot: Long,
+        parent: Long,
+        root: Long
+    ): WsEvent.Notification {
+        val result = buildJsonObject {
+            put("slot", slot)
+            put("parent", parent)
+            put("root", root)
+        }
+        return WsEvent.Notification(
+            key = "slot",
+            subscriptionId = 3L,
+            method = "slotNotification",
             result = result
         )
     }
@@ -185,6 +216,27 @@ class RealtimeEngineTest {
         val event = buildSignatureNotificationEvent(sig)
         val extracted = event.key!!.removePrefix("sig:").substringBefore(":")
         assertEquals(sig, extracted)
+    }
+
+    @Test
+    fun `slot notification event - parses slot parent and root`() {
+        val event = buildSlotNotificationEvent(
+            slot = 281_000_010L,
+            parent = 281_000_009L,
+            root = 281_000_000L
+        )
+        val result = event.result as kotlinx.serialization.json.JsonObject
+        val notification = RealtimeEngine.SlotNotification(
+            slot = (result["slot"] as JsonPrimitive).content.toLong(),
+            parent = (result["parent"] as JsonPrimitive).content.toLong(),
+            root = (result["root"] as JsonPrimitive).content.toLong()
+        )
+
+        assertEquals("slotNotification", event.method)
+        assertEquals("slot", event.key)
+        assertEquals(281_000_010L, notification.slot)
+        assertEquals(281_000_009L, notification.parent)
+        assertEquals(281_000_000L, notification.root)
     }
 
     // ─── Non-notification events ignored ─────────────────────────────────────

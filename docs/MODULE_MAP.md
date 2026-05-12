@@ -21,7 +21,7 @@ Every module in Artemis, what ring it belongs to, what it does, and when you nee
 | Module | Purpose | You need this when... |
 |--------|---------|----------------------|
 | `artemis-wallet` | Wallet abstraction: Local, Adapter, Raw signing strategies | You are signing transactions in any context |
-| `artemis-wallet-mwa-android` | Mobile Wallet Adapter 2.0 **client** (dApp side) | You are building an Android dApp that connects to mobile wallets |
+| `artemis-wallet-mwa-android` | Mobile Wallet Adapter 2.0 **client** (dApp side) with Keystore-backed auth token and session-secret persistence | You are building an Android dApp that connects to mobile wallets |
 | `artemis-wallet-mwa-walletlib-android` | Mobile Wallet Adapter 2.0 **wallet-side** runtime: `Scenario`, dispatcher, chain-gated reauthorize, wallet-driven `DeauthorizedEvent`, sign-messages address check | You are building an Android wallet that accepts MWA connections |
 | `artemis-seed-vault` | Seed Vault integration | You are building for Saga or devices with Seed Vault |
 
@@ -29,7 +29,7 @@ Every module in Artemis, what ring it belongs to, what it does, and when you nee
 
 | Module | Purpose | You need this when... |
 |--------|---------|----------------------|
-| `artemis-token2022` | Token-2022 extensions (transfer fees, interest, metadata, confidential transfers, CPI guard) | Your app works with Token-2022 mints |
+| `artemis-token2022` | Token-2022 extensions, transfer-hook interface helpers, associated-token helpers, and zero-copy TLV/account extension views | Your app works with Token-2022 mints |
 | `artemis-metaplex` | Token Metadata: metadata, editions, collections | You are reading or writing NFT metadata |
 | `artemis-mplcore` | MPL Core (Asset) program | You are working with MPL Core assets |
 | `artemis-cnft` | Compressed NFTs via Bubblegum | You are minting or transferring cNFTs |
@@ -44,7 +44,7 @@ Every module in Artemis, what ring it belongs to, what it does, and when you nee
 | Module | Purpose | You need this when... |
 |--------|---------|----------------------|
 | `artemis-privacy` | Stealth addresses, encrypted memos, confidential transfers | You are building privacy-preserving payment flows |
-| `artemis-streaming` | Zero-copy account streaming via WebSocket | You need high-throughput low-allocation account updates |
+| `artemis-streaming` | Zero-copy account streaming via WebSocket plus JVM MWA reflector service | You need high-throughput account updates or a deployable MWA remote-association reflector |
 | `artemis-universal` | IDL-less program discovery and interaction | You need to interact with programs you don't have an IDL for |
 | `artemis-simulation` | Transaction simulation and analysis | You want to dry-run transactions before submitting |
 | `artemis-batch` | Automatic transaction batching | You need to send many transactions efficiently |
@@ -82,5 +82,5 @@ Source-compatible shims that publish the upstream package + class FQNs. Swap you
 | `artemis-sol4k-compat` | `org.sol4k:sol4k` | 0.7.0 | Migrating an `org.sol4k.*` codebase (Connection, Transaction, instruction builders incl. Token-2022, `RpcException` data class) |
 | `artemis-solana-kmp-compat` | `foundation.metaplex:solana-kmp` | main@2024-06-05 (upstream dormant) | Migrating a `foundation.metaplex.*` codebase |
 | `artemis-metaplex-android-compat` | `com.metaplex.lib:lib` | main@2024-04-06 (upstream dormant) | Migrating a `com.metaplex.lib.*` Android codebase. **Partial** parity: NFT read + DAS + identity drivers covered; auctions and full mutation surface still pending |
-| `artemis-rpc-core-compat` | `com.solana:rpc-core` | main@2026-01-09 | Migrating `com.solana.rpccore.*`, `SolanaRpcClient`, and `HttpNetworkDriver` code. **Partial** driver parity: use `ArtemisHttpNetworkDriver` or a custom `HttpNetworkDriver`; `KtorNetworkDriver` / `OkioNetworkDriver` FQNs are not ported |
-| `artemis-web3-solana-compat` | `com.solana:web3-solana` (Funkatronics) | main@2025-08 | Migrating code that imports `SolanaPublicKey`, `Transaction`, `Message.Builder`, signer, and supported program helpers. **Partial** for newer web3-core 0.3.x Token-2022 / ATA-idempotent additions |
+| `artemis-rpc-core-compat` | `com.solana:rpc-core` | main@2026-01-09 | Migrating `com.solana.rpccore.*`, `SolanaRpcClient`, `HttpNetworkDriver`, and the upstream concrete driver FQNs. `KtorNetworkDriver` / `OkHttpNetworkDriver` support no-arg default HTTP and delegate injection; `OkioNetworkDriver` is kept as a deprecated alias |
+| `artemis-web3-solana-compat` | `com.solana:web3-solana` (Funkatronics) | main@2025-08 | Migrating code that imports `SolanaPublicKey`, `Transaction`, `Message.Builder`, signer, and supported program helpers. Includes additive Token-2022 / ATA-idempotent helpers; still **Partial** for a full web3-core 0.3.x pin refresh |

@@ -2,8 +2,8 @@
 // Pinned upstream surface: snapshot of github.com/Funkatronics/web3-solana `main`
 // as of 2025-08 (last verified). Surfaces SolanaPublicKey, ProgramDerivedAddress,
 // Transaction, Message, Builder, AccountMeta, Instruction, SolanaSigner, and
-// the Artemis-backed program helpers listed in PARITY_MATRIX.md. TokenProgram
-// setAuthority/freeze/thaw remain native gaps and are not claimed by this shim.
+// the Artemis-backed program helpers listed in PARITY_MATRIX.md, including the
+// SPL Token authority/freeze/thaw helpers added as Artemis extensions.
 plugins {
     kotlin("multiplatform")
     id("com.android.library")

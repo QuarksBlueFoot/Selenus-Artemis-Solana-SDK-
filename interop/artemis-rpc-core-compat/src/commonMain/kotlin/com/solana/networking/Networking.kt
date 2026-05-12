@@ -112,3 +112,49 @@ class ArtemisHttpNetworkDriver(
         return response.body
     }
 }
+
+/**
+ * Source-compatible stand-in for upstream `rpc-ktordriver`'s
+ * `com.solana.networking.KtorNetworkDriver`.
+ *
+ * Artemis keeps third-party HTTP clients out of this compat artifact; callers
+ * can provide any [HttpNetworkDriver] delegate while preserving the upstream
+ * class name at construction sites.
+ */
+class KtorNetworkDriver(
+    private val delegate: HttpNetworkDriver
+) : HttpNetworkDriver {
+    constructor() : this(defaultHttpNetworkDriver())
+    constructor(transport: HttpTransport) : this(ArtemisHttpNetworkDriver(transport))
+
+    override suspend fun makeHttpRequest(request: HttpRequest): String =
+        delegate.makeHttpRequest(request)
+}
+
+/** Source-compatible stand-in for upstream `rpc-okiodriver`'s OkHttp driver. */
+class OkHttpNetworkDriver(
+    private val delegate: HttpNetworkDriver
+) : HttpNetworkDriver {
+    constructor() : this(defaultHttpNetworkDriver())
+    constructor(transport: HttpTransport) : this(ArtemisHttpNetworkDriver(transport))
+
+    override suspend fun makeHttpRequest(request: HttpRequest): String =
+        delegate.makeHttpRequest(request)
+}
+
+/** Deprecated misspelling kept for earlier Artemis docs and migration notes. */
+@Deprecated(
+    message = "Use OkHttpNetworkDriver; upstream rpc-core names the concrete driver OkHttpNetworkDriver.",
+    replaceWith = ReplaceWith("OkHttpNetworkDriver(delegate)")
+)
+class OkioNetworkDriver(
+    private val delegate: HttpNetworkDriver
+) : HttpNetworkDriver {
+    constructor() : this(defaultHttpNetworkDriver())
+    constructor(transport: HttpTransport) : this(ArtemisHttpNetworkDriver(transport))
+
+    override suspend fun makeHttpRequest(request: HttpRequest): String =
+        delegate.makeHttpRequest(request)
+}
+
+internal expect fun defaultHttpNetworkDriver(): HttpNetworkDriver

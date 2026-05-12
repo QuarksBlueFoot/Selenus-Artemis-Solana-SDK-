@@ -155,15 +155,19 @@ post.message?.let { toast(it) }  // Spec recommends showing this in the result s
 
 ## Action chaining
 
-If `post.links?.next` is set, the provider wants to run another step after confirmation. `confirmTransaction` handles both variants (`PostAction` that needs a callback, and `InlineAction` that is already embedded):
+If `post.links?.next` is set, the provider wants to run another step after confirmation. `confirmTransaction` handles both variants (`PostAction` that needs a callback, and `InlineAction` that is already embedded). Inline actions with `type = "completed"` return a terminal completed result with the final metadata:
 
 ```kotlin
 import com.selenus.artemis.actions.NextActionResult
 
-when (val next = actions.confirmTransaction(post, signature)) {
+when (val next = actions.confirmTransaction(post, signature, account = wallet.publicKey.toBase58())) {
     is NextActionResult.Continue -> {
         // next.action is an ActionGetResponse you can render like a normal step
         renderStep(next.action)
+    }
+    is NextActionResult.Completed -> {
+        // next.action is the final completed-state metadata
+        renderReceipt(next.action)
     }
     NextActionResult.Complete -> {
         // End of the chain
@@ -172,7 +176,7 @@ when (val next = actions.confirmTransaction(post, signature)) {
 }
 ```
 
-For a `PostAction.next.href`, `confirmTransaction` POSTs `{ "signature": "<sig>" }` to the callback URL and returns the parsed `ActionGetResponse` for the next step.
+For a `PostAction.next.href`, `confirmTransaction` POSTs `{ "signature": "<sig>", "account": "<wallet>" }` when the account is provided, or just `{ "signature": "<sig>" }` otherwise, then returns either `Continue` or `Completed` based on the returned action `type`.
 
 ## Identity verification
 
@@ -207,11 +211,15 @@ A domain publishes a [`/actions.json`](https://solana.com/docs/advanced/actions#
 val rules = actions.getActionsJson("example.com")
 rules?.rules?.forEach { println("${it.pathPattern} -> ${it.apiPath ?: "(same path)"}") }
 
+val apiUrl = actions.resolveActionApiUrl("https://example.com/donate/alice?ref=mobile")
+// If actions.json maps /donate/* -> https://api.example.net/v1/donate/*,
+// apiUrl is https://api.example.net/v1/donate/alice?ref=mobile
+
 val ok = actions.isActionAllowed("https://example.com/donate")
 if (!ok) reject("Action not allowed by domain rules")
 ```
 
-`getActionsJson` returns `null` on any network or parse error (never throws); `isActionAllowed` is conservative and returns `false` when no rules file is available.
+`getActionsJson` returns `null` on any network or parse error (never throws); `isActionAllowed` is conservative and returns `false` when no rules file is available. `resolveActionApiUrl` supports same-origin and cross-origin `apiPath` values, `*` and `**` wildcard captures, and preserves query parameters from the original website URL. `getAction` uses this resolver for website URLs that are not already direct `/api/actions/...` endpoints.
 
 ## QR codes and deep links
 
@@ -245,7 +253,7 @@ val action = try {
 
 ## Status
 
-Listed as `In Progress` in [../PARITY_MATRIX.md](../PARITY_MATRIX.md). GET/POST, parameter builders, action-chaining callback, identity-verified POST, actions.json, and the Blink/QR/deep-link helpers are implemented. Not yet on the `Verified` tier: interactive action replays, the `next.inline` case in the execute-time spec revisions, and cross-origin `actions.json` delegation. Tests live at [../../ecosystem/artemis-actions/src/jvmTest/kotlin/com/selenus/artemis/actions/ActionsModuleTest.kt](../../ecosystem/artemis-actions/src/jvmTest/kotlin/com/selenus/artemis/actions/ActionsModuleTest.kt).
+Listed as `In Progress` in [../PARITY_MATRIX.md](../PARITY_MATRIX.md). GET/POST, parameter builders, action-chaining callback, inline `next` including terminal `completed` metadata, identity-verified POST, actions.json same-origin/cross-origin delegation, and the Blink/QR/deep-link helpers are implemented. Not yet on the `Verified` tier: interactive action replays. Tests live at [../../ecosystem/artemis-actions/src/jvmTest/kotlin/com/selenus/artemis/actions/ActionsModuleTest.kt](../../ecosystem/artemis-actions/src/jvmTest/kotlin/com/selenus/artemis/actions/ActionsModuleTest.kt).
 
 ## License
 

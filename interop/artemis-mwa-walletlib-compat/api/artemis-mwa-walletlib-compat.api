@@ -131,24 +131,23 @@
   L303  fun complete() = artemis.complete()
 
 ## main/kotlin/com/solana/mobilewalletadapter/walletlib/scenario/Scenario.kt (package com.solana.mobilewalletadapter.walletlib.scenario)
-  L50  abstract class Scenario protected constructor(
-  L79  interface Callbacks {
-  L80  fun onScenarioReady() {}
-  L81  fun onScenarioServingClients() {}
-  L82  fun onScenarioServingComplete() {}
-  L83  fun onScenarioComplete() {}
-  L84  fun onScenarioError() {}
-  L85  fun onScenarioTeardownComplete() {}
-  L86  fun onAuthorizeRequest(request: AuthorizeRequest)
-  L87  fun onReauthorizeRequest(request: ReauthorizeRequest)
-  L88  fun onSignTransactionsRequest(request: SignTransactionsRequest)
-  L89  fun onSignMessagesRequest(request: SignMessagesRequest)
-  L90  fun onSignAndSendTransactionsRequest(request: SignAndSendTransactionsRequest)
-  L91  fun onDeauthorizedEvent(event: DeauthorizedEvent) {}
-  L92  fun onLowPowerAndNoConnection() {}
-  L103  open class LocalAssociationScenario private constructor(
-  L238  open class RemoteWebSocketServerScenario(
-  L246  val future = CompletableFuture<String>()
+  L51  abstract class Scenario protected constructor(
+  L80  interface Callbacks {
+  L81  fun onScenarioReady() {}
+  L82  fun onScenarioServingClients() {}
+  L83  fun onScenarioServingComplete() {}
+  L84  fun onScenarioComplete() {}
+  L85  fun onScenarioError() {}
+  L86  fun onScenarioTeardownComplete() {}
+  L87  fun onAuthorizeRequest(request: AuthorizeRequest)
+  L88  fun onReauthorizeRequest(request: ReauthorizeRequest)
+  L89  fun onSignTransactionsRequest(request: SignTransactionsRequest)
+  L90  fun onSignMessagesRequest(request: SignMessagesRequest)
+  L91  fun onSignAndSendTransactionsRequest(request: SignAndSendTransactionsRequest)
+  L92  fun onDeauthorizedEvent(event: DeauthorizedEvent) {}
+  L93  fun onLowPowerAndNoConnection() {}
+  L104  open class LocalAssociationScenario private constructor(
+  L232  open class RemoteWebSocketServerScenario(
 
 ## main/kotlin/com/solana/mobilewalletadapter/walletlib/scenario/WalletIconProvider.kt (package com.solana.mobilewalletadapter.walletlib.scenario)
   L21  interface WalletIconProvider {
@@ -184,16 +183,15 @@
   L180  val provider: WalletIconProvider = DefaultWalletIconProvider()
   L188  fun `marker interfaces are reachable at upstream FQN`() {
   L191  val markers: Array<Class<*>> = arrayOf(
-  L202  fun `RemoteWebSocketServerScenario completes exceptionally on startAsync`() {
+  L202  fun `RemoteWebSocketServerScenario is constructible for remote association`() {
   L203  val callbacks = object : Scenario.Callbacks {
   L211  val uri = Uri.parse("solana-wallet:/v1/associate/remote?association=BNXVtVHa2-FNJtcLqJlh-ofyKAFVHZNs9-PPGRoBlgklgwgnmwOLUzEDJSc8FdMHK0fY3sd5DVCsoaTcEGr0lwk&reflector=test.example&id=AQID")
   L212  val remote = AssociationUri.parse(uri) as RemoteAssociationUri
   L213  val scenario = RemoteWebSocketServerScenario(
-  L219  val future = scenario.startAsync()
-  L231  val javaUri = try {
-  L242  val ssp = javaUri.rawSchemeSpecificPart
-  L243  val (pathPart, queryPart) = if (ssp.contains('?')) {
-  L244  val q = ssp.indexOf('?')
-  L247  val pathDecoded = pathPart
-  L250  val queryParams: Map<String, String> = if (queryPart.isEmpty()) emptyMap() else {
-  L252  val eq = kv.indexOf('=')
+  L225  val javaUri = try {
+  L236  val ssp = javaUri.rawSchemeSpecificPart
+  L237  val (pathPart, queryPart) = if (ssp.contains('?')) {
+  L238  val q = ssp.indexOf('?')
+  L241  val pathDecoded = pathPart
+  L244  val queryParams: Map<String, String> = if (queryPart.isEmpty()) emptyMap() else {
+  L246  val eq = kv.indexOf('=')

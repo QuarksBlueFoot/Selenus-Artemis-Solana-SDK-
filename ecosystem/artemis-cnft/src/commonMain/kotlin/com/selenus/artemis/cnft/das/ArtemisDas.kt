@@ -28,7 +28,9 @@ data class DigitalAsset(
     /** Collection address this asset belongs to, if any. */
     val collectionAddress: String?,
     /** Collection verified flag. */
-    val collectionVerified: Boolean
+    val collectionVerified: Boolean,
+    /** Mutable flag when surfaced by the DAS provider. */
+    val isMutable: Boolean? = null
 )
 
 /**
@@ -76,4 +78,19 @@ interface ArtemisDas {
         page: Int = 1,
         limit: Int = 100
     ): List<DigitalAsset>
+
+    /** Fetch all assets with [creatorAddress] in their creator list. */
+    suspend fun assetsByCreator(
+        creatorAddress: String,
+        page: Int = 1,
+        limit: Int = 100,
+        onlyVerified: Boolean = true
+    ): List<DigitalAsset> = emptyList()
+
+    /** Fetch all assets controlled by [authorityAddress] as update authority. */
+    suspend fun assetsByUpdateAuthority(
+        authorityAddress: String,
+        page: Int = 1,
+        limit: Int = 100
+    ): List<DigitalAsset> = emptyList()
 }

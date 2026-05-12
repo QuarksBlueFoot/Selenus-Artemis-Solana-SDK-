@@ -44,12 +44,33 @@ object Token2022Program {
       AccountMeta(PROGRAM_ID, isSigner = false, isWritable = false),
       AccountMeta(RENT_SYSVAR_ID, isSigner = false, isWritable = false),
     )
-    // ATA: instruction 0 (Create)
-    val data = byteArrayOf(0)
+    val data = byteArrayOf()
     return Instruction(
       programId = ASSOCIATED_TOKEN_PROGRAM_ID,
       accounts = keys,
       data = data
+    )
+  }
+
+  fun createAssociatedTokenAccountIdempotent(
+    payer: Pubkey,
+    owner: Pubkey,
+    mint: Pubkey,
+    ata: Pubkey
+  ): Instruction {
+    val keys = listOf(
+      AccountMeta(payer, isSigner = true, isWritable = true),
+      AccountMeta(ata, isSigner = false, isWritable = true),
+      AccountMeta(owner, isSigner = false, isWritable = false),
+      AccountMeta(mint, isSigner = false, isWritable = false),
+      AccountMeta(SYSTEM_PROGRAM_ID, isSigner = false, isWritable = false),
+      AccountMeta(PROGRAM_ID, isSigner = false, isWritable = false),
+      AccountMeta(RENT_SYSVAR_ID, isSigner = false, isWritable = false),
+    )
+    return Instruction(
+      programId = ASSOCIATED_TOKEN_PROGRAM_ID,
+      accounts = keys,
+      data = byteArrayOf(1)
     )
   }
 

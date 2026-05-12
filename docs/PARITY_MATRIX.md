@@ -66,7 +66,7 @@ Two orthogonal labels appear throughout the docs:
 | Account subscriptions | No | No | N/A | N/A | Yes | Verified |
 | Program subscriptions | No | No | N/A | N/A | Yes | Verified |
 | Signature subscriptions | No | No | N/A | N/A | Yes | Verified |
-| Slot subscriptions | No | No | N/A | N/A | Yes | In Progress |
+| Slot subscriptions | No | No | N/A | N/A | `SolanaWsClient.slotSubscribe` + `RealtimeEngine.subscribeSlot` | Verified (`RealtimeEngineTest`) |
 | Real transport pings (OkHttp `pingInterval`) | N/A | N/A | N/A | N/A | Yes | Verified |
 | Reconnect only on `onOpen` success | N/A | N/A | N/A | N/A | Yes | Verified |
 | Deterministic resubscribe | N/A | N/A | N/A | N/A | Yes | Verified |
@@ -88,7 +88,7 @@ Two orthogonal labels appear throughout the docs:
 | Sign-and-send wallet-unsupported fallback (`SignedButNotBroadcast` + injectable `RpcBroadcaster`) | N/A | N/A | N/A | N/A | Yes | Verified |
 | SIWS (Sign In With Solana) payload round-trip (incl. `resources`) | N/A | N/A | Partial | N/A | Yes | Verified |
 | Keystore-backed auth token (AES-256-GCM, fail-closed) | No | No | Partial | No | `KeystoreEncryptedAuthTokenStore` | Verified |
-| HMAC session secret persisted for reauthorize after process death | No | No | No | No | `SessionManager.installPersistedSecret` | In Progress (requires caller-side Keystore wiring) |
+| HMAC session secret persisted for reauthorize after process death | No | No | No | No | `MwaSessionSecretStore` + `SessionManager.installPersistedSecret` | Verified (Keystore-backed default installed by `ArtemisMobile.create`) |
 | MWA session sequencing (atomic counters, fail-on-close) | No | No | Yes | No | `MwaSession` | Verified |
 | Local WebSocket server hardened (loopback bind, origin allow-list, ping/pong, oversized-frame reject, fragmentation) | N/A | N/A | Yes | N/A | `MwaWebSocketServer` | Verified (loopback + origin reject + oversized frame reject + ping/pong covered by `MwaWebSocketServerTest`) |
 | Chain-gated reauthorize (token issued for `solana:mainnet` rejected against `solana:devnet`) | N/A | N/A | Yes (`BaseScenario.doReauthorize`) | N/A | `WalletMwaServer.handleAuthorizeAsReauthorize` + `handleReauthorize` enforce `record.chain == requestedChain` | Verified (covered by `WalletCorrectnessTest`) |
@@ -129,7 +129,8 @@ Two orthogonal labels appear throughout the docs:
 |---|---|---|
 | `com.solana.mobilewalletadapter.walletlib.association.AssociationUri.parse` (+ `parseOrNull`, `createScenario(Context, ...)` factory) | `interop/artemis-mwa-walletlib-compat` | Verified |
 | `LocalAssociationScenario` with `startAsync(): CompletableFuture<String>` and lifecycle callbacks | `interop/artemis-mwa-walletlib-compat` | Verified |
-| `RemoteWebSocketServerScenario` FQN reachable; runtime stub completes exceptionally with `UnsupportedOperationException` until reflector lands | `interop/artemis-mwa-walletlib-compat` | Partial |
+| `RemoteWebSocketServerScenario` reflector flow (WSS `/reflect?id=...`, APP_PING gate, shared HELLO + JSON-RPC server path) | `interop/artemis-mwa-walletlib-compat` + `artemis-wallet-mwa-walletlib-android` | Verified |
+| JVM MWA reflector service (`/reflect?id=...`, pair-by-id relay, binary/base64 subprotocol conversion, frame caps, health endpoint) | `artemis-streaming` | Verified (`MwaReflectorServerTest`) |
 | `MobileWalletAdapterServer` typed exceptions: `RequestDeclinedException`, `InvalidPayloadsException`, `NotSubmittedException`, `TooManyPayloadsException`, `AuthorizationNotValidException`, `ChainNotSupportedException`, deprecated `ClusterNotSupportedException` alias | `interop/artemis-mwa-walletlib-compat` | Verified |
 | `MobileWalletAdapterSession` FQN exposed | `interop/artemis-mwa-walletlib-compat` | Verified |
 | `JsonRpc20Server` with canonical error codes + envelope helpers | `interop/artemis-mwa-walletlib-compat` | Verified |
@@ -155,7 +156,7 @@ Two orthogonal labels appear throughout the docs:
 | `com.solana.networking.HttpNetworkDriver`, `HttpRequest`, `Rpc20Driver` request serialization + result/error decoding | `interop/artemis-rpc-core-compat` | Verified (`RpcCoreCompatTest`) |
 | `SolanaRpcClient` constructors, `TransactionOptions`, `AccountInfo`, `SolanaResponse`, `SolanaAccount`, `SimulationResult` model shape | `interop/artemis-rpc-core-compat` | Verified (`RpcCoreCompatTest` + API snapshot) |
 | Default Artemis transport | `ArtemisHttpNetworkDriver` | Verified by source/API surface; delegates to `artemis-rpc` `HttpTransport` |
-| Upstream `KtorNetworkDriver` / `OkioNetworkDriver` FQNs | N/A | Partial: not ported. Swap those imports to `ArtemisHttpNetworkDriver` or provide any custom `HttpNetworkDriver`. |
+| Upstream `KtorNetworkDriver` / `OkHttpNetworkDriver` FQNs, plus deprecated `OkioNetworkDriver` alias for earlier migration notes | `interop/artemis-rpc-core-compat` | Verified (`RpcCoreCompatTest`; no-arg/default HTTP bridge plus delegate injection keeps Ktor / OkHttp out of common deps) |
 
 ## web3-solana compat (drop-in client path)
 
@@ -163,8 +164,9 @@ Two orthogonal labels appear throughout the docs:
 |---|---|---|
 | `SolanaPublicKey`, `PublicKey`, `ProgramDerivedAddress` | `interop/artemis-web3-solana-compat` | Verified (API snapshot; PDA helper routes to Artemis `Pda`) |
 | `Message.Builder`, `LegacyMessage`, `VersionedMessage`, `Transaction`, `SolanaSigner` | `interop/artemis-web3-solana-compat` | Verified (`Web3SolanaCompatProgramTest` + transaction byte fixtures in `artemis-tx` / `artemis-vtx`) |
-| Program helpers: System, SPL Token initialize/transfer/mint/burn/approve/revoke/close/checked-transfer/sync-native, ATA create, Compute Budget, Memo | `interop/artemis-web3-solana-compat` | Verified (`Web3SolanaCompatProgramTest`; all supported SPL Token helpers route through native `artemis-programs`) |
-| SPL Token `setAuthority`, freeze/thaw, and newer web3-core Token-2022 / ATA idempotent helpers | N/A | Partial: not claimed until native Artemis builders and upstream-version fixtures land. |
+| Program helpers: System, SPL Token initialize/transfer/mint/burn/approve/revoke/close/checked-transfer/sync-native, ATA create/idempotent create, Compute Budget, Memo | `interop/artemis-web3-solana-compat` | Verified (`Web3SolanaCompatProgramTest`; all supported SPL Token helpers route through native `artemis-programs`) |
+| SPL Token `setAuthority`, freeze/thaw | `interop/artemis-web3-solana-compat` + `artemis-programs` | Verified (`TokenProgram` native builders + `Web3SolanaCompatProgramTest`) |
+| Token-2022 helpers: checked transfer/mint, close account, authority/freeze/thaw, initialize account/immutable owner, Token-2022 ATA address/create/idempotent create | `interop/artemis-web3-solana-compat` + `artemis-token2022` | Verified (`Web3SolanaCompatProgramTest`, `Token2022ProgramTest`; upstream 0.3.x pin refresh still pending) |
 | Upstream pin freshness | `main@2025-08` | Partial: source-compatible for the pinned snapshot; do not claim full Funkatronics `web3-core` 0.3.x parity until the pin and snapshot tests are refreshed. |
 
 ## solana-kmp compat (drop-in path)
@@ -221,7 +223,7 @@ Two orthogonal labels appear throughout the docs:
 | Capability | Artemis module | Status |
 |---|---|---|
 | `com.metaplex.lib.Metaplex` entry point with `connection`, `identityDriver`, `nft`, `tokens`, `das`, `candyMachinesV2`, `candyMachines` modules | `interop/artemis-metaplex-android-compat` | Verified |
-| `NftModule` (findByMint, findAllByOwner, findAllByMintList; findAllByCreator and findAllByUpdateAuthority degrade to empty when no DAS is available) | `interop/artemis-metaplex-android-compat` | Partial |
+| `NftModule` (findByMint, findAllByOwner, findAllByMintList; DAS-backed findAllByCreator and findAllByUpdateAuthority with empty RPC-only fallback) | `interop/artemis-metaplex-android-compat` | Verified (`MetaplexAndroidCompatTest`) |
 | `TokensModule.findByMint` | `interop/artemis-metaplex-android-compat` | Verified |
 | `DasModule` (assetsByOwner, asset) | `interop/artemis-metaplex-android-compat` | Verified |
 | Token Metadata instruction builders (createMetadataAccountV3, createMasterEditionV3, updateMetadataAccountV2, signMetadata, verifyCollection, unverifyCollection, setAndVerifyCollection, verifySizedCollectionItem, approveCollectionAuthority, revokeCollectionAuthority) | `compatibility/artemis-nft-compat` | Verified |
@@ -232,12 +234,12 @@ Two orthogonal labels appear throughout the docs:
 | Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
 |---|---|---|---|---|---|---|
 | System Program | Yes | Yes | N/A | N/A | 12 instructions | Verified |
-| SPL Token | Partial | Partial | N/A | N/A | 10 builders | Verified |
+| SPL Token | Partial | Partial | N/A | N/A | 13 builders | Verified |
 | Associated Token | Partial | Partial | N/A | N/A | Yes | Verified |
 | Compute Budget | No | No | N/A | N/A | Yes | Verified |
 | Stake Program | No | No | N/A | N/A | 5 instructions | Verified |
 | Memo Program | No | Partial | N/A | N/A | Yes | Verified |
-| Address Lookup Table program | No | No | N/A | N/A | Yes | Partial (create + extend covered; close + freeze not yet) |
+| Address Lookup Table program | No | No | N/A | N/A | Yes | Verified (create, extend, freeze, deactivate, close) |
 
 ## Token-2022
 
@@ -247,13 +249,13 @@ Two orthogonal labels appear throughout the docs:
 | Interest bearing | No | No | N/A | No | Yes | Verified |
 | Permanent delegate | No | No | N/A | No | Yes | Verified |
 | Default account state | No | No | N/A | No | Yes | Verified |
-| Transfer hook | No | No | N/A | No | Yes | In Progress |
+| Transfer hook | No | No | N/A | No | Yes | Verified; Token-2022 mint config plus SPL transfer-hook execute / extra-account-meta interface helpers |
 | Metadata pointer | No | No | N/A | No | Yes | Verified |
 | Confidential transfers | No | No | N/A | No | Yes | Experimental |
 | CPI guard | No | No | N/A | No | Yes | Verified |
 | Immutable owner | No | No | N/A | No | Yes | Verified |
 | Mint close authority | No | No | N/A | No | Yes | Verified |
-| TLV decoding | No | No | N/A | No | Yes | Verified |
+| TLV decoding | No | No | N/A | No | Yes | Verified; owned decode plus zero-copy `TlvEntryView` / account extension views |
 
 ## NFT / Metaplex
 
@@ -280,7 +282,7 @@ Two orthogonal labels appear throughout the docs:
 | Transaction simulation | No | No | N/A | N/A | `TxEngine` simulate stage | Verified |
 | Compute estimation | No | No | N/A | N/A | `artemis-compute` | Verified |
 | Priority fee helpers | No | No | N/A | N/A | Yes | Verified |
-| Error decoding | Minimal | No | N/A | N/A | `artemis-errors` | Partial |
+| Error decoding | Minimal | No | N/A | N/A | `artemis-errors` | Verified (structured RPC/simulation decoder with instruction index, program id, custom code, retryability, and mapper integration) |
 | Transaction engine (pipeline) | No | No | N/A | N/A | `TxEngine` | Verified |
 | Retry pipeline with classified errors | No | No | N/A | N/A | `RetryPipeline` | Verified |
 | Blockhash cache with TTL | No | No | N/A | N/A | `BlockhashCache` | Verified |
@@ -297,9 +299,9 @@ These are features no other Kotlin Solana SDK provides; none are required for th
 | DAS queries (Helius / RPC standard) | `artemis-cnft` | Verified |
 | cNFT transfer with proof resolution (`MarketplaceEngine`) | `artemis-cnft` | Verified |
 | Full mobile stack wiring (`ArtemisMobile.create()`) | `artemis-wallet-mwa-android` | Verified |
-| Anchor IDL client | `artemis-anchor` | Partial |
+| Anchor IDL client | `artemis-anchor` | Partial (runtime path and enum args covered; generics/bytemuck layouts remain) |
 | Jupiter DEX integration | `artemis-jupiter` | Partial |
-| Solana Actions / Blinks | `artemis-actions` | In Progress |
+| Solana Actions / Blinks | `artemis-actions` | In Progress (GET/POST, parameter builders, identity POST, actions.json same-origin/cross-origin delegation, QR/deep links, callback chaining, and inline `next` completed-state handling covered; interactive replays remain) |
 | Privacy toolkit | `artemis-privacy` | Experimental |
 | Zero-copy streaming | `artemis-streaming` | Experimental |
 | Transaction batching | `artemis-batch` | In Progress |

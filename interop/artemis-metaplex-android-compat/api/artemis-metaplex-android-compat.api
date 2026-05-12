@@ -18,81 +18,92 @@
   L47  class Metaplex(
   L48  val connection: Connection,
   L49  val identityDriver: IdentityDriver = Guest,
-  L54  val nft: NftModule by lazy { NftModule(connection.rpc) }
-  L57  val tokens: TokensModule by lazy { TokensModule(connection.rpc) }
-  L60  val das: DasModule by lazy { DasModule(connection.rpc) }
-  L68  val candyMachinesV2: CandyMachinesV2Module by lazy { CandyMachinesV2Module() }
-  L74  val candyMachines: CandyMachinesModule by lazy { CandyMachinesModule() }
-  L89  val auctions: AuctionsModule by lazy { AuctionsModule() }
-  L95  class NftModule internal constructor(rpc: RpcApi) {
-  L100  suspend fun findByMint(mint: String): NFT? = client.findByMint(mint)?.toMetaplex()
-  L103  suspend fun findAllByOwner(owner: String): List<NFT> =
-  L111  suspend fun findAllByMintList(mintList: List<String>): List<NFT> =
-  L120  suspend fun findAllByCreator(creator: String): List<NFT> = emptyList()
-  L126  suspend fun findAllByUpdateAuthority(updateAuthority: String): List<NFT> = emptyList()
-  L153  class TokensModule internal constructor(private val rpc: RpcApi) {
-  L154  suspend fun findByMint(mint: String): Token? {
-  L155  val mintInfo = rpc.getMintInfoParsed(mint) ?: return null
-  L170  class DasModule internal constructor(private val rpc: RpcApi) {
-  L173  suspend fun assetsByOwner(owner: String, das: ArtemisDas): List<DigitalAsset> =
-  L177  suspend fun asset(id: String, das: ArtemisDas): DigitalAsset? = das.asset(id)
-  L183  data class NFT(
-  L184  val mint: String,
-  L185  val name: String,
-  L186  val symbol: String,
-  L187  val uri: String,
-  L188  val sellerFeeBasisPoints: Int,
-  L189  val isMutable: Boolean
-  L195  data class Token(
-  L196  val mint: String,
-  L197  val decimals: Int,
-  L198  val supply: Long,
-  L199  val mintAuthority: String?,
-  L200  val freezeAuthority: String?
-  L204  interface IdentityDriver {
-  L205  val publicKey: String?
-  L209  object Guest : IdentityDriver {
-  L218  class KeypairIdentityDriver(private val keypairPubkey: String) : IdentityDriver {
-  L223  interface StorageDriver
-  L226  object DefaultStorageDriver : StorageDriver
-  L241  class AuctionsModule {
-  L243  data class NotImplementedResult(
-  L244  val message: String = "Auction House actions are not implemented in artemis-metaplex-android-compat. " +
-  L250  fun findAllByCreator(@Suppress("UNUSED_PARAMETER") creator: String): List<Nothing> = emptyList()
-  L253  fun findAllBySeller(@Suppress("UNUSED_PARAMETER") seller: String): List<Nothing> = emptyList()
-  L256  fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
-  L259  fun bid(@Suppress("UNUSED_PARAMETER") auctionAddress: String, @Suppress("UNUSED_PARAMETER") price: Long): NotImplementedResult =
-  L263  fun list(@Suppress("UNUSED_PARAMETER") mint: String, @Suppress("UNUSED_PARAMETER") price: Long): NotImplementedResult =
-  L267  fun cancel(@Suppress("UNUSED_PARAMETER") auctionAddress: String): NotImplementedResult =
-  L281  class CandyMachinesV2Module {
-  L282  data class NotImplementedResult(
-  L283  val message: String = "Candy Machine v2 is not implemented in artemis-metaplex-android-compat. " +
-  L289  fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
-  L292  fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<Nothing> = emptyList()
-  L295  fun findAllMintedItems(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): List<Nothing> = emptyList()
-  L298  fun mint(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): NotImplementedResult =
-  L307  class CandyMachinesModule {
-  L308  data class NotImplementedResult(
-  L309  val message: String = "Candy Machine v3 is not implemented in artemis-metaplex-android-compat. " +
-  L314  fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
-  L317  fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<Nothing> = emptyList()
-  L320  fun mint(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): NotImplementedResult =
+  L55  val nft: NftModule by lazy { NftModule(connection.rpc, dasProvider) }
+  L58  val tokens: TokensModule by lazy { TokensModule(connection.rpc) }
+  L61  val das: DasModule by lazy { DasModule(connection.rpc) }
+  L69  val candyMachinesV2: CandyMachinesV2Module by lazy { CandyMachinesV2Module() }
+  L75  val candyMachines: CandyMachinesModule by lazy { CandyMachinesModule() }
+  L90  val auctions: AuctionsModule by lazy { AuctionsModule() }
+  L96  class NftModule internal constructor(rpc: RpcApi, private val dasProvider: ArtemisDas? = null) {
+  L101  suspend fun findByMint(mint: String): NFT? = client.findByMint(mint)?.toMetaplex()
+  L104  suspend fun findAllByOwner(owner: String): List<NFT> =
+  L112  suspend fun findAllByMintList(mintList: List<String>): List<NFT> =
+  L120  suspend fun findAllByCreator(creator: String): List<NFT> =
+  L127  suspend fun findAllByUpdateAuthority(updateAuthority: String): List<NFT> =
+  L164  class TokensModule internal constructor(private val rpc: RpcApi) {
+  L165  suspend fun findByMint(mint: String): Token? {
+  L166  val mintInfo = rpc.getMintInfoParsed(mint) ?: return null
+  L181  class DasModule internal constructor(private val rpc: RpcApi) {
+  L184  suspend fun assetsByOwner(owner: String, das: ArtemisDas): List<DigitalAsset> =
+  L188  suspend fun asset(id: String, das: ArtemisDas): DigitalAsset? = das.asset(id)
+  L191  suspend fun assetsByCreator(creator: String, das: ArtemisDas): List<DigitalAsset> =
+  L195  suspend fun assetsByUpdateAuthority(updateAuthority: String, das: ArtemisDas): List<DigitalAsset> =
+  L202  data class NFT(
+  L203  val mint: String,
+  L204  val name: String,
+  L205  val symbol: String,
+  L206  val uri: String,
+  L207  val sellerFeeBasisPoints: Int,
+  L208  val isMutable: Boolean
+  L214  data class Token(
+  L215  val mint: String,
+  L216  val decimals: Int,
+  L217  val supply: Long,
+  L218  val mintAuthority: String?,
+  L219  val freezeAuthority: String?
+  L223  interface IdentityDriver {
+  L224  val publicKey: String?
+  L228  object Guest : IdentityDriver {
+  L237  class KeypairIdentityDriver(private val keypairPubkey: String) : IdentityDriver {
+  L242  interface StorageDriver
+  L245  object DefaultStorageDriver : StorageDriver
+  L260  class AuctionsModule {
+  L262  data class NotImplementedResult(
+  L263  val message: String = "Auction House actions are not implemented in artemis-metaplex-android-compat. " +
+  L269  fun findAllByCreator(@Suppress("UNUSED_PARAMETER") creator: String): List<Nothing> = emptyList()
+  L272  fun findAllBySeller(@Suppress("UNUSED_PARAMETER") seller: String): List<Nothing> = emptyList()
+  L275  fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
+  L278  fun bid(@Suppress("UNUSED_PARAMETER") auctionAddress: String, @Suppress("UNUSED_PARAMETER") price: Long): NotImplementedResult =
+  L282  fun list(@Suppress("UNUSED_PARAMETER") mint: String, @Suppress("UNUSED_PARAMETER") price: Long): NotImplementedResult =
+  L286  fun cancel(@Suppress("UNUSED_PARAMETER") auctionAddress: String): NotImplementedResult =
+  L300  class CandyMachinesV2Module {
+  L301  data class NotImplementedResult(
+  L302  val message: String = "Candy Machine v2 is not implemented in artemis-metaplex-android-compat. " +
+  L308  fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
+  L311  fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<Nothing> = emptyList()
+  L314  fun findAllMintedItems(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): List<Nothing> = emptyList()
+  L317  fun mint(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): NotImplementedResult =
+  L326  class CandyMachinesModule {
+  L327  data class NotImplementedResult(
+  L328  val message: String = "Candy Machine v3 is not implemented in artemis-metaplex-android-compat. " +
+  L333  fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
+  L336  fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<Nothing> = emptyList()
+  L339  fun mint(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): NotImplementedResult =
 
 ## jvmTest/kotlin/com/metaplex/lib/MetaplexAndroidCompatTest.kt (package com.metaplex.lib)
-  L15  class MetaplexAndroidCompatTest {
-  L18  fun `Connection wraps an Artemis RpcApi`() {
-  L19  val connection = Connection("https://api.devnet.solana.com")
-  L24  fun `Metaplex facade exposes nft, tokens, and das modules`() {
-  L25  val connection = Connection("https://api.devnet.solana.com")
-  L26  val metaplex = Metaplex(connection)
-  L33  fun `auctions module surfaces a typed error`() {
-  L34  val connection = Connection("https://api.devnet.solana.com")
-  L35  val metaplex = Metaplex(connection)
-  L36  val result = metaplex.auctions.bid("auction", price = 1L)
-  L41  fun `NFT data class preserves field ordering`() {
-  L42  val nft = NFT(
-  L56  fun `Token data class exposes mint authorities`() {
-  L57  val token = Token(
-  L69  fun `KeypairIdentityDriver reports its public key`() {
-  L70  val driver = KeypairIdentityDriver("GdRNeX9mbzrhm5tKWGP3mN1p6ZqoDMCK7BmLbsjc23Jv")
-  L75  fun `Guest driver is unauthenticated`() {
+  L19  class MetaplexAndroidCompatTest {
+  L22  fun `Connection wraps an Artemis RpcApi`() {
+  L23  val connection = Connection("https://api.devnet.solana.com")
+  L28  fun `Metaplex facade exposes nft, tokens, and das modules`() {
+  L29  val connection = Connection("https://api.devnet.solana.com")
+  L30  val metaplex = Metaplex(connection)
+  L37  fun `NftModule creator and update authority queries delegate to DAS when provided`() = runBlocking {
+  L38  val das = FakeDas(
+  L42  val metaplex = Metaplex(
+  L47  val byCreator = metaplex.nft.findAllByCreator("creator-address")
+  L48  val byAuthority = metaplex.nft.findAllByUpdateAuthority("authority-address")
+  L59  fun `NftModule creator queries keep empty RPC-only fallback`() = runBlocking {
+  L60  val metaplex = Metaplex(Connection("https://api.devnet.solana.com"))
+  L67  fun `auctions module surfaces a typed error`() {
+  L68  val connection = Connection("https://api.devnet.solana.com")
+  L69  val metaplex = Metaplex(connection)
+  L70  val result = metaplex.auctions.bid("auction", price = 1L)
+  L75  fun `NFT data class preserves field ordering`() {
+  L76  val nft = NFT(
+  L90  fun `Token data class exposes mint authorities`() {
+  L91  val token = Token(
+  L103  fun `KeypairIdentityDriver reports its public key`() {
+  L104  val driver = KeypairIdentityDriver("GdRNeX9mbzrhm5tKWGP3mN1p6ZqoDMCK7BmLbsjc23Jv")
+  L109  fun `Guest driver is unauthenticated`() {
+  L117  var lastCreator: String? = null
+  L119  var lastAuthority: String? = null

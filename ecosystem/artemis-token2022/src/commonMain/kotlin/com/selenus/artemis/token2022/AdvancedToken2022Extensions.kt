@@ -233,22 +233,13 @@ object AdvancedToken2022Extensions {
         authority: Pubkey?,
         hookProgramId: Pubkey
     ): Instruction {
-        val data = ByteArray(1 + 1 + 32 + 32)
+        val data = ByteArray(2 + 32 + 32)
         var offset = 0
         
-        data[offset++] = 39 // TransferHook extension
-        
-        // Authority option
-        if (authority != null) {
-            data[offset++] = 1
-            authority.bytes.copyInto(data, destinationOffset = offset)
-            offset += 32
-        } else {
-            data[offset++] = 0
-            offset += 32
-        }
-        
-        // Hook program ID
+        data[offset++] = TOKEN_INSTRUCTION_TRANSFER_HOOK_EXTENSION
+        data[offset++] = TRANSFER_HOOK_INSTRUCTION_INITIALIZE
+        copyNullablePubkey(authority, data, offset)
+        offset += 32
         hookProgramId.bytes.copyInto(data, destinationOffset = offset)
         
         return Instruction(
@@ -267,17 +258,24 @@ object AdvancedToken2022Extensions {
         mint: Pubkey,
         authority: Pubkey,
         newProgramId: Pubkey
+    ): Instruction = updateTransferHook(mint, authority, newProgramId, emptyList())
+
+    fun updateTransferHook(
+        mint: Pubkey,
+        authority: Pubkey,
+        newProgramId: Pubkey?,
+        signers: List<Pubkey>
     ): Instruction {
-        val data = ByteArray(33)
-        data[0] = 40
-        newProgramId.bytes.copyInto(data, destinationOffset = 1)
+        val data = ByteArray(2 + 32)
+        data[0] = TOKEN_INSTRUCTION_TRANSFER_HOOK_EXTENSION
+        data[1] = TRANSFER_HOOK_INSTRUCTION_UPDATE
+        copyNullablePubkey(newProgramId, data, 2)
+        val authorityMeta = AccountMeta(authority, isSigner = signers.isEmpty(), isWritable = false)
         
         return Instruction(
             programId = TOKEN_2022_PROGRAM,
-            accounts = listOf(
-                AccountMeta(mint, isSigner = false, isWritable = true),
-                AccountMeta(authority, isSigner = true, isWritable = false)
-            ),
+            accounts = listOf(AccountMeta(mint, isSigner = false, isWritable = true), authorityMeta) +
+                signers.map { AccountMeta(it, isSigner = true, isWritable = false) },
             data = data
         )
     }
@@ -854,6 +852,14 @@ object AdvancedToken2022Extensions {
             data = data
         )
     }
+
+    private fun copyNullablePubkey(pubkey: Pubkey?, destination: ByteArray, offset: Int) {
+        pubkey?.bytes?.copyInto(destination, destinationOffset = offset)
+    }
+
+    private const val TOKEN_INSTRUCTION_TRANSFER_HOOK_EXTENSION: Byte = 36
+    private const val TRANSFER_HOOK_INSTRUCTION_INITIALIZE: Byte = 0
+    private const val TRANSFER_HOOK_INSTRUCTION_UPDATE: Byte = 1
     
     private fun putU64LE(dst: ByteArray, off: Int, v: Long) {
         var x = v

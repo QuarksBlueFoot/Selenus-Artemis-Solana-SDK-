@@ -10,6 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
+import kotlinx.coroutines.runBlocking
 
 /**
  * Tests for the Solana Actions Client.
@@ -244,5 +245,196 @@ class ActionsModuleTest {
         val result = NextActionResult.Continue(nextAction)
         assertTrue(result is NextActionResult.Continue)
         assertEquals("Step 2", (result as NextActionResult.Continue).action.title)
+    }
+
+    @Test
+    fun `confirmTransaction returns terminal completed result for inline completed action`() = runBlocking {
+        val completed = ActionGetResponse(
+            type = "completed",
+            icon = "https://example.com/done.png",
+            title = "Done",
+            description = "The action chain is complete",
+            label = "Done"
+        )
+        val post = ActionPostResponse(
+            transaction = "tx",
+            links = PostResponseLinks(
+                next = NextAction.InlineAction(completed)
+            )
+        )
+
+        val result = actions.confirmTransaction(post, signature = "sig")
+
+        assertTrue(result is NextActionResult.Completed)
+        assertEquals("Done", result.action.title)
+    }
+
+    @Test
+    fun `confirmTransaction returns continue for inline executable action`() = runBlocking {
+        val next = ActionGetResponse(
+            type = "action",
+            icon = "https://example.com/next.png",
+            title = "Next Step",
+            description = "Continue the chain",
+            label = "Continue"
+        )
+        val post = ActionPostResponse(
+            transaction = "tx",
+            links = PostResponseLinks(
+                next = NextAction.InlineAction(next)
+            )
+        )
+
+        val result = actions.confirmTransaction(post, signature = "sig")
+
+        assertTrue(result is NextActionResult.Continue)
+        assertEquals("Next Step", result.action.title)
+    }
+
+    @Test
+    fun `confirmTransaction callback posts signature and account then decodes completed action`() = runBlocking {
+        val http = RecordingHttpApiClient(
+            postResponse = """
+                {
+                  "type": "completed",
+                  "icon": "https://example.com/done.png",
+                  "title": "Receipt Ready",
+                  "description": "Confirmed on chain",
+                  "label": "Close"
+                }
+            """.trimIndent()
+        )
+        val client = ActionsClient.create(http)
+        val post = ActionPostResponse(
+            transaction = "tx",
+            links = PostResponseLinks(
+                next = NextAction.PostAction("https://example.com/api/actions/callback")
+            )
+        )
+
+        val result = client.confirmTransaction(
+            response = post,
+            signature = "5ig",
+            account = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+        )
+
+        assertTrue(result is NextActionResult.Completed)
+        assertEquals("https://example.com/api/actions/callback", http.lastPostUrl)
+        assertTrue(http.lastPostBody!!.contains("\"signature\":\"5ig\""))
+        assertTrue(http.lastPostBody!!.contains("\"account\":\"7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU\""))
+    }
+
+    @Test
+    fun `confirmTransaction callback omits account when unavailable`() = runBlocking {
+        val http = RecordingHttpApiClient(
+            postResponse = """
+                {
+                  "type": "action",
+                  "icon": "https://example.com/next.png",
+                  "title": "Continue",
+                  "description": "Next action",
+                  "label": "Continue"
+                }
+            """.trimIndent()
+        )
+        val client = ActionsClient.create(http)
+        val post = ActionPostResponse(
+            transaction = "tx",
+            links = PostResponseLinks(
+                next = NextAction.PostAction("https://example.com/api/actions/callback")
+            )
+        )
+
+        val result = client.confirmTransaction(post, signature = "5ig")
+
+        assertTrue(result is NextActionResult.Continue)
+        assertFalse(http.lastPostBody!!.contains("account"))
+    }
+
+    @Test
+    fun `resolveActionApiUrl maps cross-origin actions json wildcard and preserves query`() = runBlocking {
+        val http = RecordingHttpApiClient(
+            getResponses = mapOf(
+                "https://example.com/actions.json" to """
+                    {
+                      "rules": [
+                        {
+                          "pathPattern": "/donate/*",
+                          "apiPath": "https://api.example.net/v1/donate/*"
+                        }
+                      ]
+                    }
+                """.trimIndent()
+            ),
+            postResponse = "{}"
+        )
+        val client = ActionsClient.create(http)
+
+        val resolved = client.resolveActionApiUrl("https://example.com/donate/alice?ref=mobile")
+
+        assertEquals("https://api.example.net/v1/donate/alice?ref=mobile", resolved)
+        assertTrue(client.isActionAllowed("https://example.com/donate/alice?ref=mobile"))
+    }
+
+    @Test
+    fun `getAction follows actions json delegation for website urls`() = runBlocking {
+        val http = RecordingHttpApiClient(
+            getResponses = mapOf(
+                "https://example.com/actions.json" to """
+                    {
+                      "rules": [
+                        {
+                          "pathPattern": "/swap/**",
+                          "apiPath": "/api/actions/swap/**"
+                        }
+                      ]
+                    }
+                """.trimIndent(),
+                "https://example.com/api/actions/swap/SOL/USDC?amount=1" to """
+                    {
+                      "type": "action",
+                      "icon": "https://example.com/icon.png",
+                      "title": "Swap",
+                      "description": "Swap SOL to USDC",
+                      "label": "Swap"
+                    }
+                """.trimIndent()
+            ),
+            postResponse = "{}"
+        )
+        val client = ActionsClient.create(http)
+
+        val action = client.getAction("https://example.com/swap/SOL/USDC?amount=1")
+
+        assertEquals("Swap", action.title)
+        assertEquals("https://example.com/api/actions/swap/SOL/USDC?amount=1", http.lastGetUrl)
+    }
+
+    private class RecordingHttpApiClient(
+        private val getResponse: String = "{}",
+        private val getResponses: Map<String, String> = emptyMap(),
+        private val postResponse: String
+    ) : HttpApiClient {
+        var lastGetUrl: String? = null
+            private set
+        var lastPostUrl: String? = null
+            private set
+        var lastPostBody: String? = null
+            private set
+
+        override fun get(url: String, headers: Map<String, String>): HttpApiClient.Response {
+            lastGetUrl = url
+            return HttpApiClient.Response(200, getResponses[url] ?: getResponse)
+        }
+
+        override fun post(
+            url: String,
+            body: String,
+            headers: Map<String, String>
+        ): HttpApiClient.Response {
+            lastPostUrl = url
+            lastPostBody = body
+            return HttpApiClient.Response(200, postResponse)
+        }
     }
 }

@@ -41,6 +41,23 @@ object Token2022StateLayout {
     val tlvData: ByteArray,
   )
 
+  class ExtensionsSliceView internal constructor(
+    val accountType: AccountType,
+    private val source: ByteArray,
+    val tlvOffset: Int,
+    val tlvLength: Int,
+  ) {
+    fun tlvByteAt(index: Int): Byte {
+      require(index in 0 until tlvLength) { "TLV index out of range: $index" }
+      return source[tlvOffset + index]
+    }
+
+    fun copyTlvData(): ByteArray = source.copyOfRange(tlvOffset, tlvOffset + tlvLength)
+
+    fun decodeTlvViews(): List<Token2022Tlv.TlvEntryView> =
+      Token2022Tlv.decodeViews(source, tlvOffset, tlvLength)
+  }
+
   /**
    * Extract account type + TLV bytes from raw account data.
    *
@@ -48,32 +65,40 @@ object Token2022StateLayout {
    * @return null if there are no extension bytes (data <= baseLen).
    */
   fun extractExtensions(accountData: ByteArray, baseLen: Int): ExtensionsSlice? {
-    if (accountData.size <= baseLen) return null
+    val view = extractExtensionsView(accountData, baseLen) ?: return null
+    return ExtensionsSlice(
+      accountType = view.accountType,
+      tlvData = view.copyTlvData(),
+    )
+  }
 
-    val rest = accountData.copyOfRange(baseLen, accountData.size)
-    if (rest.isEmpty()) return null
+  fun extractExtensionsView(accountData: ByteArray, baseLen: Int): ExtensionsSliceView? {
+    if (accountData.size <= baseLen) return null
 
     val accountTypeIndex = (BASE_ACCOUNT_LENGTH - baseLen).coerceAtLeast(0)
     val tlvStartIndex = accountTypeIndex + ACCOUNT_TYPE_LEN
 
-    if (rest.size < tlvStartIndex) {
+    val restSize = accountData.size - baseLen
+    if (restSize < tlvStartIndex) {
       throw IllegalArgumentException(
-        "Invalid Token-2022 data: rest too small for accountType. baseLen=$baseLen rest=${rest.size}"
+        "Invalid Token-2022 data: rest too small for accountType. baseLen=$baseLen rest=$restSize"
       )
     }
 
     // Padding between base bytes and Account::LEN must be all 0.
     for (i in 0 until accountTypeIndex) {
-      if (rest[i].toInt() != 0) {
+      if (accountData[baseLen + i].toInt() != 0) {
         throw IllegalArgumentException("Invalid Token-2022 padding: non-zero at rest[$i]")
       }
     }
 
-    val accountTypeByte = rest[accountTypeIndex].toInt() and 0xFF
-    val tlvData = rest.copyOfRange(tlvStartIndex, rest.size)
-    return ExtensionsSlice(
+    val accountTypeByte = accountData[baseLen + accountTypeIndex].toInt() and 0xFF
+    val absoluteTlvOffset = baseLen + tlvStartIndex
+    return ExtensionsSliceView(
       accountType = AccountType.fromByte(accountTypeByte),
-      tlvData = tlvData,
+      source = accountData,
+      tlvOffset = absoluteTlvOffset,
+      tlvLength = accountData.size - absoluteTlvOffset,
     )
   }
 }

@@ -22,6 +22,33 @@ import kotlin.test.assertTrue
  */
 class WalletSessionTest {
 
+    @Test
+    fun `SessionManager persisted secret validates tokens after reinstall`() {
+        val secret = ByteArray(32) { 7 }
+        SessionManager.installPersistedSecret(secret)
+        val token = SessionManager.generateAuthToken()
+
+        assertTrue(SessionManager.isValidTokenFormat(token))
+
+        secret[0] = 99
+        assertTrue(SessionManager.isValidTokenFormat(token), "installPersistedSecret must copy caller bytes")
+
+        SessionManager.installPersistedSecret(ByteArray(32) { 7 })
+        assertTrue(SessionManager.isValidTokenFormat(token), "same persisted secret survives process restart")
+
+        SessionManager.installPersistedSecret(ByteArray(32) { 8 })
+        assertFalse(SessionManager.isValidTokenFormat(token), "different secret invalidates old auth tokens")
+
+        SessionManager.installPersistedSecret(ByteArray(32) { 1 })
+    }
+
+    @Test
+    fun `SessionManager rejects non 32 byte persisted secrets`() {
+        assertFailsWith<IllegalArgumentException> {
+            SessionManager.installPersistedSecret(ByteArray(31))
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // SignerStrategy Tests
     // ═══════════════════════════════════════════════════════════════════════

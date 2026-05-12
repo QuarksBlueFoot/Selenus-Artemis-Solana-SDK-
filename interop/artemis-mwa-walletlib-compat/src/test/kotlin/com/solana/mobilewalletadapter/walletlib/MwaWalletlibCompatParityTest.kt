@@ -196,10 +196,10 @@ class MwaWalletlibCompatParityTest {
         assertEquals(3, markers.size)
     }
 
-    // ─── RemoteWebSocketServerScenario stub fails fast ──────────────
+    // ─── RemoteWebSocketServerScenario FQN reachability ─────────────
 
     @Test
-    fun `RemoteWebSocketServerScenario completes exceptionally on startAsync`() {
+    fun `RemoteWebSocketServerScenario is constructible for remote association`() {
         val callbacks = object : Scenario.Callbacks {
             override fun onAuthorizeRequest(request: com.solana.mobilewalletadapter.walletlib.scenario.AuthorizeRequest) {}
             override fun onReauthorizeRequest(request: com.solana.mobilewalletadapter.walletlib.scenario.ReauthorizeRequest) {}
@@ -216,13 +216,7 @@ class MwaWalletlibCompatParityTest {
             authIssuerConfig = AuthIssuerConfig(name = "Stub Wallet"),
             callbacks = callbacks
         )
-        val future = scenario.startAsync()
-        try {
-            future.get()
-            org.junit.Assert.fail("expected UnsupportedOperationException")
-        } catch (e: java.util.concurrent.ExecutionException) {
-            assertTrue(e.cause is UnsupportedOperationException)
-        }
+        assertSame(remote.associationPublicKey, scenario.associationPublicKey)
     }
 
     // ─── Helpers ────────────────────────────────────────────────────

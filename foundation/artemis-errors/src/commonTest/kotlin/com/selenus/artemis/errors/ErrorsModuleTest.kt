@@ -2,6 +2,7 @@ package com.selenus.artemis.errors
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -152,6 +153,15 @@ class ErrorsModuleTest {
             ArtemisError.BlockhashExpired(),
             ArtemisError.BlockhashNotFound(),
             ArtemisError.SimulationFailed(),
+            ArtemisError.ProgramError(
+                DecodedSolanaError(
+                    category = ArtemisErrorCategory.PROGRAM,
+                    summary = "program_error code=0x1",
+                    message = "custom program error: 0x1",
+                    customProgramErrorCode = 1,
+                    customProgramErrorCodeHex = "0x1"
+                )
+            ),
             ArtemisError.TransactionRejected(),
             ArtemisError.InsufficientFunds(),
             ArtemisError.UserRejected(),
@@ -201,5 +211,68 @@ class ErrorsModuleTest {
     fun testErrorMappersExists() {
         // Verify ErrorMappers object exists and is accessible
         assertNotNull(ErrorMappers)
+    }
+
+    @Test
+    fun `SolanaErrorDecoder extracts program id instruction and custom code from logs`() {
+        val programId = "11111111111111111111111111111111"
+        val logs = listOf(
+            "Program $programId invoke [1]",
+            "Program log: AnchorError thrown in instruction: custom program error: 0x1770",
+            "Program $programId failed: custom program error: 0x1770"
+        )
+
+        val decoded = SolanaErrorDecoder.decodeSimulation(
+            message = "Transaction simulation failed: Error processing Instruction 2: custom program error: 0x1770",
+            logs = logs
+        )
+
+        assertEquals(ArtemisErrorCategory.PROGRAM, decoded.category)
+        assertEquals(2, decoded.instructionIndex)
+        assertEquals(programId, decoded.programId)
+        assertEquals(6000, decoded.customProgramErrorCode)
+        assertEquals("0x1770", decoded.customProgramErrorCodeHex)
+        assertFalse(decoded.retryable)
+        assertTrue(decoded.summary.contains("instruction=2"))
+    }
+
+    @Test
+    fun `SolanaErrorDecoder extracts custom code from InstructionError text`() {
+        val decoded = SolanaErrorDecoder.decodeRpc(
+            message = "sendTransaction failed: InstructionError(3, Custom(42))"
+        )
+
+        assertEquals(ArtemisErrorCategory.PROGRAM, decoded.category)
+        assertEquals(3, decoded.instructionIndex)
+        assertEquals(42, decoded.customProgramErrorCode)
+        assertEquals("0x2a", decoded.customProgramErrorCodeHex)
+    }
+
+    @Test
+    fun `SolanaErrorDecoder classifies retryable rpc errors`() {
+        val rateLimited = SolanaErrorDecoder.decodeRpc(
+            rpcCode = 429,
+            message = "Too many requests"
+        )
+        val blockhash = SolanaErrorDecoder.decodeRpc(
+            message = "Blockhash not found"
+        )
+
+        assertEquals(ArtemisErrorCategory.RATE_LIMIT, rateLimited.category)
+        assertTrue(rateLimited.retryable)
+        assertEquals(ArtemisErrorCategory.BLOCKHASH, blockhash.category)
+        assertTrue(blockhash.retryable)
+    }
+
+    @Test
+    fun `ErrorMappers map rpc program errors to structured ProgramError`() {
+        val mapped = ErrorMappers.mapRpc(
+            RuntimeException("Transaction simulation failed: Error processing Instruction 1: custom program error: 0x1"),
+            logs = listOf("Program 11111111111111111111111111111111 failed: custom program error: 0x1")
+        )
+
+        assertTrue(mapped is ArtemisError.ProgramError)
+        assertEquals(1, (mapped as ArtemisError.ProgramError).decoded.instructionIndex)
+        assertEquals(1, mapped.decoded.customProgramErrorCode)
     }
 }

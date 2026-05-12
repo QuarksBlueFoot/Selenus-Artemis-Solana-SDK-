@@ -188,6 +188,10 @@ class SolanaWsClient(
     return subscribeDedup(key, "signatureSubscribe", listOf(signature, opts))
   }
 
+  suspend fun slotSubscribe(): SubscriptionHandle {
+    return subscribeDedup("slot", "slotSubscribe", emptyList())
+  }
+
   suspend fun subscribePreset(preset: IntentPreset, arg: String): List<SubscriptionHandle> {
     return when (preset) {
       IntentPreset.WALLET_ACTIVITY -> listOf(programLogsSubscribe(arg))

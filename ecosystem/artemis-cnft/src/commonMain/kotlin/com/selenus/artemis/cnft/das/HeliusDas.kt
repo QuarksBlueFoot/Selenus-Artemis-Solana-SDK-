@@ -65,6 +65,36 @@ class HeliusDas(rpcUrl: String) : ArtemisDas {
         return parseAssetList(result["result"])
     }
 
+    override suspend fun assetsByCreator(
+        creatorAddress: String,
+        page: Int,
+        limit: Int,
+        onlyVerified: Boolean
+    ): List<DigitalAsset> {
+        val params = buildJsonObject {
+            put("creatorAddress", creatorAddress)
+            put("onlyVerified", onlyVerified)
+            put("page", page)
+            put("limit", limit)
+        }
+        val result = rpc.call("getAssetsByCreator", params)
+        return parseAssetList(result["result"])
+    }
+
+    override suspend fun assetsByUpdateAuthority(
+        authorityAddress: String,
+        page: Int,
+        limit: Int
+    ): List<DigitalAsset> {
+        val params = buildJsonObject {
+            put("authorityAddress", authorityAddress)
+            put("page", page)
+            put("limit", limit)
+        }
+        val result = rpc.call("getAssetsByAuthority", params)
+        return parseAssetList(result["result"])
+    }
+
     // ─── parsing ─────────────────────────────────────────────────────────────
 
     private fun parseAssetList(element: JsonElement?): List<DigitalAsset> {
@@ -106,6 +136,7 @@ class HeliusDas(rpcUrl: String) : ArtemisDas {
         val collectionAddress = collectionEntry?.get("group_value")?.jsonPrimitive?.content
         val collectionVerified = collectionEntry?.get("verified")?.jsonPrimitive?.content
             ?.toBoolean() ?: false
+        val isMutable = obj["mutable"]?.jsonPrimitive?.content?.toBooleanStrictOrNull()
 
         return DigitalAsset(
             id = id,
@@ -117,7 +148,8 @@ class HeliusDas(rpcUrl: String) : ArtemisDas {
             isCompressed = compressed,
             frozen = frozen,
             collectionAddress = collectionAddress,
-            collectionVerified = collectionVerified
+            collectionVerified = collectionVerified,
+            isMutable = isMutable
         )
     }
 }

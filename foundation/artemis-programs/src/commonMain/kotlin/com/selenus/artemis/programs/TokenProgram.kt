@@ -6,6 +6,16 @@ import com.selenus.artemis.tx.ByteArrayBuilder
 import com.selenus.artemis.tx.Instruction
 
 /**
+ * Classic SPL Token authority selectors used by `SetAuthority`.
+ */
+enum class TokenAuthorityType(val value: Int) {
+  MintTokens(0),
+  FreezeAccount(1),
+  AccountOwner(2),
+  CloseAccount(3)
+}
+
+/**
  * TokenProgram
  *
  * SPL Token instruction builders for the classic Tokenkeg program.
@@ -19,6 +29,15 @@ object TokenProgram {
     out[0] = (op and 0xff).toByte()
     body.copyInto(out, 1)
     return out
+  }
+
+  private fun authorityAccounts(authority: Pubkey, signers: List<Pubkey>): List<AccountMeta> {
+    val authorityMeta = AccountMeta(authority, isSigner = signers.isEmpty(), isWritable = false)
+    return if (signers.isEmpty()) {
+      listOf(authorityMeta)
+    } else {
+      listOf(authorityMeta) + signers.map { AccountMeta(it, isSigner = true, isWritable = false) }
+    }
   }
 
   fun initializeMint2(
@@ -134,6 +153,72 @@ object TokenProgram {
         AccountMeta(owner, isSigner = true, isWritable = false)
       ),
       data = iData(5)
+    )
+  }
+
+  fun setAuthority(
+    account: Pubkey,
+    currentAuthority: Pubkey,
+    authorityType: TokenAuthorityType,
+    newAuthority: Pubkey?,
+    signers: List<Pubkey> = emptyList()
+  ): Instruction = setAuthority(
+    account = account,
+    currentAuthority = currentAuthority,
+    authorityType = authorityType.value,
+    newAuthority = newAuthority,
+    signers = signers
+  )
+
+  fun setAuthority(
+    account: Pubkey,
+    currentAuthority: Pubkey,
+    authorityType: Int,
+    newAuthority: Pubkey?,
+    signers: List<Pubkey> = emptyList()
+  ): Instruction {
+    require(authorityType in 0..255) { "authorityType must fit in u8" }
+    val authorityOption = TokenInstructions.pubkeyOption(newAuthority?.bytes)
+    val body = ByteArray(1 + authorityOption.size)
+    body[0] = (authorityType and 0xff).toByte()
+    authorityOption.copyInto(body, 1)
+    return Instruction(
+      programId = ProgramIds.TOKEN_PROGRAM,
+      accounts = listOf(AccountMeta(account, isSigner = false, isWritable = true)) +
+        authorityAccounts(currentAuthority, signers),
+      data = iData(6, body)
+    )
+  }
+
+  fun freezeAccount(
+    account: Pubkey,
+    mint: Pubkey,
+    authority: Pubkey,
+    signers: List<Pubkey> = emptyList()
+  ): Instruction {
+    return Instruction(
+      programId = ProgramIds.TOKEN_PROGRAM,
+      accounts = listOf(
+        AccountMeta(account, isSigner = false, isWritable = true),
+        AccountMeta(mint, isSigner = false, isWritable = false)
+      ) + authorityAccounts(authority, signers),
+      data = iData(10)
+    )
+  }
+
+  fun thawAccount(
+    account: Pubkey,
+    mint: Pubkey,
+    authority: Pubkey,
+    signers: List<Pubkey> = emptyList()
+  ): Instruction {
+    return Instruction(
+      programId = ProgramIds.TOKEN_PROGRAM,
+      accounts = listOf(
+        AccountMeta(account, isSigner = false, isWritable = true),
+        AccountMeta(mint, isSigner = false, isWritable = false)
+      ) + authorityAccounts(authority, signers),
+      data = iData(11)
     )
   }
 

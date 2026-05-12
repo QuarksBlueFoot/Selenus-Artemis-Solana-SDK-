@@ -13,13 +13,13 @@ All modules are designed to be **optional, composable**, and mobile-first. Sourc
 - **artemis-compute**: compute budget + priority fee helpers
 - **artemis-wallet**: wallet adapter interface + send pipeline
 - **artemis-wallet-mwa-android**: Android Mobile Wallet Adapter implementation
-- **artemis-errors**: stable error taxonomy + mappers
+- **artemis-errors**: stable error taxonomy, structured RPC/simulation decoding, and mappers
 - **artemis-logging**: logging facade (optional bridges)
 
 ## Program toolkits
 
 - **artemis-programs**: common program IDs + small instruction builders (System/Token/etc)
-- **artemis-token2022**: Token-2022 TLV decode + utilities
+- **artemis-token2022**: Token-2022 TLV decode/views, extension utilities, transfer-hook interface helpers, and Token-2022 ATA helpers
 - **artemis-vtx**: tx utilities (ALT helpers, budget advising)
 - **artemis-discriminators**: instruction/data discriminators and decode helpers
 

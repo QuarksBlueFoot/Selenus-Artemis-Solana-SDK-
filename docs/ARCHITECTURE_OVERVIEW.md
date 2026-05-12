@@ -90,7 +90,7 @@ This is the Artemis mobile client layer for apps that use Solana Mobile primitiv
 
 - `WalletAdapter` interface and `WalletSession` with pluggable signing strategies (Local keypair, Adapter, Raw signer)
 - `WalletSessionManager` with lazy connect, auth token caching, retry on session expiration, and `onDisconnect / onAccountChanged / onSessionExpired` callbacks
-- Mobile Wallet Adapter 2.0 **client** (dApp side): P-256 association, AES-128-GCM session cipher, HKDF-SHA256, MWA RPC, websocket transport, Sign-In With Solana
+- Mobile Wallet Adapter 2.0 **client** (dApp side): P-256 association, AES-128-GCM session cipher, HKDF-SHA256, MWA RPC, websocket transport, Sign-In With Solana, Keystore-backed auth token and HMAC session-secret persistence
 - Mobile Wallet Adapter 2.0 **wallet-side** runtime (`artemis-wallet-mwa-walletlib-android`): `Scenario` / `LocalScenario`, JSON-RPC dispatcher, chain-gated reauthorize, wallet-driven `DeauthorizedEvent.complete()`, sign-messages address-set check, `AuthRepository.start/stop` lifecycle hooks
 - `ArtemisMobile.create()` for one-call setup
 - Saga Seed Vault integration for hardware-backed key custody

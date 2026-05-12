@@ -2,6 +2,9 @@ package com.solana.rpccore
 
 import com.solana.networking.HttpNetworkDriver
 import com.solana.networking.HttpRequest
+import com.solana.networking.KtorNetworkDriver
+import com.solana.networking.OkHttpNetworkDriver
+import com.solana.networking.OkioNetworkDriver
 import com.solana.networking.Rpc20Driver
 import com.solana.publickey.SolanaPublicKey
 import com.solana.rpc.AccountInfo
@@ -115,6 +118,31 @@ class RpcCoreCompatTest {
         assertNotNull(fromDriver.asArtemis())
         assertNotNull(fromUrl.asArtemis())
         assertNull(transport.lastRequest)
+    }
+
+    @Suppress("DEPRECATION")
+    @Test
+    fun `concrete rpc-core driver FQNs delegate to HttpNetworkDriver`() = runBlocking {
+        val request = HttpRequest(url = "https://rpc.example", body = "{}")
+
+        assertNotNull(KtorNetworkDriver())
+        assertNotNull(OkHttpNetworkDriver())
+        assertNotNull(OkioNetworkDriver())
+
+        val ktorDelegate = RecordingNetworkDriver("ktor-ok")
+        val ktor = KtorNetworkDriver(ktorDelegate)
+        assertEquals("ktor-ok", ktor.makeHttpRequest(request))
+        assertEquals(request, ktorDelegate.lastRequest)
+
+        val okHttpDelegate = RecordingNetworkDriver("okhttp-ok")
+        val okHttp = OkHttpNetworkDriver(okHttpDelegate)
+        assertEquals("okhttp-ok", okHttp.makeHttpRequest(request))
+        assertEquals(request, okHttpDelegate.lastRequest)
+
+        val okioDelegate = RecordingNetworkDriver("okio-ok")
+        val okio = OkioNetworkDriver(okioDelegate)
+        assertEquals("okio-ok", okio.makeHttpRequest(request))
+        assertEquals(request, okioDelegate.lastRequest)
     }
 
     private class RecordingNetworkDriver(private val response: String) : HttpNetworkDriver {

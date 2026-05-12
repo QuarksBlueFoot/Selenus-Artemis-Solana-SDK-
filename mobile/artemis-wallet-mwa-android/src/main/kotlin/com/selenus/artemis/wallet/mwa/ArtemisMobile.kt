@@ -81,6 +81,8 @@ class ArtemisMobile private constructor(
          * @param wsUrl         Solana WebSocket endpoint (defaults to wss based on rpcUrl)
          * @param dasUrl        DAS-compatible RPC URL for NFT queries (null = no DAS)
          * @param chain         Solana chain identifier (default: mainnet)
+         * @param installPersistedSessionSecret Install a keystore-backed HMAC
+         *        secret so SessionManager auth tokens survive process death.
          */
         fun create(
             activity: Activity,
@@ -90,8 +92,12 @@ class ArtemisMobile private constructor(
             rpcUrl: String = "https://api.mainnet-beta.solana.com",
             wsUrl: String = rpcUrl.replace("https://", "wss://").replace("http://", "ws://"),
             dasUrl: String? = null,
-            chain: String = "solana:mainnet"
+            chain: String = "solana:mainnet",
+            installPersistedSessionSecret: Boolean = true
         ): ArtemisMobile {
+            if (installPersistedSessionSecret) {
+                MwaSessionSecretStore.installDefault(activity.applicationContext)
+            }
             val client = JsonRpcClient(rpcUrl)
             val rpc = RpcApi(client)
             val txEngine = TxEngine(rpc)

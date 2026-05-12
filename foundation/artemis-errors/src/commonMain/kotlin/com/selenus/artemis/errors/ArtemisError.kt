@@ -9,8 +9,15 @@ abstract class ArtemisError(message: String, cause: Throwable? = null) : Runtime
   class BlockhashExpired(cause: Throwable? = null) : ArtemisError("blockhash_expired", cause)
   class BlockhashNotFound(cause: Throwable? = null) : ArtemisError("blockhash_not_found", cause)
 
-  class SimulationFailed(val logs: List<String> = emptyList(), cause: Throwable? = null) :
+  class SimulationFailed(
+    val logs: List<String> = emptyList(),
+    cause: Throwable? = null,
+    val decoded: DecodedSolanaError? = null
+  ) :
     ArtemisError("simulation_failed", cause)
+
+  class ProgramError(val decoded: DecodedSolanaError, cause: Throwable? = null) :
+    ArtemisError("program_error", cause)
 
   class TransactionRejected(cause: Throwable? = null) : ArtemisError("transaction_rejected", cause)
   class InsufficientFunds(cause: Throwable? = null) : ArtemisError("insufficient_funds", cause)

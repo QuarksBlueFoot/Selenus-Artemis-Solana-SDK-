@@ -27,8 +27,7 @@ object AssociatedToken {
       AccountMeta(ProgramIds.SYSTEM_PROGRAM, isSigner = false, isWritable = false),
       AccountMeta(tokenProgram, isSigner = false, isWritable = false)
     )
-    // discriminator 0 = Create
-    return Instruction(ProgramIds.ASSOCIATED_TOKEN_PROGRAM, accounts, byteArrayOf(0))
+    return Instruction(ProgramIds.ASSOCIATED_TOKEN_PROGRAM, accounts, byteArrayOf())
   }
 
   /**
@@ -38,8 +37,8 @@ object AssociatedToken {
    * so the transaction lands on the second send if the first creation
    * already happened.
    *
-   * Same account list as `createAssociatedTokenAccount`; only the
-   * discriminator differs (1 = CreateIdempotent).
+  * Same account list as `createAssociatedTokenAccount`; the payload is
+  * discriminator 1 = CreateIdempotent.
    */
   fun createAssociatedTokenAccountIdempotent(
     payer: Pubkey,

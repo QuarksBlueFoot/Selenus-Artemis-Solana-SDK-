@@ -85,6 +85,21 @@ DSL form, when you are spelling them out inline. The `infix to` places each pair
 
 Supported argument types are whatever `BorshSerializer` supports for IDL primitive types: `bool`, `u8`/`u16`/`u32`/`u64`, `i8`/`i16`/`i32`/`i64`, `string`, `publicKey` (pass a `Pubkey`), `bytes` (pass a `ByteArray`), plus vectors, options, and defined structs/enums from the IDL's `types` section.
 
+Enum args support unit, named-field, and tuple-style Anchor variants. Unit variants can be passed by name. Variants with payloads can use the explicit helper or the map form:
+
+```kotlin
+.args(mapOf(
+    "mode" to "Market",
+    "limit" to AnchorEnumValue.named(
+        "Limit",
+        mapOf("price" to 42L, "postOnly" to true)
+    ),
+    "trigger" to mapOf("Trigger" to listOf(5L, oraclePubkey))
+))
+```
+
+Unsupported variants, missing named fields, and out-of-range numeric variant indexes fail with `IllegalArgumentException` instead of silently encoding the first variant.
+
 ### `accounts { }` helpers
 
 The accounts block maps IDL account names to pubkeys and role flags. The helper names reflect the role:
@@ -255,7 +270,7 @@ val acctDisc: ByteArray = AnchorDiscriminators.account("TokenState") // sha256("
 
 ## Status
 
-Listed as `Partial` in [../PARITY_MATRIX.md](../PARITY_MATRIX.md). The runtime path is exercised by `AnchorModuleTest` in [../../ecosystem/artemis-anchor/src/jvmTest/kotlin/com/selenus/artemis/anchor/AnchorModuleTest.kt](../../ecosystem/artemis-anchor/src/jvmTest/kotlin/com/selenus/artemis/anchor/AnchorModuleTest.kt) covering IDL parsing, discriminator computation, instruction building with map and DSL args, PDA derivation scaffolding, and account-type lookup. Broader coverage (full enum support in args, generics, `bytemuck` layouts) is on the roadmap.
+Listed as `Partial` in [../PARITY_MATRIX.md](../PARITY_MATRIX.md). The runtime path is exercised by `AnchorModuleTest` in [../../ecosystem/artemis-anchor/src/jvmTest/kotlin/com/selenus/artemis/anchor/AnchorModuleTest.kt](../../ecosystem/artemis-anchor/src/jvmTest/kotlin/com/selenus/artemis/anchor/AnchorModuleTest.kt) covering IDL parsing, discriminator computation, instruction building with map and DSL args, enum args, PDA derivation scaffolding, and account-type lookup. Broader coverage for generics and `bytemuck` layouts remains on the roadmap.
 
 A compile-time client generator is not shipped today. If you want generated Kotlin classes per program, hand-roll the client for now and let the runtime path handle the dynamic cases.
 

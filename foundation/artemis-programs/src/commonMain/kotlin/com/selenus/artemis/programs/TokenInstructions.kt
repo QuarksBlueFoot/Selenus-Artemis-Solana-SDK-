@@ -19,4 +19,13 @@ internal object TokenInstructions {
     }
     return out
   }
+
+  fun pubkeyOption(pubkey32: ByteArray?): ByteArray {
+    if (pubkey32 == null) return byteArrayOf(0)
+    require(pubkey32.size == 32) { "pubkey must be 32 bytes" }
+    val out = ByteArray(1 + 32)
+    out[0] = 1
+    pubkey32.copyInto(out, 1)
+    return out
+  }
 }

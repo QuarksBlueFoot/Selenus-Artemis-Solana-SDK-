@@ -50,6 +50,7 @@ dependencies {
   implementation(libs.androidx.activity.ktx)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.serialization.json)
+  implementation(libs.okhttp)
 
   testImplementation("junit:junit:4.13.2")
   testImplementation(libs.kotlinx.coroutines.test)

@@ -16,6 +16,7 @@ import android.content.Context
 import com.selenus.artemis.wallet.mwa.walletlib.AuthorizeRequest as ArtemisAuthorizeRequest
 import com.selenus.artemis.wallet.mwa.walletlib.DeauthorizedEvent as ArtemisDeauthorizedEvent
 import com.selenus.artemis.wallet.mwa.walletlib.LocalScenario as ArtemisLocalScenario
+import com.selenus.artemis.wallet.mwa.walletlib.RemoteScenario as ArtemisRemoteScenario
 import com.selenus.artemis.wallet.mwa.walletlib.ReauthorizeRequest as ArtemisReauthorizeRequest
 import com.selenus.artemis.wallet.mwa.walletlib.Scenario as ArtemisScenario
 import com.selenus.artemis.wallet.mwa.walletlib.SignAndSendTransactionsRequest as ArtemisSignAndSendTransactionsRequest
@@ -227,32 +228,81 @@ open class LocalAssociationScenario private constructor(
     }
 }
 
-/**
- * Reflector / cross-device association scenario. Upstream walletlib
- * ships this on the wallet side for the QR-pair flow; the Artemis
- * walletlib does not yet implement the reflector loop, so the scenario
- * is a stub that fires `onScenarioError()` when started. Surfacing the
- * FQN keeps source-level compatibility for code that branches on
- * `is RemoteWebSocketServerScenario`; runtime use should be gated.
- */
+/** Reflector / cross-device association scenario. */
 open class RemoteWebSocketServerScenario(
     associationUri: RemoteAssociationUri,
-    @Suppress("unused") private val config: MobileWalletAdapterConfig,
-    @Suppress("unused") private val authIssuerConfig: AuthIssuerConfig,
-    callbacks: Callbacks
+    private val config: MobileWalletAdapterConfig,
+    authIssuerConfig: AuthIssuerConfig,
+    callbacks: Callbacks,
+    private val authRepository: AuthRepository =
+        com.solana.mobilewalletadapter.walletlib.authorization.InMemoryAuthRepository(authIssuerConfig)
 ) : Scenario(callbacks, associationUri.associationPublicKey) {
 
+    private val artemis: ArtemisRemoteScenario = ArtemisRemoteScenario(
+        associationUri = associationUri.toArtemis(),
+        config = config.toArtemis(),
+        authRepository = authRepository.toArtemisAdapter()
+    )
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val started = AtomicBoolean(false)
+
     override fun startAsync(): CompletableFuture<String> {
-        val future = CompletableFuture<String>()
-        future.completeExceptionally(
-            UnsupportedOperationException(
-                "RemoteWebSocketServerScenario is not yet implemented in Artemis walletlib. " +
-                    "Track the reflector module in advanced/artemis-streaming."
-            )
-        )
-        mCallbacks.onScenarioError()
-        return future
+        return scope.future {
+            try {
+                if (!started.compareAndSet(false, true)) {
+                    error("startAsync() already invoked")
+                }
+                artemis.start(buildArtemisCallbacks())
+            } catch (t: Throwable) {
+                mCallbacks.onScenarioError()
+                throw t
+            }
+        }
     }
 
-    override fun close() { /* no-op */ }
+    override fun start() {
+        startAsync()
+    }
+
+    override fun close() {
+        runBlocking { artemis.close() }
+        scope.cancel()
+    }
+
+    private fun buildArtemisCallbacks() = object : ArtemisScenario.Callbacks {
+        override fun onScenarioReady() = mCallbacks.onScenarioReady()
+        override fun onScenarioServingClients() = mCallbacks.onScenarioServingClients()
+        override fun onScenarioServingComplete() = mCallbacks.onScenarioServingComplete()
+        override fun onScenarioComplete() = mCallbacks.onScenarioComplete()
+        override fun onScenarioError(t: Throwable) = mCallbacks.onScenarioError()
+        override fun onScenarioTeardownComplete() = mCallbacks.onScenarioTeardownComplete()
+
+        override suspend fun onAuthorizeRequest(request: ArtemisAuthorizeRequest) {
+            mCallbacks.onAuthorizeRequest(AuthorizeRequest(request))
+        }
+
+        override suspend fun onReauthorizeRequest(request: ArtemisReauthorizeRequest) {
+            mCallbacks.onReauthorizeRequest(ReauthorizeRequest(request))
+        }
+
+        override suspend fun onSignTransactionsRequest(request: ArtemisSignTransactionsRequest) {
+            mCallbacks.onSignTransactionsRequest(SignTransactionsRequest(request))
+        }
+
+        override suspend fun onSignMessagesRequest(request: ArtemisSignMessagesRequest) {
+            mCallbacks.onSignMessagesRequest(SignMessagesRequest(request))
+        }
+
+        override suspend fun onSignAndSendTransactionsRequest(
+            request: ArtemisSignAndSendTransactionsRequest
+        ) {
+            mCallbacks.onSignAndSendTransactionsRequest(SignAndSendTransactionsRequest(request))
+        }
+
+        override fun onDeauthorizedEvent(event: ArtemisDeauthorizedEvent) {
+            mCallbacks.onDeauthorizedEvent(DeauthorizedEvent(event))
+        }
+
+        override fun onLowPowerAndNoConnection() = mCallbacks.onLowPowerAndNoConnection()
+    }
 }

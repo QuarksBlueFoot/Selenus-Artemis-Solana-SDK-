@@ -49,6 +49,16 @@ class ArtemisWsBridge(private val realtime: RealtimeEngine) : WebSocketClient {
 
 The transport contract is deliberately small so you can also back it with Helius enhanced websockets, LaserStream, a file replay for tests, or anything else that yields raw account bytes.
 
+## Run an MWA reflector
+
+`artemis-streaming` also includes a JVM Mobile Wallet Adapter reflector for remote association flows. It listens on `/reflect?id=<base64url-id>`, pairs two WebSocket peers with the same id, sends the empty APP_PING once paired, and relays encrypted MWA frames without decrypting them.
+
+```powershell
+.\gradlew.bat :artemis-streaming:run --args="--host 0.0.0.0 --port 8080"
+```
+
+Production deployments should put it behind TLS and expose it as `wss://<host>/reflect?id=...`. The service supports `com.solana.mobilewalletadapter.v1` binary frames and `com.solana.mobilewalletadapter.v1.base64` text frames, including conversion between peers that negotiate different supported subprotocols.
+
 ## Create the stream
 
 ```kotlin

@@ -1,8 +1,8 @@
 // Drop-in source compatibility for `com.solana:rpc-core` (solana-mobile/rpc-core).
 // Pinned upstream surface: snapshot of github.com/solana-mobile/rpc-core `main`
 // as of 2026-01-09. Includes JsonRpc envelope types, SolanaRpcClient, AccountInfo,
-// SolanaResponse, and TransactionOptions. KtorNetworkDriver / OkioNetworkDriver
-// not yet ported; consumers wire ArtemisHttpNetworkDriver instead.
+// SolanaResponse, and TransactionOptions. KtorNetworkDriver / OkHttpNetworkDriver
+// FQNs are bridged via delegate-based drivers to avoid forcing Ktor/OkHttp into common code.
 plugins {
     kotlin("multiplatform")
     id("com.android.library")

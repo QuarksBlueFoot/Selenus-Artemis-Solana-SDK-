@@ -6,7 +6,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.junit.Test
 import org.junit.Assume
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.test.assertNotNull
 import kotlin.test.assertFalse
@@ -227,6 +229,27 @@ class VtxModuleTest {
         assertEquals(1, header.numRequiredSignatures)
         assertEquals(0, header.numReadonlySigned)
         assertEquals(1, header.numReadonlyUnsigned)
+    }
+
+    @Test
+    fun `MessageV0 deserialize parses from an offset without accepting trailing bytes`() {
+        val seed = Base58.decode(testSeed)
+        val keypair = Keypair.fromSeed(seed)
+        val recipient = Keypair.generate().publicKey
+        val message = V0MessageCompiler.compile(
+            feePayer = keypair,
+            recentBlockhash = testBlockhash,
+            instructions = listOf(SystemProgram.transfer(keypair.publicKey, recipient, 100L))
+        ).message
+        val serialized = message.serialize()
+        val wrapped = byteArrayOf(0x55) + serialized + byteArrayOf(0x66)
+
+        val parsed = MessageV0.deserialize(wrapped, startOffset = 1, length = serialized.size)
+        assertContentEquals(serialized, parsed.serialize())
+
+        assertFailsWith<IllegalArgumentException> {
+            MessageV0.deserialize(wrapped, startOffset = 1, length = serialized.size + 1)
+        }
     }
 
     // ==================== AddressLookupTable Tests ====================

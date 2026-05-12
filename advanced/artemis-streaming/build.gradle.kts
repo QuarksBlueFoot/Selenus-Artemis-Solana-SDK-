@@ -1,5 +1,10 @@
 plugins {
     kotlin("jvm")
+    application
+}
+
+application {
+    mainClass.set("com.selenus.artemis.streaming.MwaReflectorMainKt")
 }
 
 dependencies {
@@ -12,4 +17,5 @@ dependencies {
     
     testImplementation(kotlin("test"))
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.okhttp)
 }

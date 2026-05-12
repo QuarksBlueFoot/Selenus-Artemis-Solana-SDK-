@@ -14,6 +14,20 @@ package com.selenus.artemis.anchor
 
 import com.selenus.artemis.runtime.Pubkey
 
+data class AnchorEnumValue(
+    val name: String,
+    val namedFields: Map<String, Any?> = emptyMap(),
+    val tupleFields: List<Any?> = emptyList()
+) {
+    companion object {
+        fun named(name: String, fields: Map<String, Any?>): AnchorEnumValue =
+            AnchorEnumValue(name = name, namedFields = fields)
+
+        fun tuple(name: String, fields: List<Any?>): AnchorEnumValue =
+            AnchorEnumValue(name = name, tupleFields = fields)
+    }
+}
+
 /**
  * Borsh serializer for IDL types.
  */
@@ -132,46 +146,103 @@ object BorshSerializer {
             is IdlTypeDefType.Enum -> {
                 // Enum serialization: variant index (u8) + variant data
                 when (value) {
+                    is AnchorEnumValue -> {
+                        serializeEnumVariant(
+                            buffer = buffer,
+                            enumType = typeType,
+                            variantName = value.name,
+                            variantData = value,
+                            program = program
+                        )
+                    }
                     is String -> {
                         // Simple enum variant
                         val variantIndex = typeType.variants.indexOfFirst { it.name == value }
                         require(variantIndex >= 0) { "Unknown enum variant: $value" }
+                        val variant = typeType.variants[variantIndex]
+                        require(variant.fields.isNullOrEmpty() && variant.tupleFields.isNullOrEmpty()) {
+                            "Enum variant '$value' expects fields; pass AnchorEnumValue or a variant payload map"
+                        }
                         buffer.writeU8(variantIndex)
                     }
                     is Map<*, *> -> {
                         // Enum with data
                         @Suppress("UNCHECKED_CAST")
                         val map = value as Map<String, Any?>
-                        val variantName = map.keys.first()
-                        val variantIndex = typeType.variants.indexOfFirst { it.name == variantName }
-                        require(variantIndex >= 0) { "Unknown enum variant: $variantName" }
-                        buffer.writeU8(variantIndex)
-                        
-                        val variant = typeType.variants[variantIndex]
-                        val variantData = map[variantName]
-                        
-                        variant.fields?.let { fields ->
-                            if (variantData is Map<*, *>) {
-                                @Suppress("UNCHECKED_CAST")
-                                val dataMap = variantData as Map<String, Any?>
-                                for (field in fields) {
-                                    serializeValue(buffer, field.type, dataMap[field.name], program)
-                                }
-                            }
+                        require(map.isNotEmpty()) { "Enum value map must include a variant name" }
+                        val variantName = map["name"]?.toString()?.takeIf { it.isNotBlank() }
+                            ?: map.keys.first()
+                        val variantData = if ("name" in map) {
+                            map["fields"] ?: map["values"] ?: map["data"]
+                        } else {
+                            map[variantName]
                         }
+                        serializeEnumVariant(buffer, typeType, variantName, variantData, program)
                     }
                     is Int -> {
                         // Numeric enum
+                        require(value in typeType.variants.indices) { "Enum variant index out of range: $value" }
                         buffer.writeU8(value)
                     }
                     else -> {
-                        buffer.writeU8(0) // Default to first variant
+                        throw IllegalArgumentException(
+                            "Unsupported enum value for ${typeDef.name}: ${value?.let { it::class.simpleName } ?: "null"}"
+                        )
                     }
                 }
             }
             
             is IdlTypeDefType.Alias -> {
                 serializeValue(buffer, typeType.value, value, program)
+            }
+        }
+    }
+
+    private fun serializeEnumVariant(
+        buffer: DynamicByteBuffer,
+        enumType: IdlTypeDefType.Enum,
+        variantName: String,
+        variantData: Any?,
+        program: AnchorProgram
+    ) {
+        val variantIndex = enumType.variants.indexOfFirst { it.name == variantName }
+        require(variantIndex >= 0) { "Unknown enum variant: $variantName" }
+        buffer.writeU8(variantIndex)
+
+        val variant = enumType.variants[variantIndex]
+        val namedFields = variant.fields
+        val tupleFields = variant.tupleFields
+        when {
+            !namedFields.isNullOrEmpty() -> {
+                val dataMap = when (variantData) {
+                    is AnchorEnumValue -> variantData.namedFields
+                    is Map<*, *> -> {
+                        @Suppress("UNCHECKED_CAST")
+                        variantData as Map<String, Any?>
+                    }
+                    else -> emptyMap()
+                }
+                for (field in namedFields) {
+                    require(field.name in dataMap) {
+                        "Enum variant '$variantName' missing field '${field.name}'"
+                    }
+                    serializeValue(buffer, field.type, dataMap[field.name], program)
+                }
+            }
+            !tupleFields.isNullOrEmpty() -> {
+                val dataList = when (variantData) {
+                    is AnchorEnumValue -> variantData.tupleFields
+                    is List<*> -> variantData
+                    is Array<*> -> variantData.toList()
+                    null -> emptyList<Any?>()
+                    else -> if (tupleFields.size == 1) listOf(variantData) else emptyList()
+                }
+                require(dataList.size == tupleFields.size) {
+                    "Enum variant '$variantName' expects ${tupleFields.size} tuple fields, got ${dataList.size}"
+                }
+                tupleFields.forEachIndexed { index, fieldType ->
+                    serializeValue(buffer, fieldType, dataList[index], program)
+                }
             }
         }
     }
@@ -221,8 +292,27 @@ object BorshSerializer {
                 total
             }
             is IdlTypeDefType.Enum -> {
-                // Enum size depends on largest variant
-                -1
+                var maxVariantSize = 0
+                for (variant in typeType.variants) {
+                    var variantSize = 0
+                    val namedFields = variant.fields
+                    val tupleFields = variant.tupleFields
+                    if (namedFields != null) {
+                        for (field in namedFields) {
+                            val fieldSize = sizeOf(field.type, program)
+                            if (fieldSize < 0) return -1
+                            variantSize += fieldSize
+                        }
+                    } else if (tupleFields != null) {
+                        for (fieldType in tupleFields) {
+                            val fieldSize = sizeOf(fieldType, program)
+                            if (fieldSize < 0) return -1
+                            variantSize += fieldSize
+                        }
+                    }
+                    if (variantSize > maxVariantSize) maxVariantSize = variantSize
+                }
+                1 + maxVariantSize
             }
             is IdlTypeDefType.Alias -> sizeOf(typeType.value, program)
         }
@@ -372,14 +462,21 @@ object BorshDeserializer {
                 }
                 
                 val variant = typeType.variants[variantIndex]
-                if (variant.fields.isNullOrEmpty()) {
+                val namedFields = variant.fields
+                val tupleFields = variant.tupleFields
+                if (namedFields.isNullOrEmpty() && tupleFields.isNullOrEmpty()) {
                     // Simple variant
                     variant.name
-                } else {
+                } else if (!namedFields.isNullOrEmpty()) {
                     // Variant with data
                     val data = mutableMapOf<String, Any?>()
-                    for (field in variant.fields) {
+                    for (field in namedFields) {
                         data[field.name] = deserializeValue(reader, field.type, program)
+                    }
+                    mapOf(variant.name to data)
+                } else {
+                    val data = tupleFields!!.map { fieldType ->
+                        deserializeValue(reader, fieldType, program)
                     }
                     mapOf(variant.name to data)
                 }

@@ -5,8 +5,9 @@
 ## What you actually get
 
 - `MwaWalletAdapter` connects, authorizes, signs, and sends through a real wallet on the same device.
-- `ArtemisMobile.create(...)` is the one-call entry point that bundles this with RPC, transaction engine, realtime subscriptions, DAS, and session management.
+- `ArtemisMobile.create(...)` is the one-call entry point that bundles this with RPC, transaction engine, realtime subscriptions, DAS, session management, and a Keystore-backed `SessionManager` HMAC secret so reauthorize tokens survive process death.
 - `AuthTokenStore.default(context)` returns a Keystore-encrypted store (AES-256-GCM, non-exportable key). Plaintext DataStore is still available via `DataStoreAuthTokenStore` for non-production builds.
+- `MwaSessionSecretStore.default(context)` returns the Keystore-encrypted 32-byte HMAC secret store used by `SessionManager.installPersistedSecret(...)`. `ArtemisMobile.create(...)` installs it automatically unless `installPersistedSessionSecret = false` is passed.
 - Wire-format components verified against RFC vectors in unit tests: HKDF-SHA256 ([HkdfVectorsTest](../../../mobile/artemis-wallet-mwa-android/src/test/kotlin/com/selenus/artemis/wallet/mwa/protocol/HkdfVectorsTest.kt)), AES-128-GCM round-trip + layout + tamper rejection ([Aes128GcmTest](../../../mobile/artemis-wallet-mwa-android/src/test/kotlin/com/selenus/artemis/wallet/mwa/protocol/Aes128GcmTest.kt)), EcP256 ECDH + ECDSA P1363 ([EcP256Test](../../../mobile/artemis-wallet-mwa-android/src/test/kotlin/com/selenus/artemis/wallet/mwa/protocol/EcP256Test.kt)).
 
 ## Install
@@ -52,6 +53,8 @@ Artemis implements the dApp-side MWA client layer. It does not change the Mobile
 If you want to wire everything yourself:
 
 ```kotlin
+MwaSessionSecretStore.default(applicationContext).installIntoSessionManager()
+
 val adapter = MwaWalletAdapter(
     activity     = this,
     identityUri  = Uri.parse("https://myapp.example.com"),

@@ -47,11 +47,12 @@ class Connection(rpcUrl: String) {
 class Metaplex(
     val connection: Connection,
     val identityDriver: IdentityDriver = Guest,
-    @Suppress("UNUSED_PARAMETER") val storageDriver: StorageDriver = DefaultStorageDriver
+    @Suppress("UNUSED_PARAMETER") val storageDriver: StorageDriver = DefaultStorageDriver,
+    private val dasProvider: ArtemisDas? = null
 ) {
 
     /** NFT operations: metadata read, collection lookup, wallet scan. */
-    val nft: NftModule by lazy { NftModule(connection.rpc) }
+    val nft: NftModule by lazy { NftModule(connection.rpc, dasProvider) }
 
     /** Token operations: mint + token account lookups. */
     val tokens: TokensModule by lazy { TokensModule(connection.rpc) }
@@ -92,7 +93,7 @@ class Metaplex(
 /**
  * metaplex-android compatible `NftModule`.
  */
-class NftModule internal constructor(rpc: RpcApi) {
+class NftModule internal constructor(rpc: RpcApi, private val dasProvider: ArtemisDas? = null) {
 
     private val client = ArtemisNftClient(rpc)
 
@@ -112,18 +113,19 @@ class NftModule internal constructor(rpc: RpcApi) {
         mintList.mapNotNull { findByMint(it) }
 
     /**
-     * Upstream `findAllByCreator(creator)` - not implementable without a DAS
-     * backend. Apps that need this should use the [Metaplex.das] module
-     * instead. The stub returns an empty list rather than throwing so the
-     * common UI case (list owned NFTs, show empty state) keeps working.
+     * Upstream `findAllByCreator(creator)`. When the facade is constructed
+     * with a DAS provider this delegates to `getAssetsByCreator`; otherwise it
+     * preserves the RPC-only empty fallback.
      */
-    suspend fun findAllByCreator(creator: String): List<NFT> = emptyList()
+    suspend fun findAllByCreator(creator: String): List<NFT> =
+        dasProvider?.assetsByCreator(creator)?.map { it.toMetaplex() } ?: emptyList()
 
     /**
-     * Upstream `findAllByUpdateAuthority(updateAuthority)` - same caveat as
-     * [findAllByCreator]. DAS-backed in practice.
+     * Upstream `findAllByUpdateAuthority(updateAuthority)`. DAS-backed in
+     * practice; plain RPC-only construction returns an empty list.
      */
-    suspend fun findAllByUpdateAuthority(updateAuthority: String): List<NFT> = emptyList()
+    suspend fun findAllByUpdateAuthority(updateAuthority: String): List<NFT> =
+        dasProvider?.assetsByUpdateAuthority(updateAuthority)?.map { it.toMetaplex() } ?: emptyList()
 
     private fun ArtemisNft.toMetaplex(): NFT = NFT(
         mint = this.mint.toBase58(),
@@ -141,6 +143,15 @@ class NftModule internal constructor(rpc: RpcApi) {
         uri = this.metadata?.uri?.trimEnd(' ', '\u0000') ?: "",
         sellerFeeBasisPoints = this.metadata?.sellerFeeBasisPoints ?: 0,
         isMutable = this.metadata?.isMutable ?: false
+    )
+
+    private fun DigitalAsset.toMetaplex(): NFT = NFT(
+        mint = id,
+        name = name,
+        symbol = symbol,
+        uri = uri,
+        sellerFeeBasisPoints = royaltyBasisPoints,
+        isMutable = isMutable ?: false
     )
 }
 
@@ -175,6 +186,14 @@ class DasModule internal constructor(private val rpc: RpcApi) {
 
     /** Fetch a single asset by id. */
     suspend fun asset(id: String, das: ArtemisDas): DigitalAsset? = das.asset(id)
+
+    /** Query by creator via any DAS implementation that supports it. */
+    suspend fun assetsByCreator(creator: String, das: ArtemisDas): List<DigitalAsset> =
+        das.assetsByCreator(creator)
+
+    /** Query by update authority via any DAS implementation that supports it. */
+    suspend fun assetsByUpdateAuthority(updateAuthority: String, das: ArtemisDas): List<DigitalAsset> =
+        das.assetsByUpdateAuthority(updateAuthority)
 }
 
 /**

@@ -257,6 +257,110 @@ class AnchorModuleTest {
         assertNotNull(ix)
         assertTrue(ix.data.size > 8) // discriminator + args
     }
+
+    @Test
+    fun `parse kind-tagged IDL types with named and tuple enum variants`() {
+        val program = AnchorProgram.fromIdl(createEnumIdl(), tokenProgramId)
+        val type = program.findType("OrderMode")
+
+        assertNotNull(type)
+        val enumType = type.type as IdlTypeDefType.Enum
+        assertEquals(3, enumType.variants.size)
+        assertEquals("Market", enumType.variants[0].name)
+        assertEquals("Limit", enumType.variants[1].name)
+        assertEquals(listOf("price", "postOnly"), enumType.variants[1].fields!!.map { it.name })
+        assertEquals("Trigger", enumType.variants[2].name)
+        assertEquals(listOf(IdlType.U64, IdlType.PublicKey), enumType.variants[2].tupleFields)
+    }
+
+    @Test
+    fun `build instruction with named enum arg`() {
+        val program = AnchorProgram.fromIdl(createEnumIdl(), tokenProgramId)
+        val ix = program.methods
+            .instruction("placeOrder")
+            .args(
+                mapOf(
+                    "mode" to AnchorEnumValue.named(
+                        "Limit",
+                        mapOf("price" to 42L, "postOnly" to true)
+                    )
+                )
+            )
+            .accounts { }
+            .build()
+
+        val payload = ix.data.copyOfRange(8, ix.data.size)
+        assertEquals(10, payload.size)
+        assertEquals(1, payload[0].toInt() and 0xFF)
+        assertContentEquals(byteArrayOf(42, 0, 0, 0, 0, 0, 0, 0), payload.copyOfRange(1, 9))
+        assertEquals(1, payload[9].toInt() and 0xFF)
+    }
+
+    @Test
+    fun `build instruction with tuple enum arg`() {
+        val program = AnchorProgram.fromIdl(createEnumIdl(), tokenProgramId)
+        val oracle = Pubkey(ByteArray(32) { 7 })
+        val ix = program.methods
+            .instruction("placeOrder")
+            .args(mapOf("mode" to mapOf("Trigger" to listOf(5L, oracle))))
+            .accounts { }
+            .build()
+
+        val payload = ix.data.copyOfRange(8, ix.data.size)
+        assertEquals(41, payload.size)
+        assertEquals(2, payload[0].toInt() and 0xFF)
+        assertContentEquals(byteArrayOf(5, 0, 0, 0, 0, 0, 0, 0), payload.copyOfRange(1, 9))
+        assertContentEquals(oracle.bytes, payload.copyOfRange(9, 41))
+    }
+
+    @Test
+    fun `deserialize named and tuple enum variants`() {
+        val program = AnchorProgram.fromIdl(createEnumIdl(), tokenProgramId)
+        val oracle = Pubkey(ByteArray(32) { 3 })
+        val tupleData = byteArrayOf(2, 9, 0, 0, 0, 0, 0, 0, 0) + oracle.bytes
+        val namedData = byteArrayOf(1, 11, 0, 0, 0, 0, 0, 0, 0, 1)
+        val fields = listOf(IdlField("mode", type = IdlType.Defined("OrderMode")))
+
+        val tuple = BorshDeserializer.deserializeFields(fields, tupleData, 0, program)
+        val named = BorshDeserializer.deserializeFields(fields, namedData, 0, program)
+
+        @Suppress("UNCHECKED_CAST")
+        val tupleMode = tuple.fields["mode"] as Map<String, List<Any?>>
+        @Suppress("UNCHECKED_CAST")
+        val namedMode = named.fields["mode"] as Map<String, Map<String, Any?>>
+        assertEquals(9L, tupleMode["Trigger"]!![0])
+        assertEquals(oracle, tupleMode["Trigger"]!![1])
+        assertEquals(11L, namedMode["Limit"]!!["price"])
+        assertEquals(true, namedMode["Limit"]!!["postOnly"])
+    }
+
+    @Test
+    fun `sizeOf fixed enum uses largest variant`() {
+        val program = AnchorProgram.fromIdl(createEnumIdl(), tokenProgramId)
+
+        assertEquals(41, BorshSerializer.sizeOf(IdlType.Defined("OrderMode"), program))
+    }
+
+    @Test
+    fun `invalid enum arg fails instead of defaulting to first variant`() {
+        val program = AnchorProgram.fromIdl(createEnumIdl(), tokenProgramId)
+
+        assertFailsWith<IllegalArgumentException> {
+            program.methods
+                .instruction("placeOrder")
+                .args(mapOf("mode" to "Limit"))
+                .accounts { }
+                .build()
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            program.methods
+                .instruction("placeOrder")
+                .args(mapOf("mode" to mapOf("Limit" to mapOf("price" to 10L))))
+                .accounts { }
+                .build()
+        }
+    }
     
     // ===========================================
     // Account Types Tests
@@ -323,6 +427,46 @@ class AnchorModuleTest {
                             {"name": "name", "type": "string"},
                             {"name": "symbol", "type": "string"},
                             {"name": "totalSupply", "type": "u64"}
+                        ]
+                    }
+                }
+            ]
+        }
+        """.trimIndent()
+    }
+
+    private fun createEnumIdl(): String {
+        return """
+        {
+            "version": "0.1.0",
+            "name": "order_book",
+            "instructions": [
+                {
+                    "name": "placeOrder",
+                    "accounts": [],
+                    "args": [
+                        {"name": "mode", "type": {"defined": "OrderMode"}}
+                    ]
+                }
+            ],
+            "types": [
+                {
+                    "name": "OrderMode",
+                    "type": {
+                        "kind": "enum",
+                        "variants": [
+                            {"name": "Market"},
+                            {
+                                "name": "Limit",
+                                "fields": [
+                                    {"name": "price", "type": "u64"},
+                                    {"name": "postOnly", "type": "bool"}
+                                ]
+                            },
+                            {
+                                "name": "Trigger",
+                                "fields": ["u64", "publicKey"]
+                            }
                         ]
                     }
                 }

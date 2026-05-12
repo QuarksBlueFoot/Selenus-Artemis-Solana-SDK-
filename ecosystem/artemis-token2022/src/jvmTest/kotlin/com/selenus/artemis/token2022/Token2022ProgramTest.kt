@@ -2,6 +2,7 @@ package com.selenus.artemis.token2022
 
 import com.selenus.artemis.runtime.Pubkey
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -59,6 +60,28 @@ class Token2022ProgramTest {
         assertEquals(9, ix.data[0].toInt())
         assertEquals(1, ix.data.size) // no extra data
         assertEquals(3, ix.accounts.size)
+    }
+
+    @Test
+    fun `Token-2022 ATA create supports legacy empty and idempotent discriminator`() {
+        val create = Token2022Program.createAssociatedTokenAccount(
+            payer = owner,
+            owner = owner,
+            mint = mint,
+            ata = dest
+        )
+        val idempotent = Token2022Program.createAssociatedTokenAccountIdempotent(
+            payer = owner,
+            owner = owner,
+            mint = mint,
+            ata = dest
+        )
+
+        assertEquals(Token2022Program.ASSOCIATED_TOKEN_PROGRAM_ID, create.programId)
+        assertContentEquals(byteArrayOf(), create.data)
+        assertContentEquals(byteArrayOf(1), idempotent.data)
+        assertEquals(Token2022Program.PROGRAM_ID, create.accounts[5].pubkey)
+        assertEquals(Token2022Program.PROGRAM_ID, idempotent.accounts[5].pubkey)
     }
 
     @Test

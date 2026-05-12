@@ -11,6 +11,8 @@ package com.solana.programs
 import com.selenus.artemis.programs.AssociatedToken as ArtemisAssociatedToken
 import com.selenus.artemis.programs.ProgramIds as ArtemisProgramIds
 import com.selenus.artemis.programs.SystemProgram as ArtemisSystemProgram
+import com.selenus.artemis.programs.TokenAuthorityType as ArtemisTokenAuthorityType
+import com.selenus.artemis.programs.Token2022Program as ArtemisToken2022Program
 import com.selenus.artemis.programs.TokenProgram as ArtemisTokenProgram
 import com.solana.publickey.SolanaPublicKey
 import com.solana.transaction.AccountMeta
@@ -19,6 +21,14 @@ import com.solana.transaction.TransactionInstruction
 /** Marker interface upstream uses for every program object. */
 interface Program {
     val programId: SolanaPublicKey
+}
+
+/** SPL Token authority selectors accepted by `TokenProgram.setAuthority`. */
+enum class TokenAuthorityType(val value: Int) {
+    MintTokens(ArtemisTokenAuthorityType.MintTokens.value),
+    FreezeAccount(ArtemisTokenAuthorityType.FreezeAccount.value),
+    AccountOwner(ArtemisTokenAuthorityType.AccountOwner.value),
+    CloseAccount(ArtemisTokenAuthorityType.CloseAccount.value)
 }
 
 /**
@@ -138,6 +148,58 @@ object TokenProgram : Program {
         owner = owner.toArtemisPubkey()
     ).toCompatInstruction()
 
+    fun setAuthority(
+        account: SolanaPublicKey,
+        currentAuthority: SolanaPublicKey,
+        authorityType: TokenAuthorityType,
+        newAuthority: SolanaPublicKey?,
+        signers: List<SolanaPublicKey> = emptyList()
+    ): TransactionInstruction = setAuthority(
+        account = account,
+        currentAuthority = currentAuthority,
+        authorityType = authorityType.value,
+        newAuthority = newAuthority,
+        signers = signers
+    )
+
+    fun setAuthority(
+        account: SolanaPublicKey,
+        currentAuthority: SolanaPublicKey,
+        authorityType: Int,
+        newAuthority: SolanaPublicKey?,
+        signers: List<SolanaPublicKey> = emptyList()
+    ): TransactionInstruction = ArtemisTokenProgram.setAuthority(
+        account = account.toArtemisPubkey(),
+        currentAuthority = currentAuthority.toArtemisPubkey(),
+        authorityType = authorityType,
+        newAuthority = newAuthority?.toArtemisPubkey(),
+        signers = signers.map { it.toArtemisPubkey() }
+    ).toCompatInstruction()
+
+    fun freezeAccount(
+        account: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        authority: SolanaPublicKey,
+        signers: List<SolanaPublicKey> = emptyList()
+    ): TransactionInstruction = ArtemisTokenProgram.freezeAccount(
+        account = account.toArtemisPubkey(),
+        mint = mint.toArtemisPubkey(),
+        authority = authority.toArtemisPubkey(),
+        signers = signers.map { it.toArtemisPubkey() }
+    ).toCompatInstruction()
+
+    fun thawAccount(
+        account: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        authority: SolanaPublicKey,
+        signers: List<SolanaPublicKey> = emptyList()
+    ): TransactionInstruction = ArtemisTokenProgram.thawAccount(
+        account = account.toArtemisPubkey(),
+        mint = mint.toArtemisPubkey(),
+        authority = authority.toArtemisPubkey(),
+        signers = signers.map { it.toArtemisPubkey() }
+    ).toCompatInstruction()
+
     fun mintTo(
         mint: SolanaPublicKey,
         destination: SolanaPublicKey,
@@ -213,18 +275,213 @@ object AssociatedTokenProgram : Program {
         payer: SolanaPublicKey,
         owner: SolanaPublicKey,
         mint: SolanaPublicKey
+    ): TransactionInstruction = createAssociatedTokenAccount(
+        payer = payer,
+        owner = owner,
+        mint = mint,
+        tokenProgram = TokenProgram.PROGRAM_ID
+    )
+
+    fun createAssociatedTokenAccount(
+        payer: SolanaPublicKey,
+        owner: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        tokenProgram: SolanaPublicKey,
+        associatedToken: SolanaPublicKey = deriveAddress(owner, mint, tokenProgram)
     ): TransactionInstruction {
         val ix = ArtemisAssociatedToken.createAssociatedTokenAccount(
-            payer = com.selenus.artemis.runtime.Pubkey(payer.bytes),
-            owner = com.selenus.artemis.runtime.Pubkey(owner.bytes),
-            mint = com.selenus.artemis.runtime.Pubkey(mint.bytes)
+            payer = payer.toArtemisPubkey(),
+            owner = owner.toArtemisPubkey(),
+            mint = mint.toArtemisPubkey(),
+            ata = associatedToken.toArtemisPubkey(),
+            tokenProgram = tokenProgram.toArtemisPubkey()
         )
-        return TransactionInstruction(
-            programId = SolanaPublicKey(ix.programId.bytes),
-            accounts = ix.accounts.map { AccountMeta(SolanaPublicKey(it.pubkey.bytes), it.isSigner, it.isWritable) },
-            data = ix.data
-        )
+        return ix.toCompatInstruction()
     }
+
+    fun createAssociatedTokenAccountIdempotent(
+        payer: SolanaPublicKey,
+        owner: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        tokenProgram: SolanaPublicKey = TokenProgram.PROGRAM_ID,
+        associatedToken: SolanaPublicKey = deriveAddress(owner, mint, tokenProgram)
+    ): TransactionInstruction {
+        val ix = ArtemisAssociatedToken.createAssociatedTokenAccountIdempotent(
+            payer = payer.toArtemisPubkey(),
+            owner = owner.toArtemisPubkey(),
+            mint = mint.toArtemisPubkey(),
+            ata = associatedToken.toArtemisPubkey(),
+            tokenProgram = tokenProgram.toArtemisPubkey()
+        )
+        return ix.toCompatInstruction()
+    }
+
+    fun deriveAddress(
+        owner: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        tokenProgram: SolanaPublicKey = TokenProgram.PROGRAM_ID
+    ): SolanaPublicKey = SolanaPublicKey(
+        ArtemisAssociatedToken.address(
+            owner = owner.toArtemisPubkey(),
+            mint = mint.toArtemisPubkey(),
+            tokenProgram = tokenProgram.toArtemisPubkey()
+        ).bytes
+    )
+}
+
+/** Token-2022 program helpers added by newer web3-core call sites. */
+object Token2022Program : Program {
+    override val programId: SolanaPublicKey =
+        SolanaPublicKey(ArtemisProgramIds.TOKEN_2022_PROGRAM.bytes)
+
+    val PROGRAM_ID: SolanaPublicKey = programId
+    val TOKEN_2022_PROGRAM_ID: SolanaPublicKey = programId
+
+    fun initializeMint2(
+        mint: SolanaPublicKey,
+        decimals: Int,
+        mintAuthority: SolanaPublicKey,
+        freezeAuthority: SolanaPublicKey? = null
+    ): TransactionInstruction = ArtemisToken2022Program.initializeMint2(
+        mint = mint.toArtemisPubkey(),
+        decimals = decimals,
+        mintAuthority = mintAuthority.toArtemisPubkey(),
+        freezeAuthority = freezeAuthority?.toArtemisPubkey()
+    ).toCompatInstruction()
+
+    fun transferChecked(
+        source: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        destination: SolanaPublicKey,
+        owner: SolanaPublicKey,
+        amount: Long,
+        decimals: Int
+    ): TransactionInstruction = ArtemisToken2022Program.transferChecked(
+        source = source.toArtemisPubkey(),
+        mint = mint.toArtemisPubkey(),
+        destination = destination.toArtemisPubkey(),
+        owner = owner.toArtemisPubkey(),
+        amount = amount,
+        decimals = decimals
+    ).toCompatInstruction()
+
+    fun mintToChecked(
+        mint: SolanaPublicKey,
+        destination: SolanaPublicKey,
+        mintAuthority: SolanaPublicKey,
+        amount: Long,
+        decimals: Int
+    ): TransactionInstruction = ArtemisToken2022Program.mintToChecked(
+        mint = mint.toArtemisPubkey(),
+        destination = destination.toArtemisPubkey(),
+        mintAuthority = mintAuthority.toArtemisPubkey(),
+        amount = amount,
+        decimals = decimals
+    ).toCompatInstruction()
+
+    fun closeAccount(
+        account: SolanaPublicKey,
+        destination: SolanaPublicKey,
+        owner: SolanaPublicKey
+    ): TransactionInstruction = ArtemisToken2022Program.closeAccount(
+        account = account.toArtemisPubkey(),
+        destination = destination.toArtemisPubkey(),
+        owner = owner.toArtemisPubkey()
+    ).toCompatInstruction()
+
+    fun setAuthority(
+        account: SolanaPublicKey,
+        currentAuthority: SolanaPublicKey,
+        authorityType: TokenAuthorityType,
+        newAuthority: SolanaPublicKey?,
+        signers: List<SolanaPublicKey> = emptyList()
+    ): TransactionInstruction = setAuthority(
+        account = account,
+        currentAuthority = currentAuthority,
+        authorityType = authorityType.value,
+        newAuthority = newAuthority,
+        signers = signers
+    )
+
+    fun setAuthority(
+        account: SolanaPublicKey,
+        currentAuthority: SolanaPublicKey,
+        authorityType: Int,
+        newAuthority: SolanaPublicKey?,
+        signers: List<SolanaPublicKey> = emptyList()
+    ): TransactionInstruction = ArtemisToken2022Program.setAuthority(
+        account = account.toArtemisPubkey(),
+        currentAuthority = currentAuthority.toArtemisPubkey(),
+        authorityType = authorityType,
+        newAuthority = newAuthority?.toArtemisPubkey(),
+        signers = signers.map { it.toArtemisPubkey() }
+    ).toCompatInstruction()
+
+    fun freezeAccount(
+        account: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        authority: SolanaPublicKey,
+        signers: List<SolanaPublicKey> = emptyList()
+    ): TransactionInstruction = ArtemisToken2022Program.freezeAccount(
+        account = account.toArtemisPubkey(),
+        mint = mint.toArtemisPubkey(),
+        authority = authority.toArtemisPubkey(),
+        signers = signers.map { it.toArtemisPubkey() }
+    ).toCompatInstruction()
+
+    fun thawAccount(
+        account: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        authority: SolanaPublicKey,
+        signers: List<SolanaPublicKey> = emptyList()
+    ): TransactionInstruction = ArtemisToken2022Program.thawAccount(
+        account = account.toArtemisPubkey(),
+        mint = mint.toArtemisPubkey(),
+        authority = authority.toArtemisPubkey(),
+        signers = signers.map { it.toArtemisPubkey() }
+    ).toCompatInstruction()
+
+    fun initializeAccount3(
+        account: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        owner: SolanaPublicKey
+    ): TransactionInstruction = ArtemisToken2022Program.initializeAccount3(
+        account = account.toArtemisPubkey(),
+        mint = mint.toArtemisPubkey(),
+        owner = owner.toArtemisPubkey()
+    ).toCompatInstruction()
+
+    fun initializeImmutableOwner(account: SolanaPublicKey): TransactionInstruction =
+        ArtemisToken2022Program.initializeImmutableOwner(account.toArtemisPubkey()).toCompatInstruction()
+
+    fun associatedTokenAddress(owner: SolanaPublicKey, mint: SolanaPublicKey): SolanaPublicKey =
+        AssociatedTokenProgram.deriveAddress(owner, mint, programId)
+
+    fun createAssociatedTokenAccount(
+        payer: SolanaPublicKey,
+        owner: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        associatedToken: SolanaPublicKey = associatedTokenAddress(owner, mint)
+    ): TransactionInstruction = AssociatedTokenProgram.createAssociatedTokenAccount(
+        payer = payer,
+        owner = owner,
+        mint = mint,
+        tokenProgram = programId,
+        associatedToken = associatedToken
+    )
+
+    fun createAssociatedTokenAccountIdempotent(
+        payer: SolanaPublicKey,
+        owner: SolanaPublicKey,
+        mint: SolanaPublicKey,
+        associatedToken: SolanaPublicKey = associatedTokenAddress(owner, mint)
+    ): TransactionInstruction = AssociatedTokenProgram.createAssociatedTokenAccountIdempotent(
+        payer = payer,
+        owner = owner,
+        mint = mint,
+        tokenProgram = programId,
+        associatedToken = associatedToken
+    )
 }
 
 /**
