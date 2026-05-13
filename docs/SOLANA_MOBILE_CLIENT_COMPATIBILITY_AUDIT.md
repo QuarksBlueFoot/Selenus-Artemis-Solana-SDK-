@@ -27,7 +27,7 @@ Artemis does **not** replace:
 | web3-solana / web3-core | `artemis-web3-solana-compat` | main@2025-08 | Verified / Partial | `Web3SolanaCompatProgramTest`, API snapshot, tx/vtx byte fixtures | Source-compatible for pinned snapshot. Additive Token-2022 and ATA idempotent helpers are implemented/tested; a full web3-core 0.3.x pin refresh remains future work |
 | Sol4k | `artemis-sol4k-compat` | 0.7.0 | Verified | `Sol4kCompatTest`, `Sol4kCompatExtraTest`, API snapshot | Claims are scoped to Sol4k 0.7.0 public surface |
 | solana-kmp / SolanaKT family | `artemis-solana-kmp-compat` | main@2024-06-05 | Verified | `SolanaKmpCompatTest`, API snapshot | Upstream is dormant; claims target the pinned snapshot, not untracked forks |
-| Metaplex Android / KMM | `artemis-metaplex-android-compat` plus Artemis NFT modules | main@2024-04-06 | Partial | `MetaplexAndroidCompatTest`, NFT compatibility tests | NFT read, tokens, DAS, and selected metadata builders are covered. Auction House and full Candy Machine mutation surfaces are not claimed |
+| Metaplex Android / KMM | `artemis-metaplex-android-compat` plus Artemis NFT modules | main@2024-04-06 | Verified / Partial | `MetaplexAndroidCompatTest`, NFT compatibility tests | NFT read, tokens, DAS, selected metadata builders, and Candy Guard mint_v2 instruction building are covered. Auction House, legacy CMv2, and full Candy Machine lifecycle mutations are not claimed |
 
 ## Changes from the final pass
 
@@ -37,7 +37,7 @@ Artemis does **not** replace:
 - Added `MwaCommonCompatTest` and `SeedVaultCompatTest` so common protocol constants and Seed Vault client shim types are covered by runtime tests in addition to API snapshots.
 - Added native SPL Token `setAuthority`, `freezeAccount`, and `thawAccount` builders with web3-style compat wrappers and behavior tests.
 - Added `MwaReflectorServer` in `artemis-streaming`, a runnable `/reflect?id=...` WebSocket reflector with APP_PING pairing, binary/base64 subprotocol support, frame limits, and loopback tests.
-- Added rpc-core concrete driver FQN bridges and DAS-backed Metaplex Android `findAllByCreator` / `findAllByUpdateAuthority` behavior tests.
+- Added rpc-core concrete driver FQN bridges, DAS-backed Metaplex Android `findAllByCreator` / `findAllByUpdateAuthority` behavior tests, and a Metaplex Android Candy Guard mint_v2 instruction bridge.
 - Expanded CI, release, and local verification gates to run MWA clientlib, MWA walletlib, rpc-core, web3-solana, Sol4k, solana-kmp, and Metaplex Android compatibility tests.
 - Regenerated compat API snapshots so public surface drift is intentional and reviewable.
 
@@ -56,5 +56,5 @@ The honest claim is therefore:
 ## Remaining follow-up work before stronger claims
 
 - Refresh `artemis-web3-solana-compat` against Funkatronics web3-core 0.3.x and add upstream-version fixtures for any changed Token-2022 / ATA idempotent APIs.
-- Keep Metaplex Android/KMM language partial until Auction House and full Candy Machine mutations are implemented and tested.
+- Keep Metaplex Android/KMM language partial for Auction House, legacy Candy Machine v2, and full Candy Machine lifecycle mutations. Candy Guard mint_v2 instruction building is now covered by the compat runtime test.
 - Keep iOS language explicit: React Native can expose shared TypeScript calls, but MWA and Seed Vault primitives are Android Solana Mobile features with fallback hooks on iOS.

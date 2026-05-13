@@ -12,10 +12,13 @@
  *
  * Everything else the upstream SDK covered is now delegated to real Artemis
  * internals: Token Metadata reads via artemis-nft-compat, cNFT flows via
- * artemis-cnft, and MPL Core via artemis-mplcore.
+ * artemis-cnft, Candy Guard mint_v2 instruction building via
+ * artemis-candy-machine, and MPL Core via artemis-mplcore.
  */
 package com.metaplex.lib
 
+import com.selenus.artemis.candymachine.CandyGuardMintV2
+import com.selenus.artemis.candymachine.CandyMachinePdas
 import com.selenus.artemis.cnft.das.ArtemisDas
 import com.selenus.artemis.cnft.das.DigitalAsset
 import com.selenus.artemis.nft.Nft as ArtemisNft
@@ -24,6 +27,8 @@ import com.selenus.artemis.nft.WalletOwnedNft as ArtemisWalletOwnedNft
 import com.selenus.artemis.rpc.JsonRpcClient
 import com.selenus.artemis.rpc.RpcApi
 import com.selenus.artemis.runtime.Pubkey as ArtemisPubkey
+import com.selenus.artemis.tx.AccountMeta
+import com.selenus.artemis.tx.Instruction
 
 /**
  * metaplex-android compatible `Connection`.
@@ -69,8 +74,9 @@ class Metaplex(
     val candyMachinesV2: CandyMachinesV2Module by lazy { CandyMachinesV2Module() }
 
     /**
-     * Upstream Candy Machine v3 module (`candyMachines`). Same stubbing
-     * strategy as [candyMachinesV2].
+    * Upstream Candy Machine v3 module (`candyMachines`). Query methods keep
+    * the source-compatible null/empty fallback, while mint_v2 instruction
+    * builders delegate to the native Artemis Candy Guard module.
      */
     val candyMachines: CandyMachinesModule by lazy { CandyMachinesModule() }
 
@@ -300,7 +306,7 @@ class AuctionsModule {
 class CandyMachinesV2Module {
     data class NotImplementedResult(
         val message: String = "Candy Machine v2 is not implemented in artemis-metaplex-android-compat. " +
-            "Use the artemis-candy-machine module's CandyGuardAccountPlanner / CandyMachineMintV2 " +
+            "Use the artemis-candy-machine module's CandyGuardAccountPlanner / CandyGuardMintV2 " +
             "instructions for current Candy Guard mint flows."
     )
 
@@ -319,14 +325,46 @@ class CandyMachinesV2Module {
 }
 
 /**
- * Stub Candy Machine v3 module. Same semantics and routing notes as
- * [CandyMachinesV2Module]; use the dedicated `artemis-candy-machine` module
- * for real CMv3 / Candy Guard mint flows.
+ * Candy Machine v3 module.
+ *
+ * The query helpers preserve the source-compatible null / empty fallbacks from
+ * earlier releases. Mutation support now covers the current mobile-friendly
+ * Candy Guard `mint_v2` path by delegating to `artemis-candy-machine`.
  */
 class CandyMachinesModule {
     data class NotImplementedResult(
-        val message: String = "Candy Machine v3 is not implemented in artemis-metaplex-android-compat. " +
-            "Use the artemis-candy-machine module for current Candy Guard mint flows."
+        val message: String = "Candy Machine v3 address-only minting is not implemented in artemis-metaplex-android-compat. " +
+            "Call mintV2Instruction(...) with resolved accounts, or use CandyGuardAccountPlanner from " +
+            "artemis-candy-machine before building the transaction."
+    )
+
+    data class RemainingAccount(
+        val publicKey: String,
+        val isSigner: Boolean = false,
+        val isWritable: Boolean = false
+    )
+
+    data class MintV2Accounts(
+        val candyGuard: String,
+        val candyMachine: String,
+        val payer: String,
+        val minter: String,
+        val nftMint: String,
+        val nftMetadata: String,
+        val nftMasterEdition: String,
+        val collectionDelegateRecord: String,
+        val collectionMint: String,
+        val collectionMetadata: String,
+        val collectionMasterEdition: String,
+        val collectionUpdateAuthority: String,
+        val nftMintAuthority: String? = null,
+        val token: String? = null,
+        val tokenRecord: String? = null,
+        val authorizationRulesProgram: String? = null,
+        val authorizationRules: String? = null,
+        val remainingAccounts: List<RemainingAccount> = emptyList(),
+        val nftMintIsSigner: Boolean = true,
+        val nftMintAuthorityIsSigner: Boolean = true
     )
 
     /** No-op query: returns null. */
@@ -335,7 +373,67 @@ class CandyMachinesModule {
     /** No-op query: returns empty. */
     fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<Nothing> = emptyList()
 
-    /** Action stub: returns the [NotImplementedResult] sentinel. */
+    /**
+     * Build a Candy Guard `mint_v2` instruction with already-resolved accounts.
+     */
+    fun mintV2Instruction(
+        accounts: MintV2Accounts,
+        group: String? = null,
+        mintArgsBorsh: ByteArray? = null
+    ): Instruction = CandyGuardMintV2.build(
+        args = CandyGuardMintV2.Args(group = group),
+        accounts = accounts.toArtemisAccounts(),
+        mintArgsBorsh = mintArgsBorsh
+    )
+
+    /** Alias for callers that expect a `mint(...)` mutation entry point. */
+    fun mint(
+        accounts: MintV2Accounts,
+        group: String? = null,
+        mintArgsBorsh: ByteArray? = null
+    ): Instruction = mintV2Instruction(accounts, group, mintArgsBorsh)
+
+    /** Derive the Candy Machine authority PDA used by Candy Guard mint_v2. */
+    fun findCandyMachineAuthorityPda(candyMachineAddress: String): String =
+        CandyMachinePdas.findCandyMachineAuthorityPda(candyMachineAddress.toArtemisPubkey()).address.toBase58()
+
+    /** Address-only minting cannot resolve the full Candy Guard account set. */
     fun mint(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): NotImplementedResult =
         NotImplementedResult()
+
+    private fun MintV2Accounts.toArtemisAccounts(): CandyGuardMintV2.Accounts {
+        val payerKey = payer.toArtemisPubkey()
+        val candyMachineKey = candyMachine.toArtemisPubkey()
+        return CandyGuardMintV2.Accounts(
+            candyGuard = candyGuard.toArtemisPubkey(),
+            candyMachine = candyMachineKey,
+            payer = payerKey,
+            minter = minter.toArtemisPubkey(),
+            nftMint = nftMint.toArtemisPubkey(),
+            nftMintAuthority = nftMintAuthority?.toArtemisPubkey() ?: payerKey,
+            nftMetadata = nftMetadata.toArtemisPubkey(),
+            nftMasterEdition = nftMasterEdition.toArtemisPubkey(),
+            token = token?.toArtemisPubkey(),
+            tokenRecord = tokenRecord?.toArtemisPubkey(),
+            collectionDelegateRecord = collectionDelegateRecord.toArtemisPubkey(),
+            collectionMint = collectionMint.toArtemisPubkey(),
+            collectionMetadata = collectionMetadata.toArtemisPubkey(),
+            collectionMasterEdition = collectionMasterEdition.toArtemisPubkey(),
+            collectionUpdateAuthority = collectionUpdateAuthority.toArtemisPubkey(),
+            candyMachineAuthorityPda = CandyMachinePdas.findCandyMachineAuthorityPda(candyMachineKey).address,
+            authorizationRulesProgram = authorizationRulesProgram?.toArtemisPubkey(),
+            authorizationRules = authorizationRules?.toArtemisPubkey(),
+            remainingAccounts = remainingAccounts.map { it.toAccountMeta() },
+            nftMintIsSigner = nftMintIsSigner,
+            nftMintAuthorityIsSigner = nftMintAuthorityIsSigner
+        )
+    }
+
+    private fun RemainingAccount.toAccountMeta(): AccountMeta = AccountMeta(
+        pubkey = publicKey.toArtemisPubkey(),
+        isSigner = isSigner,
+        isWritable = isWritable
+    )
+
+    private fun String.toArtemisPubkey(): ArtemisPubkey = ArtemisPubkey.fromBase58(this)
 }

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.3.2 (2026-05-12)
+
+Final client compatibility sweep for the 2.3.x line.
+
+### Added
+
+- Metaplex Android/KMM `candyMachines` compat bridge for Candy Guard `mint_v2` instruction building, including typed resolved-account inputs, remaining-account support, and Candy Machine authority PDA derivation.
+
+### Changed
+
+- Narrowed the Metaplex Android/KMM compatibility boundary: NFT read, tokens, DAS, selected metadata builders, and Candy Guard `mint_v2` instruction building are covered; Auction House, legacy CMv2, and full Candy Machine lifecycle mutations remain explicitly out of claim.
+
 ## 2.3.1 (2026-05-02)
 
 Final client-SDK compatibility hardening pass before Maven Central / npm publish.

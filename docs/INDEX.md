@@ -68,31 +68,31 @@ A flat index of every document in the repo. The structured navigation lives at [
 
 ## Quick install snippet
 
-The current published version is `2.3.1`. The source of truth for the version number is the `version` field in [../gradle.properties](../gradle.properties).
+The current published version is `2.3.2`. The source of truth for the version number is the `version` field in [../gradle.properties](../gradle.properties).
 
 ```kotlin
 dependencies {
     // Foundation
-    implementation("xyz.selenus:artemis-core:2.3.1")
-    implementation("xyz.selenus:artemis-rpc:2.3.1")
-    implementation("xyz.selenus:artemis-ws:2.3.1")
-    implementation("xyz.selenus:artemis-tx:2.3.1")
-    implementation("xyz.selenus:artemis-vtx:2.3.1")
-    implementation("xyz.selenus:artemis-programs:2.3.1")
+    implementation("xyz.selenus:artemis-core:2.3.2")
+    implementation("xyz.selenus:artemis-rpc:2.3.2")
+    implementation("xyz.selenus:artemis-ws:2.3.2")
+    implementation("xyz.selenus:artemis-tx:2.3.2")
+    implementation("xyz.selenus:artemis-vtx:2.3.2")
+    implementation("xyz.selenus:artemis-programs:2.3.2")
 
     // Mobile
-    implementation("xyz.selenus:artemis-wallet:2.3.1")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.1")
-    implementation("xyz.selenus:artemis-seed-vault:2.3.1")
+    implementation("xyz.selenus:artemis-wallet:2.3.2")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.2")
+    implementation("xyz.selenus:artemis-seed-vault:2.3.2")
 
     // NFT, DAS, marketplace
-    implementation("xyz.selenus:artemis-cnft:2.3.1")
+    implementation("xyz.selenus:artemis-cnft:2.3.2")
 
     // Optional
-    implementation("xyz.selenus:artemis-token2022:2.3.1")
-    implementation("xyz.selenus:artemis-jupiter:2.3.1")
-    implementation("xyz.selenus:artemis-actions:2.3.1")
-    implementation("xyz.selenus:artemis-anchor:2.3.1")
+    implementation("xyz.selenus:artemis-token2022:2.3.2")
+    implementation("xyz.selenus:artemis-jupiter:2.3.2")
+    implementation("xyz.selenus:artemis-actions:2.3.2")
+    implementation("xyz.selenus:artemis-anchor:2.3.2")
 }
 ```
 

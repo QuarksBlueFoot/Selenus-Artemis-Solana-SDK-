@@ -226,6 +226,7 @@ Two orthogonal labels appear throughout the docs:
 | `NftModule` (findByMint, findAllByOwner, findAllByMintList; DAS-backed findAllByCreator and findAllByUpdateAuthority with empty RPC-only fallback) | `interop/artemis-metaplex-android-compat` | Verified (`MetaplexAndroidCompatTest`) |
 | `TokensModule.findByMint` | `interop/artemis-metaplex-android-compat` | Verified |
 | `DasModule` (assetsByOwner, asset) | `interop/artemis-metaplex-android-compat` | Verified |
+| `CandyMachinesModule.mintV2Instruction`, `mint(MintV2Accounts)`, and Candy Machine authority PDA derivation | `interop/artemis-metaplex-android-compat` + `artemis-candy-machine` | Verified (`MetaplexAndroidCompatTest`) |
 | Token Metadata instruction builders (createMetadataAccountV3, createMasterEditionV3, updateMetadataAccountV2, signMetadata, verifyCollection, unverifyCollection, setAndVerifyCollection, verifySizedCollectionItem, approveCollectionAuthority, revokeCollectionAuthority) | `compatibility/artemis-nft-compat` | Verified |
 | pNFT support (token record PDA, TokenRecordParser, collection authority record PDA, CollectionAuthorityRecordParser) | `compatibility/artemis-nft-compat` | Verified |
 
@@ -268,7 +269,7 @@ Two orthogonal labels appear throughout the docs:
 | MPL Core | No | No | N/A | Partial | Yes | Partial |
 | Compressed NFTs (Bubblegum) | No | No | N/A | Partial | `artemis-cnft` | Verified |
 | cNFT transfer via MarketplaceEngine | No | No | N/A | No | `MarketplaceEngine` | Verified |
-| Candy Machine v3 | No | No | N/A | No | `artemis-candy-machine` | In Progress |
+| Candy Machine v3 | No | No | N/A | No | `artemis-candy-machine` | Verified / Partial (mint_v2 builder, safe planner, and Metaplex compat bridge covered; full lifecycle mutations pending) |
 | DAS by-owner / by-collection / single-asset | No | No | N/A | No | `ArtemisDas` / `HeliusDas` | Verified |
 | DAS RPC fallback | No | No | N/A | No | `RpcFallbackDas` | Verified |
 | DAS primary + fallback router with 30s cooldown | No | No | N/A | No | `CompositeDas` | Verified |

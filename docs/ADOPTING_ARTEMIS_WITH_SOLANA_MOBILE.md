@@ -83,7 +83,7 @@ This track is still a client-library migration. It does not replace MWA, Seed Va
 | Custom websocket glue | `xyz.selenus:artemis-ws` | Realtime engine with reconnect and typed connection state |
 | Custom NFT / DAS glue | `xyz.selenus:artemis-cnft` | DAS interface, Helius primary, RPC fallback, marketplace helpers |
 
-The current published Artemis version is `2.3.1`. The source of truth is the `version` field in [../gradle.properties](../gradle.properties).
+The current published Artemis version is `2.3.2`. The source of truth is the `version` field in [../gradle.properties](../gradle.properties).
 
 ## Gradle migration
 
@@ -103,17 +103,17 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("xyz.selenus:artemis-core:2.3.1")
-    implementation("xyz.selenus:artemis-rpc:2.3.1")
-    implementation("xyz.selenus:artemis-ws:2.3.1")
-    implementation("xyz.selenus:artemis-vtx:2.3.1")
-    implementation("xyz.selenus:artemis-programs:2.3.1")
+    implementation("xyz.selenus:artemis-core:2.3.2")
+    implementation("xyz.selenus:artemis-rpc:2.3.2")
+    implementation("xyz.selenus:artemis-ws:2.3.2")
+    implementation("xyz.selenus:artemis-vtx:2.3.2")
+    implementation("xyz.selenus:artemis-programs:2.3.2")
 
-    implementation("xyz.selenus:artemis-wallet:2.3.1")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.1")
-    implementation("xyz.selenus:artemis-seed-vault:2.3.1") // only when Seed Vault is needed
+    implementation("xyz.selenus:artemis-wallet:2.3.2")
+    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.2")
+    implementation("xyz.selenus:artemis-seed-vault:2.3.2") // only when Seed Vault is needed
 
-    implementation("xyz.selenus:artemis-cnft:2.3.1") // optional NFT / DAS helpers
+    implementation("xyz.selenus:artemis-cnft:2.3.2") // optional NFT / DAS helpers
 }
 ```
 

@@ -560,7 +560,7 @@ val artemisModuleDescriptions: Map<String, String> = mapOf(
     "artemis-mwa-common-compat" to "Shared MWA protocol types (Account, AuthorizationResult, SignInPayload) exposed under the upstream package for source compatibility.",
     "artemis-sol4k-compat" to "Sol4k source-compat shim: exposes sol4k API shapes (Connection, Keypair, PublicKey, Transaction) backed by Artemis.",
     "artemis-solana-kmp-compat" to "solana-kmp source-compat shim for projects migrating from the Solana KMP fork.",
-    "artemis-metaplex-android-compat" to "metaplex-android source-compat shim: routes Metaplex calls through artemis-metaplex.",
+    "artemis-metaplex-android-compat" to "metaplex-android source-compat shim: routes Metaplex calls through Artemis NFT, DAS, MPL Core, and Candy Guard mint_v2 builders.",
     "artemis-web3-solana-compat" to "web3-solana source-compat shim that mirrors the small web3-solana Android surface on top of Artemis.",
     "artemis-rpc-core-compat" to "rpc-core source-compat shim that exposes the upstream rpc-core API backed by artemis-rpc."
 )

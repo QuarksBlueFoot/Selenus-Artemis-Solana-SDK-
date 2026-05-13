@@ -2,7 +2,8 @@
 // Pinned upstream surface: snapshot of github.com/metaplex-foundation/metaplex-android
 // `main` as of 2024-04-06 (the upstream repo has been dormant since).
 // Coverage is intentionally Partial: the Metaplex entry point + nft /
-// tokens / das / candyMachinesV2 / candyMachines accessors are present;
+// tokens / das / candyMachinesV2 / candyMachines accessors are present,
+// and CMv3 Candy Guard mint_v2 instruction building delegates to Artemis;
 // auctions and the full NFT mutation surface are not.
 plugins {
     kotlin("multiplatform")
@@ -26,6 +27,7 @@ kotlin {
             api(project(":artemis-nft-compat"))
             api(project(":artemis-cnft"))
             api(project(":artemis-mplcore"))
+            implementation(project(":artemis-candy-machine"))
             implementation(libs.kotlinx.coroutines.core)
         }
         jvmTest.dependencies {

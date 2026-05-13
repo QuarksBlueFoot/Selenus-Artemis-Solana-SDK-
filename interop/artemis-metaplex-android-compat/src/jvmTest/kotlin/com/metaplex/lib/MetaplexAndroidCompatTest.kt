@@ -10,8 +10,11 @@ package com.metaplex.lib
 
 import com.selenus.artemis.cnft.das.ArtemisDas
 import com.selenus.artemis.cnft.das.DigitalAsset
+import com.selenus.artemis.candymachine.CandyMachineIds
+import com.selenus.artemis.candymachine.CandyMachinePdas
 import com.selenus.artemis.runtime.Pubkey
 import kotlinx.coroutines.runBlocking
+import java.security.MessageDigest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -69,6 +72,61 @@ class MetaplexAndroidCompatTest {
         val metaplex = Metaplex(connection)
         val result = metaplex.auctions.bid("auction", price = 1L)
         assertEquals(true, result.message.contains("Auction House"))
+    }
+
+    @Test
+    fun `CandyMachines module builds real mint v2 instructions`() {
+        val metaplex = Metaplex(Connection("https://api.devnet.solana.com"))
+        val accounts = CandyMachinesModule.MintV2Accounts(
+            candyGuard = CandyMachineIds.CANDY_GUARD.toBase58(),
+            candyMachine = CANDY_MACHINE,
+            payer = PAYER,
+            minter = PAYER,
+            nftMint = NFT_MINT,
+            nftMetadata = NFT_METADATA,
+            nftMasterEdition = NFT_MASTER_EDITION,
+            collectionDelegateRecord = COLLECTION_DELEGATE_RECORD,
+            collectionMint = COLLECTION_MINT,
+            collectionMetadata = COLLECTION_METADATA,
+            collectionMasterEdition = COLLECTION_MASTER_EDITION,
+            collectionUpdateAuthority = PAYER,
+            remainingAccounts = listOf(
+                CandyMachinesModule.RemainingAccount(publicKey = REMAINING_ACCOUNT, isWritable = true)
+            )
+        )
+
+        val instruction = metaplex.candyMachines.mintV2Instruction(
+            accounts = accounts,
+            group = "vip",
+            mintArgsBorsh = byteArrayOf(1, 2, 3)
+        )
+
+        assertEquals(CandyMachineIds.CANDY_GUARD, instruction.programId)
+    assertEquals(anchorDiscriminator("mint_v2"), instruction.data.take(8))
+        assertEquals(Pubkey.fromBase58(CandyMachineIds.CANDY_GUARD.toBase58()), instruction.accounts[0].pubkey)
+        assertEquals(Pubkey.fromBase58(CANDY_MACHINE), instruction.accounts[2].pubkey)
+        assertEquals(true, instruction.accounts[4].isSigner)
+        assertEquals(true, instruction.accounts[4].isWritable)
+        assertEquals(true, instruction.accounts[6].isSigner)
+        assertEquals(Pubkey.fromBase58(REMAINING_ACCOUNT), instruction.accounts.last().pubkey)
+        assertEquals(true, instruction.accounts.last().isWritable)
+    }
+
+    @Test
+    fun `CandyMachines module derives the native authority PDA`() {
+        val metaplex = Metaplex(Connection("https://api.devnet.solana.com"))
+
+        assertEquals(
+            CandyMachinePdas.findCandyMachineAuthorityPda(Pubkey.fromBase58(CANDY_MACHINE)).address.toBase58(),
+            metaplex.candyMachines.findCandyMachineAuthorityPda(CANDY_MACHINE)
+        )
+    }
+
+    @Test
+    fun `CandyMachines address-only mint keeps typed fallback`() {
+        val metaplex = Metaplex(Connection("https://api.devnet.solana.com"))
+        val result = metaplex.candyMachines.mint(CANDY_MACHINE)
+        assertEquals(true, result.message.contains("mintV2Instruction"))
     }
 
     @Test
@@ -162,4 +220,22 @@ class MetaplexAndroidCompatTest {
         collectionVerified = false,
         isMutable = true
     )
+
+    private fun anchorDiscriminator(name: String): List<Byte> =
+        MessageDigest.getInstance("SHA-256")
+            .digest("global:$name".encodeToByteArray())
+            .take(8)
+
+    private companion object {
+        const val CANDY_MACHINE = "So11111111111111111111111111111111111111112"
+        const val PAYER = "7nYpDiwWkSM1bAbJhk2mXPUH1KU1U6rZxkrGi3YD2J1S"
+        const val NFT_MINT = "GdRNeX9mbzrhm5tKWGP3mN1p6ZqoDMCK7BmLbsjc23Jv"
+        const val NFT_METADATA = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+        const val NFT_MASTER_EDITION = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        const val COLLECTION_DELEGATE_RECORD = "Vote111111111111111111111111111111111111111"
+        const val COLLECTION_MINT = "Sysvar1111111111111111111111111111111111111"
+        const val COLLECTION_METADATA = "SysvarRent111111111111111111111111111111111"
+        const val COLLECTION_MASTER_EDITION = "11111111111111111111111111111111"
+        const val REMAINING_ACCOUNT = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+    }
 }
