@@ -1,6 +1,6 @@
 // Drop-in source compatibility for `com.solana.mobilewalletadapter:clientlib-ktx`.
-// Pinned upstream surface: 1.4.3 (github.com/solana-mobile/mobile-wallet-adapter
-// tag `v1.4.3`). The `dumpApi` task in the root build.gradle.kts diffs our
+// Pinned upstream surface: 2.1.0 (github.com/solana-mobile/mobile-wallet-adapter).
+// The `dumpApi` task in the root build.gradle.kts diffs our
 // surface against `api/artemis-mwa-compat.api`; bump that snapshot AND this
 // pin together when upstream releases.
 plugins {
@@ -8,7 +8,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-extra["upstream.version"] = "1.4.3"
+extra["upstream.version"] = "2.1.0"
 extra["upstream.repo"] = "https://github.com/solana-mobile/mobile-wallet-adapter"
 extra["upstream.artifact"] = "com.solana.mobilewalletadapter:clientlib-ktx"
 

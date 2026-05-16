@@ -250,18 +250,34 @@ interface StorageDriver
 /** Default in-process storage driver placeholder. */
 object DefaultStorageDriver : StorageDriver
 
+data class UnsupportedMetaplexFeature(
+    val module: String,
+    val feature: String,
+    val message: String,
+    val migrationHint: String
+)
+
+private fun unsupportedFeature(module: String, feature: String, migrationHint: String): UnsupportedMetaplexFeature =
+    UnsupportedMetaplexFeature(
+        module = module,
+        feature = feature,
+        message = "$module.$feature is not implemented in artemis-metaplex-android-compat.",
+        migrationHint = migrationHint
+    )
+
 /**
  * Stub Auction House module.
  *
  * Upstream metaplex-android exposed [findAllByCreator], [findAllBySeller],
  * [findByAddress], etc. on this module. Artemis does not ship a full Auction
- * House client (see [Metaplex.auctions] KDoc), so all queries here return
- * empty lists / null and all actions return [NotImplementedResult].
+ * House client (see [Metaplex.auctions] KDoc), so all query placeholders return
+ * a typed [UnsupportedMetaplexFeature] sentinel and all actions return
+ * [NotImplementedResult].
  *
- * Code that just iterates `metaplex.auctions.findAllByCreator(...)` for a
- * "no listings" empty UI state continues to work. Code that actually needs
- * to bid/list/cancel should pattern-match on [NotImplementedResult] and
- * route to a protocol-specific path.
+ * Code that actually needs to bid/list/cancel should pattern-match on
+ * [NotImplementedResult] and route to a protocol-specific path. Code that
+ * calls query helpers should treat [UnsupportedMetaplexFeature] as an explicit
+ * unsupported state rather than a real empty marketplace result.
  */
 class AuctionsModule {
     /** Sentinel returned by every action method on this stub. */
@@ -271,14 +287,17 @@ class AuctionsModule {
             "instructions, or migrate to artemis-cnft for compressed-NFT marketplace flows."
     )
 
-    /** Always returns empty: no auction houses are tracked locally. */
-    fun findAllByCreator(@Suppress("UNUSED_PARAMETER") creator: String): List<Nothing> = emptyList()
+    /** Query unsupported: Artemis does not ship an Auction House indexer. */
+    fun findAllByCreator(@Suppress("UNUSED_PARAMETER") creator: String): List<UnsupportedMetaplexFeature> =
+        listOf(unsupportedFeature("AuctionsModule", "findAllByCreator", AUCTION_HOUSE_HINT))
 
-    /** Always returns empty: no auction houses are tracked locally. */
-    fun findAllBySeller(@Suppress("UNUSED_PARAMETER") seller: String): List<Nothing> = emptyList()
+    /** Query unsupported: Artemis does not ship an Auction House indexer. */
+    fun findAllBySeller(@Suppress("UNUSED_PARAMETER") seller: String): List<UnsupportedMetaplexFeature> =
+        listOf(unsupportedFeature("AuctionsModule", "findAllBySeller", AUCTION_HOUSE_HINT))
 
-    /** Always returns null: no auction houses are tracked locally. */
-    fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
+    /** Query unsupported: Artemis does not ship an Auction House indexer. */
+    fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any =
+        unsupportedFeature("AuctionsModule", "findByAddress", AUCTION_HOUSE_HINT)
 
     /** Action stub: returns the [NotImplementedResult] sentinel rather than throwing. */
     fun bid(@Suppress("UNUSED_PARAMETER") auctionAddress: String, @Suppress("UNUSED_PARAMETER") price: Long): NotImplementedResult =
@@ -291,6 +310,11 @@ class AuctionsModule {
     /** Action stub: returns the [NotImplementedResult] sentinel rather than throwing. */
     fun cancel(@Suppress("UNUSED_PARAMETER") auctionAddress: String): NotImplementedResult =
         NotImplementedResult()
+
+    private companion object {
+        const val AUCTION_HOUSE_HINT =
+            "Use MarketplaceEngine.executeInstructions with protocol-specific marketplace instructions."
+    }
 }
 
 /**
@@ -300,8 +324,8 @@ class AuctionsModule {
  * and a few others on this module. Artemis routes Candy Machine workflows through
  * the dedicated `artemis-candy-machine` module, which speaks the more current
  * Candy Guard / mint_v2 surface. This stub exists so source-level imports
- * continue to resolve; queries return empty / null, actions return
- * [NotImplementedResult].
+ * continue to resolve; query placeholders return [UnsupportedMetaplexFeature],
+ * actions return [NotImplementedResult].
  */
 class CandyMachinesV2Module {
     data class NotImplementedResult(
@@ -310,25 +334,33 @@ class CandyMachinesV2Module {
             "instructions for current Candy Guard mint flows."
     )
 
-    /** No-op query: returns null. */
-    fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
+    /** Query unsupported: Candy Machine v2 is not implemented by Artemis. */
+    fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any =
+        unsupportedFeature("CandyMachinesV2Module", "findByAddress", CANDY_MACHINE_V2_HINT)
 
-    /** No-op query: returns empty. */
-    fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<Nothing> = emptyList()
+    /** Query unsupported: Candy Machine v2 is not implemented by Artemis. */
+    fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<UnsupportedMetaplexFeature> =
+        listOf(unsupportedFeature("CandyMachinesV2Module", "findAllByAuthority", CANDY_MACHINE_V2_HINT))
 
-    /** No-op query: returns empty. */
-    fun findAllMintedItems(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): List<Nothing> = emptyList()
+    /** Query unsupported: Candy Machine v2 is not implemented by Artemis. */
+    fun findAllMintedItems(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): List<UnsupportedMetaplexFeature> =
+        listOf(unsupportedFeature("CandyMachinesV2Module", "findAllMintedItems", CANDY_MACHINE_V2_HINT))
 
     /** Action stub: returns the [NotImplementedResult] sentinel. */
     fun mint(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): NotImplementedResult =
         NotImplementedResult()
+
+    private companion object {
+        const val CANDY_MACHINE_V2_HINT =
+            "Use artemis-candy-machine Candy Guard mint_v2 flows for current Candy Machine support."
+    }
 }
 
 /**
  * Candy Machine v3 module.
  *
- * The query helpers preserve the source-compatible null / empty fallbacks from
- * earlier releases. Mutation support now covers the current mobile-friendly
+ * The query helpers now return typed unsupported sentinels instead of silent
+ * null / empty fallbacks. Mutation support covers the current mobile-friendly
  * Candy Guard `mint_v2` path by delegating to `artemis-candy-machine`.
  */
 class CandyMachinesModule {
@@ -367,11 +399,13 @@ class CandyMachinesModule {
         val nftMintAuthorityIsSigner: Boolean = true
     )
 
-    /** No-op query: returns null. */
-    fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any? = null
+    /** Query unsupported: address-only lookup needs an indexer/RPC data source. */
+    fun findByAddress(@Suppress("UNUSED_PARAMETER") address: String): Any =
+        unsupportedFeature("CandyMachinesModule", "findByAddress", CANDY_MACHINE_V3_HINT)
 
-    /** No-op query: returns empty. */
-    fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<Nothing> = emptyList()
+    /** Query unsupported: authority lookup needs an indexer/RPC data source. */
+    fun findAllByAuthority(@Suppress("UNUSED_PARAMETER") authority: String): List<UnsupportedMetaplexFeature> =
+        listOf(unsupportedFeature("CandyMachinesModule", "findAllByAuthority", CANDY_MACHINE_V3_HINT))
 
     /**
      * Build a Candy Guard `mint_v2` instruction with already-resolved accounts.
@@ -400,6 +434,11 @@ class CandyMachinesModule {
     /** Address-only minting cannot resolve the full Candy Guard account set. */
     fun mint(@Suppress("UNUSED_PARAMETER") candyMachineAddress: String): NotImplementedResult =
         NotImplementedResult()
+
+    private companion object {
+        const val CANDY_MACHINE_V3_HINT =
+            "Use CandyGuardAccountPlanner or mintV2Instruction with resolved Candy Guard accounts."
+    }
 
     private fun MintV2Accounts.toArtemisAccounts(): CandyGuardMintV2.Accounts {
         val payerKey = payer.toArtemisPubkey()

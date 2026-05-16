@@ -174,20 +174,21 @@ Explicit source-compat or migration-compat surface for teams migrating from othe
 
 **Modules:**
 
-- `artemis-mwa-compat` (source-compatible shim for `com.solana.mobilewalletadapter:clientlib-ktx` 1.4.3)
-- `artemis-mwa-clientlib-compat` (source-compatible shim for `com.solana.mobilewalletadapter:clientlib` 1.4.3)
-- `artemis-mwa-walletlib-compat` (source-compatible shim for `com.solana.mobilewalletadapter:walletlib` 1.4.3)
-- `artemis-mwa-common-compat` (source-compatible shim for `com.solana.mobilewalletadapter:common` 1.4.3)
+- `artemis-mwa-compat` (source-compatible shim for `com.solana.mobilewalletadapter:clientlib-ktx` 2.1.0)
+- `artemis-mwa-clientlib-compat` (source-compatible shim for `com.solana.mobilewalletadapter:clientlib` 2.1.0)
+- `artemis-mwa-walletlib-compat` (source-compatible shim for `com.solana.mobilewalletadapter:walletlib` 2.1.0)
+- `artemis-mwa-common-compat` (source-compatible shim for `com.solana.mobilewalletadapter:common` 2.1.0)
 - `artemis-seedvault-compat` (source-compatible shim for `com.solanamobile:seedvault-wallet-sdk` 0.4.0)
 - `artemis-sol4k-compat` (source-compatible shim for `org.sol4k:sol4k` 0.7.0; includes Token-2022 instructions and the upstream `RpcException` data-class shape)
 - `artemis-solana-kmp-compat` (source-compatible shim for `foundation.metaplex:solana-kmp`, snapshot of upstream `main`@2024-06-05; upstream dormant)
 - `artemis-metaplex-android-compat` (source-compatible shim for `com.metaplex.lib:lib`, snapshot of upstream `main`@2024-04-06; upstream dormant; Partial coverage)
 - `artemis-rpc-core-compat` (source-compatible shim for `com.solana:rpc-core`, snapshot @2026-01-09; `ArtemisHttpNetworkDriver` replaces concrete Ktor/Okio driver FQNs)
 - `artemis-web3-solana-compat` (source-compatible shim for `com.solana:web3-solana` (Funkatronics), snapshot @2025-08; newer web3-core 0.3.x additions remain partial)
+- `artemis-multimult-compat` (source-compatible Base58 shim for `io.github.funkatronics:multimult` 0.2.6)
 
 **What it covers:**
 
-- Source compatibility wrappers for the upstream MWA clientlib + walletlib + common packages, sol4k, solana-kmp, Metaplex Android, rpc-core, and web3-solana
+- Source compatibility wrappers for the upstream MWA clientlib + walletlib + common packages, sol4k, solana-kmp, Metaplex Android, rpc-core, web3-solana, and multimult Base58
 - Source compatibility wrappers for the Seed Vault static surface (`com.solanamobile.seedvault.Wallet.*` + `WalletContractV1`)
 - Migration helpers with documented upstream version pins (`extra["upstream.version"]`) and scope coverage in `docs/PARITY_MATRIX.md` plus `docs/SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md`
 

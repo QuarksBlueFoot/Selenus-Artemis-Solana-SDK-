@@ -1,321 +1,126 @@
 # Parity matrix
 
-Feature-by-feature honest status of Artemis against the Kotlin/Android Solana SDK ecosystem. Each status is gated on what the tests in the repo actually exercise.
+Feature-by-feature status of Artemis against the Kotlin/Android Solana SDK ecosystem. A row is marked `Verified` only when the repo contains code plus a focused test, API snapshot, or build gate that would fail if the claim regressed.
 
 ## Legend
 
-- **Verified**: implementation shipped and exercised by a test that would fail if the feature broke.
-- **In Progress**: implementation shipped, more work scheduled; treat as a preview surface.
-- **Partial**: feature works for the documented happy path; known edge cases or upstream behaviours are not covered yet.
-- **Experimental**: surface exists; behaviour may shift before 1.0 of that module.
-- **Planned**: on the roadmap, no code yet.
-- **N/A**: not applicable to that SDK.
+- **Verified**: implementation shipped and exercised by a test, API snapshot, or focused build gate.
+- **Partial**: implementation exists, but at least one upstream edge case or device-backed flow still needs coverage.
+- **Experimental**: public surface exists, but behavior may still change.
+- **Planned**: documented roadmap, no shipping code yet.
+- **N/A**: not applicable to that upstream project.
 
 ## Release labels
 
-Two orthogonal labels appear throughout the docs:
+- `Artemis-native ready`: safe to adopt through Artemis APIs directly.
+- `SMS-client-compat ready`: safe to adopt through source-compatible interop modules for app-side Solana Mobile dependencies. This does not mean Artemis replaces Mobile Wallet Adapter, Seed Vault, wallet approval UX, or Solana Mobile platform services.
 
-- `Artemis-native ready`: safe to adopt using Artemis APIs directly (`ArtemisMobile.create()`, `WalletSession`, `TxEngine`, `RpcApi`). Everything `Verified` here qualifies.
-- `SMS-client-compat ready`: safe to use the `interop/artemis-*-compat` shims for source-compatible migration from the listed Solana Mobile client libraries. Requires both the native path and the compat behavior tests to pass. Today this label applies to `Verified` items in the Wallet/Mobile and RPC rows below; the rest is `Partial` or `In Progress`. This label does not mean Artemis replaces MWA, Seed Vault, or the Solana Mobile platform.
+## Dependency replacement matrix
+
+| Upstream dependency | Artemis path | Replacement type | Status | Evidence |
+|---|---|---|---|---|
+| Sol4k 0.7.0 | `artemis-sol4k-compat` plus native Foundation modules | Source/API compat plus native replacement | Verified | `Sol4kCompatTest`, `Sol4kCompatExtraTest`, `artemis-sol4k-compat.api` |
+| SolanaKT / solana-kmp | `artemis-solana-kmp-compat` plus native Foundation modules | Source/API compat plus native replacement | Verified | `artemis-solana-kmp-compat.api`, compat tests |
+| Solana Mobile MWA clientlib / clientlib-ktx 2.1.0 | `artemis-mwa-compat`, `artemis-mwa-clientlib-compat`, `artemis-mwa-common-compat` | Source compat backed by Artemis MWA | Verified for compile/API and local protocol behavior; real-wallet matrix remains device-gated | MWA tests, API snapshots, `:artemis-mwa-compat:testDebugUnitTest` |
+| Solana Mobile MWA walletlib 2.1.0 | `artemis-mwa-walletlib-compat` plus walletlib Android module | Source compat backed by Artemis wallet-side MWA | Verified for compile/API and local scenarios; real-wallet matrix remains device-gated | `MwaWalletlibCompatParityTest`, API snapshot |
+| Seed Vault SDK | `artemis-seed-vault`, `artemis-seedvault-compat` | Compat wrapper over platform service | Partial | static/API surface verified; full behavior requires Saga/Seeker or simulator |
+| `rpc-core` | `artemis-rpc-core-compat`, `artemis-rpc` | Source compat plus native transport | Verified | `RpcCoreCompatTest`, API snapshot |
+| `web3-solana` | `artemis-web3-solana-compat`, `artemis-tx`, `artemis-vtx`, `artemis-programs` | Source compat plus native transaction/program builders | Verified for pinned snapshot | `Web3SolanaCompatProgramTest`, transaction byte fixtures, API snapshot |
+| `io.github.funkatronics:multimult` 0.2.6 | `artemis-multimult-compat` | Source compat for Base58 APIs | Verified | `MultimultCompatTest`, `artemis-multimult-compat.api` |
+| SPL Token | `artemis-programs` | Native replacement | Verified | program builder tests |
+| Token-2022 | `artemis-token2022` | Native replacement | Verified except confidential transfer remains experimental | Token-2022 tests, TLV/zero-copy tests |
+| Metaplex Android | `artemis-metaplex-android-compat`, `artemis-metaplex`, `artemis-candy-machine` | Selected source compat and native coverage | Partial | NFT/DAS/Candy Machine bridge tests plus typed unsupported query sentinel tests |
+| Jupiter | `artemis-jupiter` | Native integration | Partial | module tests and API surface, broader route conformance pending |
+| DAS / cNFT | `artemis-cnft` | Native integration | Verified for shipped flows | DAS fallback and cNFT tests |
 
 ## Core primitives
 
-| Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
-|---|---|---|---|---|---|---|
-| PublicKey type | Yes | Yes | via solana-kmp | via solana-kmp | `Pubkey` | Verified |
-| Keypair generation | Yes | Yes | N/A | N/A | `Keypair` | Verified |
-| Ed25519 signing | Yes | Yes | N/A | N/A | `Crypto` | Verified |
-| Base58 encode/decode | Yes | Yes | N/A | N/A | `Base58` | Verified |
-| Base64 encode/decode | Partial | Yes | N/A | N/A | `PlatformBase64` | Verified |
-| PDA derivation | Yes | No | N/A | via solana-kmp | `Pda.find()` | Verified |
-| HD key derivation | No | No | N/A | N/A | `Bip32.deriveKeypair()` + `SolanaDerivation` | Verified (RFC + golden vectors) |
-| X25519 ECDH | No | No | N/A | No | `SeedVaultCrypto.deriveX25519SharedSecret` | Verified (symmetric + context-separation tests) |
-| HKDF-SHA256 | No | No | N/A | N/A | `HkdfSha256.derive` | Verified (RFC 5869 Appendix A test cases) |
-| AES-128-GCM session cipher | No | No | N/A | N/A | `Aes128Gcm` | Verified (round-trip + tamper-reject) |
-| P-256 ECDH + ECDSA P1363 | No | No | Yes (inside walletlib) | N/A | `EcP256` | Verified (round-trip + DER/P1363 tests) |
+| Capability | solana-kmp | Sol4k | Solana Mobile app deps | Artemis | Status |
+|---|---|---|---|---|---|
+| Public key type | Yes | Yes | via app-side SDK | `Pubkey` and compat aliases | Verified |
+| Keypair generation | Yes | Yes | N/A | `Keypair` | Verified |
+| Ed25519 signing | Yes | Yes | N/A | `Crypto` | Verified |
+| Base58 encode/decode | Yes | Yes | via `multimult` in some examples | `Base58`, `artemis-multimult-compat` | Verified |
+| PDA derivation | Yes | Partial | via app-side SDK | `Pda.find()` | Verified |
+| Base64 URL/session helpers | Partial | Partial | MWA protocol requirement | `PlatformBase64`, MWA protocol helpers | Verified |
 
-## Transaction model
+## Transactions and programs
 
-| Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
-|---|---|---|---|---|---|---|
-| Legacy transactions | Yes | Yes | N/A | N/A | `Transaction` | Verified |
-| Versioned transactions (v0) | Partial | Partial | N/A | N/A | `VersionedTransaction` | Verified |
-| Address lookup tables | Partial | No | N/A | N/A | `VersionedMessage.addressTableLookups` | Verified (parse + serialize round-trip) |
-| Durable nonce support | No | No | N/A | N/A | `DurableNonce` | Partial (build + send covered; rollback edge cases not fuzzed) |
-| Transaction serialization | Yes | Yes | N/A | N/A | Yes | Verified (internal round-trip + initial `web3.js` 1.98.4 byte fixtures; named-SDK equivalence remains fixture-scoped) |
-| Multi-signer support | Yes | Yes | N/A | N/A | `SolanaSigner.signTransaction` | Verified (index-by-pubkey lookup) |
+| Capability | Artemis module | Status | Evidence |
+|---|---|---|---|
+| Legacy transaction serialization | `artemis-tx` | Verified | internal round-trip plus web3.js byte fixtures |
+| Versioned transaction v0 | `artemis-vtx` | Verified | v0 parser/serializer fixtures, ALT coverage |
+| Address lookup tables | `artemis-vtx`, `artemis-programs` | Verified | create/extend/freeze/deactivate/close builders and v0 tests |
+| Account ordering parity | `artemis-tx`, `artemis-vtx` | Verified for committed fixtures | transaction parity notes and fixtures |
+| Compute budget | `artemis-compute`, `artemis-programs` | Verified | instruction builder tests |
+| SPL Token | `artemis-programs` | Verified | native builders and compat tests |
+| Token-2022 transfer hook and TLV views | `artemis-token2022` | Verified | transfer hook builders, zero-copy TLV/account extension views |
+| Anchor enum args | `artemis-anchor` | Verified | enum IDL parse/serialize/deserialize tests |
 
-## RPC client
+## RPC and realtime
 
-| Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
-|---|---|---|---|---|---|---|
-| JSON-RPC methods (typed `suspend fun`) | ~20 | ~15 | via solana-kmp | via solana-kmp | 92 typed methods declared on `RpcApi` (113 funs total including helpers / overloads) | Verified |
-| Typed response wrappers | Some | Minimal | N/A | N/A | `*Typed` helpers | Verified |
-| Batch requests | No | No | N/A | N/A | `callBatch` + `callBatchTyped` | Verified |
-| Per-item batch error surface | No | No | N/A | N/A | `BatchItemResult.Ok` / `.Err(code,message,data)` | Verified |
-| Commitment config | Yes | Yes | N/A | N/A | Yes | Verified |
-| Endpoint failover | No | No | N/A | N/A | `RpcEndpointPool` | Verified |
-| Circuit breaker (three-state, `Closed` / `Open` / `HalfOpen`, observable `StateFlow`, configurable threshold + cooldown + half-open success threshold) | No | No | N/A | N/A | `CircuitBreaker` (standalone, wrappable around any suspend block) | Verified |
-| Blockhash cache | No | No | N/A | N/A | `BlockhashCache` | Verified |
-| Retry classification (sockets, TLS, EOF, timeouts) | No | No | N/A | N/A | `shouldRetry` typed branches | Verified |
+| Capability | Artemis module | Status | Evidence |
+|---|---|---|---|
+| Typed JSON-RPC methods | `artemis-rpc` | Verified | typed method tests and compat shims |
+| Batch requests with per-item errors | `artemis-rpc` | Verified | batch result tests |
+| Endpoint pool and circuit breaker | `artemis-rpc` | Verified | `CircuitBreakerTest`, endpoint tests |
+| WebSocket account/signature/program/slot subscriptions | `artemis-ws` | Verified | realtime tests |
+| Deterministic reconnect/resubscribe | `artemis-ws` | Verified | reconnect tests |
+| HTTP polling fallback | `artemis-ws` | Partial | account/signature/program covered; logs have no HTTP equivalent |
 
-## WebSocket
+## Wallet and Solana Mobile
 
-| Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
-|---|---|---|---|---|---|---|
-| Account subscriptions | No | No | N/A | N/A | Yes | Verified |
-| Program subscriptions | No | No | N/A | N/A | Yes | Verified |
-| Signature subscriptions | No | No | N/A | N/A | Yes | Verified |
-| Slot subscriptions | No | No | N/A | N/A | `SolanaWsClient.slotSubscribe` + `RealtimeEngine.subscribeSlot` | Verified (`RealtimeEngineTest`) |
-| Real transport pings (OkHttp `pingInterval`) | N/A | N/A | N/A | N/A | Yes | Verified |
-| Reconnect only on `onOpen` success | N/A | N/A | N/A | N/A | Yes | Verified |
-| Deterministic resubscribe | N/A | N/A | N/A | N/A | Yes | Verified |
-| HTTP polling fallback (acct/sig/prog) | N/A | N/A | N/A | N/A | Yes | Partial (logs-subscribe has no HTTP equivalent; surfaces a typed `logsPollingUnavailable` event) |
-| Collector-job retention on reconnect | N/A | N/A | N/A | N/A | Yes | Verified |
-| Typed `ConnectionState` StateFlow | No | No | N/A | N/A | `ConnectionState` | Verified |
-| Endpoint rotation | No | No | N/A | N/A | Yes | Verified |
+| Capability | Artemis module | Status | Evidence |
+|---|---|---|---|
+| MWA 2.1.0 client API shape | `artemis-mwa-compat`, `artemis-mwa-clientlib-compat`, `artemis-mwa-common-compat` | Verified | 2.1.0 metadata, tests, API snapshots |
+| `transact(sender, signInPayload, block)` high-level flow | `artemis-mwa-compat` | Verified | source surface and behavior tests |
+| MWA sign messages / sign transactions / sign and send | `artemis-wallet-mwa-android`, compat modules | Verified | MWA tests and batch result tests |
+| Sign-In With Solana payload/result | `artemis-wallet-mwa-android`, compat modules | Verified | SIWS tests, result byte-preservation tests |
+| Persisted session secret for process death reauthorize | `artemis-wallet-mwa-android` | Verified | session secret store tests and `ArtemisMobile.create` install path |
+| MWA migration sample build | `samples/mwa-compat-migration` | Verified | opt-in Android sample builds with upstream-import compat, native Artemis, and mixed transaction-building flows |
+| Phantom/Solflare/Backpack/reference-wallet live device matrix | docs and planned instrumentation | Partial | device/app lab required |
+| Seed Vault contract wrapper | `artemis-seed-vault`, `artemis-seedvault-compat` | Partial | API and provider checks verified; platform signing requires device/service |
 
-## Wallet / Mobile
+## Drop-in compat shims
 
-| Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
-|---|---|---|---|---|---|---|
-| Wallet abstraction | No | No | No (raw protocol) | No | `WalletSession` | Verified |
-| MWA 2.0 client (authorize/addresses/features/auth_token) | No | No | Yes | No | `artemis-wallet-mwa-android` | Verified |
-| MWA auth lifecycle (unified `authorize(auth_token=...)`) | No | No | Yes | No | `WalletSessionManager` | Verified |
-| `withWallet { }` retry narrowed to session-expiry sentinels | No | No | No | No | `SessionExpiredException` | Verified |
-| Sign transactions (MWA 2.0 optional) | N/A | N/A | Yes | N/A | `MwaWalletAdapter.signMessages` | Verified |
-| Sign and send transactions | N/A | N/A | Yes | N/A | Yes | Verified |
-| Sign-and-send wallet-unsupported fallback (`SignedButNotBroadcast` + injectable `RpcBroadcaster`) | N/A | N/A | N/A | N/A | Yes | Verified |
-| SIWS (Sign In With Solana) payload round-trip (incl. `resources`) | N/A | N/A | Partial | N/A | Yes | Verified |
-| Keystore-backed auth token (AES-256-GCM, fail-closed) | No | No | Partial | No | `KeystoreEncryptedAuthTokenStore` | Verified |
-| HMAC session secret persisted for reauthorize after process death | No | No | No | No | `MwaSessionSecretStore` + `SessionManager.installPersistedSecret` | Verified (Keystore-backed default installed by `ArtemisMobile.create`) |
-| MWA session sequencing (atomic counters, fail-on-close) | No | No | Yes | No | `MwaSession` | Verified |
-| Local WebSocket server hardened (loopback bind, origin allow-list, ping/pong, oversized-frame reject, fragmentation) | N/A | N/A | Yes | N/A | `MwaWebSocketServer` | Verified (loopback + origin reject + oversized frame reject + ping/pong covered by `MwaWebSocketServerTest`) |
-| Chain-gated reauthorize (token issued for `solana:mainnet` rejected against `solana:devnet`) | N/A | N/A | Yes (`BaseScenario.doReauthorize`) | N/A | `WalletMwaServer.handleAuthorizeAsReauthorize` + `handleReauthorize` enforce `record.chain == requestedChain` | Verified (covered by `WalletCorrectnessTest`) |
-| Wallet-driven `DeauthorizedEvent.complete()` (server awaits the wallet's UI cleanup before replying success; bounded 30s timeout) | N/A | N/A | Yes | N/A | `WalletMwaServer.handleDeauthorize` | Verified |
-| `sign_messages` address-set check (every requested address must be in the active authorization's account list) | N/A | N/A | Yes | N/A | `WalletMwaServer.handleSignMessages` | Verified |
-| `AuthRepository.start()` / `stop()` lifecycle hooks called by `LocalScenario` on session establish/close (SQLite-backed impls open the DB here) | N/A | N/A | Yes | N/A | `AuthRepository` interface + `LocalScenario` wiring | Verified |
-| `get_capabilities` emits the spec-correct unified `max_payloads_per_request` field alongside the legacy `max_transactions_per_request` / `max_messages_per_request` for MWA 1.x compat | N/A | N/A | Yes | N/A | `WalletMwaServer.handleGetCapabilities` | Verified |
-| HELLO_RSP frame shape gated on negotiated protocol version (LEGACY frame is `Qw` only; V1 frame is `Qw` followed by an encrypted SessionProperties envelope) | N/A | N/A | Yes | N/A | `WalletSideHandshake.perform` | Verified |
-| Low-power-mode gate on `noConnectionWarningTimeoutMs` (warning only fires when `PowerManager.isPowerSaveMode()` returns true) | N/A | N/A | Yes | N/A | `LocalScenario` + `DevicePowerConfigProvider` | Verified |
-| MWA wallet conformance detector (normalizes Phantom/Solflare/Seeker quirks from upstream #958, #1146, #1331, #1458) | No | No | No | No | `MwaWalletConformance` + `KnownWallet` + `ConformanceReport` | Verified (covered by `MwaWalletConformanceTest`) |
-| Spec-first MWA error taxonomy with typed recovery hints (closes upstream #314) | No | No | No | No | `MwaError` (sealed) + `Recovery` enum | Verified (covered by `MwaErrorTest`) |
-| SIWS validator with canonical message rendering + ed25519 verification + replay check (closes upstream #193, #1331) | No | No | Partial | No | `MwaSiwsValidator` + `SiwsVerification` | Verified (covered by `MwaSiwsValidatorTest`) |
-| First-class multi-account session wrapper (closes upstream #438, open 2+ years) | No | No | No | No | `MwaMultiAccountSession` + `ResolvedAccount` | Verified (covered by `MwaMultiAccountSessionTest`) |
-| WebView / PWA / TWA environment detector with routing hints (closes upstream #1082, #1323, #1364) | No | No | No | No | `MwaEnvironmentDetector` | Verified (covered by `MwaEnvironmentDetectorTest`) |
-| Keystore-backed auth-token store with AES-256-GCM `[12-byte IV][ciphertext+tag]` wire format and fail-closed on tamper | No | No | Partial | No | `KeystoreEncryptedAuthTokenStore` + `InMemoryAuthTokenStore` | Verified (covered by `AuthTokenStoreTest`; AES round-trip + tamper-reject + IV uniqueness) |
-| Seed Vault (system-service custody; secure EE) | No | No | Separate SDK | No | `artemis-seed-vault` | Partial (device required for full behaviour; wrapper Verified, service is upstream) |
-| Seed Vault strict contract/provider split | N/A | N/A | N/A | N/A | `SeedVaultContractClient` + `*Provider` | Verified |
-| Seed Vault provider trust checks (platform signature / allowlist) | N/A | N/A | N/A | N/A | `SeedVaultCheck.isTrustedProvider` | Verified |
-| Seed Vault IPC timeouts + strict auth-token parsing | N/A | N/A | N/A | N/A | `parseAuthTokenStrict` + `withTimeout(30s)` | Verified |
-| Local keypair signing | Yes | Yes | N/A | N/A | `WalletSession.Local` | Verified |
-| React Native MWA wrapper | No | No | Yes | No | `advanced/artemis-react-native` (TypeScript + Android bridge; ships outside the Gradle build, distributed via npm) | Partial (Android-only; RN platform / `readyState` detection Verified by the TS test runner under `advanced/artemis-react-native/`) |
-
-## MWA compat (drop-in path)
-
-| Capability | Artemis module | Status |
+| Compat surface | Module | Status |
 |---|---|---|
-| `com.solana.mobilewalletadapter.clientlib.MobileWalletAdapter` (ktx) | `interop/artemis-mwa-compat` | Verified |
-| `MobileWalletAdapterClient` low-level client with live `SessionBridge` | `interop/artemis-mwa-clientlib-compat` | Verified (no `UnsupportedOperationException` in the happy path) |
-| `LocalAssociationScenario` with real P-256 keypair, loopback port reservation, base64url association token | `interop/artemis-mwa-clientlib-compat` | Verified |
-| Nested result types (`AuthorizationResult`, `SignPayloadsResult`, `SignMessagesResult`, `SignAndSendTransactionsResult`) | `interop/artemis-mwa-clientlib-compat` | Verified |
-| `LocalAdapterOperations` routes through live `MwaSessionBridge` | `interop/artemis-mwa-compat` | Verified |
-| `ProtocolContract`, `AssociationContract`, `SessionProperties`, SIWS payload helpers | `interop/artemis-mwa-common-compat` | Verified (`MwaCommonCompatTest` + API snapshot) |
-| API-diff snapshot (`dumpApi` + `verifyApiSnapshots` Gradle tasks) | `interop/artemis-mwa-*/api/*.api` | Verified |
+| `com.solana.mobilewalletadapter.clientlib.*` | `artemis-mwa-compat`, `artemis-mwa-clientlib-compat` | Verified |
+| `com.solana.mobilewalletadapter.common.*` | `artemis-mwa-common-compat` | Verified |
+| `com.solana.mobilewalletadapter.walletlib.*` | `artemis-mwa-walletlib-compat` | Verified |
+| `com.solanamobile.seedvault.*` | `artemis-seedvault-compat` | Partial, device-gated |
+| `org.sol4k.*` | `artemis-sol4k-compat` | Verified |
+| `foundation.metaplex.*` / solana-kmp shapes | `artemis-solana-kmp-compat` | Verified |
+| `com.solana.rpccore.*` and networking shims | `artemis-rpc-core-compat` | Verified |
+| web3-solana public key, transaction, and program helpers | `artemis-web3-solana-compat` | Verified for pinned snapshot |
+| `com.funkatronics.encoders.Base58` | `artemis-multimult-compat` | Verified |
+| `io.github.funkatronics.multimult.Base58` group-style alias | `artemis-multimult-compat` | Verified |
 
-## MWA walletlib compat (drop-in, wallet side)
+## Ecosystem coverage
 
-| Capability | Artemis module | Status |
+| Area | Artemis module | Status |
 |---|---|---|
-| `com.solana.mobilewalletadapter.walletlib.association.AssociationUri.parse` (+ `parseOrNull`, `createScenario(Context, ...)` factory) | `interop/artemis-mwa-walletlib-compat` | Verified |
-| `LocalAssociationScenario` with `startAsync(): CompletableFuture<String>` and lifecycle callbacks | `interop/artemis-mwa-walletlib-compat` | Verified |
-| `RemoteWebSocketServerScenario` reflector flow (WSS `/reflect?id=...`, APP_PING gate, shared HELLO + JSON-RPC server path) | `interop/artemis-mwa-walletlib-compat` + `artemis-wallet-mwa-walletlib-android` | Verified |
-| JVM MWA reflector service (`/reflect?id=...`, pair-by-id relay, binary/base64 subprotocol conversion, frame caps, health endpoint) | `artemis-streaming` | Verified (`MwaReflectorServerTest`) |
-| `MobileWalletAdapterServer` typed exceptions: `RequestDeclinedException`, `InvalidPayloadsException`, `NotSubmittedException`, `TooManyPayloadsException`, `AuthorizationNotValidException`, `ChainNotSupportedException`, deprecated `ClusterNotSupportedException` alias | `interop/artemis-mwa-walletlib-compat` | Verified |
-| `MobileWalletAdapterSession` FQN exposed | `interop/artemis-mwa-walletlib-compat` | Verified |
-| `JsonRpc20Server` with canonical error codes + envelope helpers | `interop/artemis-mwa-walletlib-compat` | Verified |
-| `walletlib.authorization.AuthRepository` interface (start/stop/issue/fromAuthToken/toAuthToken/reissue/revoke/getAuthorizedIdentities/getAuthorizations) + `InMemoryAuthRepository` + `AuthRecord` + `IdentityRecord` + `AccountRecord` | `interop/artemis-mwa-walletlib-compat` | Verified |
-| `BaseScenarioRequest` / `VerifiableIdentityRequest` / `SignPayloadsRequest` marker interfaces | `interop/artemis-mwa-walletlib-compat` | Verified |
-| `WalletIconProvider` + `DefaultWalletIconProvider` | `interop/artemis-mwa-walletlib-compat` | Verified |
-| Deprecated MWA-1.x request aliases: `cluster` getter on `AuthorizeRequest` / `ReauthorizeRequest`, `completeWithClusterNotSupported`, `completeWithAuthorize(ByteArray, …)` overload, `publicKey` getter on Sign* requests | `interop/artemis-mwa-walletlib-compat` | Verified |
+| Token Metadata read/write selected flows | `artemis-metaplex`, `artemis-nft-compat` | Partial |
+| DAS asset lookup and fallback | `artemis-cnft` | Verified |
+| Compressed NFT transfers with proof resolution | `artemis-cnft` | Verified |
+| Candy Machine v3 mint_v2 builder and Metaplex compat bridge | `artemis-candy-machine`, `artemis-metaplex-android-compat` | Verified for mint_v2 path; broader lifecycle partial; unsupported query helpers return typed sentinels |
+| MPL Core selected asset flows | `artemis-mplcore` | Partial |
+| Jupiter quote/swap | `artemis-jupiter` | Partial |
+| Solana Pay transfer/transaction URLs | `artemis-solana-pay` | Verified for shipped parser/builder flows |
+| Solana Actions / Blinks | `artemis-actions` | In Progress |
 
-## Seed Vault compat
+## Packaging
 
-| Capability | Artemis module | Status |
-|---|---|---|
-| `com.solanamobile.seedvault.Wallet` static surface | `interop/artemis-seedvault-compat` | Verified (every upstream static; `AuthTokenGuard` for the invalid-token edge; API snapshot) |
-| `WalletContractV1` constants | `interop/artemis-seedvault-compat` | Verified (every public const; IntDef + `@Purpose`; API snapshot) |
-| `SeedVault.isAvailable` / `AccessType` | `interop/artemis-seedvault-compat` | Verified (`SeedVaultCompatTest` + API snapshot) |
-| AIDL `ISeedVaultService` 9-method shape | `mobile/artemis-seed-vault/src/main/aidl` | Verified (reconciled with internal Kotlin proxy) |
+| Capability | Module | Status | Evidence |
+|---|---|---|---|
+| Maven Central POM descriptions | root publishing config | Verified | per-module description map |
+| Local staging publish | all publishable modules | Verified | `publish...ToLocalStagingRepository` gates |
+| BOM | `artemis-bom` | Verified | Java Platform module published to local staging |
+| Compat API snapshots | root `dumpApi` / `verifyApiSnapshots` | Verified | 11 compat snapshots including multimult |
+| Source-import conformance suite | `artemis-conformance-suite` | Verified | `:artemis-conformance-suite:testDebugUnitTest` |
 
-## rpc-core compat (drop-in client path)
+## Known hard limits
 
-| Capability | Artemis module | Status |
-|---|---|---|
-| `com.solana.rpccore` JSON-RPC envelope types (`RpcRequest`, `JsonRpc20Request`, `Rpc20Response`, `RpcError`, `JsonRpcDriver`) | `interop/artemis-rpc-core-compat` | Verified (`RpcCoreCompatTest`) |
-| `com.solana.networking.HttpNetworkDriver`, `HttpRequest`, `Rpc20Driver` request serialization + result/error decoding | `interop/artemis-rpc-core-compat` | Verified (`RpcCoreCompatTest`) |
-| `SolanaRpcClient` constructors, `TransactionOptions`, `AccountInfo`, `SolanaResponse`, `SolanaAccount`, `SimulationResult` model shape | `interop/artemis-rpc-core-compat` | Verified (`RpcCoreCompatTest` + API snapshot) |
-| Default Artemis transport | `ArtemisHttpNetworkDriver` | Verified by source/API surface; delegates to `artemis-rpc` `HttpTransport` |
-| Upstream `KtorNetworkDriver` / `OkHttpNetworkDriver` FQNs, plus deprecated `OkioNetworkDriver` alias for earlier migration notes | `interop/artemis-rpc-core-compat` | Verified (`RpcCoreCompatTest`; no-arg/default HTTP bridge plus delegate injection keeps Ktor / OkHttp out of common deps) |
-
-## web3-solana compat (drop-in client path)
-
-| Capability | Artemis module | Status |
-|---|---|---|
-| `SolanaPublicKey`, `PublicKey`, `ProgramDerivedAddress` | `interop/artemis-web3-solana-compat` | Verified (API snapshot; PDA helper routes to Artemis `Pda`) |
-| `Message.Builder`, `LegacyMessage`, `VersionedMessage`, `Transaction`, `SolanaSigner` | `interop/artemis-web3-solana-compat` | Verified (`Web3SolanaCompatProgramTest` + transaction byte fixtures in `artemis-tx` / `artemis-vtx`) |
-| Program helpers: System, SPL Token initialize/transfer/mint/burn/approve/revoke/close/checked-transfer/sync-native, ATA create/idempotent create, Compute Budget, Memo | `interop/artemis-web3-solana-compat` | Verified (`Web3SolanaCompatProgramTest`; all supported SPL Token helpers route through native `artemis-programs`) |
-| SPL Token `setAuthority`, freeze/thaw | `interop/artemis-web3-solana-compat` + `artemis-programs` | Verified (`TokenProgram` native builders + `Web3SolanaCompatProgramTest`) |
-| Token-2022 helpers: checked transfer/mint, close account, authority/freeze/thaw, initialize account/immutable owner, Token-2022 ATA address/create/idempotent create | `interop/artemis-web3-solana-compat` + `artemis-token2022` | Verified (`Web3SolanaCompatProgramTest`, `Token2022ProgramTest`; upstream 0.3.x pin refresh still pending) |
-| Upstream pin freshness | `main@2025-08` | Partial: source-compatible for the pinned snapshot; do not claim full Funkatronics `web3-core` 0.3.x parity until the pin and snapshot tests are refreshed. |
-
-## solana-kmp compat (drop-in path)
-
-| Capability | Artemis module | Status |
-|---|---|---|
-| `foundation.metaplex.solanapublickeys.PublicKey` (both ctors + findProgramAddress / createProgramAddress) | `interop/artemis-solana-kmp-compat` | Verified |
-| `PUBLIC_KEY_LENGTH`, `defaultPublicKey()`, `HasPublicKey` | `interop/artemis-solana-kmp-compat` | Verified |
-| `foundation.metaplex.base58.Base58` object + `encodeToBase58String` / `decodeBase58` / checksum variants | `interop/artemis-solana-kmp-compat` | Verified |
-| `foundation.metaplex.amount.Amount` data class + `Lamports` / `SOL` factories | `interop/artemis-solana-kmp-compat` | Verified |
-| `lamports` / `sol` / `createAmount` / `createAmountFromDecimals` / `percentAmount` / `tokenAmount` | `interop/artemis-solana-kmp-compat` | Verified |
-| Amount arithmetic (`addAmounts`, `subtractAmounts`, `multiplyAmount`, `divideAmount`, `absoluteAmount`) | `interop/artemis-solana-kmp-compat` | Verified |
-| Amount comparison + predicates (`compareAmounts`, `isEqualToAmount`, `isZero/Positive/NegativeAmount`, `sameAmounts`, `isAmount`) | `interop/artemis-solana-kmp-compat` | Verified |
-| Amount assertions + formatting (`assertAmount`, `assertSolAmount`, `amountToString`, `amountToNumber`, `displayAmount`) | `interop/artemis-solana-kmp-compat` | Verified |
-| `Commitment` enum, `Encoding` enum | `interop/artemis-solana-kmp-compat` | Verified |
-| `Cluster` sealed class (`MainnetBeta`, `Devnet`, `Testnet`, `Localnet`, `Custom`) + `resolveClusterFromEndpoint` | `interop/artemis-solana-kmp-compat` | Verified |
-| `RpcGetAccountInfoConfiguration`, `RpcGetMultipleAccountsConfiguration`, `RpcGetProgramAccountsConfiguration`, `RpcGetLatestBlockhashConfiguration`, `RpcGetSlotConfiguration`, `RpcGetBalanceConfiguration`, `RpcRequestAirdropConfiguration`, `RpcSendTransactionConfiguration` | `interop/artemis-solana-kmp-compat` | Verified |
-| `RpcDataFilter` sealed (`Size`, `Memcmp`), `MemcmpFilter`, `RpcDataSlice` | `interop/artemis-solana-kmp-compat` | Verified |
-| `BlockhashWithExpiryBlockHeight(blockhash, lastValidBlockHeight)` | `interop/artemis-solana-kmp-compat` | Verified |
-| `RpcInterface.getProgramAccounts` + `AccountInfoWithPublicKey` | `interop/artemis-solana-kmp-compat` | Verified |
-| `Transaction` surface (addInstruction / add / setRecentBlockHash / sign / partialSign / addSignature / verifySignatures / compileMessage / serializeMessage / serialize(SerializeConfig)) | `interop/artemis-solana-kmp-compat` | Verified |
-| `SerializeConfig(requireAllSignatures, verifySignatures)` | `interop/artemis-solana-kmp-compat` | Verified |
-| `Message` interface + `SolanaMessage` (isAccountSigner / isAccountWritable / isProgramId / programIds / nonProgramIds / serialize / setFeePayer) | `interop/artemis-solana-kmp-compat` | Verified |
-| `MessageHeader(numRequiredSignatures, numReadonlySignedAccounts, numReadonlyUnsignedAccounts)` with `toByteArray` | `interop/artemis-solana-kmp-compat` | Verified |
-| `CompiledInstruction`, `SignaturePubkeyPair`, `NonceInformation`, `Shortvec.encodeLength/decodeLength` | `interop/artemis-solana-kmp-compat` | Verified |
-| `foundation.metaplex.solana.programs.SystemProgram` (`transfer`, `createAccount`, `PROGRAM_ID`) | `interop/artemis-solana-kmp-compat` | Verified |
-| `foundation.metaplex.solana.programs.MemoProgram.writeUtf8` | `interop/artemis-solana-kmp-compat` | Verified |
-| `Keypair` (generate / publicKey / secretKey / sign), `SolanaEddsa.sign/verify/publicKeyFromSeed` | `interop/artemis-solana-kmp-compat` | Verified |
-| `RPC(rpcUrl)` with `asArtemis()` escape hatch | `interop/artemis-solana-kmp-compat` | Verified |
-| `ReadApiInterface` + `ReadApiDecorator` (getAsset, getAssetsByOwner, getAssetsByGroup, getAssetProof) | `interop/artemis-solana-kmp-compat` | Verified |
-
-## Sol4k compat (drop-in path)
-
-| Capability | Artemis module | Status |
-|---|---|---|
-| `org.sol4k.Connection` (22+ methods: getBalance, getLatestBlockhash, getAccountInfo, getMultipleAccounts, sendTransaction, simulateTransaction, getFeeForMessage, getSignaturesForAddress, getRecentPrioritizationFees, getEpochInfo, getVersion, getIdentity, getHealth, getTransactionCount, requestAirdrop, getMinimumBalanceForRentExemption, getTokenAccountBalance, getTokenSupply, isBlockhashValid) | `interop/artemis-sol4k-compat` | Verified |
-| `org.sol4k.PublicKey` with `findProgramAddress` + `findProgramDerivedAddress` (ATA helper) | `interop/artemis-sol4k-compat` | Verified |
-| `org.sol4k.Keypair` (generate, fromSecretKey, sign, publicKey, secret) | `interop/artemis-sol4k-compat` | Verified |
-| `Transaction` (sign, addSignature, serialize, `from(String)`) | `interop/artemis-sol4k-compat` | Verified |
-| `VersionedTransaction` (sign, addSignature, serialize, `calculateFee(lamportsPerSignature)`, `from(String)`) | `interop/artemis-sol4k-compat` | Verified |
-| `TransactionMessage` (newMessage, deserialize, withNewBlockhash, serialize) | `interop/artemis-sol4k-compat` | Verified |
-| Instruction builders (`TransferInstruction`, `SplTransferInstruction`, open `TokenTransferInstruction` base, `Token2022TransferInstruction`, `CreateAssociatedTokenAccountInstruction`, `CreateAssociatedToken2022AccountInstruction`, `SetComputeUnitLimitInstruction`, `SetComputeUnitPriceInstruction`) | `interop/artemis-sol4k-compat` | Verified |
-| `AccountMeta` companion factories (`signerAndWritable`, `writable`, `signer`, `readonly`) | `interop/artemis-sol4k-compat` | Verified |
-| `PublicKey.findProgramAddress` + `findProgramDerivedAddress(holder, mint, programId = TOKEN_PROGRAM_ID)` (Token-2022 ATA derivation supported) | `interop/artemis-sol4k-compat` | Verified |
-| `PublicKey.readPubkey(bytes, offset)` + `PublicKey.valueOf(base58)` | `interop/artemis-sol4k-compat` | Verified |
-| `ProgramDerivedAddress(address, nonce)` (matches upstream field name; deprecated `publicKey` alias preserved) | `interop/artemis-sol4k-compat` | Verified |
-| `Constants` (SYSTEM_PROGRAM, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, COMPUTE_BUDGET_PROGRAM_ID, SYSVAR_RENT_ADDRESS, PUBLIC_KEY_LENGTH, SIGNATURE_LENGTH) | `interop/artemis-sol4k-compat` | Verified |
-| `Base58`, `Binary` (uint32/int64/uint16/encodeLength/decodeLength), `Convert` (lamport/sol/micro-lamport) | `interop/artemis-sol4k-compat` | Verified |
-| `Commitment` enum, `RpcUrl` enum, `Health` enum, API types (`AccountInfo`, `Blockhash`, `TokenAccountBalance`, `TokenAmount`, `TransactionSignature`, `TransactionSimulation`, `PrioritizationFee`, `Version`, `EpochInfo`) | `interop/artemis-sol4k-compat` | Verified |
-| `RpcException` as `data class RpcException(code: Int, message: String, rawResponse: String)` with destructuring + `.copy()`; `SerializationException` as `data class SerializationException(message: String)`. Matches upstream sol4k 0.7.0 shape exactly. | `interop/artemis-sol4k-compat` | Verified |
-
-## Metaplex Android compat (drop-in path)
-
-| Capability | Artemis module | Status |
-|---|---|---|
-| `com.metaplex.lib.Metaplex` entry point with `connection`, `identityDriver`, `nft`, `tokens`, `das`, `candyMachinesV2`, `candyMachines` modules | `interop/artemis-metaplex-android-compat` | Verified |
-| `NftModule` (findByMint, findAllByOwner, findAllByMintList; DAS-backed findAllByCreator and findAllByUpdateAuthority with empty RPC-only fallback) | `interop/artemis-metaplex-android-compat` | Verified (`MetaplexAndroidCompatTest`) |
-| `TokensModule.findByMint` | `interop/artemis-metaplex-android-compat` | Verified |
-| `DasModule` (assetsByOwner, asset) | `interop/artemis-metaplex-android-compat` | Verified |
-| `CandyMachinesModule.mintV2Instruction`, `mint(MintV2Accounts)`, and Candy Machine authority PDA derivation | `interop/artemis-metaplex-android-compat` + `artemis-candy-machine` | Verified (`MetaplexAndroidCompatTest`) |
-| Token Metadata instruction builders (createMetadataAccountV3, createMasterEditionV3, updateMetadataAccountV2, signMetadata, verifyCollection, unverifyCollection, setAndVerifyCollection, verifySizedCollectionItem, approveCollectionAuthority, revokeCollectionAuthority) | `compatibility/artemis-nft-compat` | Verified |
-| pNFT support (token record PDA, TokenRecordParser, collection authority record PDA, CollectionAuthorityRecordParser) | `compatibility/artemis-nft-compat` | Verified |
-
-## Common programs
-
-| Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
-|---|---|---|---|---|---|---|
-| System Program | Yes | Yes | N/A | N/A | 12 instructions | Verified |
-| SPL Token | Partial | Partial | N/A | N/A | 13 builders | Verified |
-| Associated Token | Partial | Partial | N/A | N/A | Yes | Verified |
-| Compute Budget | No | No | N/A | N/A | Yes | Verified |
-| Stake Program | No | No | N/A | N/A | 5 instructions | Verified |
-| Memo Program | No | Partial | N/A | N/A | Yes | Verified |
-| Address Lookup Table program | No | No | N/A | N/A | Yes | Verified (create, extend, freeze, deactivate, close) |
-
-## Token-2022
-
-| Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
-|---|---|---|---|---|---|---|
-| Transfer fees | No | No | N/A | No | Yes | Verified |
-| Interest bearing | No | No | N/A | No | Yes | Verified |
-| Permanent delegate | No | No | N/A | No | Yes | Verified |
-| Default account state | No | No | N/A | No | Yes | Verified |
-| Transfer hook | No | No | N/A | No | Yes | Verified; Token-2022 mint config plus SPL transfer-hook execute / extra-account-meta interface helpers |
-| Metadata pointer | No | No | N/A | No | Yes | Verified |
-| Confidential transfers | No | No | N/A | No | Yes | Experimental |
-| CPI guard | No | No | N/A | No | Yes | Verified |
-| Immutable owner | No | No | N/A | No | Yes | Verified |
-| Mint close authority | No | No | N/A | No | Yes | Verified |
-| TLV decoding | No | No | N/A | No | Yes | Verified; owned decode plus zero-copy `TlvEntryView` / account extension views |
-
-## NFT / Metaplex
-
-| Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
-|---|---|---|---|---|---|---|
-| Token Metadata read | No | No | N/A | Yes | Yes | Verified |
-| Token Metadata write | No | No | N/A | Yes | Yes | Partial (mint / update covered; burn / verify edge cases pending) |
-| Editions | No | No | N/A | Yes | Yes | Partial |
-| Collections | No | No | N/A | Yes | Yes | Verified |
-| MPL Core | No | No | N/A | Partial | Yes | Partial |
-| Compressed NFTs (Bubblegum) | No | No | N/A | Partial | `artemis-cnft` | Verified |
-| cNFT transfer via MarketplaceEngine | No | No | N/A | No | `MarketplaceEngine` | Verified |
-| Candy Machine v3 | No | No | N/A | No | `artemis-candy-machine` | Verified / Partial (mint_v2 builder, safe planner, and Metaplex compat bridge covered; full lifecycle mutations pending) |
-| DAS by-owner / by-collection / single-asset | No | No | N/A | No | `ArtemisDas` / `HeliusDas` | Verified |
-| DAS RPC fallback | No | No | N/A | No | `RpcFallbackDas` | Verified |
-| DAS primary + fallback router with 30s cooldown | No | No | N/A | No | `CompositeDas` | Verified |
-| Marketplace preflight (ownership, ATA, frozen) | No | No | N/A | No | `MarketplacePreflight` | Verified |
-| Standalone ATA ensurer | No | No | N/A | No | `AtaEnsurer` | Verified |
-
-## Developer tooling
-
-| Capability | solana-kmp | Sol4k | Solana Mobile SDK | Metaplex KMM | Artemis | Artemis Status |
-|---|---|---|---|---|---|---|
-| Transaction simulation | No | No | N/A | N/A | `TxEngine` simulate stage | Verified |
-| Compute estimation | No | No | N/A | N/A | `artemis-compute` | Verified |
-| Priority fee helpers | No | No | N/A | N/A | Yes | Verified |
-| Error decoding | Minimal | No | N/A | N/A | `artemis-errors` | Verified (structured RPC/simulation decoder with instruction index, program id, custom code, retryability, and mapper integration) |
-| Transaction engine (pipeline) | No | No | N/A | N/A | `TxEngine` | Verified |
-| Retry pipeline with classified errors | No | No | N/A | N/A | `RetryPipeline` | Verified |
-| Blockhash cache with TTL | No | No | N/A | N/A | `BlockhashCache` | Verified |
-| Framework event bus | No | No | N/A | N/A | `ArtemisEventBus` | Verified |
-| Compat API-diff snapshot | No | No | N/A | N/A | `./gradlew dumpApi` | Verified |
-
-## Artemis-only capabilities
-
-These are features no other Kotlin Solana SDK provides; none are required for the SMS-client-compat path.
-
-| Capability | Module | Status |
-|---|---|---|
-| Typed WebSocket subscriptions (`RealtimeEngine`) | `artemis-ws` | Verified |
-| DAS queries (Helius / RPC standard) | `artemis-cnft` | Verified |
-| cNFT transfer with proof resolution (`MarketplaceEngine`) | `artemis-cnft` | Verified |
-| Full mobile stack wiring (`ArtemisMobile.create()`) | `artemis-wallet-mwa-android` | Verified |
-| Anchor IDL client | `artemis-anchor` | Partial (runtime path and enum args covered; generics/bytemuck layouts remain) |
-| Jupiter DEX integration | `artemis-jupiter` | Partial |
-| Solana Actions / Blinks | `artemis-actions` | In Progress (GET/POST, parameter builders, identity POST, actions.json same-origin/cross-origin delegation, QR/deep links, callback chaining, and inline `next` completed-state handling covered; interactive replays remain) |
-| Privacy toolkit | `artemis-privacy` | Experimental |
-| Zero-copy streaming | `artemis-streaming` | Experimental |
-| Transaction batching | `artemis-batch` | In Progress |
-| Offline queue | `artemis-offline` | In Progress |
-| Portfolio tracking | `artemis-portfolio` | In Progress |
-| Gaming primitives (session keys, VRF, state proofs) | `artemis-gaming` | Experimental |
-| DePIN attestation | `artemis-depin` | Experimental |
-| NLP transactions | `artemis-nlp` | Experimental |
-| Intent decoding | `artemis-intent` | Verified |
-| Universal program client | `artemis-universal` | Experimental |
-| MWA wallet conformance detector (normalizes known Phantom/Solflare/Seeker quirks from upstream #958, #1146, #1331, #1458) | `artemis-wallet-mwa-android` (`MwaWalletConformance`, `KnownWallet`, `ConformanceReport`); test: `MwaWalletConformanceTest` | Verified |
-| Spec-first MWA error taxonomy with typed recovery hints (closes upstream #314) | `artemis-wallet-mwa-android` (`MwaError`, `Recovery`); test: `MwaErrorTest` | Verified |
-| SIWS validator with canonical message rendering + ed25519 verification + replay check (closes upstream #193, #1331) | `artemis-wallet-mwa-android` (`MwaSiwsValidator`, `SiwsVerification`); test: `MwaSiwsValidatorTest` | Verified |
-| First-class multi-account session wrapper (closes upstream #438, open 2+ years) | `artemis-wallet-mwa-android` (`MwaMultiAccountSession`, `ResolvedAccount`); test: `MwaMultiAccountSessionTest` | Verified |
-| WebView / PWA / TWA environment detector with routing hints (closes upstream #1082, #1323, #1364) | `artemis-wallet-mwa-android` (`MwaEnvironmentDetector`); test: `MwaEnvironmentDetectorTest` | Verified |
-| Three-state circuit breaker (`CircuitBreaker`) wrappable around any suspend block, observable via `StateFlow`, configurable threshold/cooldown/half-open success threshold | `artemis-rpc` (`CircuitBreaker`, `CircuitBreakerOpenException`); test: `CircuitBreakerTest` | Verified |
+- Artemis complements Solana Mobile Stack. It does not replace MWA, Seed Vault, Android wallet approval UX, device hardware custody, or platform services.
+- Seed Vault signing and real-wallet MWA behavior require Android devices or wallet apps. Local JVM/Android unit tests cover API shape, protocol serialization, and shim behavior, not every wallet vendor path.
+- Metaplex support is selected-flow support, not a full replacement for every Metaplex SDK surface.

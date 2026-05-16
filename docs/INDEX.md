@@ -22,6 +22,9 @@ A flat index of every document in the repo. The structured navigation lives at [
 | [MODULE_MAP.md](MODULE_MAP.md) | All developers |
 | [ADOPTION_BUNDLES.md](ADOPTION_BUNDLES.md) | Mobile app teams |
 | [PARITY_MATRIX.md](PARITY_MATRIX.md) | SDK evaluators |
+| [claims.md](claims.md) | Public claim boundaries and approved wording |
+| [drop-in-compatibility.md](drop-in-compatibility.md) | Source-compatible migration surfaces |
+| [ecosystem-support.md](ecosystem-support.md) | Supported and unsupported ecosystem flows |
 | [SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md](SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md) | SDK evaluators and Solana Mobile client-library adopters |
 
 ## Migration
@@ -30,6 +33,10 @@ A flat index of every document in the repo. The structured navigation lives at [
 | --- | --- |
 | [ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md](ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md) | Apps adopting Artemis above MWA and Seed Vault |
 | [migration-solana-mobile.md](migration-solana-mobile.md) | API-level migration notes |
+| [solana-mobile.md](solana-mobile.md) | Solana Mobile dependency replacement and integration guide |
+| [compatibility/replacement-matrix.md](compatibility/replacement-matrix.md) | Dependency-by-dependency replacement matrix |
+| [compatibility/ARTEMIS_READINESS_PLAN.md](compatibility/ARTEMIS_READINESS_PLAN.md) | Readiness plan and remaining gated work |
+| [../samples/mwa-compat-migration/README.md](../samples/mwa-compat-migration/README.md) | Compile-checked MWA compat/native/mixed migration sample |
 
 ## Mobile integration
 
@@ -38,6 +45,8 @@ A flat index of every document in the repo. The structured navigation lives at [
 | [MOBILE_APP_GUIDE.md](MOBILE_APP_GUIDE.md) | Android app developers |
 | [WALLET_COMPATIBILITY_TESTING.md](WALLET_COMPATIBILITY_TESTING.md) | Android and React Native wallet testers |
 | [TRANSACTION_CORRECTNESS.md](TRANSACTION_CORRECTNESS.md) | SDK evaluators and maintainers |
+| [conformance/transaction-parity.md](conformance/transaction-parity.md) | Byte-level transaction parity gates |
+| [../testing/artemis-conformance-suite/build.gradle.kts](../testing/artemis-conformance-suite/build.gradle.kts) | Source-import conformance suite module |
 | [PERFORMANCE_BENCHMARKS.md](PERFORMANCE_BENCHMARKS.md) | Release maintainers and SDK evaluators |
 
 ## Feature guides
@@ -72,27 +81,29 @@ The current published version is `2.3.2`. The source of truth for the version nu
 
 ```kotlin
 dependencies {
+    implementation(platform("xyz.selenus:artemis-bom:2.3.2"))
+
     // Foundation
-    implementation("xyz.selenus:artemis-core:2.3.2")
-    implementation("xyz.selenus:artemis-rpc:2.3.2")
-    implementation("xyz.selenus:artemis-ws:2.3.2")
-    implementation("xyz.selenus:artemis-tx:2.3.2")
-    implementation("xyz.selenus:artemis-vtx:2.3.2")
-    implementation("xyz.selenus:artemis-programs:2.3.2")
+    implementation("xyz.selenus:artemis-core")
+    implementation("xyz.selenus:artemis-rpc")
+    implementation("xyz.selenus:artemis-ws")
+    implementation("xyz.selenus:artemis-tx")
+    implementation("xyz.selenus:artemis-vtx")
+    implementation("xyz.selenus:artemis-programs")
 
     // Mobile
-    implementation("xyz.selenus:artemis-wallet:2.3.2")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.2")
-    implementation("xyz.selenus:artemis-seed-vault:2.3.2")
+    implementation("xyz.selenus:artemis-wallet")
+    implementation("xyz.selenus:artemis-wallet-mwa-android")
+    implementation("xyz.selenus:artemis-seed-vault")
 
     // NFT, DAS, marketplace
-    implementation("xyz.selenus:artemis-cnft:2.3.2")
+    implementation("xyz.selenus:artemis-cnft")
 
     // Optional
-    implementation("xyz.selenus:artemis-token2022:2.3.2")
-    implementation("xyz.selenus:artemis-jupiter:2.3.2")
-    implementation("xyz.selenus:artemis-actions:2.3.2")
-    implementation("xyz.selenus:artemis-anchor:2.3.2")
+    implementation("xyz.selenus:artemis-token2022")
+    implementation("xyz.selenus:artemis-jupiter")
+    implementation("xyz.selenus:artemis-actions")
+    implementation("xyz.selenus:artemis-anchor")
 }
 ```
 

@@ -47,7 +47,7 @@ dependencies {
 }
 ```
 
-Covers: everything in Foundation, plus WalletSession abstraction (local/adapter/raw signing), MWA 2.0 client integration, Seed Vault integration, Android lifecycle handling.
+Covers: everything in Foundation, plus WalletSession abstraction (local/adapter/raw signing), MWA 2.x client integration, Seed Vault integration, Android lifecycle handling.
 
 Consolidates client SDK functionality from solana-kmp, mobile-wallet-adapter-clientlib-ktx, and seedvault-wallet-sdk without replacing MWA or Seed Vault.
 

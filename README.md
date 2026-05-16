@@ -1,8 +1,8 @@
 # Artemis Solana SDK
 
-this is the kotlin solana sdk you actually want.
+Artemis is a mobile-first Kotlin Solana SDK that consolidates app-side Solana client dependencies.
 
-one Kotlin Multiplatform dependency. JSON-RPC, WebSocket subs with reconnect and replay, legacy + v0 transactions, MWA 2.0, Seed Vault, Token-2022, compressed NFTs with DAS failover, Solana Pay, Jupiter, Anchor, Actions. plus a real reliability layer wrapped around all of it.
+one Kotlin Multiplatform dependency graph. JSON-RPC, WebSocket subs with reconnect and replay, legacy + v0 transactions, MWA 2.1, Seed Vault, Token-2022, compressed NFTs with DAS failover, Solana Pay, Jupiter, Anchor, Actions. plus a real reliability layer wrapped around all of it.
 
 [![Maven Central](https://img.shields.io/maven-central/v/xyz.selenus/artemis-core?style=flat-square)](https://central.sonatype.com/search?q=xyz.selenus)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
@@ -13,7 +13,7 @@ the kotlin/android solana story is fragmented. you ship `mobile-wallet-adapter-c
 
 five dependencies. five opinions about coroutines. five version matrices. zero shared reliability story.
 
-Artemis is one dependency graph, one coroutine-first surface, one `ArtemisMobile.create()` call for the full stack. every module pulls weight. `artemis-rpc` ships 92 typed JSON-RPC methods with a batch DSL and a real circuit breaker. `artemis-ws` runs a real websocket with deterministic resubscribe on reconnect. `artemis-vtx` drives a simulate + retry + priority-fee transaction pipeline. `artemis-wallet-mwa-android` speaks MWA 2.0 end to end with P-256 association, AES-128-GCM session crypto, HKDF-SHA256 key derivation, and Sign-In With Solana.
+Artemis is one dependency graph, one coroutine-first surface, one `ArtemisMobile.create()` call for the full stack. every module pulls weight. `artemis-rpc` ships 92 typed JSON-RPC methods with a batch DSL and a real circuit breaker. `artemis-ws` runs a real websocket with deterministic resubscribe on reconnect. `artemis-vtx` drives a simulate + retry + priority-fee transaction pipeline. `artemis-wallet-mwa-android` speaks MWA 2.x end to end with P-256 association, AES-128-GCM session crypto, HKDF-SHA256 key derivation, and Sign-In With Solana.
 
 Artemis is the client SDK layer above Solana Mobile Stack primitives. It does not replace MWA, Seed Vault, wallet approval UX, or the Solana Mobile platform. If you can't rewrite call sites, the source-compatible `interop/artemis-*-compat` shims let you swap Maven coordinates and keep your imports. one dep, not five.
 
@@ -39,29 +39,39 @@ repositories {
 }
 
 dependencies {
+    // Align all Artemis modules on one version.
+    implementation(platform("xyz.selenus:artemis-bom:2.3.2"))
+
     // Foundation (KMP)
-    implementation("xyz.selenus:artemis-core:2.3.2")
-    implementation("xyz.selenus:artemis-rpc:2.3.2")
-    implementation("xyz.selenus:artemis-ws:2.3.2")
-    implementation("xyz.selenus:artemis-tx:2.3.2")
-    implementation("xyz.selenus:artemis-vtx:2.3.2")
-    implementation("xyz.selenus:artemis-programs:2.3.2")
+    implementation("xyz.selenus:artemis-core")
+    implementation("xyz.selenus:artemis-rpc")
+    implementation("xyz.selenus:artemis-ws")
+    implementation("xyz.selenus:artemis-tx")
+    implementation("xyz.selenus:artemis-vtx")
+    implementation("xyz.selenus:artemis-programs")
 
     // Mobile
-    implementation("xyz.selenus:artemis-wallet:2.3.2")
-    implementation("xyz.selenus:artemis-wallet-mwa-android:2.3.2")
-    implementation("xyz.selenus:artemis-seed-vault:2.3.2")
+    implementation("xyz.selenus:artemis-wallet")
+    implementation("xyz.selenus:artemis-wallet-mwa-android")
+    implementation("xyz.selenus:artemis-seed-vault")
 
     // NFT, DAS, marketplace
-    implementation("xyz.selenus:artemis-cnft:2.3.2")
+    implementation("xyz.selenus:artemis-cnft")
 
     // Optional ecosystem modules
-    implementation("xyz.selenus:artemis-token2022:2.3.2")
-    implementation("xyz.selenus:artemis-jupiter:2.3.2")
+    implementation("xyz.selenus:artemis-token2022")
+    implementation("xyz.selenus:artemis-jupiter")
+
+    // Optional source-compatible migration shims
+    implementation("xyz.selenus:artemis-mwa-compat")
+    implementation("xyz.selenus:artemis-sol4k-compat")
+    implementation("xyz.selenus:artemis-multimult-compat")
 }
 ```
 
 current published version is `2.3.2`. the `version` field in [gradle.properties](gradle.properties) is the source of truth.
+
+compatibility and claim boundaries live in [docs/PARITY_MATRIX.md](docs/PARITY_MATRIX.md), [docs/compatibility/replacement-matrix.md](docs/compatibility/replacement-matrix.md), [docs/drop-in-compatibility.md](docs/drop-in-compatibility.md), and [docs/claims.md](docs/claims.md). Solana Mobile-specific guidance is in [docs/solana-mobile.md](docs/solana-mobile.md). A compile-checked Android migration sample lives at [samples/mwa-compat-migration/README.md](samples/mwa-compat-migration/README.md).
 
 ## Quick start
 

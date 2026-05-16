@@ -551,6 +551,7 @@ val artemisModuleDescriptions: Map<String, String> = mapOf(
     "artemis-tx-presets" to "Curated transaction presets: common SOL and SPL flows preassembled with sane defaults for quick integration.",
     "artemis-candy-machine-presets" to "Candy Machine configuration presets covering the common mint flows (public sale, allowlist, gated).",
     "artemis-presets" to "Top-level preset bundle that pulls in transaction and candy-machine presets under one import.",
+    "artemis-bom" to "Maven BOM that aligns Artemis Foundation, Mobile, Ecosystem, Preset, and Interop module versions.",
 
     // Interop / compat shims
     "artemis-seedvault-compat" to "Source-compatible shim for com.solanamobile:seedvault-wallet-sdk: same package and class names, routed through Artemis Seed Vault integration.",
@@ -562,13 +563,15 @@ val artemisModuleDescriptions: Map<String, String> = mapOf(
     "artemis-solana-kmp-compat" to "solana-kmp source-compat shim for projects migrating from the Solana KMP fork.",
     "artemis-metaplex-android-compat" to "metaplex-android source-compat shim: routes Metaplex calls through Artemis NFT, DAS, MPL Core, and Candy Guard mint_v2 builders.",
     "artemis-web3-solana-compat" to "web3-solana source-compat shim that mirrors the small web3-solana Android surface on top of Artemis.",
-    "artemis-rpc-core-compat" to "rpc-core source-compat shim that exposes the upstream rpc-core API backed by artemis-rpc."
+    "artemis-rpc-core-compat" to "rpc-core source-compat shim that exposes the upstream rpc-core API backed by artemis-rpc.",
+    "artemis-multimult-compat" to "multimult source-compat shim for com.funkatronics.encoders Base58 APIs backed by Artemis Base58."
 )
 
 subprojects {
     if (project.name == "artemis-react-native") return@subprojects
     if (project.name == "artemis-integration-tests") return@subprojects
     if (project.name == "artemis-devnet-tests") return@subprojects
+    if (project.name == "artemis-conformance-suite") return@subprojects
 
     val pomConfig: MavenPublication.() -> Unit = {
         pom {
@@ -787,7 +790,8 @@ tasks.register("dumpApi") {
         "artemis-web3-solana-compat",
         "artemis-rpc-core-compat",
         "artemis-solana-kmp-compat",
-        "artemis-metaplex-android-compat"
+        "artemis-metaplex-android-compat",
+        "artemis-multimult-compat"
     )
 
     doLast {
@@ -881,7 +885,8 @@ tasks.register("verifyApiSnapshots") {
         "artemis-web3-solana-compat",
         "artemis-rpc-core-compat",
         "artemis-solana-kmp-compat",
-        "artemis-metaplex-android-compat"
+        "artemis-metaplex-android-compat",
+        "artemis-multimult-compat"
     )
 
     doLast {
@@ -993,13 +998,13 @@ tasks.register("checkDependencyRings") {
         )
         val compat = setOf(
             "artemis-discriminators", "artemis-nft-compat", "artemis-tx-presets",
-            "artemis-candy-machine-presets", "artemis-presets"
+            "artemis-candy-machine-presets", "artemis-presets", "artemis-bom"
         )
         val interop = setOf(
             "artemis-seedvault-compat", "artemis-mwa-compat",
-            "artemis-mwa-walletlib-compat"
+            "artemis-mwa-walletlib-compat", "artemis-multimult-compat"
         )
-        val testing = setOf("artemis-integration-tests", "artemis-devnet-tests")
+        val testing = setOf("artemis-integration-tests", "artemis-devnet-tests", "artemis-conformance-suite")
 
         fun ringOf(name: String): Int = when (name) {
             in foundation -> 1

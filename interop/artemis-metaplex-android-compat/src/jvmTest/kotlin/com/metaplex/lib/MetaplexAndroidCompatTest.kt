@@ -75,6 +75,27 @@ class MetaplexAndroidCompatTest {
     }
 
     @Test
+    fun `unsupported Metaplex queries return typed sentinels`() {
+        val metaplex = Metaplex(Connection("https://api.devnet.solana.com"))
+
+        val auctionQuery = metaplex.auctions.findAllByCreator("creator").single()
+        assertEquals("AuctionsModule", auctionQuery.module)
+        assertEquals("findAllByCreator", auctionQuery.feature)
+        assertEquals(true, auctionQuery.message.contains("not implemented"))
+
+        val auctionAddress = metaplex.auctions.findByAddress("auction")
+        assertEquals(true, auctionAddress is UnsupportedMetaplexFeature)
+
+        val candyV2Query = metaplex.candyMachinesV2.findAllMintedItems(CANDY_MACHINE).single()
+        assertEquals("CandyMachinesV2Module", candyV2Query.module)
+        assertEquals(true, candyV2Query.migrationHint.contains("artemis-candy-machine"))
+
+        val candyV3Query = metaplex.candyMachines.findAllByAuthority(PAYER).single()
+        assertEquals("CandyMachinesModule", candyV3Query.module)
+        assertEquals(true, candyV3Query.migrationHint.contains("mintV2Instruction"))
+    }
+
+    @Test
     fun `CandyMachines module builds real mint v2 instructions`() {
         val metaplex = Metaplex(Connection("https://api.devnet.solana.com"))
         val accounts = CandyMachinesModule.MintV2Accounts(

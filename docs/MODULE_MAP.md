@@ -67,6 +67,7 @@ Every module in Artemis, what ring it belongs to, what it does, and when you nee
 | `artemis-tx-presets` | Pre-composed tx patterns (ATA + priority fees + resend) | You want ready-made transaction templates |
 | `artemis-candy-machine-presets` | Candy Machine mint presets | You want a one-call candy machine mint |
 | `artemis-presets` | Preset registry, lightweight interfaces for composing modules | You want to bundle multiple modules together |
+| `artemis-bom` | Maven BOM for aligning Artemis module versions | You want versionless dependency declarations across Artemis artifacts |
 
 ## Interop (Ring 6)
 
@@ -74,13 +75,14 @@ Source-compatible shims that publish the upstream package + class FQNs. Swap you
 
 | Module | Compat target | Upstream pin | You need this when... |
 |--------|----------|--------------|----------------------|
-| `artemis-mwa-compat` | `com.solana.mobilewalletadapter:clientlib-ktx` | 1.4.3 | Migrating an MWA-ktx dApp without rewriting `transact { }` blocks |
-| `artemis-mwa-clientlib-compat` | `com.solana.mobilewalletadapter:clientlib` | 1.4.3 | Migrating low-level MWA client / `LocalAssociationScenario` callsites |
-| `artemis-mwa-walletlib-compat` | `com.solana.mobilewalletadapter:walletlib` | 1.4.3 | Migrating a wallet's MWA `Scenario` / `AuthRepository` / typed-exception code |
-| `artemis-mwa-common-compat` | `com.solana.mobilewalletadapter:common` | 1.4.3 | Migrating code that imports `ProtocolContract`, `AssociationContract`, `SignInWithSolana` |
+| `artemis-mwa-compat` | `com.solana.mobilewalletadapter:clientlib-ktx` | 2.1.0 | Migrating an MWA-ktx dApp without rewriting `transact { }` blocks |
+| `artemis-mwa-clientlib-compat` | `com.solana.mobilewalletadapter:clientlib` | 2.1.0 | Migrating low-level MWA client / `LocalAssociationScenario` callsites |
+| `artemis-mwa-walletlib-compat` | `com.solana.mobilewalletadapter:walletlib` | 2.1.0 | Migrating a wallet's MWA `Scenario` / `AuthRepository` / typed-exception code |
+| `artemis-mwa-common-compat` | `com.solana.mobilewalletadapter:common` | 2.1.0 | Migrating code that imports `ProtocolContract`, `AssociationContract`, `SignInWithSolana` |
 | `artemis-seedvault-compat` | `com.solanamobile:seedvault-wallet-sdk` | 0.4.0 | Migrating Seed Vault static `Wallet.*` calls and `WalletContractV1` constants |
 | `artemis-sol4k-compat` | `org.sol4k:sol4k` | 0.7.0 | Migrating an `org.sol4k.*` codebase (Connection, Transaction, instruction builders incl. Token-2022, `RpcException` data class) |
 | `artemis-solana-kmp-compat` | `foundation.metaplex:solana-kmp` | main@2024-06-05 (upstream dormant) | Migrating a `foundation.metaplex.*` codebase |
 | `artemis-metaplex-android-compat` | `com.metaplex.lib:lib` | main@2024-04-06 (upstream dormant) | Migrating a `com.metaplex.lib.*` Android codebase. **Partial** parity: NFT read + DAS + identity drivers + Candy Guard mint_v2 instruction building covered; auctions, CMv2, and full lifecycle mutations still pending |
 | `artemis-rpc-core-compat` | `com.solana:rpc-core` | main@2026-01-09 | Migrating `com.solana.rpccore.*`, `SolanaRpcClient`, `HttpNetworkDriver`, and the upstream concrete driver FQNs. `KtorNetworkDriver` / `OkHttpNetworkDriver` support no-arg default HTTP and delegate injection; `OkioNetworkDriver` is kept as a deprecated alias |
 | `artemis-web3-solana-compat` | `com.solana:web3-solana` (Funkatronics) | main@2025-08 | Migrating code that imports `SolanaPublicKey`, `Transaction`, `Message.Builder`, signer, and supported program helpers. Includes additive Token-2022 / ATA-idempotent helpers; still **Partial** for a full web3-core 0.3.x pin refresh |
+| `artemis-multimult-compat` | `io.github.funkatronics:multimult` | 0.2.6 | Migrating Base58 usage from `com.funkatronics.encoders.Base58` or group-style `io.github.funkatronics.multimult.Base58` imports |

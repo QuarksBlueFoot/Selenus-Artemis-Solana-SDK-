@@ -18,15 +18,16 @@ Artemis does **not** replace:
 
 | Upstream dependency | Artemis module | Audited pin | Status | Evidence | Remaining boundary |
 |---|---|---:|---|---|---|
-| MWA clientlib-ktx | `artemis-mwa-compat` | 1.4.3 | Verified | `MwaCompatParityTest`, API snapshot, behavior gate | Client library only; MWA protocol and wallet UX remain upstream/platform concerns |
-| MWA clientlib | `artemis-mwa-clientlib-compat` | 1.4.3 | Verified | `MwaCompatParityTest`, `MwaCompatResultsTest`, API snapshot | Requires a live session bridge for real wallet flows |
-| MWA walletlib | `artemis-mwa-walletlib-compat` | 1.4.3 | Verified | `MwaWalletlibCompatParityTest`, API snapshot, native remote scenario behavior test, `MwaReflectorServerTest` | Artemis provides a JVM reflector service in `artemis-streaming`; TLS/domain/uptime remain operator deployment concerns |
-| MWA common | `artemis-mwa-common-compat` | 1.4.3 | Verified | `MwaCommonCompatTest`, API snapshot; constants are re-published at upstream FQNs | Constants/protocol contract only; does not alter MWA wire semantics |
+| MWA clientlib-ktx | `artemis-mwa-compat` | 2.1.0 | Verified | `MwaCompatParityTest`, API snapshot, behavior gate | Client library only; MWA protocol and wallet UX remain upstream/platform concerns |
+| MWA clientlib | `artemis-mwa-clientlib-compat` | 2.1.0 | Verified | `MwaCompatParityTest`, `MwaCompatResultsTest`, API snapshot | Requires a live session bridge for real wallet flows |
+| MWA walletlib | `artemis-mwa-walletlib-compat` | 2.1.0 | Verified | `MwaWalletlibCompatParityTest`, API snapshot, native remote scenario behavior test, `MwaReflectorServerTest` | Artemis provides a JVM reflector service in `artemis-streaming`; TLS/domain/uptime remain operator deployment concerns |
+| MWA common | `artemis-mwa-common-compat` | 2.1.0 | Verified | `MwaCommonCompatTest`, API snapshot; constants are re-published at upstream FQNs | Constants/protocol contract only; does not alter MWA wire semantics |
 | Seed Vault SDK | `artemis-seedvault-compat` | 0.4.0 | Verified client surface | `SeedVaultCompatTest`, API snapshot, `SeedVaultContractClient` tests in native module | Seed Vault service/custody remains device-provided and cannot be replaced by Artemis |
 | rpc-core | `artemis-rpc-core-compat` | main@2026-01-09 | Verified | `RpcCoreCompatTest`, API snapshot | `KtorNetworkDriver` / `OkHttpNetworkDriver` FQNs support upstream-style no-arg construction and delegate injection without forcing Ktor / OkHttp into common deps; `OkioNetworkDriver` remains as a deprecated alias for earlier migration notes |
 | web3-solana / web3-core | `artemis-web3-solana-compat` | main@2025-08 | Verified / Partial | `Web3SolanaCompatProgramTest`, API snapshot, tx/vtx byte fixtures | Source-compatible for pinned snapshot. Additive Token-2022 and ATA idempotent helpers are implemented/tested; a full web3-core 0.3.x pin refresh remains future work |
 | Sol4k | `artemis-sol4k-compat` | 0.7.0 | Verified | `Sol4kCompatTest`, `Sol4kCompatExtraTest`, API snapshot | Claims are scoped to Sol4k 0.7.0 public surface |
 | solana-kmp / SolanaKT family | `artemis-solana-kmp-compat` | main@2024-06-05 | Verified | `SolanaKmpCompatTest`, API snapshot | Upstream is dormant; claims target the pinned snapshot, not untracked forks |
+| multimult | `artemis-multimult-compat` | 0.2.6 | Verified | `MultimultCompatTest`, API snapshot | Source-compatible for Base58 APIs only; full multibase coverage is not claimed |
 | Metaplex Android / KMM | `artemis-metaplex-android-compat` plus Artemis NFT modules | main@2024-04-06 | Verified / Partial | `MetaplexAndroidCompatTest`, NFT compatibility tests | NFT read, tokens, DAS, selected metadata builders, and Candy Guard mint_v2 instruction building are covered. Auction House, legacy CMv2, and full Candy Machine lifecycle mutations are not claimed |
 
 ## Changes from the final pass
@@ -35,6 +36,7 @@ Artemis does **not** replace:
 - Added `Web3SolanaCompatProgramTest` to exercise those program helpers and `Message.Builder` compilation.
 - Added `RpcCoreCompatTest` to exercise JSON-RPC request serialization, typed result/error decoding, rpc-core model shapes, and `SolanaRpcClient` constructors.
 - Added `MwaCommonCompatTest` and `SeedVaultCompatTest` so common protocol constants and Seed Vault client shim types are covered by runtime tests in addition to API snapshots.
+- Updated MWA compat metadata to the current 2.1.0 baseline and added `artemis-multimult-compat` for Base58 import-level migration.
 - Added native SPL Token `setAuthority`, `freezeAccount`, and `thawAccount` builders with web3-style compat wrappers and behavior tests.
 - Added `MwaReflectorServer` in `artemis-streaming`, a runnable `/reflect?id=...` WebSocket reflector with APP_PING pairing, binary/base64 subprotocol support, frame limits, and loopback tests.
 - Added rpc-core concrete driver FQN bridges, DAS-backed Metaplex Android `findAllByCreator` / `findAllByUpdateAuthority` behavior tests, and a Metaplex Android Candy Guard mint_v2 instruction bridge.

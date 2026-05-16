@@ -1,12 +1,12 @@
 // Drop-in source compatibility for `com.solana.mobilewalletadapter:walletlib`.
-// Pinned upstream surface: 1.4.3 (github.com/solana-mobile/mobile-wallet-adapter
-// tag `v1.4.3`). Wallet-side scenario / authorization / protocol packages.
+// Pinned upstream surface: 2.1.0 (github.com/solana-mobile/mobile-wallet-adapter).
+// Wallet-side scenario / authorization / protocol packages.
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
 }
 
-extra["upstream.version"] = "1.4.3"
+extra["upstream.version"] = "2.1.0"
 extra["upstream.repo"] = "https://github.com/solana-mobile/mobile-wallet-adapter"
 extra["upstream.artifact"] = "com.solana.mobilewalletadapter:walletlib"
 

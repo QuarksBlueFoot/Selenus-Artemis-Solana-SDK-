@@ -12,6 +12,9 @@ top-level index for everything under `docs/`. if you just want to install and ru
 | [MODULE_MAP.md](MODULE_MAP.md) | Every module with purpose and adoption context |
 | [ADOPTION_BUNDLES.md](ADOPTION_BUNDLES.md) | Recommended dependency sets per use case |
 | [PARITY_MATRIX.md](PARITY_MATRIX.md) | Side-by-side feature comparison vs solana-kmp, sol4k, Solana Mobile SDK, Metaplex KMM |
+| [claims.md](claims.md) | Public claim boundaries and approved wording |
+| [drop-in-compatibility.md](drop-in-compatibility.md) | Source-compatible migration surfaces |
+| [ecosystem-support.md](ecosystem-support.md) | Supported and unsupported ecosystem flows |
 | [SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md](SOLANA_MOBILE_CLIENT_COMPATIBILITY_AUDIT.md) | Final claim boundary and dependency-by-dependency client SDK compatibility audit |
 
 ## Migration
@@ -20,6 +23,10 @@ top-level index for everything under `docs/`. if you just want to install and ru
 | --- | --- |
 | [ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md](ADOPTING_ARTEMIS_WITH_SOLANA_MOBILE.md) | Adopting Artemis as the client SDK layer above MWA and Seed Vault |
 | [migration-solana-mobile.md](migration-solana-mobile.md) | API-level migration notes for SMS users |
+| [solana-mobile.md](solana-mobile.md) | Solana Mobile dependency replacement and integration guide |
+| [compatibility/replacement-matrix.md](compatibility/replacement-matrix.md) | Dependency-by-dependency replacement matrix |
+| [compatibility/ARTEMIS_READINESS_PLAN.md](compatibility/ARTEMIS_READINESS_PLAN.md) | Readiness plan and remaining gated work |
+| [../samples/mwa-compat-migration/README.md](../samples/mwa-compat-migration/README.md) | Compile-checked MWA compat/native/mixed migration sample |
 
 ## Mobile integration
 
@@ -28,6 +35,8 @@ top-level index for everything under `docs/`. if you just want to install and ru
 | [MOBILE_APP_GUIDE.md](MOBILE_APP_GUIDE.md) | End-to-end Android integration walkthrough using `ArtemisMobile.create()` |
 | [WALLET_COMPATIBILITY_TESTING.md](WALLET_COMPATIBILITY_TESTING.md) | Real wallet test matrix and MWA edge-case coverage |
 | [TRANSACTION_CORRECTNESS.md](TRANSACTION_CORRECTNESS.md) | Byte-level transaction correctness evidence policy |
+| [conformance/transaction-parity.md](conformance/transaction-parity.md) | Byte-level transaction parity gates |
+| [../testing/artemis-conformance-suite/build.gradle.kts](../testing/artemis-conformance-suite/build.gradle.kts) | Source-import conformance suite module |
 | [PERFORMANCE_BENCHMARKS.md](PERFORMANCE_BENCHMARKS.md) | Reproducible benchmark methodology before performance claims |
 
 ## Module guides

@@ -114,12 +114,14 @@ include(":artemis-nft-compat")
 include(":artemis-tx-presets")
 include(":artemis-candy-machine-presets")
 include(":artemis-presets")
+include(":artemis-bom")
 
 project(":artemis-discriminators").projectDir       = file("compatibility/artemis-discriminators")
 project(":artemis-nft-compat").projectDir           = file("compatibility/artemis-nft-compat")
 project(":artemis-tx-presets").projectDir            = file("compatibility/artemis-tx-presets")
 project(":artemis-candy-machine-presets").projectDir = file("compatibility/artemis-candy-machine-presets")
 project(":artemis-presets").projectDir               = file("compatibility/artemis-presets")
+project(":artemis-bom").projectDir                   = file("compatibility/artemis-bom")
 
 // =============================================================================
 // Interop - source-compatible shims for Solana Mobile client-library migration
@@ -134,6 +136,7 @@ include(":artemis-rpc-core-compat")
 include(":artemis-mwa-common-compat")
 include(":artemis-mwa-clientlib-compat")
 include(":artemis-mwa-walletlib-compat")
+include(":artemis-multimult-compat")
 
 project(":artemis-seedvault-compat").projectDir         = file("interop/artemis-seedvault-compat")
 project(":artemis-mwa-compat").projectDir               = file("interop/artemis-mwa-compat")
@@ -145,19 +148,23 @@ project(":artemis-rpc-core-compat").projectDir           = file("interop/artemis
 project(":artemis-mwa-common-compat").projectDir         = file("interop/artemis-mwa-common-compat")
 project(":artemis-mwa-clientlib-compat").projectDir      = file("interop/artemis-mwa-clientlib-compat")
 project(":artemis-mwa-walletlib-compat").projectDir      = file("interop/artemis-mwa-walletlib-compat")
+project(":artemis-multimult-compat").projectDir           = file("interop/artemis-multimult-compat")
 
 // =============================================================================
 // Testing
 // =============================================================================
 include(":artemis-integration-tests")
 include(":artemis-devnet-tests")
+include(":artemis-conformance-suite")
 
 project(":artemis-integration-tests").projectDir = file("testing/artemis-integration-tests")
 project(":artemis-devnet-tests").projectDir      = file("testing/artemis-devnet-tests")
+project(":artemis-conformance-suite").projectDir = file("testing/artemis-conformance-suite")
 
 // =============================================================================
 // Samples - opt-in only
 // =============================================================================
 if (providers.gradleProperty("enableAndroidSamples").orNull == "true") {
     include(":samples:solana-mobile-compose-mint-app")
+    include(":samples:mwa-compat-migration")
 }
